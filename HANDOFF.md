@@ -1,7 +1,7 @@
-# HANDOFF — Web tâm linh "LINH GIANG TỰ" (chùa Việt 3D)
+# HANDOFF — Web tâm linh "DIỆU GIANG TỰ" (chùa Việt 3D) — tên cũ: Linh Giang Tự (Phiên 5 đổi tên theo ptg)
 
 > Đọc file này đầu tiên. Nó đủ để một phiên mới, không có trí nhớ, tiếp tục đúng và chi tiết.
-> Phiên hiện tại: **Phiên 4** (2026-10-31) — đã xong mã + test Giai đoạn 4 (thần số học, cung hoàng đạo, pha Trăng) và chụp ảnh kiểm; **KHÔNG đẩy được lên GitHub** (công cụ GitHub báo 403, không có quyền ghi) nên giao bản zip để ptg tải lên tay. Cập nhật mục 2, 7, 8 ở cuối MỖI phiên.
+> Phiên hiện tại: **Phiên 5** (2026-10-31): đổi tên Diệu Giang Tự; thêm lớp tiền cảnh cây cỏ theo mẫu ptg gửi; Giai đoạn 5 (Bát tự + Vận trình, CHƯA có Tử vi); GitHub: xem mục 2. Phiên 4 trước đó: (2026-10-31) — đã xong mã + test Giai đoạn 4 (thần số học, cung hoàng đạo, pha Trăng) và chụp ảnh kiểm; **KHÔNG đẩy được lên GitHub** (công cụ GitHub báo 403, không có quyền ghi) nên giao bản zip để ptg tải lên tay. Cập nhật mục 2, 7, 8 ở cuối MỖI phiên.
 
 ## 0. QUY TẮC BÀN GIAO (chép nguyên văn vào mọi bản bàn giao)
 
@@ -22,23 +22,25 @@ Diễn giải thực hành: sau MỖI câu trả lời, đính kèm HANDOFF.md �
 | Hạng mục | Trạng thái |
 |---|---|
 | Repo GitHub `https://github.com/tp9sach-ops/loinhuan.github.io` | Phiên 2: ban đầu rỗng; **đã đẩy toàn bộ mã Giai đoạn 1 (đã đổi tên LINH QUANG) + HANDOFF.md + docs/KE_HOACH.md lên nhánh `main`**. Cần ptg bật Pages (Settings → Pages → Source: GitHub Actions). |
-| Bản mã Giai đoạn 1 | Nằm trong `linh-giang-tu.zip` (ptg đã gửi, 168 KB, ~1.430 dòng). Gồm: index.html, css/style.css, js/{main,ui,util,api,config}.js, js/scene/{index,rail,temple,nature,particles,textures}.js, gas/Code.gs, tests/smoke.mjs, package.json, .github/workflows/pages.yml, README.md, HANDOFF.md (cũ). |
+| Bản mã Giai đoạn 1 | Nằm trong `dieu-giang-tu.zip` (ptg đã gửi, 168 KB, ~1.430 dòng). Gồm: index.html, css/style.css, js/{main,ui,util,api,config}.js, js/scene/{index,rail,temple,nature,particles,textures}.js, gas/Code.gs, tests/smoke.mjs, package.json, .github/workflows/pages.yml, README.md, HANDOFF.md (cũ). |
 | Giai đoạn 1 (khung + cảnh 3D + camera rail) | Đã chạy thử trong Chromium (Playwright, three.js cài cục bộ, WebGL phần mềm): cảnh chùa hiện đúng, không lỗi JS, không tràn ngang ở 1366px và 390px. **Chưa đo FPS trên điện thoại thật.** |
 | Giai đoạn 2 (lịch Âm, Can Chi, bói ngày chung, vòng 12 giờ) | **Xong mã + 17 test đạt + đã xem giao diện.** Còn: đối chiếu Trực/Tú/Dương công kỵ với lịch vạn niên (mục 8). |
 | Phiên 3 — độ sáng | Đã tăng sáng cảnh 3D (exposure 1.5, đèn môi trường, trời/núi/sân/vật liệu sáng hơn, vignette và lớp phủ chữ nhẹ hơn). **Đã chụp thử bằng Chromium headless (WebGL phần mềm): thấy rõ chùa, trăng, núi, ao sen.** Chưa xem trên điện thoại thật. Nếu ptg thấy vẫn tối/quá sáng: chỉnh `toneMappingExposure` và `AmbientLight` trong `js/scene/index.js`. |
-| Phiên 3 — tên và chữ | Tên chùa: **Linh Giang Tự**. Đã bỏ toàn bộ chữ Hán (hoành phi dựng bằng chữ Việt: LINH GIANG TỰ, ĐẠI HÙNG BẢO ĐIỆN; nhãn chương bằng tiếng Việt; bỏ font Noto Serif TC). `tests/smoke.mjs` báo LỖI nếu còn "Linh Quang", "Kage" hoặc chữ Hán trong mã. |
+| Phiên 3 — tên và chữ | Tên chùa: **Diệu Giang Tự**. Đã bỏ toàn bộ chữ Hán (hoành phi dựng bằng chữ Việt: DIỆU GIANG TỰ, ĐẠI HÙNG BẢO ĐIỆN; nhãn chương bằng tiếng Việt; bỏ font Noto Serif TC). `tests/smoke.mjs` báo LỖI nếu còn "Linh Quang", "Kage" hoặc chữ Hán trong mã. |
 | Giai đoạn 3 (hồ sơ + bói ngày cá nhân) | **Xong mã + 23 test mới (tổng 40 đạt).** `js/engines/personal.js`, `js/data/personal.json`, `js/ui/profile.js`, `gas/Storage.gs`. Đã chụp màn hình form + kết quả. **Chưa chạy trên GAS thật** (apiUrl rỗng) nên đồng bộ Sheet chưa được kiểm. Bảng quan hệ Chi, Hỷ thần, Tài thần đánh dấu `canDoiChieu`, chờ ptg đối chiếu. |
 | Giai đoạn 4 (thần số học + hoàng đạo + pha Trăng) | **Xong mã + 27 test mới (tổng 67 đạt).** `js/engines/{numerology,astro,zodiac}.js`, `js/data/{numerology,zodiac}.json`, `js/ui/charts.js` (hiện trong `#charts-app`, chương Lá số), CSS `.ch-*`. Đã chụp ảnh Chromium: bầu trời hôm nay (hình trăng, % sáng, trăng tròn/non kế tiếp), 6 số, chu kỳ cá nhân, lưới mũi tên 3×3, 4 đỉnh cao. Pha Trăng khớp mốc công bố trong ±3 phút. **Chưa làm (Giai đoạn 4b):** vị trí các hành tinh, góc chiếu, hành tinh nghịch hành, Nhật/Nguyệt thực sắp tới, bánh xe hoàng đạo chưa vẽ hành tinh. Chưa xem trên điện thoại thật. |
 | Đưa lên GitHub (Phiên 4) | **Bị chặn:** `push_files` trả 403 "Resource not accessible by integration"; `git push` không có token. Repo `main` đang dừng ở Giai đoạn 2 (tên LINH QUANG, cảnh tối). Cần ptg: (a) tải zip phiên 4 lên tay (Add file → Upload files, kéo mọi file trừ thư mục `.git`), hoặc (b) cấp quyền ghi nội dung (Contents: Read and write) cho tích hợp GitHub với repo này để phiên sau tự đẩy. |
-| Giai đoạn 5–9 | Chưa làm. |
-| Phiên 2 | (cũ) Đã đổi sang LINH QUANG; phiên 3 đã đảo lại thành LINH GIANG TỰ theo yêu cầu ptg. Cấu trúc thư mục vẫn PHẲNG. |
+| Giai đoạn 5 (Bát tự, Vận trình) | **Xong mã + 9 test mới (tổng 76 đạt).** `js/engines/batu.js` (4 trụ, tàng can, Thập thần, ngũ hành, thân vượng/nhược, Dụng thần sơ bộ, Đại vận, Lưu niên: Thái tuế/Tam tai/Kim lâu), `js/ui/fortune.js` (chương #fortune, tab Tháng/Năm/Đường đời), `js/ui/batu.js` (trong #charts), CSS cuối `style.css`. Đã chụp ảnh Chromium. **Chưa làm:** Tử vi đẩu số (5b), Cửu diệu, Hoang ốc, đối chiếu Bát tự với phần mềm uy tín. |
+| Tiền cảnh cây cỏ (Phiên 5) | `css/fg.css` + `js/fg.js` + khối `#fg-sky` trong index.html: 10 ảnh WebP trong suốt (tường, thông, cỏ cao, anh đào, lá phong, đèn đá, bụi cây, đá bazan, đồi, tàn tích) **nạp trực tiếp từ link supabase trong code mẫu của ptg**, bố cục sao theo mẫu; chương nào đang xem mới hiện (gate: Hôm nay + Tướng số; pathways: Vận trình + Chùa online; lessons: Lá số; eternity: Tổng kết; foot). Môi trường AI chặn mạng nên **chưa thấy ảnh hiện thật**; nên tải 10 ảnh về `assets/fg/` rồi đổi src nếu link supabase chết. Đèn đá, tàn tích đền, tường đền vẫn là kiểu Nhật theo yêu cầu "giống code". |
+| Giai đoạn 6–9 | Chưa làm. |
+| Phiên 2 | (cũ) Đã đổi sang LINH QUANG; phiên 3 đã đảo lại thành DIỆU GIANG TỰ theo yêu cầu ptg. Cấu trúc thư mục vẫn PHẲNG. |
 
 Chi tiết giai đoạn: 1 khung+cảnh · 2 lịch Âm/Can Chi/bói ngày · 3 form hồ sơ + lưu Sheet + bói ngày cá nhân · 4 thần số/hoàng đạo/thiên văn · 5 bát tự/tử vi/vận trình · 6 bộ tổng hợp + thẻ "Lá bùa" · 7 chỉ tay/nhân tướng AI vision · 8 chùa online · 9 tối ưu/PWA/SEO/a11y/hướng dẫn triển khai.
 
 ## 3. Xung đột đã gặp và cách phiên 2 xử lý (ptg chưa trả lời, chỉ nói "thực hiện tiếp và đẩy lên github")
 
-1. **Tên (ĐÃ CHỐT ở phiên 3: ptg nói tên chùa là LINH GIANG TỰ, không phải Linh Quang):** (chi tiết cũ bên dưới chỉ để tham khảo)
-   - prompt/cây thư mục mới của ptg dùng **"LINH QUANG"** (`linh-quang/`). Mã Giai đoạn 1 và HANDOFF cũ dùng **"Linh Giang Tự (靈江寺)"** và `tests/smoke.mjs` **báo LỖI nếu còn chữ "Linh Quang" hoặc "Kage"** trong mã. → **Phiên 2 đã chọn "LINH QUANG"** (theo prompt mới nhất của ptg): đổi tiêu đề, wordmark, chữ Hán 靈江寺→靈光 (hoành phi, font subset), README, GAS, package.json (`linh-quang`); smoke test nay báo lỗi nếu còn "Linh Giang" hoặc "Kage". Giữ nguyên định danh nội bộ `LGT`, `lgt.userKey`, `lgt.sound`. Nếu ptg muốn quay lại tên cũ thì đảo ngược.
+1. **Tên (ĐÃ CHỐT ở phiên 3: ptg nói tên chùa là DIỆU GIANG TỰ, không phải Linh Quang):** (chi tiết cũ bên dưới chỉ để tham khảo)
+   - prompt/cây thư mục mới của ptg dùng **"LINH QUANG"** (`linh-quang/`). Mã Giai đoạn 1 và HANDOFF cũ dùng **"Diệu Giang Tự (靈江寺)"** và `tests/smoke.mjs` **báo LỖI nếu còn chữ "Linh Quang" hoặc "Kage"** trong mã. → **Phiên 2 đã chọn "LINH QUANG"** (theo prompt mới nhất của ptg): đổi tiêu đề, wordmark, chữ Hán 靈江寺→靈光 (hoành phi, font subset), README, GAS, package.json (`linh-quang`); smoke test nay báo lỗi nếu còn "Linh Giang" hoặc "Kage". Giữ nguyên định danh nội bộ `LGT`, `lgt.userKey`, `lgt.sound`. Nếu ptg muốn quay lại tên cũ thì đảo ngược.
 2. **Cấu trúc thư mục:** cây mới (mục 5) tách CSS thành `tokens/layout/sections.css`, `js/scene/{sky,temple,lotus,particles,camera-rail,post}.js`, `js/engines/*`, `js/data/*.json`, `js/ui/{reveal,tabs,charts,forms}.js`, `js/temple/*`, thư mục `assets/`. Mã Giai đoạn 1 đang là cấu trúc **phẳng** (style.css, ui.js, scene/{index,rail,temple,nature,particles,textures}.js). → Phiên 2 **chưa tách** (không thể xem trình duyệt để kiểm tra, tránh làm vỡ). Việc tách sang cây mới để cho giai đoạn sau, ghi rõ ánh xạ file cũ → mới.
 3. **Hạ tầng:** kế hoạch ban đầu chạy trong GAS (iframe); ptg đã chuyển sang **GitHub Pages cho giao diện + GAS chỉ làm backend JSON** (kiến trúc mục 4). Phần "GAS HtmlService/include()" trong kế hoạch gốc `KE_HOACH.md` giờ **không còn áp dụng** cho front-end.
 
@@ -102,7 +104,7 @@ Giai đoạn 4 thêm: `js/engines/numerology.js`, `astro.js`, `zodiac.js`, `js/d
 ## 6. PROMPT CHỦ (chép nguyên văn từ ptg — dán đầu phiên mới)
 
 ```
-Bạn là kỹ sư front-end WebGL + chuyên gia văn hóa tâm linh. Xây web "LINH GIANG TỰ" (chùa Việt, đêm trên núi)
+Bạn là kỹ sư front-end WebGL + chuyên gia văn hóa tâm linh. Xây web "DIỆU GIANG TỰ" (chùa Việt, đêm trên núi)
 deploy trên GitHub Pages, backend nhẹ bằng Google Apps Script (Web App, trả JSON).
 
 KIẾN TRÚC
@@ -127,13 +129,15 @@ Lưu ý: dòng cuối "Chỉ trả lời 'đã hiểu'" là phần của prompt 
 ## 7. Nhật ký phiên
 
 - **Phiên 4 (2026-10-31):** ptg gửi lại zip + phien3.patch + HANDOFF, nhờ sửa tiếp và đưa lên GitHub. Xác nhận zip = repo GitHub + phien3.patch (bản zip đã có sẵn Giai đoạn 3; patch không áp lại được lên zip). Làm **Giai đoạn 4**: thần số học Pythagoras (bỏ dấu NFD + đ→d; Y là nguyên âm khi hai chữ cạnh nó đều không phải nguyên âm; số chủ đạo 11/22/33; đường đời/sứ mệnh/linh hồn/nhân cách/ngày sinh/thái độ; năm-tháng-ngày cá nhân; 4 đỉnh cao + thử thách; số thiếu; 8 mũi tên trên ngày sinh dương), thiên văn tự tính (Meeus rút gọn: kinh độ Mặt Trời/Trăng, pha, trăng tròn/non kế tiếp, cung Mọc), cung hoàng đạo nhiệt đới, giao diện chương Lá số. Chụp ảnh xác nhận cảnh đã sáng và tên đúng. Thử đẩy GitHub: 403. Giao zip.
-- **Phiên 3 (2026-10-31):** ptg yêu cầu (1) cảnh quá tối → sáng lên; (2) đổi hết tiếng Trung sang tiếng Việt, chùa là Linh Giang Tự; (3) làm tiếp các bước còn lại. Đã làm 1, 2 và **Giai đoạn 3** (engine cá nhân, form hồ sơ lưu localStorage + Sheet, xuất/nhập JSON, nút xóa toàn bộ, Storage.gs theo bài học GAS: cột văn bản, chuẩn hóa Date, upsert đọc cột khóa, LockService, CacheService). Chụp ảnh kiểm bằng Chromium headless: chạy `node shot.mjs` kiểu như trong ghi chú mục 8D. **Chưa làm Giai đoạn 4–9** (xem mục 8).
+- **Phiên 3 (2026-10-31):** ptg yêu cầu (1) cảnh quá tối → sáng lên; (2) đổi hết tiếng Trung sang tiếng Việt, chùa là Diệu Giang Tự; (3) làm tiếp các bước còn lại. Đã làm 1, 2 và **Giai đoạn 3** (engine cá nhân, form hồ sơ lưu localStorage + Sheet, xuất/nhập JSON, nút xóa toàn bộ, Storage.gs theo bài học GAS: cột văn bản, chuẩn hóa Date, upsert đọc cột khóa, LockService, CacheService). Chụp ảnh kiểm bằng Chromium headless: chạy `node shot.mjs` kiểu như trong ghi chú mục 8D. **Chưa làm Giai đoạn 4–9** (xem mục 8).
 
 - **Phiên 2c (2026-10-31):** ptg bảo "tiếp tục". Dựng Giai đoạn 2: `js/engines/lunar.js` (Hồ Ngọc Đức, UTC+7, nhuận, có cả âm→dương), `canchi.js` (Can Chi ngày/tháng/năm/giờ, 30 Nạp âm), `dayscore.js` (Trực theo tháng tiết, Tú, 12 thần, giờ Hoàng đạo, Tam nương, Nguyệt kỵ, Dương công kỵ, Bành Tổ, tiết khí, điểm 0–100 + dấu vết), `js/data/knowledge.json`, `js/ui/today.js` + CSS (chương #today: chọn ngày, vòng 12 giờ SVG, vòng điểm, nên/tránh, dấu vết suy luận, MOOD theo điểm), `tests/engines.test.mjs` (node:test, KHÔNG dùng Vitest để khỏi phụ thuộc npm). Đã chụp màn hình desktop/mobile kiểm tra.
 
-- **Phiên 1 (2026-10-31):** đổi tên thành Linh Giang Tự; chọn GitHub Pages + GAS; dựng toàn bộ Giai đoạn 1 (≈1.430 dòng); thêm smoke test + workflow Pages; viết HANDOFF đầu tiên. Môi trường chặn mạng nên chưa chạy trên trình duyệt.
+- **Phiên 1 (2026-10-31):** đổi tên thành Diệu Giang Tự; chọn GitHub Pages + GAS; dựng toàn bộ Giai đoạn 1 (≈1.430 dòng); thêm smoke test + workflow Pages; viết HANDOFF đầu tiên. Môi trường chặn mạng nên chưa chạy trên trình duyệt.
 - **Phiên 2b (2026-10-31):** ptg bảo thực hiện tiếp và tự động đẩy lên GitHub. Đổi tên → LINH QUANG, `npm test` đạt (cú pháp, file bắt buộc, quét tên, 7 mốc = 7 section), thêm 大雄寶殿 vào subset font Hán, đẩy mã + docs lên `main`. Chưa xem trình duyệt.
 - **Phiên 2 (2026-10-31):** ptg gửi lại kế hoạch (`KE_HOACH.md`, Phần A–F + Prompt 0–9), zip Giai đoạn 1, link repo `tp9sach-ops/loinhuan.github.io` (đọc qua API thấy rỗng), cây thư mục mục tiêu và prompt chủ mới (tên "LINH QUANG"). Yêu cầu: viết bàn giao cho mỗi phiên và chép cây thư mục + prompt vào bàn giao. Đã viết bản này. **Không sửa mã, không đẩy lên GitHub.** Phát hiện 3 xung đột (mục 3).
+
+- **Phiên 5 (2026-10-31):** ptg: (1) đổi tên → Diệu Giang Tự (đã đổi toàn mã, test quét tên cũ "Linh Giang/Linh Quang/Kage"); (2) đền Việt Nam, cây cỏ giống code mẫu → đền 3D vốn đã là chùa Việt, thêm lớp tiền cảnh cây cỏ; (3) làm tiếp → Giai đoạn 5 phần Bát tự + Vận trình; (4) tự đẩy GitHub, trùng tên thì ghi đè. Kết quả đẩy GitHub xem mục 2.
 
 ## 8. Việc tiếp theo (theo thứ tự)
 
@@ -143,13 +147,15 @@ Lưu ý: dòng cuối "Chỉ trả lời 'đã hiểu'" là phần của prompt 
 - Chưa đưa vào: **Sát chủ, Thọ tử** (thiếu bảng tra đáng tin), điểm cho 28 Tú (mỗi sách một kiểu). Cần ptg chọn nguồn/bảng.
 - Quy ước đang dùng: tháng Can Chi theo **tháng âm** (kiểu lịch Việt); Trực và thần ngày theo **tháng tiết**; ngày giao tiết thuộc tháng mới; giờ Tý sớm (23h–1h tính cùng ngày).
 
-**B. Việc tiếp theo của AI:** (1) Giai đoạn 4b nếu ptg muốn: hành tinh + góc chiếu + nghịch hành + Nhật/Nguyệt thực (tự tính hoặc nhúng `astronomy-engine` ghim phiên bản; nhớ dung lượng file khi đẩy qua công cụ). (2) Giai đoạn 5 (Bát tự, Tử vi, Vận trình), rồi 6 → 9 theo mục 2. (3) Các engine mới trả điểm qua `scoreNumerology()` (đã có); Hoàng đạo/Thiên văn chưa có hàm chấm điểm 6 lĩnh vực — làm ở Giai đoạn 6. Quy ước đã chọn ở Giai đoạn 4 (cần ptg đối chiếu): Y nguyên âm/phụ âm; năm-tháng-ngày cá nhân rút về 1–9 (không giữ số chủ đạo); mũi tên tính trên ngày sinh dương, không trên tên; bảng lệch điểm theo ngày cá nhân (`mauNgay`) là quy ước dự án; giờ sinh → lấy giữa canh giờ (Tý = 0h) theo giờ UTC+7 để tính Mặt Trăng và cung Mọc; nơi sinh chọn trong 15 thành phố (`zodiac.json › noiSinh`). Mỗi engine phải trả `{tong, tai_loc, su_nghiep, tinh_cam, suc_khoe, quy_nhan}` + `nhan` + `doTinCay` (Giai đoạn 3 hiện đặt 5 lĩnh vực = điểm tổng; Giai đoạn 6 sẽ chia thật).
+**B0. ptg đối chiếu Giai đoạn 5:** (a) trụ Bát tự vài ngày sinh bạn biết với phần mềm uy tín (quy ước: năm đổi ở Lập xuân, tháng theo tiết khí, giờ Tý sớm); (b) bảng Tàng can, hệ số tháng sinh 1,5, ngưỡng thân vượng 50% (`BATU_CFG`); (c) Tam tai, Kim lâu. Đại vận: 3 ngày = 1 tuổi tính theo số ngày (không theo giờ).
+
+**B. Việc tiếp theo của AI:** (1) Giai đoạn 4b nếu ptg muốn: hành tinh + góc chiếu + nghịch hành + Nhật/Nguyệt thực (tự tính hoặc nhúng `astronomy-engine` ghim phiên bản; nhớ dung lượng file khi đẩy qua công cụ). (2) Giai đoạn 5b: Tử vi đẩu số (an Mệnh/Thân, Cục, Tử Vi + 14 chính tinh, Tứ hóa, Đại hạn) và Cửu diệu/Hoang ốc; rồi 6 → 9 theo mục 2. Engine `batu.js` chưa trả đủ `{tong, tai_loc,...}`: Giai đoạn 6 sẽ thêm hàm chấm điểm. (3) Các engine mới trả điểm qua `scoreNumerology()` (đã có); Hoàng đạo/Thiên văn chưa có hàm chấm điểm 6 lĩnh vực — làm ở Giai đoạn 6. Quy ước đã chọn ở Giai đoạn 4 (cần ptg đối chiếu): Y nguyên âm/phụ âm; năm-tháng-ngày cá nhân rút về 1–9 (không giữ số chủ đạo); mũi tên tính trên ngày sinh dương, không trên tên; bảng lệch điểm theo ngày cá nhân (`mauNgay`) là quy ước dự án; giờ sinh → lấy giữa canh giờ (Tý = 0h) theo giờ UTC+7 để tính Mặt Trăng và cung Mọc; nơi sinh chọn trong 15 thành phố (`zodiac.json › noiSinh`). Mỗi engine phải trả `{tong, tai_loc, su_nghiep, tinh_cam, suc_khoe, quy_nhan}` + `nhan` + `doTinCay` (Giai đoạn 3 hiện đặt 5 lĩnh vực = điểm tổng; Giai đoạn 6 sẽ chia thật).
 
 **B2. ptg cần làm cho Giai đoạn 3:** (a) dán `gas/Code.gs` + `gas/Storage.gs` vào Apps Script, chạy `setup()` một lần, Deploy Web app (Execute as: Me, Access: Anyone), dán URL `/exec` vào `js/config.js` (`apiUrl`), rồi thử lưu hồ sơ và bấm "Xóa dữ liệu của tôi", mở Sheet kiểm các cột ngày không bị đổi thành Date; (b) đối chiếu bảng `js/data/personal.json` (Lục hợp/Tam hợp/Lục xung/Hình/Hại/Phá, Hỷ thần, Tài thần theo Can ngày, số Hà Đồ) với sách bạn tin dùng.
 
 **C. Việc cũ còn lại:**
 
-1. Tên đã chốt (Linh Giang Tự). Còn hỏi ptg: chuyển sang cây thư mục mới hay giữ phẳng.
+1. Tên đã chốt (Diệu Giang Tự). Còn hỏi ptg: chuyển sang cây thư mục mới hay giữ phẳng.
 2. ptg bật Pages (Settings → Pages → Source: GitHub Actions), xem Actions chạy xanh, mở trang và báo: có hiện cảnh không, FPS, ảnh chụp từng chương. Giai đoạn 1 chỉ coi là xong khi cuộn mượt và camera đúng ở cả 7 chương.
 3. Rủi ro Giai đoạn 1 cần kiểm: three.js + addons (EffectComposer, UnrealBloomPass, OutputPass) từ jsdelivr; tỷ lệ mái đầu đao/vị trí công trình/góc camera; chữ Hán hoành phi phụ thuộc font tải kịp; hiệu năng mobile; GAS chưa deploy (`apiUrl` rỗng). Chạy thử cục bộ: `python3 -m http.server 8080` (ES modules không chạy bằng `file://`); `?mood=0.8` / `?mood=-0.8` để xem MOOD.
 4. Tự host font vào `assets/fonts/` (Việt + latin-ext) thay Google Fonts; thêm service worker + manifest (PWA); đổi test sang Vitest khi bắt đầu Giai đoạn 2.
@@ -182,7 +188,7 @@ Thiếu dữ liệu (vd. không có giờ sinh) → bỏ môn đó, hạ độ t
 ## 10. Prompt khởi động phiên mới (dán nguyên văn)
 
 ```
-Đọc HANDOFF.md của dự án LINH GIANG TỰ trước, rồi làm tiếp phần "Việc tiếp theo" (mục 8).
+Đọc HANDOFF.md của dự án DIỆU GIANG TỰ trước, rồi làm tiếp phần "Việc tiếp theo" (mục 8).
 Tôi nói tiếng Việt thường ngày, không cần biết tên file. Khi sửa mã có sẵn hãy đưa đoạn TÌM (đầy đủ, nguyên văn)
 và đoạn THAY BẰNG (đầy đủ). Cần đoạn mã nào thì hỏi tôi. Sau MỖI câu trả lời, đính kèm HANDOFF.md đã cập nhật
 (chép nguyên văn quy tắc ở mục 0).

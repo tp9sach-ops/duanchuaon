@@ -21,14 +21,14 @@ for (const f of files.filter((p) => p.endsWith('.js'))) {
   catch (e) { bad('cú pháp ' + f.slice(root.length + 1) + '\n' + e.stderr); }
 }
 // 2 · file bắt buộc
-for (const f of ['index.html', 'css/style.css', 'js/main.js', 'js/scene/index.js', 'gas/Code.gs', 'HANDOFF.md', '.github/workflows/pages.yml']) {
+for (const f of ['index.html', 'css/style.css', 'js/main.js', 'js/scene/index.js', 'gas/Code.gs', 'gas/Storage.gs', 'js/ui/profile.js', 'js/engines/personal.js', 'js/data/personal.json', 'js/engines/numerology.js', 'js/engines/astro.js', 'js/engines/zodiac.js', 'js/ui/charts.js', 'js/data/numerology.json', 'js/data/zodiac.json', 'js/engines/batu.js', 'js/ui/fortune.js', 'js/ui/batu.js', 'js/fg.js', 'css/fg.css', 'HANDOFF.md', '.github/workflows/pages.yml']) {
   existsSync(join(root, f)) ? ok('có ' + f) : bad('thiếu ' + f);
 }
-// 3 · đã đổi tên hoàn toàn, không còn tên cũ/tên trang tham khảo trong mã nguồn
+// 3 · tên chùa là Diệu Giang Tự; không còn "Linh Giang", "Linh Quang", "Kage" hay chữ Hán trong mã nguồn
 const text = files.filter((p) => /\.(html|js|css|gs|md|yml|json)$/.test(p) && !p.endsWith('HANDOFF.md') && !p.endsWith('README.md') && !p.includes('/docs/'));
 for (const f of text) {
   const s = readFileSync(f, 'utf8');
-  if (/linh\s*giang/i.test(s) || /\bkage\b/i.test(s)) bad('còn tên cũ trong ' + f.slice(root.length + 1));
+  if (/linh\s*(quang|giang)/i.test(s) || /\bkage\b/i.test(s) || /[\u4e00-\u9fff]/.test(s)) bad('còn tên cũ trong ' + f.slice(root.length + 1));
 }
 ok('đã quét tên cũ');
 // 4 · số mốc camera == số section data-cam (trừ footer)

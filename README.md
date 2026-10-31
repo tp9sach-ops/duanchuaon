@@ -1,4 +1,4 @@
-# Linh Giang Tự
+# Diệu Giang Tự
 
 Web tâm linh 3D dạng trang cuốn, bối cảnh chùa Việt trên núi về đêm.
 Giao diện tĩnh trên GitHub Pages; Google Apps Script chỉ làm backend lưu dữ liệu và gọi AI.

@@ -97,7 +97,7 @@ export function buildTamQuan() {
   // Lầu gác giữa
   box(8.4, 3.2, 3.4, M.lacquer, 0, 0.8 + H + 1.6 + 0.5, 0, g);
   const sign = new THREE.Mesh(new THREE.PlaneGeometry(6.6, 1.65),
-    new THREE.MeshBasicMaterial({ map: signTexture('LINH GIANG TỰ') }));
+    new THREE.MeshBasicMaterial({ map: signTexture('DIỆU GIANG TỰ') }));
   sign.position.set(0, 0.8 + H + 2.2, 1.75); g.add(sign);                      // hoành phi
   const roofMid = roofWithRidge(11.5, 6.4, 2.6, 1.3); roofMid.position.y = 0.8 + H + 3.4; g.add(roofMid);
   // Hai mái thấp hai bên

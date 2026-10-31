@@ -124,7 +124,7 @@ export async function initCharts(root = document.getElementById('charts-app')) {
   try {
     const rd = async (f) => { const r = await fetch(new URL('../data/' + f, import.meta.url)); if (!r.ok) throw new Error(f + ' HTTP ' + r.status); return r.json(); };
     [N, Z] = await Promise.all([rd('numerology.json'), rd('zodiac.json')]);
-  } catch (e) { root.innerHTML = '<p class="t-load">Chưa tải được bảng tra lá số. Hãy thử tải lại trang.</p>'; console.warn('[Linh Giang Tự]', e && e.message); return; }
+  } catch (e) { root.innerHTML = '<p class="t-load">Chưa tải được bảng tra lá số. Hãy thử tải lại trang.</p>'; console.warn('[Diệu Giang Tự]', e && e.message); return; }
 
   const render = () => {
     const p = getJSON(PROFILE_KEY);

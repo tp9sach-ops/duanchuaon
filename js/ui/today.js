@@ -112,7 +112,7 @@ export async function initToday(root = document.getElementById('today-app')) {
     K = await res.json();
   } catch (e) {
     root.querySelector('.t-out').innerHTML = '<p class="t-load">Chưa tải được bảng tra lịch. Hãy thử tải lại trang.</p>';
-    console.warn('[Linh Giang Tự] knowledge.json:', e && e.message); return;
+    console.warn('[Diệu Giang Tự] knowledge.json:', e && e.message); return;
   }
   const input = root.querySelector('.t-date-in');
   const go = (iso) => {

@@ -118,8 +118,8 @@ export async function initProfile(root = document.getElementById('profile-app'))
     const b = e.target.closest('[data-act]'); if (!b) return;
     const act = b.dataset.act;
     if (act === 'export') {
-      const blob = new Blob([JSON.stringify({ app: 'linh-giang-tu', version: 1, profile: { ...read(), nhuan: form.elements.nhuan.checked } }, null, 2)], { type: 'application/json' });
-      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'ho-so-linh-giang-tu.json'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+      const blob = new Blob([JSON.stringify({ app: 'dieu-giang-tu', version: 1, profile: { ...read(), nhuan: form.elements.nhuan.checked } }, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'ho-so-dieu-giang-tu.json'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
       say('Đã xuất hồ sơ thành tệp JSON.');
     } else if (act === 'import') { form.querySelector('[data-role="file"]').click(); }
     else if (act === 'wipe') {
@@ -135,9 +135,9 @@ export async function initProfile(root = document.getElementById('profile-app'))
     const f = e.target.files && e.target.files[0]; if (!f) return;
     try {
       const j = JSON.parse(await f.text());
-      if (!j || j.app !== 'linh-giang-tu' || !j.profile) throw new Error('sai tệp');
+      if (!j || j.app !== 'dieu-giang-tu' || !j.profile) throw new Error('sai tệp');
       fill(j.profile); say('Đã nhập hồ sơ. Bấm "Xem ngày này với tuổi tôi" để tính.');
-    } catch (_) { say('Tệp không đúng định dạng hồ sơ Linh Giang Tự.', true); }
+    } catch (_) { say('Tệp không đúng định dạng hồ sơ Diệu Giang Tự.', true); }
     e.target.value = '';
   });
 
