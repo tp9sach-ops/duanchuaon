@@ -66,24 +66,96 @@ export function moonTexture() {
   return tex(c);
 }
 
-// Sân gạch: lưới gạch tối màu, có đốm rêu mờ
+// Sân gạch Bát Tràng: gạch nung đỏ nâu xếp so le, vữa tối, vài đốm rêu. Đủ tối để không "bệt" dưới ánh trăng.
 export function brickTexture() {
-  const W = 512, c = cvs(W, W), x = c.getContext('2d');
+  const W = 512, H = 512, c = cvs(W, H), x = c.getContext('2d');
   const rnd = mulberry32(23);
-  x.fillStyle = '#2a3238'; x.fillRect(0, 0, W, W);
-  const n = 8, s = W / n;
-  for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) {
-    const t = 0.8 + rnd() * 0.5;
-    x.fillStyle = `rgb(${(58 * t) | 0},${(66 * t) | 0},${(72 * t) | 0})`;
-    x.fillRect(i * s + 1.5, j * s + 1.5, s - 3, s - 3);
+  x.fillStyle = '#1b1411'; x.fillRect(0, 0, W, H);
+  const rows = 16, bh = H / rows, bw = W / 4;
+  for (let j = 0; j < rows; j++) for (let i = -1; i < 5; i++) {
+    const off = (j % 2) * bw / 2, t = 0.72 + rnd() * 0.5;
+    x.fillStyle = `rgb(${(92 * t) | 0},${(56 * t) | 0},${(44 * t) | 0})`;
+    x.fillRect(i * bw + off + 1.5, j * bh + 1.5, bw - 3, bh - 3);
+    const g = x.createLinearGradient(0, j * bh, 0, (j + 1) * bh);   // mép trên sáng nhẹ
+    g.addColorStop(0, 'rgba(255,220,180,.10)'); g.addColorStop(1, 'rgba(0,0,0,.14)');
+    x.fillStyle = g; x.fillRect(i * bw + off + 1.5, j * bh + 1.5, bw - 3, bh - 3);
   }
-  for (let i = 0; i < 160; i++) {
-    x.fillStyle = `rgba(50,84,60,${0.08 + rnd() * 0.12})`;
-    x.beginPath(); x.arc(rnd() * W, rnd() * W, 2 + rnd() * 9, 0, TAU); x.fill();
+  for (let i = 0; i < 90; i++) {
+    x.fillStyle = `rgba(40,70,48,${0.06 + rnd() * 0.12})`;
+    x.beginPath(); x.arc(rnd() * W, rnd() * H, 3 + rnd() * 12, 0, TAU); x.fill();
   }
   const t = tex(c);
-  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 8;
   return t;
+}
+
+// Phiến đá xanh lát lối đi giữa sân
+export function slabTexture() {
+  const W = 256, H = 512, c = cvs(W, H), x = c.getContext('2d');
+  const rnd = mulberry32(61);
+  x.fillStyle = '#10161a'; x.fillRect(0, 0, W, H);
+  for (let j = 0; j < 4; j++) {
+    const t = 0.85 + rnd() * 0.3;
+    x.fillStyle = `rgb(${(70 * t) | 0},${(82 * t) | 0},${(88 * t) | 0})`;
+    x.fillRect(5, j * 128 + 4, W - 10, 120);
+    for (let k = 0; k < 40; k++) { x.fillStyle = `rgba(0,0,0,${0.05 + rnd() * 0.1})`; x.fillRect(5 + rnd() * (W - 12), j * 128 + 4 + rnd() * 118, 1 + rnd() * 3, 1 + rnd() * 3); }
+  }
+  const t = tex(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 8;
+  return t;
+}
+
+// Ngói âm dương: các rãnh ngói ống chạy dọc mái, xen ngói lá. Dùng làm map cho mặt mái.
+export function tileTexture() {
+  const W = 256, H = 256, c = cvs(W, H), x = c.getContext('2d');
+  const rnd = mulberry32(8);
+  x.fillStyle = '#2b211d'; x.fillRect(0, 0, W, H);
+  const n = 8, s = W / n;
+  for (let i = 0; i < n; i++) {                       // ngói ống: gờ tròn nổi
+    const g = x.createLinearGradient(i * s, 0, (i + 1) * s, 0);
+    g.addColorStop(0, '#2a1f1b'); g.addColorStop(0.25, '#7c6757'); g.addColorStop(0.5, '#a08b78'); g.addColorStop(0.75, '#6b5848'); g.addColorStop(1, '#2a1f1b');
+    x.fillStyle = g; x.fillRect(i * s + s * 0.1, 0, s * 0.8, H);
+  }
+  for (let j = 0; j < 8; j++) {                       // đường nối từng viên ngói
+    x.fillStyle = 'rgba(0,0,0,.35)'; x.fillRect(0, j * 32, W, 2);
+  }
+  for (let i = 0; i < 260; i++) {                     // rêu và bụi thời gian
+    x.fillStyle = rnd() > 0.5 ? `rgba(40,70,48,${0.05 + rnd() * 0.1})` : `rgba(0,0,0,${0.05 + rnd() * 0.1})`;
+    x.beginPath(); x.arc(rnd() * W, rnd() * H, 1 + rnd() * 5, 0, TAU); x.fill();
+  }
+  const t = tex(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 8;
+  return t;
+}
+
+// Tường vàng chùa: vữa vàng đất, loang nhẹ, chân tường rêu tối, vài vệt mưa
+export function plasterTexture() {
+  const W = 256, H = 256, c = cvs(W, H), x = c.getContext('2d');
+  const rnd = mulberry32(19);
+  const g = x.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, '#d6aa52'); g.addColorStop(1, '#cb9d48');   // gần phẳng: texture được lặp, gradient mạnh sẽ thành sọc
+  x.fillStyle = g; x.fillRect(0, 0, W, H);
+  for (let i = 0; i < 90; i++) {
+    x.fillStyle = `rgba(${rnd() > 0.5 ? '255,235,170' : '90,60,20'},${0.04 + rnd() * 0.08})`;
+    x.beginPath(); x.ellipse(rnd() * W, rnd() * H, 6 + rnd() * 30, 4 + rnd() * 18, rnd() * 3, 0, TAU); x.fill();
+  }
+  for (let i = 0; i < 26; i++) {                       // vệt mưa chảy dọc
+    const sx = rnd() * W, top = rnd() * H * 0.5, ln = 40 + rnd() * 140;
+    const gr = x.createLinearGradient(0, top, 0, top + ln);
+    gr.addColorStop(0, 'rgba(60,40,15,0)'); gr.addColorStop(0.4, 'rgba(60,40,15,.16)'); gr.addColorStop(1, 'rgba(60,40,15,0)');
+    x.fillStyle = gr; x.fillRect(sx, top, 1 + rnd() * 3, ln);
+  }
+  const t = tex(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4;
+  return t;
+}
+
+// Câu đối dọc: nền son, chữ vàng xếp từng từ một hàng
+export function coupletTexture(words) {
+  const W = 256, H = 1024, c = cvs(W, H), x = c.getContext('2d');
+  x.fillStyle = '#7e1812'; x.fillRect(0, 0, W, H);
+  x.strokeStyle = '#e7c470'; x.lineWidth = 6; x.strokeRect(8, 8, W - 16, H - 16);
+  x.fillStyle = '#f0d58a'; x.textAlign = 'center'; x.textBaseline = 'middle';
+  const step = (H - 80) / words.length;
+  words.forEach((w, i) => { x.font = '600 74px "Cormorant Garamond", "Noto Serif", Georgia, serif'; x.fillText(w, W / 2, 56 + step * (i + 0.5)); });
+  return tex(c);
 }
 
 // Bảng chữ (hoành phi, wordmark): vẽ chữ vàng lên nền gỗ sơn

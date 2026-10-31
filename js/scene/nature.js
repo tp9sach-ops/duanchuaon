@@ -1,6 +1,6 @@
 // Thiên nhiên: bầu trời, trăng, núi, nền sân, ao sen, cây bồ đề, tre.
 import * as THREE from 'three';
-import { skyTexture, moonTexture, brickTexture } from './textures.js';
+import { skyTexture, moonTexture, brickTexture, slabTexture } from './textures.js';
 import { mulberry32, TAU } from '../util.js';
 
 export function buildSky() {
@@ -44,12 +44,20 @@ export function buildMountains() {
 
 export function buildGround() {
   const g = new THREE.Group();
-  const bt = brickTexture(); bt.repeat.set(26, 26);
+  const bt = brickTexture(); bt.repeat.set(16, 16);
   const court = new THREE.Mesh(new THREE.PlaneGeometry(130, 130),
-    new THREE.MeshStandardMaterial({ map: bt, roughness: 0.7, metalness: 0 }));
+    new THREE.MeshStandardMaterial({ map: bt, roughness: 0.8, metalness: 0 }));
   court.rotation.x = -Math.PI / 2; g.add(court);
+  // Lối đi lát đá xanh từ Tam quan vòng qua ao sen lên chính điện
+  // (đoạn qua ao sen là cầu đá, dựng trong buildPond)
+  const st = slabTexture(); st.repeat.set(1, 12);
+  const slabMat = new THREE.MeshStandardMaterial({ map: st, roughness: 0.6, metalness: 0.1 });
+  [[24.4, 66], [-13, 3.6]].forEach(([z0, z1]) => {
+    const seg = new THREE.Mesh(new THREE.PlaneGeometry(5, z1 - z0), slabMat);
+    seg.rotation.x = -Math.PI / 2; seg.position.set(0, 0.03, (z0 + z1) / 2); g.add(seg);
+  });
   // Nền đất tối kéo dài đến chân núi
-  const far = new THREE.Mesh(new THREE.PlaneGeometry(900, 900), new THREE.MeshStandardMaterial({ color: 0x1f2c34, roughness: 1 }));
+  const far = new THREE.Mesh(new THREE.PlaneGeometry(900, 900), new THREE.MeshStandardMaterial({ color: 0x14201f, roughness: 1 }));
   far.rotation.x = -Math.PI / 2; far.position.y = -0.06; g.add(far);
   return g;
 }
@@ -75,6 +83,13 @@ export function buildPond(center = new THREE.Vector3(0, 0, 14), radius = 10, flo
     })
   );
   water.rotation.x = -Math.PI / 2; water.position.y = 0.04; group.add(water);
+  // Cầu đá bắc ngang ao, nối lối đi hai bên
+  const bridge = new THREE.Mesh(new THREE.BoxGeometry(3.4, 0.34, radius * 2 + 1.2), new THREE.MeshStandardMaterial({ color: 0x59636b, roughness: 0.85 }));
+  bridge.position.y = 0.17; group.add(bridge);
+  for (const sx of [-1, 1]) {
+    const rail = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.55, radius * 2 + 1.2), new THREE.MeshStandardMaterial({ color: 0x6c767d, roughness: 0.85 }));
+    rail.position.set(sx * 1.6, 0.6, 0); group.add(rail);
+  }
   // Bờ đá
   const rim = new THREE.Mesh(new THREE.TorusGeometry(radius + 0.35, 0.4, 8, 64), new THREE.MeshStandardMaterial({ color: 0x6a737c, roughness: 0.9 }));
   rim.rotation.x = Math.PI / 2; rim.position.y = 0.1; group.add(rim);

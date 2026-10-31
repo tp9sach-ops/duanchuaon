@@ -1,7 +1,7 @@
 /* Lớp tiền cảnh PNG/WebP trong suốt (cây cỏ, đá, đèn đá, tường) — bộ ảnh và cách bố trí theo mẫu tiền cảnh mà ptg đã gửi.
    Mỗi .fg nằm trong #fg-sky (mặt phẳng gần nhất: z-index 52, phía trên nội dung và nav, dưới vignette 55 và grain 60).
    Chỉ chương đang giữ khung nhìn mới hiện (.fg-active); chương trước đó mờ dần (.fg-retiring). */
-#fg-sky{position:fixed;left:0;top:0;width:0;height:0;z-index:52;pointer-events:none}
+#fg-sky{position:fixed;left:0;top:0;width:0;height:0;z-index:5;pointer-events:none} /* z 5: dưới .page (10) nên không bao giờ che chữ; trên canvas 3D (0) */
 .fg{position:fixed;left:0;right:0;bottom:0;height:min(56svh,680px);z-index:1;overflow:visible;pointer-events:none;visibility:hidden}
 .fg.fg-active,.fg.fg-retiring{visibility:visible}
 html{overflow-x:clip}
@@ -18,23 +18,23 @@ html{overflow-x:clip}
 .fg.fg-retiring .fg-el{opacity:0;transform:translate3d(0,8vh,0) scale(.98);filter:blur(18px);transition:opacity .68s ease,transform .78s ease,filter .78s ease}
 
 /* I · cổng (Hôm nay, Tướng số): tường bên trái, thông bên phải, cỏ cao dưới chân */
-[data-fg="gate"] .fg-wall{left:0;bottom:-30px;width:clamp(430px,47vw,780px)}
+[data-fg="gate"] .fg-wall{left:0;bottom:-8px;width:clamp(430px,47vw,780px)}
 [data-fg="gate"] .fg-pine{right:-4%;bottom:-46px;width:clamp(190px,21vw,370px)}
 [data-fg="gate"] .fg-grass{left:3%;bottom:-150px;width:clamp(420px,60vw,1050px)}
-/* II · vườn (Vận trình, Chùa online): hoa anh đào, lá phong, đèn đá, bụi cây thấp */
+/* II · vườn (Vận trình, Chùa online): hoa anh đào, lá phong, đèn lồng trụ đá (Việt), bụi cây thấp */
 [data-fg="pathways"] .fg-sakura{left:-6%;bottom:-86px;width:clamp(430px,50vw,880px)}
 [data-fg="pathways"] .fg-leaves{right:-6%;bottom:-62px;width:clamp(330px,38vw,670px)}
-[data-fg="pathways"] .fg-lantern{left:-1%;bottom:-96px;width:clamp(120px,13vw,215px)}
+[data-fg="pathways"] .fg-lantern{left:2%;bottom:-20px;width:clamp(110px,11vw,190px)}
 [data-fg="pathways"] .fg-bush{right:-4%;bottom:-38px;width:clamp(250px,30vw,530px)}
 [data-fg="pathways"] .fg-lantern>img{filter:saturate(.96) brightness(1)}
 [data-fg="pathways"] .fg-leaves>img{transform-origin:100% 40%}
 /* III · lá số: đá bazan, mảnh tường thấp, đám cỏ nối chúng */
-[data-fg="lessons"] .fg-wall{right:-8%;bottom:-78px;width:clamp(390px,50vw,870px)}
+[data-fg="lessons"] .fg-wall{right:-8%;bottom:-8px;width:clamp(390px,50vw,870px)}
 [data-fg="lessons"] .fg-stones{left:-4%;bottom:-48px;width:clamp(250px,30vw,530px)}
 [data-fg="lessons"] .fg-grass{left:24%;bottom:-84px;width:clamp(280px,33vw,580px)}
-/* IV · tổng kết: đồi xa, tàn tích điện thờ, cỏ, cành anh đào */
+/* IV · tổng kết: đồi xa, tháp gạch chùa Việt, cỏ, cành anh đào */
 [data-fg="eternity"] .fg-hill{left:-8%;width:min(150vh,116%);bottom:calc(-1 * min(20vh,15.5vw))}
-[data-fg="eternity"] .fg-ruins{left:-5%;bottom:-32px;width:clamp(240px,28vw,500px)}
+[data-fg="eternity"] .fg-ruins{left:-1%;bottom:-24px;width:clamp(170px,19vw,330px)}
 [data-fg="eternity"] .fg-grass{right:-7%;bottom:-60px;width:clamp(300px,37vw,670px)}
 [data-fg="eternity"] .fg-sakura{left:-15%;bottom:-70px;width:clamp(280px,33vw,580px)}
 /* chân trang */
@@ -50,13 +50,13 @@ html{overflow-x:clip}
 }
 @media (max-width:820px){
   [data-fg="gate"] .fg-pine,[data-fg="pathways"] .fg-sakura,[data-fg="pathways"] .fg-leaves,[data-fg="lessons"] .fg-wall,[data-fg="eternity"] .fg-sakura,[data-fg="foot"] .fg-stones{display:none}
-  [data-fg="gate"] .fg-wall{left:-14%;bottom:-22px;width:min(82vw,440px)}
+  [data-fg="gate"] .fg-wall{left:-14%;bottom:-6px;width:min(82vw,440px)}
   [data-fg="gate"] .fg-grass{left:auto;right:-10%;bottom:-76px;width:min(94vw,530px)}
-  [data-fg="pathways"] .fg-lantern{left:-4%;bottom:-58px;width:clamp(80px,20vw,128px)}
+  [data-fg="pathways"] .fg-lantern{left:1%;bottom:-12px;width:clamp(70px,18vw,110px)}
   [data-fg="pathways"] .fg-bush{right:-10%;bottom:-38px;width:min(72vw,400px)}
   [data-fg="lessons"] .fg-stones{left:-8%;bottom:-34px;width:min(66vw,360px)}
   [data-fg="lessons"] .fg-grass{left:auto;right:-8%;bottom:-44px;width:min(70vw,380px)}
-  [data-fg="eternity"] .fg-ruins{left:-8%;bottom:-25px;width:min(54vw,300px)}
+  [data-fg="eternity"] .fg-ruins{left:-2%;bottom:-18px;width:min(34vw,190px)}
   [data-fg="eternity"] .fg-grass{right:-12%;bottom:-34px;width:min(80vw,440px)}
   [data-fg="foot"] .fg-bush{left:-12%;bottom:-26px;width:min(68vw,340px)}
   [data-fg="foot"] .fg-grass{right:-12%;bottom:-30px;width:min(74vw,380px)}

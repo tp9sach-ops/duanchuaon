@@ -1,14 +1,15 @@
 // Kiến trúc chùa Việt: mái đầu đao, Tam quan, chính điện, gác chuông, đèn lồng, lư hương.
 import * as THREE from 'three';
-import { signTexture } from './textures.js';
+import { signTexture, tileTexture, plasterTexture, coupletTexture } from './textures.js';
 
 const M = {}; // vật liệu dùng chung, tạo một lần
 export function makeMaterials() {
   M.stone = new THREE.MeshStandardMaterial({ color: 0x77808a, roughness: 0.92 });
-  M.wall = new THREE.MeshStandardMaterial({ color: 0xd2a850, roughness: 0.95 });   // tường vàng
+  M.wall = new THREE.MeshStandardMaterial({ map: plasterTexture(), color: 0xffffff, roughness: 0.95 });   // tường vàng (vữa)
+  M.wall.map.repeat.set(0.14, 0.14);                                          // tường lớn: kéo giãn vữa, tránh lặp thành sọc
   M.lacquer = new THREE.MeshStandardMaterial({ color: 0xb8302a, roughness: 0.5, metalness: 0.05 }); // cột sơn son
   M.wood = new THREE.MeshStandardMaterial({ color: 0x6a4e3a, roughness: 0.85 });
-  M.tile = new THREE.MeshStandardMaterial({ color: 0x7a665a, roughness: 0.8, side: THREE.DoubleSide });
+  M.tile = new THREE.MeshStandardMaterial({ map: tileTexture(), color: 0xe6d6c8, roughness: 0.78, side: THREE.DoubleSide }); // ngói âm dương
   M.gold = new THREE.MeshStandardMaterial({ color: 0xd9b25f, roughness: 0.35, metalness: 0.7, emissive: 0x5a3e0c, emissiveIntensity: 0.8 });
   M.bronze = new THREE.MeshStandardMaterial({ color: 0xb08a3e, roughness: 0.4, metalness: 0.6 });
   M.paper = new THREE.MeshBasicMaterial({ color: 0xffc977 });                      // ô cửa sáng đèn
@@ -20,7 +21,7 @@ export function makeMaterials() {
    u: ngang mái (-1..1), v: dọc nóc (-1..1).
    Mặt cắt lõm (pow), mũi mái hất lên, hai đầu nóc cong vút. */
 export function makeRoof(w, d, h, curl = 1.4) {
-  const nu = 14, nv = 28, pos = [], idx = [];
+  const nu = 14, nv = 28, pos = [], idx = [], uvs = [];
   for (let j = 0; j <= nv; j++) {
     const v = (j / nv) * 2 - 1;
     for (let i = 0; i <= nu; i++) {
@@ -29,6 +30,7 @@ export function makeRoof(w, d, h, curl = 1.4) {
       y += 0.16 * h * Math.pow(t, 6);                                   // mũi mái hất lên
       y += curl * Math.pow(av, 4) * (0.3 + 0.7 * t);                    // đầu đao cong
       pos.push(u * w / 2, y, v * d / 2);
+      uvs.push(((v + 1) / 2) * (d / 3.6), t * (w / 2) / 4);                 // rãnh ngói chạy từ nóc xuống mép
     }
   }
   for (let j = 0; j < nv; j++) for (let i = 0; i < nu; i++) {
@@ -37,6 +39,7 @@ export function makeRoof(w, d, h, curl = 1.4) {
   }
   const g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
   g.setIndex(idx); g.computeVertexNormals();
   return new THREE.Mesh(g, M.tile);
 }
@@ -84,32 +87,64 @@ export function makeLantern(parent, x, y, z, s = 1) {
   return l;
 }
 
-/* Tam quan: bốn trụ vuông lớn, ba lối đi, lầu gác hai tầng mái, hoành phi chữ Việt. */
+/* Tường có cổng vòm: khối chữ nhật khoét lỗ cổng đỉnh tròn, đùn ra theo chiều sâu. */
+function archWall(w, h, ow, oh, depth, mat) {
+  const sh = new THREE.Shape();
+  sh.moveTo(-w / 2, 0); sh.lineTo(w / 2, 0); sh.lineTo(w / 2, h); sh.lineTo(-w / 2, h); sh.closePath();
+  const hole = new THREE.Path(), r = ow / 2;
+  hole.moveTo(-r, 0); hole.lineTo(r, 0); hole.lineTo(r, oh - r); hole.absarc(0, oh - r, r, 0, Math.PI, false); hole.lineTo(-r, 0);
+  sh.holes.push(hole);
+  const g = new THREE.ExtrudeGeometry(sh, { depth, bevelEnabled: false, curveSegments: 18 });
+  g.translate(0, 0, -depth / 2);
+  return new THREE.Mesh(g, mat);
+}
+
+// Trụ biểu: thân vuông, đài, nụ sen vàng trên đỉnh (đặc trưng cổng chùa Việt)
+function lotusPillar(parent, x, h) {
+  box(1.5, h, 1.5, M.wall, x, 0.6 + h / 2, 0, parent);
+  box(1.9, 0.4, 1.9, M.stone, x, 0.6 + h + 0.2, 0, parent);
+  box(1.6, 0.35, 1.6, M.wall, x, 0.6 + h + 0.58, 0, parent);
+  const bud = new THREE.Mesh(new THREE.SphereGeometry(0.62, 14, 10), M.gold); bud.scale.y = 1.35;
+  bud.position.set(x, 0.6 + h + 1.5, 0); parent.add(bud);
+  const tip = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.9, 10), M.gold); tip.position.set(x, 0.6 + h + 2.55, 0); parent.add(tip);
+}
+
+/* Tam quan chùa Việt: ba cổng vòm trên tường vàng, gác hai tầng mái ngói ống có đầu đao,
+   hoành phi, câu đối, trụ biểu nụ sen, đèn lồng. */
 export function buildTamQuan() {
   const g = new THREE.Group();
-  const W = 22, pillarX = [-W / 2, -4.2, 4.2, W / 2], H = 8;
-  box(W + 4, 0.8, 5.5, M.stone, 0, 0.4, 0, g);                                // bệ
-  pillarX.forEach((x) => box(1.7, H, 1.7, M.wall, x, 0.8 + H / 2, 0, g));     // trụ vuông
-  // Hai trụ phụ cao hơn kiểu "trụ biểu" ở lối giữa
-  [-4.2, 4.2].forEach((x) => { box(1.1, 3, 1.1, M.wall, x, 0.8 + H + 1.5, 0, g);
-    const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.42, 12, 10), M.gold); lamp.position.set(x, 0.8 + H + 3.4, 0); g.add(lamp); });
-  box(W + 1.6, 1.0, 2.4, M.lacquer, 0, 0.8 + H - 0.5, 0, g);                  // xà ngang
-  // Lầu gác giữa
-  box(8.4, 3.2, 3.4, M.lacquer, 0, 0.8 + H + 1.6 + 0.5, 0, g);
-  const sign = new THREE.Mesh(new THREE.PlaneGeometry(6.6, 1.65),
-    new THREE.MeshBasicMaterial({ map: signTexture('DIỆU GIANG TỰ') }));
-  sign.position.set(0, 0.8 + H + 2.2, 1.75); g.add(sign);                      // hoành phi
-  const roofMid = roofWithRidge(11.5, 6.4, 2.6, 1.3); roofMid.position.y = 0.8 + H + 3.4; g.add(roofMid);
-  // Hai mái thấp hai bên
+  const yb = 0.6, HC = 9.5, HS = 5.8;
+  box(33, 0.6, 7, M.stone, 0, 0.3, 0, g);                                       // bệ đá
+  const mid = archWall(10, HC, 4.6, 6.8, 3.6, M.wall); mid.position.set(0, yb, 0); g.add(mid);
   for (const s of [-1, 1]) {
-    const r = roofWithRidge(5.8, 6.6, 1.6, 1.0); r.position.set(s * 9.2, 0.8 + H + 0.6, 0); g.add(r);
-    box(5, 1.6, 2.4, M.lacquer, s * 9.2, 0.8 + H - 0.3 + 1.4, 0, g);
+    const side = archWall(6.2, HS, 2.4, 3.9, 3.2, M.wall); side.position.set(s * 8.1, yb, 0); g.add(side);
+    lotusPillar(g, s * 12.7, 9.2);
+    // cổng phụ: lanh tô và gờ chỉ
+    box(6.5, 0.3, 3.5, M.stone, s * 8.1, yb + HS + 0.15, 0, g);
+    const r = roofWithRidge(8.4, 5.4, 1.5, 1.0); r.position.set(s * 8.1, yb + HS + 0.3, 0); g.add(r);
   }
-  // Đèn lồng treo dưới xà
-  [-8, -3, 0, 3, 8].forEach((x) => makeLantern(g, x, 0.8 + H - 1.5, 1.3, 0.8));
-  // Cổng tròn giữa: cánh cửa gỗ mở hé, ánh đèn sau cổng
-  const glow = new THREE.Mesh(new THREE.PlaneGeometry(6.2, 6.4), new THREE.MeshBasicMaterial({ color: 0xffb25e, transparent: true, opacity: 0.2 }));
-  glow.position.set(0, 0.8 + 3.2, -0.2); g.add(glow);
+  box(10.6, 0.35, 3.9, M.stone, 0, yb + HC + 0.17, 0, g);                       // gờ chỉ trên tường giữa
+  const rLow = roofWithRidge(15.4, 6.6, 2.5, 1.5); rLow.position.set(0, yb + HC + 0.35, 0); g.add(rLow);
+  // gác trên: khung son, ô cửa tròn hai bên, hoành phi ở giữa
+  const yl = yb + HC + 1.5;
+  box(8.6, 3.6, 3.3, M.lacquer, 0, yl + 1.8, 0, g);
+  for (const s of [-1, 1]) {
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.62, 0.09, 8, 24), M.gold); ring.position.set(s * 3.3, yl + 1.9, 1.7); g.add(ring);
+    const disc = new THREE.Mesh(new THREE.CircleGeometry(0.58, 20), new THREE.MeshBasicMaterial({ color: 0xffbe6a })); disc.position.set(s * 3.3, yl + 1.9, 1.68); g.add(disc);
+  }
+  const sign = new THREE.Mesh(new THREE.PlaneGeometry(5.2, 1.5), new THREE.MeshBasicMaterial({ map: signTexture('DIỆU GIANG TỰ') }));
+  sign.position.set(0, yl + 1.9, 1.68); g.add(sign);                           // hoành phi
+  const rUp = roofWithRidge(11.8, 5.6, 2.7, 1.7); rUp.position.set(0, yl + 3.6, 0); g.add(rUp);
+  // câu đối hai bên cổng giữa
+  [['CỬA', 'TỪ', 'BI', 'RỘNG', 'MỞ'], ['ĐẤT', 'PHẬT', 'BÌNH', 'AN']].forEach((w, i) => {
+    const c = new THREE.Mesh(new THREE.PlaneGeometry(0.95, 4.6), new THREE.MeshBasicMaterial({ map: coupletTexture(w) }));
+    c.position.set(i ? 3.8 : -3.8, yb + 4.4, 1.83); g.add(c);
+  });
+  // đèn lồng hai bên cổng
+  [[-2.6, 7.5], [2.6, 7.5], [-8.1, 4.8], [8.1, 4.8]].forEach(([x, y]) => makeLantern(g, x, y, 2.0, 0.85));
+  // ánh đèn sau cổng giữa (nhìn xuyên ra ao sen)
+  const glow = new THREE.Mesh(new THREE.PlaneGeometry(4.6, 6.8), new THREE.MeshBasicMaterial({ color: 0xffb25e, transparent: true, opacity: 0.16 }));
+  glow.position.set(0, yb + 3.4, 0); g.add(glow);
   return g;
 }
 
@@ -127,6 +162,11 @@ export function buildHall() {
     pillar(0.42, H, M.lacquer, x, y0, -D / 2 + 1, g);
   }
   box(W - 1, H, 0.5, M.wall, 0, y0 + H / 2, -D / 2 + 0.3, g);                  // tường hậu
+  for (const s of [-1, 1]) {                                                    // tường vàng hai gian bên, cửa sổ tròn
+    box(0.6, H, D - 1.4, M.wall, s * (W / 2 - 0.9), y0 + H / 2, 0, g);
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.85, 0.1, 8, 24), M.gold); ring.rotation.y = Math.PI / 2;
+    ring.position.set(s * (W / 2 - 0.55), y0 + H / 2 + 0.4, 0); g.add(ring);
+  }
   // Gian giữa phát sáng (ánh nến, bàn thờ)
   const inner = new THREE.Mesh(new THREE.PlaneGeometry(W - 6, H - 1.2), new THREE.MeshBasicMaterial({ color: 0xffb35c }));
   inner.position.set(0, y0 + H / 2 - 0.2, -D / 2 + 0.6); g.add(inner);

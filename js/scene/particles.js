@@ -34,7 +34,7 @@ export function buildFireflies(dot, count) {
 
 // Cánh sen / hoa đào rơi chậm, lặp vòng
 export function buildPetals(dot, count) {
-  const p = makePoints(count, 0.5, 0xf6c4d2, dot, 0.85);
+  const p = makePoints(count, 0.3, 0xf6c4d2, dot, 0.85);
   p.material.blending = THREE.NormalBlending;
   const rnd = mulberry32(44), a = p.geometry.attributes.position, seed = [];
   for (let i = 0; i < count; i++) {

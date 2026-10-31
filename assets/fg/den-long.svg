@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 900">
+<defs>
+ <radialGradient id="halo"><stop offset="0" stop-color="#ffb468" stop-opacity=".8"/><stop offset=".5" stop-color="#ff8a3a" stop-opacity=".22"/><stop offset="1" stop-color="#ff8a3a" stop-opacity="0"/></radialGradient>
+ <linearGradient id="red" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8e1812"/><stop offset=".45" stop-color="#ee4a32"/><stop offset="1" stop-color="#7a120d"/></linearGradient>
+ <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f3d78b"/><stop offset="1" stop-color="#b8892f"/></linearGradient>
+ <linearGradient id="stone" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#4a545b"/><stop offset=".4" stop-color="#8a959c"/><stop offset="1" stop-color="#3b444a"/></linearGradient>
+</defs>
+<circle cx="200" cy="330" r="190" fill="url(#halo)"/>
+<rect x="194" y="30" width="12" height="600" fill="#3a2c20"/><rect x="190" y="30" width="20" height="10" fill="#c9a24a"/>
+<path d="M200 74 C140 84 112 120 112 168" stroke="#c9a24a" stroke-width="3" fill="none" opacity="0"/>
+<path d="M146 214 L254 214 L240 190 L160 190Z" fill="url(#gold)"/>
+<path d="M200 190 V74" stroke="#3a2c20" stroke-width="5"/>
+<ellipse cx="200" cy="330" rx="96" ry="118" fill="url(#red)"/><path d="M200 214 C132 260 132 400 200 446" fill="none" stroke="#6a0f0a" stroke-width="3" opacity=".7"/><path d="M200 214 C166 260 166 400 200 446" fill="none" stroke="#6a0f0a" stroke-width="3" opacity=".7"/><path d="M200 214 C200 260 200 400 200 446" fill="none" stroke="#6a0f0a" stroke-width="3" opacity=".7"/><path d="M200 214 C234 260 234 400 200 446" fill="none" stroke="#6a0f0a" stroke-width="3" opacity=".7"/><path d="M200 214 C268 260 268 400 200 446" fill="none" stroke="#6a0f0a" stroke-width="3" opacity=".7"/>
+<ellipse cx="200" cy="330" rx="96" ry="118" fill="none" stroke="#5d0e09" stroke-width="3"/>
+<rect x="124" y="296" width="152" height="10" fill="url(#gold)" opacity=".9"/><rect x="124" y="352" width="152" height="10" fill="url(#gold)" opacity=".9"/>
+<text x="200" y="344" font-family="'Cormorant Garamond',serif" font-size="46" font-weight="700" fill="#f6dc91" text-anchor="middle">PHÚC</text>
+<path d="M146 446 L254 446 L236 466 L164 466Z" fill="url(#gold)"/>
+<path d="M200 466 V560 M184 466 L176 540 M216 466 L224 540" stroke="#d9b25f" stroke-width="4" fill="none"/>
+<rect x="150" y="560" width="100" height="14" fill="#c8322b" opacity=".0"/>
+<!-- trụ đá hoa sen -->
+<path d="M148 610 L252 610 L244 640 L156 640Z" fill="url(#stone)"/>
+<rect x="166" y="640" width="68" height="150" fill="url(#stone)"/>
+<g fill="url(#stone)" stroke="#2c3338" stroke-width="2"><path d="M200 580 C168 596 160 612 164 624 C180 616 192 612 200 612 C208 612 220 616 236 624 C240 612 232 596 200 580Z"/></g>
+<ellipse cx="200" cy="792" rx="104" ry="20" fill="#59636a"/><rect x="96" y="792" width="208" height="64" fill="url(#stone)"/>
+<ellipse cx="200" cy="856" rx="116" ry="22" fill="#3b444a"/>
+<rect x="96" y="840" width="208" height="20" fill="#000" opacity=".25"/>
+</svg>
