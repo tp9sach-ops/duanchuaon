@@ -414,3 +414,8 @@ h1,h2,h3{margin:0;font-weight:500}
 .tv-mid{grid-row:2/4;grid-column:2/4;padding:12px;border:1px solid var(--line-soft);border-radius:6px;background:rgba(8,10,20,.6);display:grid;align-content:center;gap:2px;text-align:center;font-size:13px;color:#c3c8d8}.tv-mid p{margin:0}.tv-hoa{margin-top:8px!important;font-size:11px;color:var(--gold-soft)}
 @media (max-width:620px){.tv-cell{min-height:92px;padding:5px 5px;font-size:10px}.tv-cell li{font-size:10.5px}.tv-h b{font-size:9.5px}.tv-mid{font-size:11px;padding:6px}}
 .tv-cell{background:rgba(8,10,20,.86)}.tv-mid{background:rgba(8,10,20,.84)}.tv-board+.ch-note{padding:8px 12px;border-radius:6px;background:rgba(8,10,20,.78);color:#c3c8d8}
+
+/* ------------------------------------------------ Hành tinh (js/ui/planets.js) */
+.pl-tbl th{font-weight:500;text-align:left;color:var(--moon);white-space:nowrap}.pl-tbl td{color:#c3c8d8}.pl-r{padding:1px 8px;border:1px solid var(--vermilion);border-radius:100px;font-size:10px;color:#f0a39e;letter-spacing:.06em}
+.pl .ch-list i{font-style:normal;color:var(--muted)}
+.pl>.ch-note:last-child{padding:8px 12px;border-radius:6px;background:rgba(8,10,20,.78);color:#c3c8d8}
