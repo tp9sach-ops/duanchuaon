@@ -1,4 +1,4 @@
-# Linh Quang (靈光)
+# Linh Giang Tự
 
 Web tâm linh 3D dạng trang cuốn, bối cảnh chùa Việt trên núi về đêm.
 Giao diện tĩnh trên GitHub Pages; Google Apps Script chỉ làm backend lưu dữ liệu và gọi AI.
@@ -10,7 +10,7 @@ Giao diện tĩnh trên GitHub Pages; Google Apps Script chỉ làm backend lưu
 ```bash
 python3 -m http.server 8080
 # mở http://localhost:8080   (thêm ?mood=0.8 hoặc ?mood=-0.8 để thử đổi ánh sáng)
-npm test                      # kiểm tra cú pháp, quy ước và engine lịch (17 test)
+npm test                      # kiểm tra cú pháp, quy ước và các engine (67 test)
 ```
 
 ## Đưa lên GitHub Pages

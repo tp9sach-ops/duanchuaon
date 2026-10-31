@@ -1,11 +1,11 @@
 {
-  "name": "linh-quang",
+  "name": "linh-giang-tu",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Linh Quang — web tâm linh 3D (chùa Việt). Giao diện tĩnh trên GitHub Pages, backend Google Apps Script.",
+  "description": "Linh Giang Tự — web tâm linh 3D (chùa Việt). Giao diện tĩnh trên GitHub Pages, backend Google Apps Script.",
   "scripts": {
-    "test": "node tests/smoke.mjs && node --test tests/engines.test.mjs",
+    "test": "node tests/smoke.mjs && node --test tests/engines.test.mjs tests/personal.test.mjs tests/numerology.test.mjs tests/astro.test.mjs",
     "serve": "python3 -m http.server 8080"
   }
 }
