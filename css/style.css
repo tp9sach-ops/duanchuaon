@@ -378,3 +378,24 @@ h1,h2,h3{margin:0;font-weight:500}
 .sm-actions{display:flex;flex-wrap:wrap;gap:10px}
 .summary .t-trace table{font-size:12.5px}.summary .t-trace thead th,.summary .t-trace thead td{color:var(--muted);font-size:10px;letter-spacing:.14em;text-transform:uppercase}
 @media (min-width:760px){.sm-two{grid-template-columns:1fr 1fr}}
+
+/* ------------------------------------------------ chương Chùa online (js/ui/temple.js) */
+.temple-app{width:min(100%,1100px);margin:clamp(24px,4vh,48px) auto 0}
+.tp-grid{display:grid;grid-template-columns:1fr;gap:16px}@media (min-width:820px){.tp-grid{grid-template-columns:1fr 1fr}}
+.tp-box{padding:clamp(16px,2.6vw,26px);border:1px solid var(--line-soft);border-radius:10px;background:rgba(8,10,20,.72);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);display:grid;gap:14px;align-content:start}
+.tp-box h3{margin:0;font-family:var(--serif);font-weight:500;font-size:clamp(22px,2.2vw,28px);color:var(--gold-soft)}
+.tp-row{display:flex;flex-wrap:wrap;gap:8px}
+.tp-note{margin:0;font-size:12.5px;color:#a9b0c4;line-height:1.55}
+.tp-big{margin:0;font-family:var(--serif);font-size:44px;line-height:1;color:var(--moon)}.tp-big span{font-size:18px;color:var(--muted)}
+.tp-censer{position:relative;height:190px}.tp-censer svg{position:absolute;left:50%;bottom:0;width:min(220px,70%);transform:translateX(-50%)}
+.tp-stick{position:absolute;bottom:46px;width:2px;height:104px;margin-left:-1px;background:linear-gradient(#caa66a,#7a4f26);border-radius:1px}
+.tp-stick u{position:absolute;top:-3px;left:-1px;width:4px;height:5px;border-radius:50%;background:#ff7a3a;box-shadow:0 0 8px 2px rgba(255,122,58,.8)}
+.tp-stick s{position:absolute;top:-8px;left:-6px;width:14px;height:14px;border-radius:50%;background:rgba(220,224,236,.28);filter:blur(5px);opacity:0;animation:tpsmoke 4s ease-out infinite}.tp-stick s+s{animation-delay:2s}
+@keyframes tpsmoke{0%{transform:translate(0,0) scale(.6);opacity:0}15%{opacity:.7}100%{transform:translate(10px,-80px) scale(2.4);opacity:0}}
+.tp-beads{display:grid;grid-template-columns:repeat(27,1fr);gap:3px}.tp-beads i{aspect-ratio:1;border-radius:50%;background:rgba(232,234,242,.12)}.tp-beads i.on{background:var(--gold);box-shadow:0 0 6px rgba(217,178,95,.6)}
+.tp-que{padding:14px 16px;border:1px solid rgba(217,178,95,.45);border-radius:8px;background:rgba(217,178,95,.07)}.tp-que small{display:block;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.tp-que b{display:block;margin:4px 0 6px;font-family:var(--serif);font-size:26px;font-weight:500;color:var(--gold-soft)}.tp-que p{margin:0 0 6px;font-size:15px;color:#d3d8e6}
+#tp-in{flex:1 1 220px;min-width:0;padding:11px 14px;border:1px solid var(--line);border-radius:100px;background:rgba(6,7,13,.7);color:var(--moon);font:inherit;font-size:14px}
+.tp-wall{list-style:none;margin:0;padding:0;display:grid;gap:6px;max-height:220px;overflow:auto}
+.tp-wall li{display:flex;justify-content:space-between;gap:10px;padding:8px 12px;border-left:2px solid var(--gold);background:rgba(232,234,242,.05);font-size:14px;color:#d3d8e6}
+.tp-wall .tp-empty{border-left-color:var(--line);color:var(--muted)}.tp-x{background:none;border:0;color:var(--muted);font-size:18px;line-height:1;cursor:pointer}.tp-x:hover{color:var(--vermilion)}
