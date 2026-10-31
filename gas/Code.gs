@@ -1,6 +1,6 @@
 /**
- * Linh Quang — backend Google Apps Script (Web App trả JSON).
- * Giai đoạn 1: khung API + tạo Sheet + lưu/đọc hồ sơ. Các hàm khác để TODO theo giai đoạn.
+ * Linh Giang Tự — backend Google Apps Script (Web App trả JSON).
+ * Giai đoạn 3: lưu/đọc/xóa hồ sơ (Storage.gs). Các hàm khác để TODO theo giai đoạn.
  *
  * TRIỂN KHAI: Extensions → Apps Script → dán file này → Deploy → New deployment → Web app
  *   Execute as: Me  |  Who has access: Anyone  → copy URL (…/exec) vào js/config.js (apiUrl).
@@ -10,7 +10,7 @@
  */
 
 var SHEETS = {
-  Profiles: ['profileId', 'userKey', 'hoTen', 'ngaySinhDL', 'gioSinh', 'noiSinh', 'gioiTinh', 'ngayTao'],
+  Profiles: ['profileId', 'userKey', 'hoTen', 'ngaySinhDL', 'gioSinh', 'noiSinh', 'gioiTinh', 'ngayTao', 'loaiLich', 'ngaySinhNhap'],
   Readings: ['readingId', 'profileId', 'loai', 'ketQuaJSON', 'diem', 'ngayTao'],
   Incense:  ['userKey', 'soNhangThap', 'chuoiNgay', 'lanCuoi', 'loiNguyen'],
   Prayers:  ['id', 'userKey', 'noiDung', 'congKhai', 'ngay'],
@@ -22,17 +22,18 @@ var SHEETS = {
 function setup() {
   var props = PropertiesService.getScriptProperties();
   var id = props.getProperty('SHEET_ID');
-  var ss = id ? SpreadsheetApp.openById(id) : SpreadsheetApp.create('Linh Quang — dữ liệu');
+  var ss = id ? SpreadsheetApp.openById(id) : SpreadsheetApp.create('Linh Giang Tự — dữ liệu');
   props.setProperty('SHEET_ID', ss.getId());
   Object.keys(SHEETS).forEach(function (name) {
     var sh = ss.getSheetByName(name) || ss.insertSheet(name);
     if (sh.getLastRow() === 0) sh.appendRow(SHEETS[name]);
+    textFormat_(sh);
   });
   Logger.log('Spreadsheet: ' + ss.getUrl());
 }
 
 function doGet() {
-  return json_({ ok: true, name: 'Linh Quang API', time: new Date().toISOString() });
+  return json_({ ok: true, name: 'Linh Giang Tự API', time: new Date().toISOString() });
 }
 
 function doPost(e) {
@@ -42,6 +43,7 @@ function doPost(e) {
       case 'ping':         return json_({ ok: true, pong: true });
       case 'saveProfile':  return json_(saveProfile_(req));
       case 'getProfile':   return json_(getProfile_(req));
+      case 'deleteProfile': return json_(deleteProfile_(req));
       // TODO Giai đoạn 7: case 'analyzeHand' / 'analyzeFace' → Vision.gs (khóa API ở Script Properties)
       // TODO Giai đoạn 8: case 'logIncense', 'addPrayer', 'listPrayers'
       default:             return json_({ ok: false, error: 'unknown_action' });
@@ -62,26 +64,3 @@ function sheet_(name) {
 }
 
 function clean_(v, max) { return String(v == null ? '' : v).slice(0, max || 200); }
-
-function saveProfile_(req) {
-  var userKey = clean_(req.userKey, 80), p = req.profile || {};
-  if (!userKey) return { ok: false, error: 'missing_userKey' };
-  var lock = LockService.getScriptLock();
-  lock.waitLock(10000);                       // chống ghi đồng thời
-  try {
-    var sh = sheet_('Profiles'), rows = sh.getDataRange().getValues(), rowIdx = -1;
-    for (var i = 1; i < rows.length; i++) if (rows[i][1] === userKey) { rowIdx = i + 1; break; }
-    var rec = [rowIdx > 0 ? rows[rowIdx - 1][0] : Utilities.getUuid(), userKey, clean_(p.hoTen), clean_(p.ngaySinhDL, 20),
-      clean_(p.gioSinh, 20), clean_(p.noiSinh), clean_(p.gioiTinh, 10), rowIdx > 0 ? rows[rowIdx - 1][7] : new Date()];
-    if (rowIdx > 0) sh.getRange(rowIdx, 1, 1, rec.length).setValues([rec]); else sh.appendRow(rec);
-    return { ok: true, profileId: rec[0] };
-  } finally { lock.releaseLock(); }
-}
-
-function getProfile_(req) {
-  var userKey = clean_(req.userKey, 80), rows = sheet_('Profiles').getDataRange().getValues();
-  for (var i = 1; i < rows.length; i++) if (rows[i][1] === userKey) {
-    return { ok: true, profile: { profileId: rows[i][0], hoTen: rows[i][2], ngaySinhDL: rows[i][3], gioSinh: rows[i][4], noiSinh: rows[i][5], gioiTinh: rows[i][6] } };
-  }
-  return { ok: true, profile: null };
-}
