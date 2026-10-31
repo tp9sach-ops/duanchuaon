@@ -4,6 +4,7 @@ import { analyzePersonal, birthInfo } from '../engines/personal.js';
 import { analyzeNumerology, scoreNumerology } from '../engines/numerology.js';
 import { analyzeBatu, luuNien } from '../engines/batu.js';
 import { jdFromUTC, moonPhase } from '../engines/astro.js';
+import { lapLaSo, scoreTuVi } from '../engines/tuvi.js';
 import { synthesize, fromBoiNgay, fromLuuNien, fromThienVan, averageScores, LINH_VUC } from '../engines/synthesis.js';
 
 const KEY = 'lgt.profile';
@@ -34,6 +35,8 @@ export function compute(horizon, D, prof, now = new Date()) {
   } else if (horizon === 'nam' && ok) {
     const batu = analyzeBatu(b.solar.dd, b.solar.mm, b.solar.yy, b.gio);
     inputs.push(fromLuuNien(luuNien(yy, b.lunar.year, batu), batu, W)); inputs.push(numVec('nam'));
+    const tv = scoreTuVi(lapLaSo({ lunar: b.lunar, gio: b.gio, gioiTinh: prof.gioiTinh }));   // lá số gốc (chưa có Tiểu hạn theo năm)
+    if (tv) inputs.push(tv);
   }
   const r = synthesize(horizon, inputs, W, extras);
   r.coHoSo = ok; r.ngay = { dd, mm, yy };
