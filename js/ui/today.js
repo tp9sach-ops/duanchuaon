@@ -88,6 +88,8 @@ function render(root, r, today) {
     const step = (t) => { const k = Math.min(1, (t - t0) / 900); num.textContent = Math.round(to * (1 - Math.pow(1 - k, 3))); if (k < 1) requestAnimationFrame(step); };
     requestAnimationFrame(step);
   }
+  // Báo cho phần hồ sơ biết ngày đang chọn
+  document.dispatchEvent(new CustomEvent('lgt:day', { detail: { r } }));
   // Cảnh 3D đổi tông theo điểm (chỉ khi cảnh đã dựng)
   try { if (window.LGT && typeof window.LGT.setMood === 'function') window.LGT.setMood(r.mood); } catch (_) { /* bỏ qua */ }
 }
@@ -110,7 +112,7 @@ export async function initToday(root = document.getElementById('today-app')) {
     K = await res.json();
   } catch (e) {
     root.querySelector('.t-out').innerHTML = '<p class="t-load">Chưa tải được bảng tra lịch. Hãy thử tải lại trang.</p>';
-    console.warn('[Linh Quang] knowledge.json:', e && e.message); return;
+    console.warn('[Linh Giang Tự] knowledge.json:', e && e.message); return;
   }
   const input = root.querySelector('.t-date-in');
   const go = (iso) => {
