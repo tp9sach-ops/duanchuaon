@@ -47,6 +47,8 @@ export function createRail(camera) {
       f = reduce ? target : damp(f, target, 3.2, dt);
       const t = f / (CAM.length - 1);
       posCurve.getPoint(t, p); lookCurve.getPoint(t, l);
+      // Màn hình dọc (điện thoại): chữ chiếm nửa trên, nên hạ chùa xuống nửa dưới ở chương đầu (nhìn cao hơn = cảnh tụt xuống)
+      if (camera.aspect < 0.85) l.y += 12 * clamp(1 - f, 0, 1);
       camera.position.copy(p); camera.lookAt(l);
       return f;
     },
