@@ -170,7 +170,7 @@ h1,h2,h3{margin:0;font-weight:500}
   .cards{grid-template-columns:repeat(3,1fr)}.cards.two-cards{grid-template-columns:repeat(2,1fr)}
   .foot-grid{grid-template-columns:1.4fr .6fr .6fr}
   .hero-side{display:block;position:absolute;z-index:2;right:var(--pad);top:calc(var(--nav-h) + 24px)}
-  .hero-side .v{writing-mode:vertical-rl;font-size:clamp(28px,3vw,50px);letter-spacing:.14em;color:rgba(232,234,242,.55)}
+  .hero-side .v{writing-mode:vertical-rl;font-size:clamp(28px,3vw,50px);letter-spacing:.14em;color:rgba(241,219,160,.92);text-shadow:0 0 14px rgba(6,7,13,.95),0 1px 3px rgba(6,7,13,.9)}
 }
 @media (max-width:1080px){.rail{display:none}.nav-link{letter-spacing:.1em}}
 @media (max-width:899px){

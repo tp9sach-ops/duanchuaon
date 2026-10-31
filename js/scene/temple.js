@@ -129,11 +129,11 @@ export function buildTamQuan() {
   const yl = yb + HC + 1.5;
   box(8.6, 3.6, 3.3, M.lacquer, 0, yl + 1.8, 0, g);
   for (const s of [-1, 1]) {
-    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.62, 0.09, 8, 24), M.gold); ring.position.set(s * 3.3, yl + 1.9, 1.7); g.add(ring);
-    const disc = new THREE.Mesh(new THREE.CircleGeometry(0.58, 20), new THREE.MeshBasicMaterial({ color: 0xffbe6a })); disc.position.set(s * 3.3, yl + 1.9, 1.68); g.add(disc);
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.62, 0.09, 8, 24), M.gold); ring.position.set(s * 3.3, yl + 2.5, 1.7); g.add(ring);
+    const disc = new THREE.Mesh(new THREE.CircleGeometry(0.58, 20), new THREE.MeshBasicMaterial({ color: 0xffbe6a })); disc.position.set(s * 3.3, yl + 2.5, 1.68); g.add(disc);
   }
-  const sign = new THREE.Mesh(new THREE.PlaneGeometry(5.2, 1.5), new THREE.MeshBasicMaterial({ map: signTexture('DIỆU GIANG TỰ') }));
-  sign.position.set(0, yl + 1.9, 1.68); g.add(sign);                           // hoành phi
+  const sign = new THREE.Mesh(new THREE.PlaneGeometry(5.0, 1.4), new THREE.MeshBasicMaterial({ map: signTexture('DIỆU GIANG TỰ') }));
+  sign.position.set(0, yl + 2.5, 1.68); g.add(sign);                           // hoành phi (đặt cao để mái dưới không che)
   const rUp = roofWithRidge(11.8, 5.6, 2.7, 1.7); rUp.position.set(0, yl + 3.6, 0); g.add(rUp);
   // câu đối hai bên cổng giữa
   [['CỬA', 'TỪ', 'BI', 'RỘNG', 'MỞ'], ['ĐẤT', 'PHẬT', 'BÌNH', 'AN']].forEach((w, i) => {
