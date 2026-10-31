@@ -11,6 +11,7 @@ import { initSummary } from './ui/summary.js';
 import { initTemple } from './ui/temple.js';
 import { initTuvi } from './ui/tuvi.js';
 import { initPlanets } from './ui/planets.js';
+import { initVision } from './ui/vision.js';
 
 const pct = document.getElementById('pre-pct'), fill = document.getElementById('pre-fill'), pre = document.getElementById('pre');
 const setProgress = (v) => { const p = Math.round(v * 100); pct.textContent = p; fill.style.right = (100 - p) + '%'; };
@@ -29,7 +30,7 @@ function fallback(reason) {
   console.warn('[Diệu Giang Tự] Không dựng được cảnh 3D:', reason);
   document.documentElement.classList.add('no-webgl');
   const noop = { sections: [...document.querySelectorAll('[data-cam]')].filter((e) => e.tagName !== 'FOOTER'), index: 0 };
-  initReveal(); initNav(noop); initSound(); initProfile(); initToday(); initCharts(); initFortune(); initBatu(); initTuvi(); initPlanets(); initSummary(); initTemple(); hidePre();
+  initReveal(); initNav(noop); initSound(); initProfile(); initToday(); initCharts(); initFortune(); initBatu(); initTuvi(); initPlanets(); initVision(); initSummary(); initTemple(); hidePre();
 }
 
 async function boot() {
@@ -49,7 +50,7 @@ async function boot() {
     created = createScene(document.getElementById('gl'), { onProgress: (v) => { setProgress(0.1 + v * 0.9); if (v >= 1) setTimeout(hidePre, 350); } });
   } catch (e) { return fallback(e && e.message); }
 
-  initReveal(); initNav(created.rail); initSound(); initProfile(); initToday(); initCharts(); initFortune(); initBatu(); initTuvi(); initPlanets(); initSummary(); initTemple(); initForeground();
+  initReveal(); initNav(created.rail); initSound(); initProfile(); initToday(); initCharts(); initFortune(); initBatu(); initTuvi(); initPlanets(); initVision(); initSummary(); initTemple(); initForeground();
   // Phòng khi onProgress(1) không tới (tab nền): vẫn mở trang sau 6s
   setTimeout(hidePre, 6000);
 

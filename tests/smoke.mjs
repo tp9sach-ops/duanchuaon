@@ -21,7 +21,7 @@ for (const f of files.filter((p) => p.endsWith('.js'))) {
   catch (e) { bad('cú pháp ' + f.slice(root.length + 1) + '\n' + e.stderr); }
 }
 // 2 · file bắt buộc
-for (const f of ['index.html', 'manifest.webmanifest', 'sw.js', 'assets/icon.svg', 'css/style.css', 'js/main.js', 'js/scene/index.js', 'gas/Code.gs', 'gas/Storage.gs', 'js/ui/profile.js', 'js/engines/personal.js', 'js/data/personal.json', 'js/engines/numerology.js', 'js/engines/astro.js', 'js/engines/zodiac.js', 'js/ui/charts.js', 'js/data/numerology.json', 'js/data/zodiac.json', 'js/engines/batu.js', 'js/ui/fortune.js', 'js/ui/temple.js', 'js/ui/tuvi.js', 'js/ui/planets.js', 'js/engines/planets.js', 'js/engines/tuvi.js', 'js/engines/temple.js', 'js/ui/batu.js', 'js/fg.js', 'css/fg.css', 'HANDOFF.md', '.github/workflows/pages.yml']) {
+for (const f of ['index.html', 'manifest.webmanifest', 'sw.js', 'assets/icon.svg', 'css/style.css', 'js/main.js', 'js/scene/index.js', 'gas/Code.gs', 'gas/Storage.gs', 'js/ui/profile.js', 'js/engines/personal.js', 'js/data/personal.json', 'js/engines/numerology.js', 'js/engines/astro.js', 'js/engines/zodiac.js', 'js/ui/charts.js', 'js/data/numerology.json', 'js/data/zodiac.json', 'js/engines/batu.js', 'js/ui/fortune.js', 'js/ui/temple.js', 'js/ui/tuvi.js', 'js/ui/planets.js', 'js/ui/vision.js', 'js/engines/vision.js', 'gas/Vision.gs', 'js/engines/planets.js', 'js/engines/tuvi.js', 'js/engines/temple.js', 'js/ui/batu.js', 'js/fg.js', 'css/fg.css', 'HANDOFF.md', '.github/workflows/pages.yml']) {
   existsSync(join(root, f)) ? ok('có ' + f) : bad('thiếu ' + f);
 }
 // 3 · tên chùa là Diệu Giang Tự; không còn "Linh Giang", "Linh Quang", "Kage" hay chữ Hán trong mã nguồn

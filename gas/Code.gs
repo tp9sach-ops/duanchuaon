@@ -44,7 +44,8 @@ function doPost(e) {
       case 'saveProfile':  return json_(saveProfile_(req));
       case 'getProfile':   return json_(getProfile_(req));
       case 'deleteProfile': return json_(deleteProfile_(req));
-      // TODO Giai đoạn 7: case 'analyzeHand' / 'analyzeFace' → Vision.gs (khóa API ở Script Properties)
+      case 'analyzeHand':  return json_(analyzeImage_(req, 'hand'));   // Vision.gs
+      case 'analyzeFace':  return json_(analyzeImage_(req, 'face'));
       // TODO Giai đoạn 8: case 'logIncense', 'addPrayer', 'listPrayers'
       default:             return json_({ ok: false, error: 'unknown_action' });
     }

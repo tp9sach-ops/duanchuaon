@@ -419,3 +419,10 @@ h1,h2,h3{margin:0;font-weight:500}
 .pl-tbl th{font-weight:500;text-align:left;color:var(--moon);white-space:nowrap}.pl-tbl td{color:#c3c8d8}.pl-r{padding:1px 8px;border:1px solid var(--vermilion);border-radius:100px;font-size:10px;color:#f0a39e;letter-spacing:.06em}
 .pl .ch-list i{font-style:normal;color:var(--muted)}
 .pl>.ch-note:last-child{padding:8px 12px;border-radius:6px;background:rgba(8,10,20,.78);color:#c3c8d8}
+
+/* ------------------------------------------------ Chỉ tay & Nhân tướng (js/ui/vision.js) */
+.vision{width:min(100%,900px);margin:clamp(20px,4vh,40px) 0 0}
+.vs-box{display:grid;gap:14px;padding:clamp(16px,2.6vw,26px);border:1px solid var(--line-soft);border-radius:10px;background:rgba(8,10,20,.74);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
+.vs-consent{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;color:#c3c8d8;line-height:1.5}.vs-consent input{margin-top:4px;accent-color:var(--gold)}
+.vs-file{cursor:pointer}.vs-file.off{opacity:.45;cursor:not-allowed}
+.vs-res li{margin-bottom:6px}.vs-res li i{font-style:normal;color:var(--muted)}
