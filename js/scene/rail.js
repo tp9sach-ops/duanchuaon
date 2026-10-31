@@ -6,7 +6,7 @@ import { clamp, damp } from '../util.js';
 // QUAN TRỌNG: thứ tự và số mốc phải khớp với data-cam trong index.html.
 export const CAM = [
   { name: 'hero',    pos: [0, 9, 70],    look: [0, 11, 0]    }, // toàn cảnh chùa trên núi
-  { name: 'today',   pos: [5, 4.5, 54],  look: [0, 7, 34]    }, // tiến tới Tam quan
+  { name: 'today',   pos: [5, 5.5, 62],  look: [0, 7, 34]    }, // tiến tới Tam quan
   { name: 'fortune', pos: [-14, 3.4, 28], look: [0, 1.5, 14]  }, // ao sen
   { name: 'charts',  pos: [6, 3.8, 0],   look: [0, 14, -34]   }, // ngước lên chính điện, bầu trời
   { name: 'reading', pos: [22, 3.2, 14], look: [28, 7, -2]    }, // gác chuông

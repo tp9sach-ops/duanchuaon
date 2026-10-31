@@ -19,9 +19,9 @@ export function buildSky() {
 export function buildMountains() {
   const g = new THREE.Group();
   const layers = [
-    { z: -150, h: 60, c: 0x16222f, seed: 3, span: 520 },
-    { z: -105, h: 44, c: 0x101a25, seed: 9, span: 420 },
-    { z: -70,  h: 30, c: 0x0b131c, seed: 14, span: 340 },
+    { z: -150, h: 60, c: 0x2c4058, seed: 3, span: 520 },
+    { z: -105, h: 44, c: 0x213349, seed: 9, span: 420 },
+    { z: -70,  h: 30, c: 0x16253a, seed: 14, span: 340 },
   ];
   layers.forEach((L) => {
     const rnd = mulberry32(L.seed), pts = [];
@@ -46,10 +46,10 @@ export function buildGround() {
   const g = new THREE.Group();
   const bt = brickTexture(); bt.repeat.set(26, 26);
   const court = new THREE.Mesh(new THREE.PlaneGeometry(130, 130),
-    new THREE.MeshStandardMaterial({ map: bt, roughness: 0.55, metalness: 0.15 }));
+    new THREE.MeshStandardMaterial({ map: bt, roughness: 0.7, metalness: 0 }));
   court.rotation.x = -Math.PI / 2; g.add(court);
   // Nền đất tối kéo dài đến chân núi
-  const far = new THREE.Mesh(new THREE.PlaneGeometry(900, 900), new THREE.MeshStandardMaterial({ color: 0x080d10, roughness: 1 }));
+  const far = new THREE.Mesh(new THREE.PlaneGeometry(900, 900), new THREE.MeshStandardMaterial({ color: 0x1f2c34, roughness: 1 }));
   far.rotation.x = -Math.PI / 2; far.position.y = -0.06; g.add(far);
   return g;
 }
@@ -68,7 +68,7 @@ export function buildPond(center = new THREE.Vector3(0, 0, 14), radius = 10, flo
           float r = length(vP) / ${radius.toFixed(1)};
           float w = sin(vP.x*1.6 + uTime*.7) * sin(vP.y*1.9 - uTime*.55);
           float rip = smoothstep(.55,1.,w) * .10;
-          vec3 base = mix(vec3(.02,.05,.07), vec3(.05,.09,.12), 1.-r);
+          vec3 base = mix(vec3(.06,.14,.20), vec3(.12,.24,.32), 1.-r);
           float glint = pow(max(0.,1.-abs(vP.x*.07 + vP.y*.01 - .0)), 8.) * smoothstep(1.,.2,r) * (.35 + .25*sin(uTime*1.3 + vP.y*2.));
           gl_FragColor = vec4(base + rip*vec3(.4,.5,.6) + glint*uTint*.55, 1.);
         }`,
@@ -76,11 +76,11 @@ export function buildPond(center = new THREE.Vector3(0, 0, 14), radius = 10, flo
   );
   water.rotation.x = -Math.PI / 2; water.position.y = 0.04; group.add(water);
   // Bờ đá
-  const rim = new THREE.Mesh(new THREE.TorusGeometry(radius + 0.35, 0.4, 8, 64), new THREE.MeshStandardMaterial({ color: 0x3b4146, roughness: 0.9 }));
+  const rim = new THREE.Mesh(new THREE.TorusGeometry(radius + 0.35, 0.4, 8, 64), new THREE.MeshStandardMaterial({ color: 0x6a737c, roughness: 0.9 }));
   rim.rotation.x = Math.PI / 2; rim.position.y = 0.1; group.add(rim);
 
   const rnd = mulberry32(77), floaters = [];
-  const padMat = new THREE.MeshStandardMaterial({ color: 0x1f4a3a, roughness: 0.7, side: THREE.DoubleSide });
+  const padMat = new THREE.MeshStandardMaterial({ color: 0x2f7a5a, roughness: 0.7, side: THREE.DoubleSide });
   const petalMat = new THREE.MeshStandardMaterial({ color: 0xf3b6c8, emissive: 0x7a3a50, emissiveIntensity: 0.7, roughness: 0.6 });
   const petalGeo = new THREE.ConeGeometry(0.24, 0.72, 6);
   petalGeo.translate(0, 0.36, 0);
@@ -115,9 +115,9 @@ export function buildPond(center = new THREE.Vector3(0, 0, 14), radius = 10, flo
 // Cây bồ đề: thân + tán lá icosahedron tối, lá hình tim sẽ làm sau
 export function buildBodhi(x, z, s = 1) {
   const g = new THREE.Group(); g.position.set(x, 0, z); g.scale.setScalar(s);
-  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 1.1, 8, 10), new THREE.MeshStandardMaterial({ color: 0x2a211c, roughness: 1 }));
+  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 1.1, 8, 10), new THREE.MeshStandardMaterial({ color: 0x4a3a30, roughness: 1 }));
   trunk.position.y = 4; g.add(trunk);
-  const leaf = new THREE.MeshStandardMaterial({ color: 0x1b3a2c, roughness: 0.85, flatShading: true });
+  const leaf = new THREE.MeshStandardMaterial({ color: 0x3a7a58, roughness: 0.85, flatShading: true });
   const rnd = mulberry32(Math.floor(x * 13 + z * 7 + 3));
   for (let i = 0; i < 6; i++) {
     const c = new THREE.Mesh(new THREE.IcosahedronGeometry(2.8 + rnd() * 1.6, 1), leaf);
@@ -128,7 +128,7 @@ export function buildBodhi(x, z, s = 1) {
 
 export function buildBamboo(x, z, n = 14) {
   const g = new THREE.Group(); g.position.set(x, 0, z);
-  const mat = new THREE.MeshStandardMaterial({ color: 0x2d5a3f, roughness: 0.7 });
+  const mat = new THREE.MeshStandardMaterial({ color: 0x4a9468, roughness: 0.7 });
   const rnd = mulberry32(Math.floor(x * 5 + z * 11 + 1));
   for (let i = 0; i < n; i++) {
     const h = 9 + rnd() * 6, c = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.13, h, 6), mat);
@@ -140,7 +140,7 @@ export function buildBamboo(x, z, n = 14) {
 // Đá tảng rải rác cho tiền cảnh
 export function buildRocks(count, spreadX, zMin, zMax, seed = 31) {
   const g = new THREE.Group(), rnd = mulberry32(seed);
-  const mat = new THREE.MeshStandardMaterial({ color: 0x2b3238, roughness: 1, flatShading: true });
+  const mat = new THREE.MeshStandardMaterial({ color: 0x59636c, roughness: 1, flatShading: true });
   for (let i = 0; i < count; i++) {
     const r = 0.5 + rnd() * 1.3, m = new THREE.Mesh(new THREE.DodecahedronGeometry(r, 0), mat);
     m.position.set((rnd() - 0.5) * spreadX, r * 0.4, zMin + rnd() * (zMax - zMin));

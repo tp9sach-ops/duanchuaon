@@ -4,13 +4,13 @@ import { signTexture } from './textures.js';
 
 const M = {}; // vật liệu dùng chung, tạo một lần
 export function makeMaterials() {
-  M.stone = new THREE.MeshStandardMaterial({ color: 0x3b4146, roughness: 0.92 });
-  M.wall = new THREE.MeshStandardMaterial({ color: 0x9a7a3c, roughness: 0.95 });   // tường vàng
-  M.lacquer = new THREE.MeshStandardMaterial({ color: 0x8c1f1a, roughness: 0.5, metalness: 0.05 }); // cột sơn son
-  M.wood = new THREE.MeshStandardMaterial({ color: 0x3a2a20, roughness: 0.85 });
-  M.tile = new THREE.MeshStandardMaterial({ color: 0x4a3f38, roughness: 0.8, side: THREE.DoubleSide });
-  M.gold = new THREE.MeshStandardMaterial({ color: 0xd9b25f, roughness: 0.35, metalness: 0.85, emissive: 0x3a2808, emissiveIntensity: 0.6 });
-  M.bronze = new THREE.MeshStandardMaterial({ color: 0x8a6a2e, roughness: 0.4, metalness: 0.8 });
+  M.stone = new THREE.MeshStandardMaterial({ color: 0x77808a, roughness: 0.92 });
+  M.wall = new THREE.MeshStandardMaterial({ color: 0xd2a850, roughness: 0.95 });   // tường vàng
+  M.lacquer = new THREE.MeshStandardMaterial({ color: 0xb8302a, roughness: 0.5, metalness: 0.05 }); // cột sơn son
+  M.wood = new THREE.MeshStandardMaterial({ color: 0x6a4e3a, roughness: 0.85 });
+  M.tile = new THREE.MeshStandardMaterial({ color: 0x7a665a, roughness: 0.8, side: THREE.DoubleSide });
+  M.gold = new THREE.MeshStandardMaterial({ color: 0xd9b25f, roughness: 0.35, metalness: 0.7, emissive: 0x5a3e0c, emissiveIntensity: 0.8 });
+  M.bronze = new THREE.MeshStandardMaterial({ color: 0xb08a3e, roughness: 0.4, metalness: 0.6 });
   M.paper = new THREE.MeshBasicMaterial({ color: 0xffc977 });                      // ô cửa sáng đèn
   M.lantern = new THREE.MeshStandardMaterial({ color: 0xc8322b, emissive: 0xff3a1f, emissiveIntensity: 1.6, roughness: 0.6 });
   return M;
@@ -84,7 +84,7 @@ export function makeLantern(parent, x, y, z, s = 1) {
   return l;
 }
 
-/* Tam quan: bốn trụ vuông lớn, ba lối đi, lầu gác hai tầng mái, hoành phi chữ Hán. */
+/* Tam quan: bốn trụ vuông lớn, ba lối đi, lầu gác hai tầng mái, hoành phi chữ Việt. */
 export function buildTamQuan() {
   const g = new THREE.Group();
   const W = 22, pillarX = [-W / 2, -4.2, 4.2, W / 2], H = 8;
@@ -97,7 +97,7 @@ export function buildTamQuan() {
   // Lầu gác giữa
   box(8.4, 3.2, 3.4, M.lacquer, 0, 0.8 + H + 1.6 + 0.5, 0, g);
   const sign = new THREE.Mesh(new THREE.PlaneGeometry(6.6, 1.65),
-    new THREE.MeshBasicMaterial({ map: signTexture('靈 光') }));
+    new THREE.MeshBasicMaterial({ map: signTexture('LINH GIANG TỰ') }));
   sign.position.set(0, 0.8 + H + 2.2, 1.75); g.add(sign);                      // hoành phi
   const roofMid = roofWithRidge(11.5, 6.4, 2.6, 1.3); roofMid.position.y = 0.8 + H + 3.4; g.add(roofMid);
   // Hai mái thấp hai bên
@@ -108,7 +108,7 @@ export function buildTamQuan() {
   // Đèn lồng treo dưới xà
   [-8, -3, 0, 3, 8].forEach((x) => makeLantern(g, x, 0.8 + H - 1.5, 1.3, 0.8));
   // Cổng tròn giữa: cánh cửa gỗ mở hé, ánh đèn sau cổng
-  const glow = new THREE.Mesh(new THREE.PlaneGeometry(6.2, 6.4), new THREE.MeshBasicMaterial({ color: 0xffb25e, transparent: true, opacity: 0.18 }));
+  const glow = new THREE.Mesh(new THREE.PlaneGeometry(6.2, 6.4), new THREE.MeshBasicMaterial({ color: 0xffb25e, transparent: true, opacity: 0.2 }));
   glow.position.set(0, 0.8 + 3.2, -0.2); g.add(glow);
   return g;
 }
@@ -135,7 +135,7 @@ export function buildHall() {
   for (let j = 0; j <= 4; j++) box(W - 6, 0.1, 0.1, M.wood, 0, y0 + 0.5 + j * ((H - 1.4) / 4), -D / 2 + 0.7, g);
   // Xà + bảng
   box(W + 1, 0.9, D, M.lacquer, 0, y0 + H + 0.2, 0, g);
-  const sign = new THREE.Mesh(new THREE.PlaneGeometry(7.5, 1.9), new THREE.MeshBasicMaterial({ map: signTexture('大雄寶殿', { font: '600 120px "Noto Serif TC", serif' }) }));
+  const sign = new THREE.Mesh(new THREE.PlaneGeometry(7.5, 1.9), new THREE.MeshBasicMaterial({ map: signTexture('ĐẠI HÙNG BẢO ĐIỆN') }));
   sign.position.set(0, y0 + H + 1.4, D / 2 + 0.35); g.add(sign);
   // Mái hai tầng
   const low = roofWithRidge(W + 7, D + 5, 3.4, 1.8); low.position.y = y0 + H + 0.7; g.add(low);

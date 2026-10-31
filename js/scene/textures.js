@@ -24,8 +24,8 @@ export function softDot() {
 export function skyTexture() {
   const W = 1024, H = 512, c = cvs(W, H), x = c.getContext('2d');
   const g = x.createLinearGradient(0, 0, 0, H);
-  g.addColorStop(0, '#03050b'); g.addColorStop(0.4, '#0a1224');
-  g.addColorStop(0.7, '#14203a'); g.addColorStop(0.9, '#223049'); g.addColorStop(1, '#1a2538');
+  g.addColorStop(0, '#0b1226'); g.addColorStop(0.4, '#1a2a4c');
+  g.addColorStop(0.7, '#2c4272'); g.addColorStop(0.9, '#45608c'); g.addColorStop(1, '#34496e');
   x.fillStyle = g; x.fillRect(0, 0, W, H);
   // Dải Ngân Hà mờ: vài elip xiên cộng ánh sáng
   const rnd = mulberry32(881);
@@ -70,15 +70,15 @@ export function moonTexture() {
 export function brickTexture() {
   const W = 512, c = cvs(W, W), x = c.getContext('2d');
   const rnd = mulberry32(23);
-  x.fillStyle = '#0d1114'; x.fillRect(0, 0, W, W);
+  x.fillStyle = '#2a3238'; x.fillRect(0, 0, W, W);
   const n = 8, s = W / n;
   for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) {
     const t = 0.8 + rnd() * 0.5;
-    x.fillStyle = `rgb(${(22 * t) | 0},${(26 * t) | 0},${(29 * t) | 0})`;
+    x.fillStyle = `rgb(${(58 * t) | 0},${(66 * t) | 0},${(72 * t) | 0})`;
     x.fillRect(i * s + 1.5, j * s + 1.5, s - 3, s - 3);
   }
   for (let i = 0; i < 160; i++) {
-    x.fillStyle = `rgba(30,50,36,${0.05 + rnd() * 0.1})`;
+    x.fillStyle = `rgba(50,84,60,${0.08 + rnd() * 0.12})`;
     x.beginPath(); x.arc(rnd() * W, rnd() * W, 2 + rnd() * 9, 0, TAU); x.fill();
   }
   const t = tex(c);
@@ -87,12 +87,15 @@ export function brickTexture() {
 }
 
 // Bảng chữ (hoành phi, wordmark): vẽ chữ vàng lên nền gỗ sơn
-export function signTexture(text, { font = '600 120px "Noto Serif TC", serif', bg = '#3a0f0c', fg = '#e7c470', w = 1024, h = 256 } = {}) {
+export function signTexture(text, { font = '600 118px "Cormorant Garamond", "Noto Serif", Georgia, serif', bg = '#3a0f0c', fg = '#e7c470', w = 1024, h = 256 } = {}) {
   const c = cvs(w, h), x = c.getContext('2d');
   x.fillStyle = bg; x.fillRect(0, 0, w, h);
   x.strokeStyle = fg; x.lineWidth = 6; x.strokeRect(10, 10, w - 20, h - 20);
   x.strokeStyle = 'rgba(231,196,112,.4)'; x.lineWidth = 2; x.strokeRect(22, 22, w - 44, h - 44);
   x.fillStyle = fg; x.font = font; x.textAlign = 'center'; x.textBaseline = 'middle';
+  // Co cỡ chữ cho vừa bảng (chữ Việt có dấu, dài hơn chữ Hán)
+  const size = parseInt(font.match(/(\d+)px/)[1], 10), fit = (w - 110) / Math.max(1, x.measureText(text).width);
+  if (fit < 1) x.font = font.replace(/\d+px/, Math.floor(size * fit) + 'px');
   x.fillText(text, w / 2, h / 2 + 6);
   return tex(c);
 }

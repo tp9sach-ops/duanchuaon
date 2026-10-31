@@ -21,21 +21,22 @@ export function createScene(canvas, { onProgress } = {}) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: !coarse, powerPreference: 'high-performance' });
   // Nếu không có WebGL, new WebGLRenderer ném lỗi → main.js bắt và bật fallback.
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.05;
+  renderer.toneMappingExposure = 1.5;
 
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x070b14);
-  scene.fog = new THREE.FogExp2(0x0b1424, 0.0085);
+  scene.background = new THREE.Color(0x1a2b48);
+  scene.fog = new THREE.FogExp2(0x1a2b48, 0.0042);
   const camera = new THREE.PerspectiveCamera(52, 1, 0.1, 1400);
 
   makeMaterials(); onProgress?.(0.15);
 
   // --- ánh sáng
-  const hemi = new THREE.HemisphereLight(0x6f86b8, 0x120d10, 0.55);
-  const moonLight = new THREE.DirectionalLight(0xcfd8ff, 0.8); moonLight.position.set(60, 90, -120);
-  const warm1 = new THREE.PointLight(0xffa24a, 90, 60, 2); warm1.position.set(0, 6, -10);
-  const warm2 = new THREE.PointLight(0xff8a3a, 60, 50, 2); warm2.position.set(0, 7, 31);
-  scene.add(hemi, moonLight, warm1, warm2);
+  const hemi = new THREE.HemisphereLight(0x9bb2e6, 0x3a2e30, 1.6);
+  const moonLight = new THREE.DirectionalLight(0xdfe6ff, 2.2); moonLight.position.set(60, 90, -120);
+  const warm1 = new THREE.PointLight(0xffa24a, 220, 80, 2); warm1.position.set(0, 6, -10);
+  const warm2 = new THREE.PointLight(0xff8a3a, 160, 70, 2); warm2.position.set(0, 7, 31);
+  const ambient = new THREE.AmbientLight(0xb4c2ea, 0.9);
+  scene.add(hemi, ambient, moonLight, warm1, warm2);
 
   // --- bầu trời, núi, nền
   const { sky, moon, moonMat } = buildSky();
@@ -65,7 +66,7 @@ export function createScene(canvas, { onProgress } = {}) {
   // --- hậu kỳ: bloom (tắt trên mobile yếu / khi PERF hạ cấp)
   const composer = new EffectComposer(renderer);
   composer.addPass(new RenderPass(scene, camera));
-  const bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), 0.6, 0.7, 0.82);
+  const bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), 0.5, 0.6, 0.9);
   composer.addPass(bloom); composer.addPass(new OutputPass());
   let bloomOn = true;
 
@@ -98,7 +99,7 @@ export function createScene(canvas, { onProgress } = {}) {
   addEventListener('pointermove', (e) => { mouseX = e.clientX / innerWidth - 0.5; mouseY = e.clientY / innerHeight - 0.5; }, { passive: true });
   document.addEventListener('visibilitychange', () => { running = !document.hidden; if (running) clock.getDelta(); });
 
-  const cWarm = new THREE.Color(0x2a1d10), cCool = new THREE.Color(0x0b1830), cNeutral = new THREE.Color(0x0b1424), tmp = new THREE.Color();
+  const cWarm = new THREE.Color(0x3d2d1c), cCool = new THREE.Color(0x14305a), cNeutral = new THREE.Color(0x1a2b48), tmp = new THREE.Color();
 
   function frame() {
     requestAnimationFrame(frame);
@@ -108,13 +109,13 @@ export function createScene(canvas, { onProgress } = {}) {
     // MOOD: damp rồi áp lên đèn, trăng, sương, bloom
     LGT.mood = damp(LGT.mood, LGT._target, 2.2, dt);
     const m = LGT.mood;
-    moonLight.intensity = 0.8 + 0.35 * m;
+    moonLight.intensity = 2.2 + 0.6 * m;
     moonLight.color.setHex(m >= 0 ? 0xe9e0c8 : 0xbccaf5);
-    warm1.intensity = 90 + 50 * Math.max(0, m); warm2.intensity = 60 + 40 * Math.max(0, m);
+    warm1.intensity = 220 + 80 * Math.max(0, m); warm2.intensity = 160 + 60 * Math.max(0, m);
     tmp.copy(cNeutral).lerp(m >= 0 ? cWarm : cCool, Math.abs(m) * 0.7);
     scene.fog.color.copy(tmp); scene.background.copy(tmp);
     moonMat.color.setRGB(1, 1 - 0.08 * Math.max(0, -m), 1 - 0.2 * Math.max(0, -m));
-    bloom.strength = 0.55 + 0.25 * Math.max(0, m);
+    bloom.strength = 0.45 + 0.25 * Math.max(0, m);
 
     // Camera + hiệu ứng nhẹ theo con trỏ (tắt khi reduced-motion)
     rail.update(dt, reduce);
@@ -129,7 +130,7 @@ export function createScene(canvas, { onProgress } = {}) {
       pond.update(t);
       tower.bell.rotation.z = Math.sin(t * 0.6) * 0.012;
       censer.embers.forEach((e, i) => { e.material.color.setRGB(1, 0.25 + 0.2 * Math.sin(t * 3 + i), 0.12); });
-      warm1.intensity *= 0.96 + 0.08 * Math.sin(t * 7.3) * Math.sin(t * 3.1);
+      warm1.intensity *= 0.97 + 0.06 * Math.sin(t * 7.3) * Math.sin(t * 3.1);
     }
 
     if (bloomOn) composer.render(); else renderer.render(scene, camera);
