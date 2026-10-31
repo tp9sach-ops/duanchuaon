@@ -1,0 +1,41 @@
+// Kiểm tra nhanh: cú pháp mọi file JS, file bắt buộc, quy ước đặt tên, khớp số mốc camera.
+import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { execFileSync } from 'node:child_process';
+
+const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+let fail = 0;
+const ok = (m) => console.log('  ok  ' + m);
+const bad = (m) => { fail++; console.error('  LỖI ' + m); };
+
+const walk = (d) => readdirSync(d).flatMap((n) => {
+  if (['node_modules', '.git', 'tests', '_site'].includes(n)) return [];
+  const p = join(d, n); return statSync(p).isDirectory() ? walk(p) : [p];
+});
+const files = walk(root);
+
+// 1 · cú pháp
+for (const f of files.filter((p) => p.endsWith('.js'))) {
+  try { execFileSync(process.execPath, ['--check', f], { stdio: 'pipe' }); ok('cú pháp ' + f.slice(root.length + 1)); }
+  catch (e) { bad('cú pháp ' + f.slice(root.length + 1) + '\n' + e.stderr); }
+}
+// 2 · file bắt buộc
+for (const f of ['index.html', 'css/style.css', 'js/main.js', 'js/scene/index.js', 'gas/Code.gs', 'HANDOFF.md', '.github/workflows/pages.yml']) {
+  existsSync(join(root, f)) ? ok('có ' + f) : bad('thiếu ' + f);
+}
+// 3 · đã đổi tên hoàn toàn, không còn tên cũ/tên trang tham khảo trong mã nguồn
+const text = files.filter((p) => /\.(html|js|css|gs|md|yml|json)$/.test(p) && !p.endsWith('HANDOFF.md') && !p.endsWith('README.md') && !p.includes('/docs/'));
+for (const f of text) {
+  const s = readFileSync(f, 'utf8');
+  if (/linh\s*giang/i.test(s) || /\bkage\b/i.test(s)) bad('còn tên cũ trong ' + f.slice(root.length + 1));
+}
+ok('đã quét tên cũ');
+// 4 · số mốc camera == số section data-cam (trừ footer)
+const html = readFileSync(join(root, 'index.html'), 'utf8');
+const nSec = [...html.matchAll(/<section[^>]*data-cam="(\d+)"/g)].length;
+const nCam = [...readFileSync(join(root, 'js/scene/rail.js'), 'utf8').matchAll(/name:\s*'/g)].length;
+nSec === nCam ? ok(`camera ${nCam} mốc = ${nSec} section`) : bad(`camera ${nCam} mốc ≠ ${nSec} section`);
+
+if (fail) { console.error(`\n${fail} lỗi`); process.exit(1); }
+console.log('\nTất cả kiểm tra đạt.');
