@@ -1,0 +1,51 @@
+{
+  "_ghiChu": "12 cung hoàng đạo (hệ nhiệt đới/tropical, Tây phương). Lời giải nghĩa là tóm tắt tham khảo của dự án. Mục có 'canDoiChieu': true là quy ước chờ đối chiếu.",
+  "heTinh": { "loai": "tropical", "canDoiChieu": false },
+  "cung": [
+    { "ten": "Bạch Dương", "kyHieu": "♈", "hanh": "Lửa", "kieu": "Tiên phong", "chuTinh": "Sao Hỏa", "y": "Nhiệt huyết, thẳng thắn, thích dẫn đầu và bắt đầu việc mới." },
+    { "ten": "Kim Ngưu", "kyHieu": "♉", "hanh": "Đất", "kieu": "Bền vững", "chuTinh": "Sao Kim", "y": "Kiên nhẫn, thực tế, trân trọng sự ổn định và cái đẹp giản dị." },
+    { "ten": "Song Tử", "kyHieu": "♊", "hanh": "Khí", "kieu": "Linh hoạt", "chuTinh": "Sao Thủy", "y": "Tò mò, nhanh trí, thích giao tiếp và học điều mới." },
+    { "ten": "Cự Giải", "kyHieu": "♋", "hanh": "Nước", "kieu": "Tiên phong", "chuTinh": "Mặt Trăng", "y": "Nhạy cảm, giàu tình thân, che chở người mình thương." },
+    { "ten": "Sư Tử", "kyHieu": "♌", "hanh": "Lửa", "kieu": "Bền vững", "chuTinh": "Mặt Trời", "y": "Rộng rãi, tự tin, có sức lan tỏa và thích được ghi nhận." },
+    { "ten": "Xử Nữ", "kyHieu": "♍", "hanh": "Đất", "kieu": "Linh hoạt", "chuTinh": "Sao Thủy", "y": "Cẩn thận, ngăn nắp, giỏi phân tích và chăm chút chi tiết." },
+    { "ten": "Thiên Bình", "kyHieu": "♎", "hanh": "Khí", "kieu": "Tiên phong", "chuTinh": "Sao Kim", "y": "Hài hòa, công bằng, khéo ngoại giao và yêu cái đẹp." },
+    { "ten": "Bọ Cạp", "kyHieu": "♏", "hanh": "Nước", "kieu": "Bền vững", "chuTinh": "Sao Diêm Vương (cổ điển: Sao Hỏa)", "y": "Sâu sắc, kiên định, trực giác mạnh, sống hết mình." },
+    { "ten": "Nhân Mã", "kyHieu": "♐", "hanh": "Lửa", "kieu": "Linh hoạt", "chuTinh": "Sao Mộc", "y": "Lạc quan, thích khám phá, hướng tới tự do và chân lý." },
+    { "ten": "Ma Kết", "kyHieu": "♑", "hanh": "Đất", "kieu": "Tiên phong", "chuTinh": "Sao Thổ", "y": "Kỷ luật, có trách nhiệm, kiên trì theo đuổi mục tiêu dài hạn." },
+    { "ten": "Bảo Bình", "kyHieu": "♒", "hanh": "Khí", "kieu": "Bền vững", "chuTinh": "Sao Thiên Vương (cổ điển: Sao Thổ)", "y": "Độc lập, nhiều ý tưởng mới, quan tâm cộng đồng." },
+    { "ten": "Song Ngư", "kyHieu": "♓", "hanh": "Nước", "kieu": "Linh hoạt", "chuTinh": "Sao Hải Vương (cổ điển: Sao Mộc)", "y": "Giàu tưởng tượng, thấu cảm, dễ rung động với nghệ thuật." }
+  ],
+  "viTri": {
+    "matTroi": "Cung Mặt Trời — bản chất cốt lõi, cách bạn muốn tỏa sáng.",
+    "matTrang": "Cung Mặt Trăng — thế giới cảm xúc, nhu cầu được an toàn.",
+    "cungMoc": "Cung Mọc (Ascendant) — vẻ ngoài và cách bạn bước vào cuộc sống; cần giờ sinh và nơi sinh."
+  },
+  "phaTrang": [
+    { "den": 22.5,  "ten": "Trăng non" },
+    { "den": 67.5,  "ten": "Trăng lưỡi liềm đầu tháng" },
+    { "den": 112.5, "ten": "Trăng thượng huyền" },
+    { "den": 157.5, "ten": "Trăng khuyết tròn dần" },
+    { "den": 202.5, "ten": "Trăng tròn" },
+    { "den": 247.5, "ten": "Trăng khuyết nhỏ dần" },
+    { "den": 292.5, "ten": "Trăng hạ huyền" },
+    { "den": 337.5, "ten": "Trăng lưỡi liềm cuối tháng" },
+    { "den": 360,   "ten": "Trăng non" }
+  ],
+  "noiSinh": [
+    { "ten": "Hà Nội", "lat": 21.03, "lon": 105.85 },
+    { "ten": "Hải Phòng", "lat": 20.84, "lon": 106.69 },
+    { "ten": "Vinh", "lat": 18.68, "lon": 105.69 },
+    { "ten": "Huế", "lat": 16.46, "lon": 107.59 },
+    { "ten": "Đà Nẵng", "lat": 16.05, "lon": 108.22 },
+    { "ten": "Quy Nhơn", "lat": 13.78, "lon": 109.22 },
+    { "ten": "Nha Trang", "lat": 12.24, "lon": 109.19 },
+    { "ten": "Buôn Ma Thuột", "lat": 12.67, "lon": 108.04 },
+    { "ten": "Đà Lạt", "lat": 11.94, "lon": 108.44 },
+    { "ten": "Biên Hòa", "lat": 10.95, "lon": 106.82 },
+    { "ten": "TP. Hồ Chí Minh", "lat": 10.82, "lon": 106.63 },
+    { "ten": "Cần Thơ", "lat": 10.03, "lon": 105.78 },
+    { "ten": "Rạch Giá", "lat": 10.01, "lon": 105.08 },
+    { "ten": "Phú Quốc", "lat": 10.29, "lon": 103.98 },
+    { "ten": "Cà Mau", "lat": 9.18, "lon": 105.15 }
+  ]
+}

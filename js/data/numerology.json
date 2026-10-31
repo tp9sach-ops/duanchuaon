@@ -1,0 +1,59 @@
+{
+  "_ghiChu": "Bảng tra Thần số học (Pythagoras). Lời giải nghĩa là tóm tắt văn hóa/tham khảo của dự án, không phải kinh điển. Mục 'canDoiChieu': true là quy ước dự án tự chọn, chờ chủ dự án đối chiếu với sách tin dùng.",
+  "truongPhai": { "heChuCai": "pythagoras", "chuY": "Y là nguyên âm khi hai chữ cái cạnh nó đều không phải nguyên âm; ngược lại là phụ âm.", "canDoiChieu": true },
+  "chuCai": { "A": 1, "B": 2, "C": 3, "D": 4, "E": 5, "F": 6, "G": 7, "H": 8, "I": 9, "J": 1, "K": 2, "L": 3, "M": 4, "N": 5, "O": 6, "P": 7, "Q": 8, "R": 9, "S": 1, "T": 2, "U": 3, "V": 4, "W": 5, "X": 6, "Y": 7, "Z": 8 },
+  "so": {
+    "1": { "ten": "Người khởi xướng", "tuKhoa": "độc lập, tiên phong", "y": "Thích tự mở đường, quyết đoán, có sức bắt đầu mọi việc.", "luuY": "Dễ cứng đầu; thử lắng nghe thêm trước khi quyết." },
+    "2": { "ten": "Người hòa giải", "tuKhoa": "hợp tác, nhạy cảm", "y": "Khéo kết nối, tinh tế, giỏi làm việc nhóm và giữ hòa khí.", "luuY": "Dễ ngại va chạm; hãy tập nói điều mình cần." },
+    "3": { "ten": "Người biểu đạt", "tuKhoa": "sáng tạo, vui tươi", "y": "Có duyên ăn nói, giàu ý tưởng, mang lại niềm vui cho người quanh mình.", "luuY": "Dễ phân tán; chọn một việc để đi đến cùng." },
+    "4": { "ten": "Người xây nền", "tuKhoa": "kỷ luật, bền bỉ", "y": "Thực tế, ngăn nắp, đáng tin; làm chắc từng bước.", "luuY": "Dễ cứng nhắc; chừa chỗ cho điều bất ngờ." },
+    "5": { "ten": "Người tự do", "tuKhoa": "linh hoạt, ham trải nghiệm", "y": "Thích thay đổi, học nhanh, thích nghi tốt.", "luuY": "Dễ bốc đồng; hãy giữ một nhịp ổn định." },
+    "6": { "ten": "Người chăm sóc", "tuKhoa": "trách nhiệm, yêu thương", "y": "Quan tâm gia đình, hài hòa, có tinh thần phục vụ.", "luuY": "Dễ ôm việc của người khác; nhớ chăm sóc chính mình." },
+    "7": { "ten": "Người tìm hiểu", "tuKhoa": "chiêm nghiệm, phân tích", "y": "Thích suy ngẫm, nghiên cứu, có đời sống nội tâm sâu.", "luuY": "Dễ thu mình; chủ động chia sẻ với người thân." },
+    "8": { "ten": "Người điều hành", "tuKhoa": "tham vọng, tổ chức", "y": "Có tầm nhìn quản lý, hiểu tiền bạc và quyền lực thực tế.", "luuY": "Dễ chạy theo thành tích; giữ cân bằng với các mối quan hệ." },
+    "9": { "ten": "Người nhân văn", "tuKhoa": "bao dung, lý tưởng", "y": "Rộng lượng, giàu lòng trắc ẩn, muốn giúp đời tốt hơn.", "luuY": "Dễ chịu thiệt; biết buông những điều đã qua." },
+    "11": { "ten": "Số chủ đạo 11 · Người truyền cảm hứng", "tuKhoa": "trực giác, cảm hứng", "y": "Trực giác mạnh, nhạy bén, có khả năng soi sáng cho người khác.", "luuY": "Năng lượng cao dễ căng thẳng; cần thời gian tĩnh lặng." },
+    "22": { "ten": "Số chủ đạo 22 · Người kiến tạo", "tuKhoa": "tầm nhìn lớn, thực thi", "y": "Biến ý tưởng lớn thành công trình thực tế, có khả năng tổ chức rộng.", "luuY": "Áp lực tự đặt ra lớn; chia nhỏ mục tiêu để đi bền." },
+    "33": { "ten": "Số chủ đạo 33 · Người dẫn dắt bằng yêu thương", "tuKhoa": "phụng sự, chữa lành", "y": "Thiên hướng nâng đỡ, dạy dỗ và chăm sóc cộng đồng.", "luuY": "Dễ gồng gánh; hãy nhận sự giúp đỡ khi cần." }
+  },
+  "chiSo": {
+    "duongDoi": "Số đường đời — hướng đi và bài học lớn trong cuộc sống (từ ngày sinh).",
+    "suMenh": "Số sứ mệnh — tài năng và cách bạn thể hiện ra bên ngoài (từ toàn bộ tên).",
+    "linhHon": "Số linh hồn — điều bạn thật sự khao khát bên trong (từ nguyên âm trong tên).",
+    "nhanCach": "Số nhân cách — ấn tượng người khác nhận được ở bạn (từ phụ âm trong tên).",
+    "ngaySinh": "Số ngày sinh — một tài năng tự nhiên đi kèm bạn.",
+    "thaiDo": "Số thái độ — cách bạn phản ứng với cuộc sống (ngày + tháng sinh)."
+  },
+  "chuKy": {
+    "nam": { "1": "Năm khởi đầu: gieo hạt, bắt đầu việc mới.", "2": "Năm kiên nhẫn: hợp tác, chờ đợi đúng lúc.", "3": "Năm biểu đạt: giao lưu, sáng tạo, mở rộng quan hệ.", "4": "Năm xây nền: làm chắc, sắp xếp, tiết kiệm.", "5": "Năm thay đổi: di chuyển, thử cái mới, linh hoạt.", "6": "Năm gia đình: chăm sóc, trách nhiệm, hàn gắn.", "7": "Năm chiêm nghiệm: học, nghỉ ngơi, nhìn lại.", "8": "Năm thu hoạch: công việc, tiền bạc, quyền chủ động.", "9": "Năm khép lại: buông cũ, dọn dẹp, chuẩn bị chu kỳ mới." },
+    "thang": "Tháng cá nhân nhắc nhịp việc trong tháng, theo số của năm cá nhân cộng tháng.",
+    "ngay": "Ngày cá nhân gợi ý tông việc nên chú tâm trong ngày."
+  },
+  "mauNgay": {
+    "ghiChu": "Quy ước dự án: mỗi số 1–9 nghiêng nhẹ về vài lĩnh vực. Mức chênh nhỏ (±8), không phải kinh điển; canDoiChieu.",
+    "canDoiChieu": true,
+    "nen": 60,
+    "lech": {
+      "1": { "tai_loc": 2, "su_nghiep": 8, "tinh_cam": -2, "suc_khoe": 2, "quy_nhan": 0 },
+      "2": { "tai_loc": 0, "su_nghiep": -2, "tinh_cam": 8, "suc_khoe": 0, "quy_nhan": 6 },
+      "3": { "tai_loc": 2, "su_nghiep": 4, "tinh_cam": 6, "suc_khoe": 2, "quy_nhan": 4 },
+      "4": { "tai_loc": 4, "su_nghiep": 6, "tinh_cam": -2, "suc_khoe": 2, "quy_nhan": 0 },
+      "5": { "tai_loc": 0, "su_nghiep": 2, "tinh_cam": 2, "suc_khoe": -2, "quy_nhan": 4 },
+      "6": { "tai_loc": 2, "su_nghiep": 0, "tinh_cam": 8, "suc_khoe": 4, "quy_nhan": 4 },
+      "7": { "tai_loc": -2, "su_nghiep": 0, "tinh_cam": -2, "suc_khoe": 4, "quy_nhan": 2 },
+      "8": { "tai_loc": 8, "su_nghiep": 8, "tinh_cam": -4, "suc_khoe": 0, "quy_nhan": 2 },
+      "9": { "tai_loc": -2, "su_nghiep": 0, "tinh_cam": 4, "suc_khoe": 2, "quy_nhan": 6 }
+    }
+  },
+  "mui": [
+    { "id": "ke-hoach", "ten": "Kế hoạch", "so": [1, 2, 3], "co": "Biết lên kế hoạch và sắp xếp ý tưởng.", "trong": "Hay làm theo cảm hứng; thử viết ra ba việc cần làm mỗi ngày." },
+    { "id": "y-chi", "ten": "Ý chí", "so": [4, 5, 6], "co": "Ý chí bền, đã chọn là theo đến cùng.", "trong": "Dễ bỏ giữa chừng; hãy chia việc thành bước nhỏ." },
+    { "id": "hoat-dong", "ten": "Hoạt động", "so": [7, 8, 9], "co": "Năng động, thích bắt tay vào làm.", "trong": "Hay ngại bắt đầu; cho mình một việc nhỏ để làm ngay." },
+    { "id": "thuc-te", "ten": "Thực tế", "so": [1, 4, 7], "co": "Chân thực, khéo tay, biết lo toan thực tế.", "trong": "Cần tập chú ý chi tiết và việc cụ thể." },
+    { "id": "can-bang-cam-xuc", "ten": "Cân bằng cảm xúc", "so": [2, 5, 8], "co": "Hiểu và cân bằng được cảm xúc.", "trong": "Cảm xúc dễ dao động; thiền, viết nhật ký sẽ giúp." },
+    { "id": "tri-tue", "ten": "Trí tuệ", "so": [3, 6, 9], "co": "Tư duy tốt, trí nhớ và phân tích sắc.", "trong": "Cần rèn thêm trí nhớ và sự tập trung." },
+    { "id": "quyet-tam", "ten": "Quyết tâm", "so": [1, 5, 9], "co": "Quyết tâm cao, vượt khó giỏi.", "trong": "Dễ chùn lòng; tìm một người đồng hành." },
+    { "id": "tam-linh", "ten": "Tâm linh", "so": [3, 5, 7], "co": "Trực giác và đời sống tinh thần phong phú.", "trong": "Thiên về lý trí; để ý thêm tiếng nói bên trong." }
+  ],
+  "nuiTen": "Mũi tên được tính trên ngày sinh dương (các chữ số khác 0): đủ cả ba số trên một hàng/cột/đường chéo là có mũi tên; vắng cả ba là mũi tên trống."
+}

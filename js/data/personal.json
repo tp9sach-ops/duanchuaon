@@ -1,0 +1,45 @@
+{
+  "_ghiChu": "Bảng tra bói ngày cá nhân. Mục có 'canDoiChieu': true là dữ liệu chưa được đối chiếu với sách/lịch uy tín, cần chủ dự án kiểm trước khi coi là chuẩn.",
+  "quanHe": {
+    "canDoiChieu": true,
+    "diem": { "lucHop": 10, "tamHop": 8, "lucXung": -12, "tuHanhXung": -4, "hinh": -6, "hai": -6, "pha": -5 },
+    "lucHop": [[0, 1], [2, 11], [3, 10], [4, 9], [5, 8], [6, 7]],
+    "tamHop": [[8, 0, 4], [11, 3, 7], [2, 6, 10], [5, 9, 1]],
+    "tuHanhXung": [[0, 6, 3, 9], [2, 8, 5, 11], [4, 10, 1, 7]],
+    "hinh": [[2, 5, 8], [1, 10, 7], [0, 3]],
+    "tuHinh": [4, 6, 9, 11],
+    "hai": [[0, 7], [1, 6], [2, 5], [3, 4], [8, 11], [9, 10]],
+    "pha": [[0, 9], [1, 4], [2, 11], [3, 6], [5, 8], [7, 10]]
+  },
+  "nguHanh": {
+    "diem": { "ngaySinhMenh": 5, "tyHoa": 3, "menhSinhNgay": -1, "menhKhacNgay": -2, "ngayKhacMenh": -7 },
+    "sinh": { "Mộc": "Hỏa", "Hỏa": "Thổ", "Thổ": "Kim", "Kim": "Thủy", "Thủy": "Mộc" },
+    "khac": { "Mộc": "Thổ", "Thổ": "Thủy", "Thủy": "Hỏa", "Hỏa": "Kim", "Kim": "Mộc" }
+  },
+  "mucTieu": {
+    "chung":   { "ten": "Việc chung", "tu": [] },
+    "khaiTai": { "ten": "Khai tài, khai trương", "tu": ["khai trương", "nhập kho", "thu hoạch"] },
+    "cuoiHoi": { "ten": "Cưới hỏi", "tu": ["cưới hỏi"] },
+    "dongTho": { "ten": "Động thổ, xây dựng", "tu": ["động thổ", "xây dựng", "khởi công"] },
+    "xuatHanh": { "ten": "Xuất hành", "tu": ["xuất hành"] },
+    "kyKet": { "ten": "Ký hợp đồng", "tu": ["ký kết", "khế ước"] },
+    "thiCu": { "ten": "Thi cử, phỏng vấn", "tu": [], "ghiChu": "Chưa có quy tắc Trực riêng cho mục này; chỉ dùng điểm ngày và tuổi." },
+    "khamBenh": { "ten": "Khám chữa bệnh", "tu": ["chữa bệnh", "trị liệu"] },
+    "leChua": { "ten": "Lễ chùa, cúng tế", "tu": ["cúng tế", "cầu phúc"] },
+    "diemNen": 6,
+    "diemKy": -8
+  },
+  "huong": {
+    "canDoiChieu": true,
+    "hyThan": ["Đông Bắc", "Tây Bắc", "Tây Nam", "Chính Nam", "Đông Nam", "Đông Bắc", "Tây Bắc", "Tây Nam", "Chính Nam", "Đông Nam"],
+    "taiThan": ["Đông Nam", "Đông Nam", "Đông", "Đông", "Bắc", "Bắc", "Tây Nam", "Tây Nam", "Tây", "Tây"]
+  },
+  "hanh": {
+    "Kim":   { "mau": ["trắng", "ghi", "vàng nhạt"], "so": [4, 9] },
+    "Mộc":   { "mau": ["xanh lá", "xanh dương", "đen"], "so": [3, 8] },
+    "Thủy":  { "mau": ["đen", "xanh dương", "trắng"], "so": [1, 6] },
+    "Hỏa":   { "mau": ["đỏ", "hồng", "tím", "xanh lá"], "so": [2, 7] },
+    "Thổ":   { "mau": ["vàng", "nâu", "đỏ"], "so": [5, 10] }
+  },
+  "gioSinh": ["Tý (23h–1h)", "Sửu (1h–3h)", "Dần (3h–5h)", "Mão (5h–7h)", "Thìn (7h–9h)", "Tỵ (9h–11h)", "Ngọ (11h–13h)", "Mùi (13h–15h)", "Thân (15h–17h)", "Dậu (17h–19h)", "Tuất (19h–21h)", "Hợi (21h–23h)"]
+}
