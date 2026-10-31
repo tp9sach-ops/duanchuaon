@@ -83,3 +83,32 @@ export function viTriHanhTinh(jd) {
   });
   return { planets, goc: gocChieu(planets) };
 }
+
+// ---- Chấm điểm sơ bộ cho bộ tổng hợp (quy ước dự án, độ tin cậy thấp) ----
+// Hành tinh hôm nay chiếu vào Mặt Trời/Mặt Trăng lúc sinh (orb 4°). Mộc/Kim thuận: cộng; Thổ/Hỏa vuông, đối: trừ nhẹ.
+const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
+const LINH_VUC_HT = { 'Kim Tinh': ['tinh_cam', 'quy_nhan'], 'Mộc Tinh': ['tai_loc', 'quy_nhan'], 'Thổ Tinh': ['su_nghiep', 'suc_khoe'], 'Hỏa Tinh': ['suc_khoe', 'su_nghiep'], 'Thủy Tinh': ['su_nghiep'] };
+const DAU = { 'Hợp': { 'Kim Tinh': 1, 'Mộc Tinh': 1, 'Thổ Tinh': -1, 'Hỏa Tinh': -0.5, 'Thủy Tinh': 0.3 }, 'Tam hợp': 1, 'Lục hợp': 0.6, 'Vuông': -1, 'Đối': -0.8 };
+const MUC = { 'Kim Tinh': 3, 'Mộc Tinh': 5, 'Thổ Tinh': 5, 'Hỏa Tinh': 4, 'Thủy Tinh': 2 };
+
+/** natal, nay = kết quả viTriHanhTinh(). Trả vector điểm cùng dạng các môn khác. */
+export function scoreHoangDao(natal, nay) {
+  const o = { mon: 'hoangDao', tong: 50, tai_loc: 50, su_nghiep: 50, tinh_cam: 50, suc_khoe: 50, quy_nhan: 50, doTinCay: 0.3, nhan: 'Hành tinh đi qua cung Mặt Trời/Trăng của bạn' };
+  const goc = [], ly = [];
+  const nat = natal.planets.filter((p) => p.ten === 'Mặt Trời' || p.ten === 'Mặt Trăng');
+  nay.planets.filter((p) => LINH_VUC_HT[p.ten]).forEach((t) => nat.forEach((n) => {
+    const diff = Math.abs(t.lon - n.lon), sep = diff > 180 ? 360 - diff : diff;
+    for (const [ten, g] of GOC.map((x) => [x[0], x[1]])) {
+      if (Math.abs(sep - g) > 4) continue;
+      const base = ten === 'Hợp' ? DAU['Hợp'][t.ten] : DAU[ten];
+      const d = base * MUC[t.ten] * (1 - Math.abs(sep - g) / 6);
+      LINH_VUC_HT[t.ten].forEach((k) => { o[k] += d; });
+      o.tong += d * 0.5; ly.push(`${t.ten} ${ten.toLowerCase()} ${n.ten} lúc sinh`);
+    }
+  }));
+  const thuy = nay.planets.find((p) => p.ten === 'Thủy Tinh');
+  if (thuy && thuy.nghich) { o.su_nghiep -= 3; o.quy_nhan -= 2; o.tong -= 1.5; ly.push('Thủy Tinh nghịch hành: nên rà soát hợp đồng, giấy tờ'); }
+  ['tong', 'tai_loc', 'su_nghiep', 'tinh_cam', 'suc_khoe', 'quy_nhan'].forEach((k) => { o[k] = Math.round(clamp(o[k], 30, 75)); });
+  if (ly.length) o.nhan = ly.slice(0, 2).join('; ');
+  return o;
+}

@@ -5,6 +5,8 @@ import { analyzeNumerology, scoreNumerology } from '../engines/numerology.js';
 import { analyzeBatu, luuNien } from '../engines/batu.js';
 import { jdFromUTC, moonPhase } from '../engines/astro.js';
 import { lapLaSo, scoreTuVi } from '../engines/tuvi.js';
+import { viTriHanhTinh, scoreHoangDao } from '../engines/planets.js';
+import { birthUTC } from '../engines/zodiac.js';
 import { synthesize, fromBoiNgay, fromLuuNien, fromThienVan, averageScores, LINH_VUC } from '../engines/synthesis.js';
 
 const KEY = 'lgt.profile';
@@ -37,6 +39,11 @@ export function compute(horizon, D, prof, now = new Date()) {
     inputs.push(fromLuuNien(luuNien(yy, b.lunar.year, batu), batu, W)); inputs.push(numVec('nam'));
     const tv = scoreTuVi(lapLaSo({ lunar: b.lunar, gio: b.gio, gioiTinh: prof.gioiTinh }));   // lá số gốc (chưa có Tiểu hạn theo năm)
     if (tv) inputs.push(tv);
+  }
+  // Hoàng đạo: hành tinh ở thời điểm xem (hôm nay / giữa tháng / giữa năm) chiếu vào Mặt Trời, Mặt Trăng lúc sinh
+  if (ok) {
+    const at = horizon === 'ngay' ? now.getTime() : horizon === 'thang' ? Date.UTC(yy, mm - 1, 15, 5) : Date.UTC(yy, 6, 1, 5);
+    inputs.push(scoreHoangDao(viTriHanhTinh(jdFromUTC(birthUTC(b.solar.dd, b.solar.mm, b.solar.yy, b.gio))), viTriHanhTinh(jdFromUTC(at))));
   }
   const r = synthesize(horizon, inputs, W, extras);
   r.coHoSo = ok; r.ngay = { dd, mm, yy };

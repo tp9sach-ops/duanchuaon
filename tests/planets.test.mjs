@@ -34,3 +34,20 @@ test('góc chiếu: hai thiên thể cách đúng 120° là Tam hợp', () => {
   const g = gocChieu([{ ten: 'A', lon: 10 }, { ten: 'B', lon: 130 }, { ten: 'C', lon: 200 }]);
   assert.ok(g.some((x) => x.a === 'A' && x.b === 'B' && x.ten === 'Tam hợp' && x.lech === 0));
 });
+
+import { scoreHoangDao } from '../js/engines/planets.js';
+const mk = (list) => ({ planets: list.map(([ten, lon]) => ({ ten, lon, nghich: false })), goc: [] });
+test('chấm điểm: Mộc tam hợp Mặt Trời lúc sinh → tài lộc tăng; Thổ vuông → sự nghiệp giảm', () => {
+  const natal = mk([['Mặt Trời', 10], ['Mặt Trăng', 200]]);
+  const tot = scoreHoangDao(natal, mk([['Mộc Tinh', 130]])), xau = scoreHoangDao(natal, mk([['Thổ Tinh', 100]]));
+  assert.ok(tot.tai_loc > 50); assert.ok(xau.su_nghiep < 50);
+});
+test('chấm điểm: không góc chiếu thì giữ 50; Thủy nghịch trừ nhẹ sự nghiệp; luôn trong 30–75', () => {
+  const natal = mk([['Mặt Trời', 10], ['Mặt Trăng', 200]]);
+  const base = scoreHoangDao(natal, mk([['Mộc Tinh', 70]]));   // 60° với Mặt Trời: lục hợp → có cộng; chọn 50° để không có góc
+  const none = scoreHoangDao(natal, mk([['Mộc Tinh', 50]]));
+  assert.equal(none.tong, 50); assert.ok(base.tai_loc > 50);
+  const nay = mk([['Thủy Tinh', 300]]); nay.planets[0].nghich = true;
+  assert.ok(scoreHoangDao(natal, nay).su_nghiep < 50);
+  for (let L = 0; L < 360; L += 7) { const r = scoreHoangDao(natal, mk([['Thổ Tinh', L], ['Hỏa Tinh', L + 1]])); ['tong', 'tai_loc', 'su_nghiep'].forEach((k) => assert.ok(r[k] >= 30 && r[k] <= 75)); }
+});
