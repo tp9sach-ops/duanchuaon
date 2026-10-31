@@ -24,7 +24,7 @@ function ringSvg(gio, nowChi) {
 
 function scoreRing(score) {
   const C = 2 * Math.PI * 44;
-  return `<svg viewBox="0 0 100 100" class="score-ring" aria-hidden="true"><circle cx="50" cy="50" r="44" class="bg"/><circle cx="50" cy="50" r="44" class="fg" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * (1 - score / 100)).toFixed(1)}" transform="rotate(-90 50 50)"/></svg>`;
+  return `<svg viewBox="0 0 100 100" class="score-ring" aria-hidden="true"><circle cx="50" cy="50" r="44" class="bg"/><circle cx="50" cy="50" r="44" class="arc" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * (1 - score / 100)).toFixed(1)}" transform="rotate(-90 50 50)"/></svg>`;
 }
 
 const moodWord = (s) => (s >= 70 ? 'Ngày thuận, hợp khởi sự việc đã chuẩn bị kỹ.' : s >= 55 ? 'Ngày khá ổn, làm việc đều tay.' : s >= 42 ? 'Ngày trung bình, nên chọn việc vừa sức.' : 'Ngày nên chậm lại, ưu tiên việc nhẹ và tĩnh tâm.');

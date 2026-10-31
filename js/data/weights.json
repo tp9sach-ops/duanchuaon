@@ -1,0 +1,29 @@
+{
+  "_ghiChu": "Bảng trọng số bộ tổng hợp (theo kế hoạch ban đầu của ptg). Chỉnh số ở đây, không cần sửa mã. Môn thiếu dữ liệu sẽ bị bỏ và trọng số còn lại được chuẩn hóa lại. Mục 'canDoiChieu' là quy ước dự án, chưa đối chiếu nguồn.",
+  "trongSo": {
+    "ngay":    { "boiNgay": 0.40, "batu": 0.20, "tuVi": 0.05, "thanSo": 0.15, "hoangDao": 0.15, "thienVan": 0.05, "tayTuong": 0 },
+    "thang":   { "boiNgay": 0.15, "batu": 0.25, "tuVi": 0.15, "thanSo": 0.20, "hoangDao": 0.20, "thienVan": 0.05, "tayTuong": 0 },
+    "nam":     { "boiNgay": 0.05, "batu": 0.25, "tuVi": 0.30, "thanSo": 0.20, "hoangDao": 0.15, "thienVan": 0.05, "tayTuong": 0 },
+    "duongDoi":{ "boiNgay": 0,    "batu": 0.20, "tuVi": 0.30, "thanSo": 0.25, "hoangDao": 0.10, "thienVan": 0,    "tayTuong": 0.15 }
+  },
+  "tenMon": { "boiNgay": "Bói ngày", "batu": "Bát tự", "tuVi": "Tử vi", "thanSo": "Thần số học", "hoangDao": "Cung hoàng đạo", "thienVan": "Thiên văn", "tayTuong": "Chỉ tay và nhân tướng" },
+  "tenLinhVuc": { "tai_loc": "Tài lộc", "su_nghiep": "Sự nghiệp", "tinh_cam": "Tình cảm", "suc_khoe": "Sức khỏe", "quy_nhan": "Quý nhân" },
+  "tenKhoang": { "ngay": "hôm nay", "thang": "tháng này", "nam": "năm nay", "duongDoi": "đường đời" },
+  "nguong": { "tot": 58, "thap": 42, "dongThuan": 3, "yeuLinhVuc": 48 },
+  "canDoiChieu": true,
+  "chiaLinhVucBoiNgay": {
+    "buoc": 4, "toiDa": 8, "thanHoangDao": 4,
+    "tai_loc":   { "nen": ["cầu tài", "khai trương", "nhập kho", "thu nợ", "thu hoạch", "ký kết"], "ky": [] },
+    "su_nghiep": { "nen": ["nhậm chức", "khai trương", "ký kết", "xây dựng", "khởi công", "động thổ", "lập khế ước"], "ky": ["khởi công lớn"] },
+    "tinh_cam":  { "nen": ["cưới hỏi"], "ky": ["cưới hỏi"] },
+    "suc_khoe":  { "nen": ["chữa bệnh", "trị liệu", "nghỉ ngơi", "dọn dẹp"], "ky": ["leo cao", "đi thuyền", "mạo hiểm", "xuất hành xa"] },
+    "quy_nhan":  { "nen": ["cúng tế", "cầu phúc", "tĩnh tâm"], "ky": [] }
+  },
+  "chiaLinhVucNam": {
+    "Chính tài": { "tai_loc": 6 }, "Thiên tài": { "tai_loc": 6, "quy_nhan": 2 },
+    "Chính quan": { "su_nghiep": 6, "quy_nhan": 2 }, "Thất sát": { "su_nghiep": 4, "suc_khoe": -2 },
+    "Thực thần": { "suc_khoe": 4, "tinh_cam": 3 }, "Thương quan": { "tinh_cam": 2, "su_nghiep": -2 },
+    "Chính ấn": { "quy_nhan": 6, "suc_khoe": 2 }, "Thiên ấn": { "quy_nhan": 5 },
+    "Tỷ kiên": { "quy_nhan": 2, "tai_loc": -3 }, "Kiếp tài": { "quy_nhan": 1, "tai_loc": -4 }
+  }
+}
