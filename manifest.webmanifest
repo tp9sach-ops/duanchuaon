@@ -1,0 +1,15 @@
+{
+  "name": "Diệu Giang Tự",
+  "short_name": "Diệu Giang Tự",
+  "description": "Chùa Việt 3D trên núi về đêm: lịch vạn niên, bát tự, thần số học, chùa online.",
+  "lang": "vi",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#06070d",
+  "theme_color": "#06070d",
+  "icons": [
+    { "src": "assets/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "assets/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}

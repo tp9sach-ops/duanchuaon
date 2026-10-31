@@ -57,3 +57,6 @@ async function boot() {
   });
 }
 boot();
+
+// PWA: đăng ký service worker (bỏ qua khi chạy file:// hoặc trình duyệt không hỗ trợ)
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
