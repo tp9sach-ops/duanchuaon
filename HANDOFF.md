@@ -1,7 +1,7 @@
 # HANDOFF — Web tâm linh "LINH QUANG / Linh Giang Tự" (chùa Việt 3D)
 
 > Đọc file này đầu tiên. Nó đủ để một phiên mới, không có trí nhớ, tiếp tục đúng và chi tiết.
-> Phiên hiện tại: **Phiên 2** (2026-10-31) — đã đẩy mã lên GitHub. Cập nhật mục 2, 7, 8 ở cuối MỖI phiên.
+> Phiên hiện tại: **Phiên 2** (2026-10-31) — đã đẩy mã lên GitHub; Giai đoạn 2 đã xong phần mã và test. Cập nhật mục 2, 7, 8 ở cuối MỖI phiên.
 
 ## 0. QUY TẮC BÀN GIAO (chép nguyên văn vào mọi bản bàn giao)
 
@@ -23,8 +23,9 @@ Diễn giải thực hành: sau MỖI câu trả lời, đính kèm HANDOFF.md �
 |---|---|
 | Repo GitHub `https://github.com/tp9sach-ops/loinhuan.github.io` | Phiên 2: ban đầu rỗng; **đã đẩy toàn bộ mã Giai đoạn 1 (đã đổi tên LINH QUANG) + HANDOFF.md + docs/KE_HOACH.md lên nhánh `main`**. Cần ptg bật Pages (Settings → Pages → Source: GitHub Actions). |
 | Bản mã Giai đoạn 1 | Nằm trong `linh-giang-tu.zip` (ptg đã gửi, 168 KB, ~1.430 dòng). Gồm: index.html, css/style.css, js/{main,ui,util,api,config}.js, js/scene/{index,rail,temple,nature,particles,textures}.js, gas/Code.gs, tests/smoke.mjs, package.json, .github/workflows/pages.yml, README.md, HANDOFF.md (cũ). |
-| Giai đoạn 1 (khung + cảnh 3D + camera rail) | Đã viết mã, **CHƯA từng xem trên trình duyệt thật**. |
-| Giai đoạn 2–9 | Chưa làm. |
+| Giai đoạn 1 (khung + cảnh 3D + camera rail) | Đã chạy thử trong Chromium (Playwright, three.js cài cục bộ, WebGL phần mềm): cảnh chùa hiện đúng, không lỗi JS, không tràn ngang ở 1366px và 390px. **Chưa đo FPS trên điện thoại thật.** |
+| Giai đoạn 2 (lịch Âm, Can Chi, bói ngày chung, vòng 12 giờ) | **Xong mã + 17 test đạt + đã xem giao diện.** Còn: đối chiếu Trực/Tú/Dương công kỵ với lịch vạn niên (mục 8). |
+| Giai đoạn 3–9 | Chưa làm. |
 | Phiên 2 | Đổi tên mã sang LINH QUANG (chữ Hán 靈光), đẩy lên GitHub. Cấu trúc thư mục vẫn PHẲNG (chưa tách theo cây mới). |
 
 Chi tiết giai đoạn: 1 khung+cảnh · 2 lịch Âm/Can Chi/bói ngày · 3 form hồ sơ + lưu Sheet + bói ngày cá nhân · 4 thần số/hoàng đạo/thiên văn · 5 bát tự/tử vi/vận trình · 6 bộ tổng hợp + thẻ "Lá bùa" · 7 chỉ tay/nhân tướng AI vision · 8 chùa online · 9 tối ưu/PWA/SEO/a11y/hướng dẫn triển khai.
@@ -118,17 +119,29 @@ Lưu ý: dòng cuối "Chỉ trả lời 'đã hiểu'" là phần của prompt 
 
 ## 7. Nhật ký phiên
 
+- **Phiên 2c (2026-10-31):** ptg bảo "tiếp tục". Dựng Giai đoạn 2: `js/engines/lunar.js` (Hồ Ngọc Đức, UTC+7, nhuận, có cả âm→dương), `canchi.js` (Can Chi ngày/tháng/năm/giờ, 30 Nạp âm), `dayscore.js` (Trực theo tháng tiết, Tú, 12 thần, giờ Hoàng đạo, Tam nương, Nguyệt kỵ, Dương công kỵ, Bành Tổ, tiết khí, điểm 0–100 + dấu vết), `js/data/knowledge.json`, `js/ui/today.js` + CSS (chương #today: chọn ngày, vòng 12 giờ SVG, vòng điểm, nên/tránh, dấu vết suy luận, MOOD theo điểm), `tests/engines.test.mjs` (node:test, KHÔNG dùng Vitest để khỏi phụ thuộc npm). Đã chụp màn hình desktop/mobile kiểm tra.
+
 - **Phiên 1 (2026-10-31):** đổi tên thành Linh Giang Tự; chọn GitHub Pages + GAS; dựng toàn bộ Giai đoạn 1 (≈1.430 dòng); thêm smoke test + workflow Pages; viết HANDOFF đầu tiên. Môi trường chặn mạng nên chưa chạy trên trình duyệt.
 - **Phiên 2b (2026-10-31):** ptg bảo thực hiện tiếp và tự động đẩy lên GitHub. Đổi tên → LINH QUANG, `npm test` đạt (cú pháp, file bắt buộc, quét tên, 7 mốc = 7 section), thêm 大雄寶殿 vào subset font Hán, đẩy mã + docs lên `main`. Chưa xem trình duyệt.
 - **Phiên 2 (2026-10-31):** ptg gửi lại kế hoạch (`KE_HOACH.md`, Phần A–F + Prompt 0–9), zip Giai đoạn 1, link repo `tp9sach-ops/loinhuan.github.io` (đọc qua API thấy rỗng), cây thư mục mục tiêu và prompt chủ mới (tên "LINH QUANG"). Yêu cầu: viết bàn giao cho mỗi phiên và chép cây thư mục + prompt vào bàn giao. Đã viết bản này. **Không sửa mã, không đẩy lên GitHub.** Phát hiện 3 xung đột (mục 3).
 
 ## 8. Việc tiếp theo (theo thứ tự)
 
+**A. ptg cần làm/đối chiếu (Giai đoạn 2):**
+- Mở trang, chọn vài ngày, so với lịch vạn niên bạn tin: Trực, Sao (Tú), Thần ngày, giờ Hoàng đạo, Dương công kỵ nhật. Dữ liệu đánh dấu `canDoiChieu` trong `js/data/knowledge.json` (Tú offset `offsetJd`=11, bảng Dương công kỵ, điểm Trực) **chưa được đối chiếu**.
+- Đã chắc chắn (có test): âm lịch Tết 2024/2025/2026, tháng 2 nhuận 2023, Can Chi ngày/năm/tháng/giờ, Nạp âm, Trực lặp ở ngày giao tiết, giờ Hoàng đạo ngày Tý.
+- Chưa đưa vào: **Sát chủ, Thọ tử** (thiếu bảng tra đáng tin), điểm cho 28 Tú (mỗi sách một kiểu). Cần ptg chọn nguồn/bảng.
+- Quy ước đang dùng: tháng Can Chi theo **tháng âm** (kiểu lịch Việt); Trực và thần ngày theo **tháng tiết**; ngày giao tiết thuộc tháng mới; giờ Tý sớm (23h–1h tính cùng ngày).
+
+**B. Việc tiếp theo của AI:** Giai đoạn 3 (form hồ sơ, Storage.gs + Sheet, bói ngày cá nhân: xung/hợp theo tuổi, Hỷ thần/Tài thần, màu, số). Trước đó xác nhận tên/cấu trúc (mục 3) nếu ptg đã trả lời.
+
+**C. Việc cũ còn lại:**
+
 1. Xác nhận với ptg: tên LINH QUANG ổn chưa; chuyển sang cây thư mục mới hay giữ phẳng.
 2. ptg bật Pages (Settings → Pages → Source: GitHub Actions), xem Actions chạy xanh, mở trang và báo: có hiện cảnh không, FPS, ảnh chụp từng chương. Giai đoạn 1 chỉ coi là xong khi cuộn mượt và camera đúng ở cả 7 chương.
 3. Rủi ro Giai đoạn 1 cần kiểm: three.js + addons (EffectComposer, UnrealBloomPass, OutputPass) từ jsdelivr; tỷ lệ mái đầu đao/vị trí công trình/góc camera; chữ Hán hoành phi phụ thuộc font tải kịp; hiệu năng mobile; GAS chưa deploy (`apiUrl` rỗng). Chạy thử cục bộ: `python3 -m http.server 8080` (ES modules không chạy bằng `file://`); `?mood=0.8` / `?mood=-0.8` để xem MOOD.
 4. Tự host font vào `assets/fonts/` (Việt + latin-ext) thay Google Fonts; thêm service worker + manifest (PWA); đổi test sang Vitest khi bắt đầu Giai đoạn 2.
-5. **Giai đoạn 2:** `lunar.js` (Hồ Ngọc Đức, UTC+7, tháng nhuận), `canchi.js`, `dayscore.js` (12 Trực, 28 Tú, 12 thần Hoàng/Hắc đạo, giờ Hoàng đạo, Tam nương, Nguyệt kỵ, Dương công kỵ nhật, Sát chủ, Thọ tử, Bành Tổ); bảng tra `js/data/knowledge.json`; thay khối giữ chỗ ở `#today`; ≥10 ngày kiểm thử có đáp án trong `tests/` để ptg đối chiếu lịch vạn niên; nối `LGT.setMood(...)` theo điểm ngày.
+5. ~~Giai đoạn 2~~ (XONG, xem mục 7 Phiên 2c). Mô tả gốc: `lunar.js` (Hồ Ngọc Đức, UTC+7, tháng nhuận), `canchi.js`, `dayscore.js` (12 Trực, 28 Tú, 12 thần Hoàng/Hắc đạo, giờ Hoàng đạo, Tam nương, Nguyệt kỵ, Dương công kỵ nhật, Sát chủ, Thọ tử, Bành Tổ); bảng tra `js/data/knowledge.json`; thay khối giữ chỗ ở `#today`; ≥10 ngày kiểm thử có đáp án trong `tests/` để ptg đối chiếu lịch vạn niên; nối `LGT.setMood(...)` theo điểm ngày.
 
 ### Quy ước kỹ thuật phải giữ
 - Số mốc `CAM` trong rail phải bằng số `data-cam` trong `index.html` (trừ footer); test kiểm tra.

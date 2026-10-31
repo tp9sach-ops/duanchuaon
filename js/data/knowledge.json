@@ -1,0 +1,64 @@
+{
+  "_ghiChu": "Bảng tra bói ngày. Mọi mục có thể chỉnh. Mục có 'canDoiChieu': true là dữ liệu chưa được đối chiếu với nguồn lịch vạn niên uy tín, cần chủ dự án kiểm.",
+  "truongPhai": { "gioTy": "som", "thangTheo": "tiet", "tuDiem": "chiHienThi" },
+  "truc": [
+    { "ten": "Kiến",  "diem": 6,  "nen": ["xuất hành", "nhậm chức", "khai trương nhỏ"], "ky": ["động thổ", "an táng"] },
+    { "ten": "Trừ",   "diem": 6,  "nen": ["dọn dẹp nhà cửa", "cúng tế", "chữa bệnh"], "ky": ["cưới hỏi", "xuất hành xa"] },
+    { "ten": "Mãn",   "diem": 8,  "nen": ["cúng tế", "cầu phúc", "nhập kho"], "ky": ["khởi công lớn", "an táng"] },
+    { "ten": "Bình",  "diem": 2,  "nen": ["sửa sang đường lối", "việc thường ngày"], "ky": ["khai trương lớn", "động thổ"] },
+    { "ten": "Định",  "diem": 10, "nen": ["cưới hỏi", "ký kết", "xây dựng"], "ky": ["kiện tụng", "xuất hành xa"] },
+    { "ten": "Chấp",  "diem": 4,  "nen": ["lập khế ước", "thu nợ", "bắt tay việc nhỏ"], "ky": ["dọn nhà", "xuất hành"] },
+    { "ten": "Phá",   "diem": -12, "nen": ["phá dỡ", "dọn dẹp", "trị liệu"], "ky": ["khai trương", "cưới hỏi", "ký kết lớn"] },
+    { "ten": "Nguy",  "diem": -6, "nen": ["cúng tế", "tĩnh tâm"], "ky": ["leo cao", "đi thuyền", "việc mạo hiểm"] },
+    { "ten": "Thành", "diem": 14, "nen": ["khai trương", "cưới hỏi", "xuất hành", "ký kết"], "ky": ["kiện tụng"] },
+    { "ten": "Thu",   "diem": 3,  "nen": ["thu hoạch", "thu nợ", "nhập kho"], "ky": ["an táng", "xuất hành xa"] },
+    { "ten": "Khai",  "diem": 14, "nen": ["khai trương", "động thổ", "cưới hỏi", "xuất hành"], "ky": ["an táng"] },
+    { "ten": "Bế",    "diem": -8, "nen": ["đắp đê", "lấp hố", "nghỉ ngơi"], "ky": ["khai trương", "xuất hành", "cưới hỏi"] }
+  ],
+  "tu": {
+    "canDoiChieu": true,
+    "ghiChu": "Chu kỳ 28 ngày gắn với thứ trong tuần. Phần điểm Tú chưa chấm vì mỗi sách xếp cát/hung khác nhau; ptg chọn bảng rồi điền 'diem'.",
+    "offsetJd": 11,
+    "danhSach": [
+      { "ten": "Giác", "hanh": "Mộc", "diem": 0 }, { "ten": "Cang", "hanh": "Kim", "diem": 0 },
+      { "ten": "Đê", "hanh": "Thổ", "diem": 0 }, { "ten": "Phòng", "hanh": "Nhật", "diem": 0 },
+      { "ten": "Tâm", "hanh": "Nguyệt", "diem": 0 }, { "ten": "Vĩ", "hanh": "Hỏa", "diem": 0 },
+      { "ten": "Cơ", "hanh": "Thủy", "diem": 0 }, { "ten": "Đẩu", "hanh": "Mộc", "diem": 0 },
+      { "ten": "Ngưu", "hanh": "Kim", "diem": 0 }, { "ten": "Nữ", "hanh": "Thổ", "diem": 0 },
+      { "ten": "Hư", "hanh": "Nhật", "diem": 0 }, { "ten": "Nguy", "hanh": "Nguyệt", "diem": 0 },
+      { "ten": "Thất", "hanh": "Hỏa", "diem": 0 }, { "ten": "Bích", "hanh": "Thủy", "diem": 0 },
+      { "ten": "Khuê", "hanh": "Mộc", "diem": 0 }, { "ten": "Lâu", "hanh": "Kim", "diem": 0 },
+      { "ten": "Vị", "hanh": "Thổ", "diem": 0 }, { "ten": "Mão", "hanh": "Nhật", "diem": 0 },
+      { "ten": "Tất", "hanh": "Nguyệt", "diem": 0 }, { "ten": "Chủy", "hanh": "Hỏa", "diem": 0 },
+      { "ten": "Sâm", "hanh": "Thủy", "diem": 0 }, { "ten": "Tỉnh", "hanh": "Mộc", "diem": 0 },
+      { "ten": "Quỷ", "hanh": "Kim", "diem": 0 }, { "ten": "Liễu", "hanh": "Thổ", "diem": 0 },
+      { "ten": "Tinh", "hanh": "Nhật", "diem": 0 }, { "ten": "Trương", "hanh": "Nguyệt", "diem": 0 },
+      { "ten": "Dực", "hanh": "Hỏa", "diem": 0 }, { "ten": "Chẩn", "hanh": "Thủy", "diem": 0 }
+    ]
+  },
+  "than12": [
+    { "ten": "Thanh Long", "hoang": true }, { "ten": "Minh Đường", "hoang": true },
+    { "ten": "Thiên Hình", "hoang": false }, { "ten": "Chu Tước", "hoang": false },
+    { "ten": "Kim Quỹ", "hoang": true }, { "ten": "Thiên Đức", "hoang": true },
+    { "ten": "Bạch Hổ", "hoang": false }, { "ten": "Ngọc Đường", "hoang": true },
+    { "ten": "Thiên Lao", "hoang": false }, { "ten": "Huyền Vũ", "hoang": false },
+    { "ten": "Tư Mệnh", "hoang": true }, { "ten": "Câu Trần", "hoang": false }
+  ],
+  "thanKhoiNgay": [0, 2, 4, 6, 8, 10],
+  "thanKhoiGio": { "0": 8, "1": 10, "2": 0, "3": 2, "4": 4, "5": 6, "6": 8, "7": 10, "8": 0, "9": 2, "10": 4, "11": 6 },
+  "diemHoangDao": 12,
+  "diemHacDao": -12,
+  "tamNuong": { "ngay": [3, 7, 13, 18, 22, 27], "diem": -8 },
+  "nguyetKy": { "ngay": [5, 14, 23], "diem": -6 },
+  "duongCongKy": {
+    "canDoiChieu": true,
+    "diem": -10,
+    "theoThang": { "1": [13], "2": [11], "3": [9], "4": [7], "5": [5], "6": [3], "7": [1, 29], "8": [27], "9": [25], "10": [23], "11": [21], "12": [19] }
+  },
+  "ngayDacBiet": { "mung1": 3, "ram": 3 },
+  "banhTo": {
+    "can": ["không mở kho, xuất của", "không gieo trồng", "không sửa bếp", "không cắt tóc", "không nhận ruộng đất", "không phá/ký khế ước", "không dệt vải, làm khung cửi", "không làm tương, ủ rượu", "không dẫn nước, khơi mương", "không kiện tụng"],
+    "chi": ["không bói toán", "không đội mũ, thắt đai", "không cúng tế", "không đào giếng", "không khóc than", "không đi xa", "không lợp mái, thêm nhà", "không uống thuốc", "không kê giường", "không đãi tiệc", "không ăn thịt chó", "không cưới gả"]
+  },
+  "chuaDua": ["Sát chủ", "Thọ tử"]
+}

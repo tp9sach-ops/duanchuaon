@@ -5,7 +5,7 @@
   "type": "module",
   "description": "Linh Quang — web tâm linh 3D (chùa Việt). Giao diện tĩnh trên GitHub Pages, backend Google Apps Script.",
   "scripts": {
-    "test": "node tests/smoke.mjs",
+    "test": "node tests/smoke.mjs && node --test tests/engines.test.mjs",
     "serve": "python3 -m http.server 8080"
   }
 }

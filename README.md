@@ -10,7 +10,7 @@ Giao diện tĩnh trên GitHub Pages; Google Apps Script chỉ làm backend lưu
 ```bash
 python3 -m http.server 8080
 # mở http://localhost:8080   (thêm ?mood=0.8 hoặc ?mood=-0.8 để thử đổi ánh sáng)
-npm test                      # kiểm tra cú pháp và quy ước
+npm test                      # kiểm tra cú pháp, quy ước và engine lịch (17 test)
 ```
 
 ## Đưa lên GitHub Pages
