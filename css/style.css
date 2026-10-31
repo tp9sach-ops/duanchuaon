@@ -1,4 +1,4 @@
-/* Linh Giang Tự — style.css
+/* Diệu Giang Tự — style.css
    Design tokens, layout, reveal. Mobile-first: bố cục 1 cột, mở rộng ở >=900px. */
 :root{
   --ink:#06070d; --ink-2:#0d1020;
@@ -328,3 +328,32 @@ h1,h2,h3{margin:0;font-weight:500}
 .ch-sign.off{opacity:.6}
 @media (min-width:900px){.ch-zod{grid-template-columns:minmax(0,360px) minmax(0,1fr)}.ch-wheelbox{margin:0}}
 @media (max-width:560px){.ch-sky{grid-template-columns:1fr;justify-items:start}}
+
+/* ---- Giai đoạn 5: Vận trình + Bát tự ---- */
+.fortune{display:grid;gap:14px;margin-top:clamp(22px,4vh,40px)}
+.fo-tabs{display:flex;gap:6px;border-bottom:1px solid var(--line-soft)}
+.fo-tabs button{padding:10px 18px;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px}
+.fo-tabs button.on{color:var(--gold-soft);border-color:var(--gold)}
+.fo-bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px}.fo-ttl{font-family:var(--serif);font-size:24px;font-weight:500;color:var(--gold-soft);min-width:9ch;text-align:center}
+.fo-goal{display:flex;align-items:center;gap:8px;margin-left:auto;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.fo-goal select{background:rgba(8,10,20,.8);color:var(--moon);border:1px solid var(--line);border-radius:6px;padding:7px 10px;font:inherit;font-size:13px;letter-spacing:0;text-transform:none}
+.fo-dow,.fo-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}
+.fo-dow span{font-size:10px;letter-spacing:.16em;color:var(--muted);text-align:center}
+.fo-cell{position:relative;min-height:clamp(52px,7vw,74px);border:1px solid var(--line-soft);border-radius:8px;background:rgba(8,10,20,.6);display:grid;align-content:space-between;justify-items:start;padding:6px 8px;text-align:left;transition:border-color .3s,transform .3s}
+.fo-cell b{font-size:15px;font-weight:500;color:var(--moon)}.fo-cell small{font-size:10px;color:var(--muted)}.fo-cell em{position:absolute;right:7px;bottom:5px;font-style:normal;font-size:11px;font-variant-numeric:tabular-nums}
+.fo-cell.good{background:rgba(217,178,95,.16);border-color:rgba(217,178,95,.4)}.fo-cell.good em{color:var(--gold-soft)}
+.fo-cell.low{background:rgba(107,140,201,.14);border-color:rgba(107,140,201,.34)}.fo-cell.low em{color:#9db4e0}
+.fo-cell.mid em{color:var(--muted)}.fo-cell:hover{transform:translateY(-2px)}.fo-cell.sel{outline:2px solid var(--gold);outline-offset:1px}.fo-pad{display:block}
+.fo-two{display:grid;grid-template-columns:1fr;gap:14px}@media (min-width:900px){.fo-two{grid-template-columns:1fr 1.2fr}}
+.fo-best{list-style:none;margin:0 0 8px;padding:0;display:grid;gap:8px}.fo-best button{display:grid;grid-template-columns:1fr auto;gap:2px 10px;width:100%;text-align:left;padding:10px 12px;border:1px solid var(--line-soft);border-radius:8px;background:rgba(217,178,95,.08)}
+.fo-best b{font-weight:500;color:var(--gold-soft)}.fo-best span{grid-column:1;font-size:12px;color:var(--muted)}.fo-best em{grid-column:2;grid-row:1/3;align-self:center;font-style:normal;font-size:22px;font-family:var(--serif);color:var(--gold-soft)}
+.fo-trace{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:6px;font-size:13px;color:#c3c8d8}.fo-trace li{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid var(--line-soft);padding-bottom:5px}.fo-trace b{font-variant-numeric:tabular-nums}.fo-trace b.p{color:var(--jade)}.fo-trace b.n{color:#9db4e0}
+.fo-chart,.fo-line{width:100%;height:auto;display:block;overflow:visible}.fo-chart text,.fo-line text{fill:var(--muted);font-size:10px}.fo-chart .mid{stroke:var(--line);stroke-dasharray:3 4}.fo-chart .ln{fill:none;stroke:var(--gold);stroke-width:1.6}
+.fo-chart .dot{fill:#06070d;stroke:var(--muted);stroke-width:1.5}.fo-chart .dot.good{stroke:var(--gold)}.fo-chart .dot.low{stroke:var(--cold)}.fo-chart .val{fill:var(--moon)}
+.fo-flag{display:inline-block;margin:0 4px 4px 0;padding:3px 10px;border:1px solid var(--line);border-radius:100px;font-size:12px;color:var(--gold-soft)}
+.fo-line rect.b1{fill:rgba(217,178,95,.28)}.fo-line rect.b2{fill:rgba(217,178,95,.14)}.fo-line rect.b3{fill:rgba(74,165,138,.3)}.fo-line rect.b4{fill:rgba(74,165,138,.16)}.fo-line .lb{fill:var(--gold-soft);font-size:11px}.fo-line .now{stroke:var(--vermilion);stroke-width:1.5}.fo-line text{fill:var(--moon)}.fo-line .tk,.fo-line .lb{fill:var(--muted)}.fo-line .lb{fill:var(--gold-soft)}
+.bt{margin-top:16px;display:grid;gap:14px}.bt-cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}@media (min-width:800px){.bt-cols{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.bt-col{border:1px solid var(--line-soft);border-radius:10px;background:rgba(8,10,20,.62);padding:14px;text-align:center}.bt-col.me{border-color:rgba(217,178,95,.5)}
+.bt-can,.bt-chi{font-family:var(--serif);font-size:clamp(26px,3.4vw,38px);line-height:1.1;color:var(--gold-soft)}.bt-chi{color:var(--moon);margin-top:8px}.bt-col small{display:block;font-size:11px;color:var(--muted)}
+.bt-tang{list-style:none;margin:10px 0 0;padding:8px 0 0;border-top:1px solid var(--line-soft);display:grid;gap:3px;font-size:12px;color:#c3c8d8}.bt-tang li{display:flex;justify-content:space-between;gap:8px}.bt-tang i{font-style:normal;color:var(--muted)}
+.bt-bar{display:grid;grid-template-columns:48px 1fr 40px;align-items:center;gap:10px;font-size:13px;margin-bottom:8px;color:#c3c8d8}.bt-bar i{display:block;height:8px;border-radius:6px}.bt-bar b{font-weight:400;text-align:right;color:var(--muted)}
