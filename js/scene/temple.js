@@ -1,8 +1,9 @@
-// Kiến trúc chùa Việt: mái đầu đao, Tam quan, chính điện, gác chuông, đèn lồng, lư hương.
+// Kiến trúc chùa Việt: mái đầu đao, Tam quan, gác chuông, đèn lồng, lư hương.
+// (Chính điện nay nằm ở chanhdien.js; quần thể chùa lớn phía sau là mô hình GLB, xem model.js.)
 import * as THREE from 'three';
 import { signTexture, tileTexture, plasterTexture, coupletTexture } from './textures.js';
 
-const M = {}; // vật liệu dùng chung, tạo một lần
+export const M = {}; // vật liệu dùng chung, tạo một lần
 export function makeMaterials() {
   M.stone = new THREE.MeshStandardMaterial({ color: 0x77808a, roughness: 0.92 });
   M.wall = new THREE.MeshStandardMaterial({ map: plasterTexture(), color: 0xffffff, roughness: 0.95 });   // tường vàng (vữa)
@@ -61,18 +62,18 @@ function ridgeOrnament(len, curl) {
   return g;
 }
 
-function roofWithRidge(w, d, h, curl) {
+export function roofWithRidge(w, d, h, curl) {
   const g = new THREE.Group();
   g.add(makeRoof(w, d, h, curl));
   const r = ridgeOrnament(d, curl); r.position.y = h + 0.12; g.add(r);
   return g;
 }
 
-function box(w, h, d, mat, x, y, z, parent) {
+export function box(w, h, d, mat, x, y, z, parent) {
   const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
   m.position.set(x, y, z); parent.add(m); return m;
 }
-function pillar(r, h, mat, x, y, z, parent) {
+export function pillar(r, h, mat, x, y, z, parent) {
   const m = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.9, r, h, 14), mat);
   m.position.set(x, y + h / 2, z); parent.add(m); return m;
 }
@@ -145,44 +146,6 @@ export function buildTamQuan() {
   // ánh đèn sau cổng giữa (nhìn xuyên ra ao sen)
   const glow = new THREE.Mesh(new THREE.PlaneGeometry(4.6, 6.8), new THREE.MeshBasicMaterial({ color: 0xffb25e, transparent: true, opacity: 0.16 }));
   glow.position.set(0, yb + 3.4, 0); g.add(glow);
-  return g;
-}
-
-/* Chính điện: bệ đá, hai hàng cột sơn son, tường sau, mái chồng diêm hai tầng, cửa sáng đèn. */
-export function buildHall() {
-  const g = new THREE.Group();
-  const W = 28, D = 15, H = 6.2;
-  box(W + 6, 1.5, D + 6, M.stone, 0, 0.75, 0, g);                              // bệ
-  for (let i = 0; i < 7; i++) box(10 - i * 0.2, 0.22, 0.8, M.stone, 0, 0.11 + i * 0.2, D / 2 + 3 + (6 - i) * 0.8 - 0.4, g); // bậc thềm
-  const y0 = 1.5;
-  // Hai hàng cột mặt trước + cột trong
-  for (let i = 0; i < 7; i++) {
-    const x = -W / 2 + 1.5 + i * ((W - 3) / 6);
-    pillar(0.42, H, M.lacquer, x, y0, D / 2 - 1, g);
-    pillar(0.42, H, M.lacquer, x, y0, -D / 2 + 1, g);
-  }
-  box(W - 1, H, 0.5, M.wall, 0, y0 + H / 2, -D / 2 + 0.3, g);                  // tường hậu
-  for (const s of [-1, 1]) {                                                    // tường vàng hai gian bên, cửa sổ tròn
-    box(0.6, H, D - 1.4, M.wall, s * (W / 2 - 0.9), y0 + H / 2, 0, g);
-    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.85, 0.1, 8, 24), M.gold); ring.rotation.y = Math.PI / 2;
-    ring.position.set(s * (W / 2 - 0.55), y0 + H / 2 + 0.4, 0); g.add(ring);
-  }
-  // Gian giữa phát sáng (ánh nến, bàn thờ)
-  const inner = new THREE.Mesh(new THREE.PlaneGeometry(W - 6, H - 1.2), new THREE.MeshBasicMaterial({ color: 0xffb35c }));
-  inner.position.set(0, y0 + H / 2 - 0.2, -D / 2 + 0.6); g.add(inner);
-  // Cửa lùa: khung gỗ chia ô (giữ nhịp sáng/tối)
-  for (let i = 0; i <= 9; i++) box(0.12, H - 1, 0.1, M.wood, -((W - 6) / 2) + i * ((W - 6) / 9), y0 + H / 2 - 0.2, -D / 2 + 0.7, g);
-  for (let j = 0; j <= 4; j++) box(W - 6, 0.1, 0.1, M.wood, 0, y0 + 0.5 + j * ((H - 1.4) / 4), -D / 2 + 0.7, g);
-  // Xà + bảng
-  box(W + 1, 0.9, D, M.lacquer, 0, y0 + H + 0.2, 0, g);
-  const sign = new THREE.Mesh(new THREE.PlaneGeometry(7.5, 1.9), new THREE.MeshBasicMaterial({ map: signTexture('ĐẠI HÙNG BẢO ĐIỆN') }));
-  sign.position.set(0, y0 + H + 1.4, D / 2 + 0.35); g.add(sign);
-  // Mái hai tầng
-  const low = roofWithRidge(W + 7, D + 5, 3.4, 1.8); low.position.y = y0 + H + 0.7; g.add(low);
-  box(W - 6, 2.6, D - 4, M.lacquer, 0, y0 + H + 0.9 + 1.3, 0, g);
-  const up = roofWithRidge(W - 2, D, 3.2, 2.0); up.position.y = y0 + H + 3.5; g.add(up);
-  // Đèn lồng dọc hiên
-  for (let i = 0; i < 6; i++) makeLantern(g, -W / 2 + 3 + i * ((W - 6) / 5), y0 + H - 0.6, D / 2 + 1.4, 0.85);
   return g;
 }
 
