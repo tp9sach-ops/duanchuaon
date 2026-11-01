@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { viTriTuVi, anChinhTinh, canCung, lapLaSo, scoreTuVi } from '../js/engines/tuvi.js';
+import { anPhuTinh, viTriTuVi, anChinhTinh, canCung, lapLaSo, scoreTuVi } from '../js/engines/tuvi.js';
 
 test('vị trí Tử Vi theo bảng quen thuộc: Thủy nhị cục', () => {
   assert.equal(viTriTuVi(2, 1), 1);   // ngày 1 → Sửu
@@ -34,7 +34,7 @@ test('Mệnh/Thân: tháng 1 giờ Tý → Mệnh Dần; giờ Dần → Mệnh 
 });
 test('lá số hoàn chỉnh: 12 cung, mỗi chính tinh đúng một cung, Tứ hóa gắn đúng sao', () => {
   const ls = lapLaSo({ lunar: { day: 17, month: 4, year: 1990, leap: false }, gio: 6, gioiTinh: 'nam' });
-  assert.equal(ls.cung.length, 12); assert.equal(ls.cung.reduce((n, c) => n + c.sao.length, 0), 14);
+  assert.equal(ls.cung.length, 12); assert.equal(ls.cung.reduce((n, c) => n + c.sao.length, 0), 14 + 9);
   assert.equal(ls.cung.filter((c) => c.chucVu === 'Mệnh').length, 1); assert.equal(ls.cung[ls.menh].chucVu, 'Mệnh');
   assert.equal(ls.namSinh, 'Canh Ngọ'); assert.ok(ls.cung.some((c) => c.sao.some((s) => s.hoa === 'Hóa Lộc')));  // Canh: Thái Dương hóa Lộc
   assert.equal(ls.cung.filter((c) => c.daiHan).length, 12);
@@ -51,4 +51,20 @@ test('Đại hạn: Giáp (dương) nam đi thuận, nữ đi nghịch', () => {
   assert.equal(a.thuan, true); assert.equal(b.thuan, false);
   assert.deepEqual(a.cung[(a.menh + 1) % 12].daiHan, [a.cuc + 10, a.cuc + 19]);
   assert.deepEqual(b.cung[(b.menh + 11) % 12].daiHan, [b.cuc + 10, b.cuc + 19]);
+});
+test('phụ tinh: Tả Hữu theo tháng, Xương Khúc theo giờ', () => {
+  let p = anPhuTinh(1, 0, 0); assert.equal(p['Tả Phụ'], 4); assert.equal(p['Hữu Bật'], 10); assert.equal(p['Văn Xương'], 10); assert.equal(p['Văn Khúc'], 4);
+  p = anPhuTinh(3, 2, 0); assert.equal(p['Tả Phụ'], 6); assert.equal(p['Hữu Bật'], 8); assert.equal(p['Văn Xương'], 8); assert.equal(p['Văn Khúc'], 6);
+});
+test('phụ tinh: Lộc Tồn, Kình Dương, Đà La theo Can năm; Khôi Việt', () => {
+  const g = anPhuTinh(1, 0, 0);   // Giáp
+  assert.equal(g['Lộc Tồn'], 2); assert.equal(g['Kình Dương'], 3); assert.equal(g['Đà La'], 1); assert.equal(g['Thiên Khôi'], 1); assert.equal(g['Thiên Việt'], 7);
+  const b = anPhuTinh(1, 0, 2);   // Bính: Lộc Tỵ, Khôi Hợi, Việt Dậu
+  assert.equal(b['Lộc Tồn'], 5); assert.equal(b['Thiên Khôi'], 11); assert.equal(b['Thiên Việt'], 9);
+  const q = anPhuTinh(1, 0, 9);   // Quý: Lộc Tý, Đà La Hợi
+  assert.equal(q['Lộc Tồn'], 0); assert.equal(q['Đà La'], 11);
+});
+test('Tứ hóa gắn được lên phụ tinh (năm Nhâm: Tả Phụ hóa Khoa)', () => {
+  const ls = lapLaSo({ lunar: { day: 9, month: 2, year: 1992, leap: false }, gio: 4, gioiTinh: 'nam' });
+  assert.equal(ls.namSinh, 'Nhâm Thân'); assert.ok(ls.cung.some((c) => c.sao.some((s) => s.ten === 'Tả Phụ' && s.hoa === 'Hóa Khoa')));
 });

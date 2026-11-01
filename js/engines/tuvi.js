@@ -1,5 +1,5 @@
 // Tử vi đẩu số, mức SƠ BỘ: an Mệnh/Thân, Cục, Tử Vi và 14 chính tinh, Tứ hóa theo Can năm, Đại hạn.
-// CHƯA có: phụ tinh (Xương Khúc, Tả Hữu, Lộc Tồn, sát tinh...), độ miếu/hãm, Tiểu hạn. Kết quả chỉ để tham khảo.
+// Có 9 phụ tinh (Tả Hữu, Xương Khúc, Lộc Tồn, Kình Đà, Khôi Việt). CHƯA có: Không Kiếp, Hỏa Linh, Tuần Triệt, sao Thái Tuế/Bác Sĩ/Tràng Sinh, độ miếu/hãm, Tiểu hạn. Kết quả chỉ để tham khảo.
 // Quy ước (ghi để ptg đối chiếu): giờ sinh tính theo chi giờ (Tý = 0); tháng nhuận từ ngày 16 trở đi tính sang tháng sau.
 import { CAN, CHI, napAm, napAmHanh } from './canchi.js';
 import { yearCanChi } from './canchi.js';
@@ -37,6 +37,18 @@ export function anChinhTinh(tv) {
   };
 }
 
+/** An 9 phụ tinh thông dụng. thang = tháng âm (đã xử lý nhuận), gio = chi giờ 0..11, canNam = 0..9. */
+export function anPhuTinh(thang, gio, canNam) {
+  const loc = [2, 3, 5, 6, 5, 6, 8, 9, 11, 0][canNam];                       // Lộc Tồn: Giáp Dần, Ất Mão, Bính/Mậu Tỵ, Đinh/Kỷ Ngọ, Canh Thân, Tân Dậu, Nhâm Hợi, Quý Tý
+  const kv = [[1, 7], [0, 8], [11, 9], [11, 9], [1, 7], [0, 8], [1, 7], [6, 2], [3, 5], [3, 5]][canNam];   // Thiên Khôi, Thiên Việt
+  return {
+    'Tả Phụ': mod(4 + thang - 1, 12), 'Hữu Bật': mod(10 - (thang - 1), 12),
+    'Văn Xương': mod(10 - gio, 12), 'Văn Khúc': mod(4 + gio, 12),
+    'Lộc Tồn': loc, 'Kình Dương': mod(loc + 1, 12), 'Đà La': mod(loc - 1, 12),
+    'Thiên Khôi': kv[0], 'Thiên Việt': kv[1],
+  };
+}
+
 /** Can của cung (chi) theo Can năm sinh: Ngũ Hổ độn, Dần mang Can đầu. */
 export const canCung = (canNam, chi) => mod([2, 4, 6, 8, 0][canNam % 5] + mod(chi - 2, 12), 10);
 
@@ -58,6 +70,8 @@ export function lapLaSo({ lunar, gio, gioiTinh }) {
   dsHoa.forEach((s, i) => { hoa[s] = TEN_HOA[i]; });
   const cung = Array.from({ length: 12 }, (_, c) => ({ chi: c, chiName: CHI[c], can: CAN[canCung(nam.can, c)], chucVu: CUNG_CHUC[mod(c - menh, 12)], sao: [], laThan: c === than }));
   Object.entries(sao).forEach(([s, c]) => cung[c].sao.push({ ten: s, hoa: hoa[s] || null }));
+  const phu = anPhuTinh(thang, gio, nam.can);
+  Object.entries(phu).forEach(([s, c]) => cung[c].sao.push({ ten: s, hoa: hoa[s] || null, phu: true }));
 
   // Đại hạn: Dương Nam, Âm Nữ đi thuận; Âm Nam, Dương Nữ đi nghịch. Mỗi hạn 10 năm, hạn đầu bắt đầu từ tuổi = số cục.
   // Không nêu giới tính thì không tính Đại hạn (hướng đi thuận/nghịch phụ thuộc giới tính)
@@ -70,12 +84,13 @@ export function lapLaSo({ lunar, gio, gioiTinh }) {
 
 // Chấm điểm sơ bộ: thang 50, mỗi chính tinh ±nhẹ, Tứ hóa cộng/trừ; độ tin cậy thấp vì chưa có phụ tinh, miếu/hãm.
 const SAO_DIEM = { 'Tử Vi': 6, 'Thiên Phủ': 6, 'Thiên Lương': 5, 'Thái Âm': 4, 'Thái Dương': 4, 'Thiên Đồng': 4, 'Thiên Cơ': 3, 'Vũ Khúc': 3, 'Thiên Tướng': 4, 'Cự Môn': -1, 'Tham Lang': 0, 'Liêm Trinh': -1, 'Thất Sát': -2, 'Phá Quân': -3 };
+const PHU_DIEM = { 'Tả Phụ': 3, 'Hữu Bật': 3, 'Văn Xương': 2, 'Văn Khúc': 2, 'Lộc Tồn': 3, 'Thiên Khôi': 3, 'Thiên Việt': 3, 'Kình Dương': -3, 'Đà La': -3 };
 const HOA_DIEM = { 'Hóa Lộc': 6, 'Hóa Quyền': 3, 'Hóa Khoa': 4, 'Hóa Kỵ': -6 };
 const CHUC_LV = { tai_loc: 'Tài Bạch', su_nghiep: 'Quan Lộc', tinh_cam: 'Phu Thê', suc_khoe: 'Tật Ách', quy_nhan: 'Nô Bộc' };
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
 
 function diemCung(c) {
-  let d = 50; c.sao.forEach((s) => { d += (SAO_DIEM[s.ten] || 0) + (s.hoa ? HOA_DIEM[s.hoa] : 0); });
+  let d = 50; c.sao.forEach((s) => { d += (SAO_DIEM[s.ten] || PHU_DIEM[s.ten] || 0) + (s.hoa ? HOA_DIEM[s.hoa] : 0); });
   return d;
 }
 /** Vector điểm cho bộ tổng hợp (cùng dạng các môn khác). */

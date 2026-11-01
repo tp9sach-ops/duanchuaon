@@ -428,3 +428,5 @@ h1,h2,h3{margin:0;font-weight:500}
 .vs-res li{margin-bottom:6px}.vs-res li i{font-style:normal;color:var(--muted)}
 
 .tp-wall small{color:var(--muted);font-size:11px;white-space:nowrap}
+.tv-cell li.tv-phu{font-size:10.5px;color:#8f97ad}@media (max-width:620px){.tv-cell li.tv-phu{font-size:9.5px}}
+.tv-cell{min-height:130px}@media (max-width:620px){.tv-cell{min-height:120px}}

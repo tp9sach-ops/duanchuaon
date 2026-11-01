@@ -16,7 +16,9 @@ export function initTuvi(root = document.getElementById('tuvi-app')) {
     if (!ls) { root.innerHTML = '<article class="ch-card ch-empty"><p class="ch-k">Tử vi đẩu số</p><p>Cần giờ sinh để an cung Mệnh và Thân. Hãy chọn giờ sinh trong hồ sơ.</p></article>'; return; }
     const cells = ls.cung.map((c) => {
       const [r, k] = POS[c.chi];
-      const sao = c.sao.map((s) => `<li>${esc(s.ten)}${s.hoa ? `<em>${esc(s.hoa.replace('Hóa ', ''))}</em>` : ''}</li>`).join('') || '<li class="tv-none">Vô chính diệu</li>';
+      const chinh = c.sao.filter((s) => !s.phu), phu = c.sao.filter((s) => s.phu);
+      const li = (s) => `<li${s.phu ? ' class="tv-phu"' : ''}>${esc(s.ten)}${s.hoa ? `<em>${esc(s.hoa.replace('Hóa ', ''))}</em>` : ''}</li>`;
+      const sao = (chinh.length ? chinh.map(li).join('') : '<li class="tv-none">Vô chính diệu</li>') + phu.map(li).join('');
       return `<div class="tv-cell${c.chucVu === 'Mệnh' ? ' menh' : ''}${c.laThan ? ' than' : ''}" style="grid-row:${r};grid-column:${k}">
         <p class="tv-h"><b>${esc(c.chucVu)}${c.laThan ? ' · Thân' : ''}</b><span>${esc(c.can)} ${esc(c.chiName)}</span></p><ul>${sao}</ul>${c.daiHan ? `<p class="tv-dh">${c.daiHan[0]}–${c.daiHan[1]}</p>` : ''}</div>`;
     }).join('');
@@ -25,7 +27,7 @@ export function initTuvi(root = document.getElementById('tuvi-app')) {
     <div class="tv-board" role="group" aria-label="Lá số tử vi 12 cung">${cells}
       <div class="tv-mid"><p class="ch-k">Thông tin</p><p>${esc(b.namSinh.name)}${p.gioiTinh ? ' · ' + (p.gioiTinh === 'nam' ? 'Nam' : 'Nữ') : ''}</p><p>Cục: ${esc(ls.tenCuc)}</p>${ls.thuan == null ? '' : `<p>Đại hạn đi ${ls.thuan ? 'thuận' : 'nghịch'}</p>`}<p class="tv-hoa">${ls.tuHoa.map(esc).join('<br>')}</p></div>
     </div>
-    <p class="ch-note">Mới an Mệnh, Thân, Cục, 14 chính tinh và Tứ hóa. Chưa có phụ tinh, độ miếu hãm và Tiểu hạn, nên chưa thể luận đoán đầy đủ.${ls.nhuanSangThang ? ' Sinh tháng nhuận sau ngày 15 được tính sang tháng kế (quy ước thông dụng).' : ''}${ls.thuan == null ? ' Chọn giới tính trong hồ sơ để tính Đại hạn.' : ''}</p>`;
+    <p class="ch-note">Đã an Mệnh, Thân, Cục, 14 chính tinh, 9 phụ tinh (chữ nhỏ, mờ) và Tứ hóa. Chưa có Không Kiếp, Hỏa Linh, Tuần Triệt, các vòng sao phụ khác, độ miếu hãm và Tiểu hạn, nên chưa thể luận đoán đầy đủ.${ls.nhuanSangThang ? ' Sinh tháng nhuận sau ngày 15 được tính sang tháng kế (quy ước thông dụng).' : ''}${ls.thuan == null ? ' Chọn giới tính trong hồ sơ để tính Đại hạn.' : ''}</p>`;
   };
   document.addEventListener('lgt:profile', render);
   render();
