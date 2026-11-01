@@ -1,7 +1,8 @@
 // Chương "Lá số": Thần số học + Cung hoàng đạo + Bầu trời hôm nay (Giai đoạn 4).
 // Đọc hồ sơ đã lưu (localStorage 'lgt.profile'); phần "Bầu trời hôm nay" không cần hồ sơ.
 import { analyzeNumerology, scoreNumerology } from '../engines/numerology.js';
-import { natalSigns } from '../engines/zodiac.js';
+import { natalSigns, birthUTC } from '../engines/zodiac.js';
+import { viTriHanhTinh } from '../engines/planets.js';
 import { jdFromUTC, dateFromJD, moonPhase, nextPhaseAt, sunLongitude } from '../engines/astro.js';
 import { signIndex } from '../engines/zodiac.js';
 import { birthInfo } from '../engines/personal.js';
@@ -36,9 +37,16 @@ function wheelSvg(Z, marks) {
   });
   marks.forEach((m) => {
     const [x, y] = pt(m.lon, m.r);
-    g += `<g><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="13" fill="#06070d" stroke="${m.color}" stroke-width="1.5"/><text x="${x.toFixed(1)}" y="${(y + 5).toFixed(1)}" text-anchor="middle" font-size="${m.small ? 10 : 15}" fill="${m.color}">${m.glyph}<title>${esc(m.title)}</title></text></g>`;
+    g += `<g><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${m.rad || 13}" fill="#06070d" stroke="${m.color}" stroke-width="1.5"/><text x="${x.toFixed(1)}" y="${(y + 5).toFixed(1)}" text-anchor="middle" font-size="${m.small ? 10 : m.rad ? 12 : 15}" fill="${m.color}">${m.glyph}<title>${esc(m.title)}</title></text></g>`;
   });
   return `<svg class="ch-wheel" viewBox="0 0 320 320" role="img" aria-label="Bánh xe 12 cung hoàng đạo">${g}</svg>`;
+}
+
+// Năm hành tinh lúc sinh trên bánh xe (xen kẽ hai vòng để đỡ chồng nhau)
+const HT_MAU = { 'Thủy Tinh': '#a7d1c7', 'Kim Tinh': '#f0b3c8', 'Hỏa Tinh': '#e08a6a', 'Mộc Tinh': '#e7c470', 'Thổ Tinh': '#b9b4a6' };
+function planetMarks(b) {
+  const r = viTriHanhTinh(jdFromUTC(birthUTC(b.solar.dd, b.solar.mm, b.solar.yy, b.gio)));
+  return r.planets.filter((p) => HT_MAU[p.ten]).map((p, i) => ({ lon: p.lon, r: i % 2 ? 40 : 68, rad: 9, glyph: p.kyHieu, color: HT_MAU[p.ten], title: `${p.ten} ở ${p.cung}${p.nghich ? ' (nghịch hành)' : ''}` }));
 }
 
 function skyBlock(Z) {
@@ -99,11 +107,12 @@ function numBlock(r, N, name) {
   </article>`;
 }
 
-function zodBlock(z, Z) {
+function zodBlock(z, Z, extraMarks = []) {
   const info = (k, p) => !p ? `<article class="ch-sign off"><p class="ch-k">${k}</p><h4>Chưa tính được</h4></article>` : `
     <article class="ch-sign"><p class="ch-k">${k}</p><h4>${p.cung.kyHieu} ${esc(p.cung.ten)}</h4>
     <p class="ch-sub">Hành ${esc(p.cung.hanh)} · ${esc(p.cung.kieu)} · ${p.do.toFixed(0)}°</p><p>${esc(p.cung.y)}</p></article>`;
   const marks = [{ lon: z.matTroi.lon, r: 80, glyph: '☉', color: '#f1dba0', title: 'Mặt Trời' }, { lon: z.matTrang.lon, r: 58, glyph: '☽', color: '#cfd6ea', title: 'Mặt Trăng' }];
+  marks.push(...extraMarks);
   if (z.cungMoc) marks.push({ lon: z.cungMoc.lon, r: 122, glyph: 'AC', color: '#6fc4a8', title: 'Cung Mọc', small: true });
   return `
   <div class="ch-head"><p class="ch-k">Cung hoàng đạo</p><h3 class="ch-h">Mặt Trời, Mặt Trăng và cung Mọc</h3></div>
@@ -146,7 +155,7 @@ export async function initCharts(root = document.getElementById('charts-app')) {
       <div class="ch-who"><span>Dương lịch ${b.solar.dd}/${b.solar.mm}/${b.solar.yy}${b.gio >= 0 ? '' : ' · chưa có giờ sinh'}</span>
         <label>Nơi sinh (để tính cung Mọc)<select data-role="city"><option value="">Không rõ</option>${Z.noiSinh.map((c, i) => `<option value="${i}"${city === i ? ' selected' : ''}>${esc(c.ten)}</option>`).join('')}</select></label></div>
       ${numBlock(r, N, p.hoTen)}
-      ${zodBlock(z, Z)}
+      ${zodBlock(z, Z, planetMarks(b))}
       <details class="t-trace"><summary>Dấu vết suy luận (Thần số học + Hoàng đạo)</summary>
         <table><tbody>${r.trace.concat(z.trace).map((x) => `<tr><th>${esc(x.ten)}</th><td colspan="2">${esc(x.vi)}</td></tr>`).join('')}</tbody></table>
         <p class="t-note">Độ tin cậy Hoàng đạo ${Math.round(z.doTinCay * 100)}%; Thần số học ${Math.round(sc.doTinCay * 100)}% khi quy ra điểm (bảng điểm theo số ngày cá nhân là quy ước của dự án, đang chờ đối chiếu). Cung hoàng đạo tính theo hệ nhiệt đới (Tây phương). Nội dung mang tính tham khảo, giải trí và chiêm nghiệm văn hóa.</p>

@@ -10,7 +10,7 @@ Giao diện tĩnh trên GitHub Pages; Google Apps Script chỉ làm backend lưu
 ```bash
 python3 -m http.server 8080
 # mở http://localhost:8080   (thêm ?mood=0.8 hoặc ?mood=-0.8 để thử đổi ánh sáng)
-npm test                      # kiểm tra cú pháp, quy ước và các engine (67 test)
+npm test                      # kiểm tra cú pháp, quy ước và các engine (hơn 110 test)
 ```
 
 ## Đưa lên GitHub Pages
@@ -23,5 +23,17 @@ npm test                      # kiểm tra cú pháp, quy ước và các engine
 
 Dán `gas/Code.gs` vào một dự án Apps Script, chạy `setup()` một lần, deploy Web App
 (Execute as: Me, Access: Anyone), rồi điền URL `/exec` vào `js/config.js`.
+
+## Bật AI chỉ tay / nhân tướng (tùy chọn)
+
+1. Apps Script → thêm file `Vision.gs` (nội dung trong `gas/Vision.gs`) và cập nhật `Code.gs`.
+2. Project Settings → Script properties → thêm `ANTHROPIC_API_KEY` (khóa của bạn; không bao giờ đưa vào repo).
+3. Deploy → Manage deployments → Edit → New version.
+4. Dán URL `/exec` vào `js/config.js` (`apiUrl`), đẩy lên GitHub. Khi chưa cấu hình, trang chỉ tắt phần AI.
+
+## Cài như ứng dụng (PWA)
+
+Trang có `manifest.webmanifest` và `sw.js`. Mở trên điện thoại → menu trình duyệt → "Thêm vào màn hình chính".
+Muốn buộc mọi người tải bản mới, đổi `VERSION` trong `sw.js`.
 
 Nội dung trên trang mang tính tham khảo, giải trí và chiêm nghiệm văn hóa.
