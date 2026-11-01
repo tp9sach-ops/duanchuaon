@@ -1,0 +1,69 @@
+/* Sân khấu 3D: không cuộn trang, không dải đen. Nội dung các chương là bảng kính mờ nổi bên phải, chỉ hiện khi bấm. */
+html,body{overflow:hidden;height:100%}
+body.is-locked{overflow:hidden}
+.page{pointer-events:none}                                   /* cho phép bấm xuyên xuống cảnh 3D và điểm sáng */
+.page .hero-top,.page .hero-foot,.page .sec,.page .foot-credit{pointer-events:auto}
+
+/* ---------- Mở đầu: gọn, không nền đen */
+.hero{min-height:100svh;padding:0 var(--pad);transition:opacity .5s var(--ease),visibility .5s}
+.hero::before,.hero-top::before,.sec::before,.foot::before{display:none}
+.hero-top{padding-top:calc(var(--nav-h) + clamp(6px,2vh,22px));max-width:min(520px,92vw)}
+.hero h1{font-size:clamp(26px,3.6vw,50px);max-width:16ch;margin-bottom:12px}
+.hero-sub{max-width:40ch;margin-bottom:16px;font-size:14px}
+.hero-hint{display:flex;align-items:center;gap:10px;margin:0 0 16px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold-soft);text-shadow:0 1px 14px rgba(3,5,10,.95)}
+.hero-hint i{width:9px;height:9px;border-radius:50%;background:var(--gold);box-shadow:0 0 0 0 rgba(217,178,95,.7);animation:hs-pulse 2.2s ease-out infinite}
+.hero-side{display:none!important}
+.panel-open .hero{opacity:0;visibility:hidden}
+/* Hàng chương: chỉ hiện trên điện thoại (nơi điểm sáng khó thấy), dạng viên thuốc kính mờ, không dải đen */
+.hero-foot{position:fixed;left:0;right:0;bottom:56px;padding:0 var(--pad);display:none}
+.chapters{display:flex;flex-wrap:wrap;gap:8px;border:0;padding:0;justify-content:center}
+.chip{flex-direction:row;align-items:center;gap:8px;padding:8px 14px;border:1px solid var(--line);border-radius:100px;background:rgba(8,10,20,.45);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.chip .num{font-size:13px;color:var(--gold)}.chip b{margin:0;font-size:10px}.chip p{display:none}
+@media (max-width:899px){.hero-foot{display:block}.panel-open .hero-foot{display:none}}
+@media (min-width:900px){.hero-foot{width:auto}}
+
+/* ---------- Điểm sáng trong cảnh */
+#hotspots{position:fixed;inset:0;z-index:8;pointer-events:none;transition:opacity .45s}
+#hotspots.off{opacity:0}#hotspots.off .hs{pointer-events:none}
+.hs{position:absolute;left:0;top:0;pointer-events:auto;display:flex;align-items:center;gap:10px;margin:-9px 0 0 -9px;padding:0;will-change:transform;cursor:pointer}
+.hs-dot{display:block;width:18px;height:18px;border-radius:50%;border:2px solid var(--gold-soft);background:rgba(217,178,95,.55);box-shadow:0 0 0 0 rgba(217,178,95,.75);animation:hs-pulse 2.2s ease-out infinite;flex:none}
+.hs-tx{padding:5px 12px 5px 10px;border:1px solid rgba(241,219,160,.35);border-radius:100px;background:rgba(8,10,20,.5);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);font-size:11px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--moon);white-space:nowrap;transition:background .3s,border-color .3s,color .3s}
+.hs-tx b{margin-right:8px;font-weight:500;color:var(--gold)}
+.hs:hover .hs-tx,.hs:focus-visible .hs-tx{background:var(--gold);border-color:var(--gold);color:var(--ink)}.hs:hover .hs-tx b,.hs:focus-visible .hs-tx b{color:var(--ink)}
+@keyframes hs-pulse{0%{box-shadow:0 0 0 0 rgba(217,178,95,.7)}70%{box-shadow:0 0 0 16px rgba(217,178,95,0)}100%{box-shadow:0 0 0 0 rgba(217,178,95,0)}}
+@media (max-width:899px){#hotspots .hs-tx{display:none}.hs-dot{width:22px;height:22px}}
+
+/* ---------- Bảng nội dung */
+.page .sec{position:fixed;z-index:30;top:calc(var(--nav-h) + 6px);right:clamp(10px,2vw,28px);bottom:clamp(40px,6vh,64px);
+  width:min(800px,calc(100vw - 20px));padding:clamp(40px,5vh,52px) clamp(16px,2.4vw,34px) 28px;margin:0;
+  overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;
+  border:1px solid var(--line);border-radius:16px;background:rgba(8,10,20,.78);backdrop-filter:blur(14px) saturate(1.1);-webkit-backdrop-filter:blur(14px) saturate(1.1);
+  box-shadow:0 20px 70px rgba(0,0,0,.45);
+  opacity:0;visibility:hidden;transform:translate3d(36px,0,0);transition:opacity .45s var(--ease-out),transform .6s var(--ease-out),visibility 0s linear .45s}
+.page .sec.open{opacity:1;visibility:visible;transform:none;transition-delay:0s}
+.pn-close{position:absolute;top:10px;right:12px;z-index:3;width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:rgba(6,7,13,.7);font-size:24px;line-height:1;color:var(--moon);display:grid;place-items:center;transition:border-color .3s,color .3s}
+.pn-close:hover,.pn-close:focus-visible{border-color:var(--gold);color:var(--gold-soft)}
+/* nội dung luôn hiện rõ trong bảng (bỏ hiệu ứng chờ cuộn tới) */
+.page .sec [data-rv],.page .sec .word{opacity:1!important;transform:none!important}
+.page .sec .two{grid-template-columns:1fr;gap:12px}
+.page .sec .h-sec{font-size:clamp(26px,3vw,40px);max-width:none}
+.page .sec .sec-head{margin-bottom:18px;padding-right:44px}
+.page .sec.fin{display:block;min-height:0;text-align:left}
+.page .sec.fin .h-fin{font-size:clamp(30px,4vw,48px)}
+.page .sec.fin .btn{display:none}
+.page .sec .charts,.page .sec .today{margin-top:18px}
+.page .sec .temple-app,.page .sec .summary{width:100%}
+@media (max-width:899px){
+  .page .sec{top:auto;left:8px;right:8px;bottom:8px;width:auto;height:72svh;max-height:72svh;border-radius:16px 16px 12px 12px;transform:translate3d(0,40px,0)}
+}
+
+/* ---------- Chân trang: chỉ còn dòng ghi chú nhỏ, không dải nền */
+.foot{position:fixed;left:0;right:0;bottom:0;z-index:12;padding:0 var(--pad) 10px;border:0;pointer-events:none;text-align:center}
+.foot-grid,.foot-base{display:none}
+.foot .disclaimer{margin:0 auto;max-width:90ch;font-size:10.5px;line-height:1.5;color:#9aa1b6;text-shadow:0 1px 10px rgba(3,5,10,.95)}
+.foot .foot-credit{margin:2px auto 0;max-width:90ch;font-size:10px;color:#8890a6;text-shadow:0 1px 10px rgba(3,5,10,.95)}
+.foot .foot-credit a{text-decoration:underline;pointer-events:auto}
+.sound{bottom:34px}
+.rail{display:none}
+@media (prefers-reduced-motion:reduce){.hs-dot,.hero-hint i{animation:none}}
+.no-webgl .hero-foot{display:block}.no-webgl.panel-open .hero-foot{display:none}.no-webgl .hero-hint{display:none}
