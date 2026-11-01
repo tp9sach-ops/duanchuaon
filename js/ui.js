@@ -1,4 +1,4 @@
-// Giao diện: reveal chữ, nav, rail chấm, nút âm thanh, menu mobile.
+// Giao diện: reveal chữ, menu, nút âm thanh, menu mobile.
 import { prefersReduced } from './util.js';
 
 export function initReveal() {
@@ -18,16 +18,9 @@ export function initReveal() {
   targets.forEach((t) => io.observe(t));
 }
 
-export function initNav(rail) {
+// Menu: nút bánh mì trên điện thoại. Việc mở chương do js/ui/stage.js xử lý (bấm liên kết #chương).
+export function initNav() {
   const nav = document.getElementById('nav'), burger = document.getElementById('burger');
-  let lastY = scrollY;
-  addEventListener('scroll', () => {
-    const y = scrollY;
-    nav.classList.toggle('stuck', y > 40);
-    nav.classList.toggle('hide', y > lastY && y > 300 && !nav.classList.contains('menu-open'));
-    lastY = y;
-  }, { passive: true });
-
   const setMenu = (open) => {
     nav.classList.toggle('menu-open', open);
     burger.setAttribute('aria-expanded', String(open));
@@ -36,22 +29,6 @@ export function initNav(rail) {
   burger.addEventListener('click', () => setMenu(!nav.classList.contains('menu-open')));
   document.querySelectorAll('.nav-link').forEach((a) => a.addEventListener('click', () => setMenu(false)));
   addEventListener('keydown', (e) => { if (e.key === 'Escape') setMenu(false); });
-
-  // Rail chấm bên phải + làm sáng link nav theo section đang xem
-  const railEl = document.getElementById('rail'), secs = rail.sections;
-  secs.forEach((s, i) => {
-    const b = document.createElement('button'); b.setAttribute('aria-label', 'Chương ' + i); b.innerHTML = '<i></i>';
-    b.addEventListener('click', () => s.scrollIntoView({ behavior: prefersReduced() ? 'auto' : 'smooth' }));
-    railEl.appendChild(b);
-  });
-  const dots = [...railEl.children], links = [...document.querySelectorAll('.nav-link')];
-  const sync = () => {
-    const f = Math.round(rail.index);
-    dots.forEach((d, i) => d.classList.toggle('on', i === f));
-    const id = secs[f]?.id;
-    links.forEach((a) => a.classList.toggle('on', a.getAttribute('href') === '#' + id));
-  };
-  setInterval(sync, 200);
 }
 
 // Nhạc nền: pad hai dao động trầm bằng Web Audio. Chỉ bắt đầu sau lần bấm đầu tiên (luật autoplay).
