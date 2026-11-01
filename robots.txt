@@ -1,2 +1,3 @@
 User-agent: *
 Allow: /
+Sitemap: https://tp9sach-ops.github.io/loinhuan.github.io/sitemap.xml
