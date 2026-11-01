@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { anPhuTinh, viTriTuVi, anChinhTinh, canCung, lapLaSo, scoreTuVi } from '../js/engines/tuvi.js';
+import { tuanTriet, anPhuTinh, viTriTuVi, anChinhTinh, canCung, lapLaSo, scoreTuVi } from '../js/engines/tuvi.js';
 
 test('vị trí Tử Vi theo bảng quen thuộc: Thủy nhị cục', () => {
   assert.equal(viTriTuVi(2, 1), 1);   // ngày 1 → Sửu
@@ -34,7 +34,7 @@ test('Mệnh/Thân: tháng 1 giờ Tý → Mệnh Dần; giờ Dần → Mệnh 
 });
 test('lá số hoàn chỉnh: 12 cung, mỗi chính tinh đúng một cung, Tứ hóa gắn đúng sao', () => {
   const ls = lapLaSo({ lunar: { day: 17, month: 4, year: 1990, leap: false }, gio: 6, gioiTinh: 'nam' });
-  assert.equal(ls.cung.length, 12); assert.equal(ls.cung.reduce((n, c) => n + c.sao.length, 0), 14 + 9);
+  assert.equal(ls.cung.length, 12); assert.equal(ls.cung.reduce((n, c) => n + c.sao.length, 0), 14 + 11);
   assert.equal(ls.cung.filter((c) => c.chucVu === 'Mệnh').length, 1); assert.equal(ls.cung[ls.menh].chucVu, 'Mệnh');
   assert.equal(ls.namSinh, 'Canh Ngọ'); assert.ok(ls.cung.some((c) => c.sao.some((s) => s.hoa === 'Hóa Lộc')));  // Canh: Thái Dương hóa Lộc
   assert.equal(ls.cung.filter((c) => c.daiHan).length, 12);
@@ -67,4 +67,11 @@ test('phụ tinh: Lộc Tồn, Kình Dương, Đà La theo Can năm; Khôi Việ
 test('Tứ hóa gắn được lên phụ tinh (năm Nhâm: Tả Phụ hóa Khoa)', () => {
   const ls = lapLaSo({ lunar: { day: 9, month: 2, year: 1992, leap: false }, gio: 4, gioiTinh: 'nam' });
   assert.equal(ls.namSinh, 'Nhâm Thân'); assert.ok(ls.cung.some((c) => c.sao.some((s) => s.ten === 'Tả Phụ' && s.hoa === 'Hóa Khoa')));
+});
+test('Địa Không/Địa Kiếp từ Hợi theo giờ', () => { let p = anPhuTinh(1, 0, 0); assert.equal(p['Địa Không'], 11); assert.equal(p['Địa Kiếp'], 11); p = anPhuTinh(1, 3, 0); assert.equal(p['Địa Không'], 8); assert.equal(p['Địa Kiếp'], 2); });
+test('Tuần: Canh Ngọ thuộc tuần Giáp Tý → Tuất Hợi; Giáp Thìn thuộc tuần Giáp Thìn → Dần Mão', () => {
+  assert.deepEqual(tuanTriet(6, 6).tuan, [10, 11]); assert.deepEqual(tuanTriet(0, 4).tuan, [2, 3]);
+});
+test('Triệt theo Can: Giáp/Kỷ → Thân Dậu, Nhâm → Dần Mão, Quý → Tý Sửu', () => {
+  assert.deepEqual(tuanTriet(0, 0).triet, [8, 9]); assert.deepEqual(tuanTriet(5, 0).triet, [8, 9]); assert.deepEqual(tuanTriet(8, 0).triet, [2, 3]); assert.deepEqual(tuanTriet(9, 0).triet, [0, 1]);
 });
