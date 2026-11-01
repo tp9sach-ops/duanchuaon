@@ -22,6 +22,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500&family=Cormorant+Garamond:wght@400;500;600&display=swap&subset=vietnamese,latin-ext">
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="css/fg.css">
+<link rel="stylesheet" href="css/stage.css">
 
 <script type="importmap">
 {
@@ -68,7 +69,7 @@
   <button class="nav-burger" id="burger" aria-label="Mở menu" aria-expanded="false"><i></i><i></i></button>
 </header>
 
-<!-- Tiền cảnh: cây cỏ, đá, đồi là ảnh WebP nguồn ngoài; tường chùa vàng, đèn lồng trụ đá, tháp gạch là SVG kiểu chùa Việt (assets/fg/). Chỉ chương đang xem mới hiện. js/fg.js điều khiển. -->
+<!-- Tiền cảnh: cây cỏ, đá, đồi là ảnh WebP nguồn ngoài; tường chùa vàng, đèn lồng trụ đá, tháp gạch là SVG kiểu chùa Việt (assets/fg/). Chỉ bảng đang mở mới hiện bộ ảnh của nó. js/fg.js điều khiển. -->
 <div id="fg-sky" aria-hidden="true">
   <div class="fg" data-fg="gate">
     <span class="fg-el fg-wall" data-fg-in="left"><img src="assets/fg/tuong-chua.svg" alt="" width="1536" height="620" loading="lazy" decoding="async" onerror="this.style.display='none'"></span>
@@ -99,6 +100,8 @@
   </div>
 </div>
 
+<!-- Điểm sáng bấm được trong cảnh 3D (js/scene/hotspots.js tạo nút) -->
+<div id="hotspots"></div>
 <div class="rail" id="rail" aria-hidden="true"></div>
 <button class="sound" id="sound" aria-pressed="false" aria-label="Bật âm thanh nền"><span class="sound-ic"></span><span class="sound-tx">Âm thanh</span></button>
 
@@ -107,22 +110,22 @@
 <!-- ============================================================ 0 · hero -->
 <section class="hero" id="hero" data-cam="0">
   <div class="hero-top">
-    <div class="eyebrow" data-rv="fade"><span class="dot"></span> Chương 00 — Cổng Tam quan</div>
+    <div class="eyebrow" data-rv="fade"><span class="dot"></span> Cổng Tam quan</div>
     <h1 class="display h-hero word-reveal" data-words>Nơi tĩnh lặng soi thấu điều chưa thấy.</h1>
-    <p class="hero-sub body" data-rv="up">Bước qua cổng Tam quan, đi dọc ao sen và sân gạch dưới trăng.
-      Lịch, tử vi, bát tự, thần số, tướng số và nén nhang — gom về một hành trình.</p>
-    <a class="btn" href="#today" data-rv="up"><span>Xem vận hôm nay</span></a>
+    <p class="hero-sub body" data-rv="up">Lịch, tử vi, bát tự, thần số, tướng số và nén nhang — gom về một ngôi chùa Việt dưới trăng.</p>
+    <p class="hero-hint" data-rv="up"><i></i> Chạm vào các điểm sáng trong cảnh để mở từng chương</p>
   </div>
   <div class="hero-spacer"></div>
   <div class="hero-foot">
     <div class="chapters" id="chips">
-      <a class="chip" href="#today" data-rv="up"><span class="num">01</span><span class="tx"><b>Hôm nay</b><p>Ngày tốt xấu, giờ Hoàng đạo, việc nên và kỵ.</p></span></a>
-      <a class="chip" href="#fortune" data-rv="up"><span class="num">02</span><span class="tx"><b>Vận trình</b><p>Tháng, năm và đường đời của bạn.</p></span></a>
-      <a class="chip" href="#charts" data-rv="up"><span class="num">03</span><span class="tx"><b>Lá số</b><p>Tử vi, bát tự, hoàng đạo, thần số học.</p></span></a>
-      <a class="chip" href="#temple" data-rv="up"><span class="num">04</span><span class="tx"><b>Chùa online</b><p>Thắp nhang, nghe kinh, gõ mõ, xin xăm.</p></span></a>
+      <a class="chip" href="#today"><span class="num">01</span><b>Hôm nay</b></a>
+      <a class="chip" href="#fortune"><span class="num">02</span><b>Vận trình</b></a>
+      <a class="chip" href="#charts"><span class="num">03</span><b>Lá số</b></a>
+      <a class="chip" href="#reading"><span class="num">04</span><b>Tướng số</b></a>
+      <a class="chip" href="#temple"><span class="num">05</span><b>Chùa online</b></a>
+      <a class="chip" href="#summary"><span class="num">06</span><b>Lá bùa</b></a>
     </div>
   </div>
-  <div class="hero-side" data-rv="fade"><span class="v">Diệu Giang Tự</span></div>
 </section>
 
 <!-- ============================================================ 1 · today -->
@@ -173,11 +176,11 @@
 
 <!-- ============================================================ 5 · temple -->
 <section class="sec" id="temple" data-fg-key="pathways" data-cam="5">
-  <div class="sec-head" data-rv="fade"><span class="k"><b>05</b> — Chùa online</span><span class="rule"></span><span class="k">Chùa</span></div>
+  <div class="sec-head" data-rv="fade"><span class="k"><b>05</b> — Chùa online</span><span class="rule"></span><span class="k">Chánh điện</span></div>
   <div class="two">
     <h2 class="display h-sec word-reveal" data-words>Thắp một nén nhang, lắng một nhịp mõ.</h2>
     <div>
-      <p class="lead" data-rv="up">Lư hương đồng trước sân chùa sẽ nhận nén nhang của bạn: khói bay lên, sổ nhang ghi lại chuỗi ngày.</p>
+      <p class="lead" data-rv="up">Trước chánh điện Diệu Giang Tự, lư hương đồng nhận nén nhang của bạn: khói bay lên, sổ nhang ghi lại chuỗi ngày.</p>
       <ul class="list" data-rv="up">
         <li>Thắp nhang 1, 3 hoặc 9 nén</li><li>Khấn nguyện và tường nguyện ẩn danh</li>
         <li>Gõ mõ, rung chuông, niệm 108</li><li>Xin xăm một trong 100 quẻ</li>
@@ -189,29 +192,18 @@
 
 <!-- ============================================================ 6 · summary -->
 <section class="sec fin" id="summary" data-fg-key="eternity" data-cam="6">
-  <div class="eyebrow" data-rv="fade">Chương 06 — Tổng kết</div>
+  <div class="sec-head" data-rv="fade"><span class="k"><b>06</b> — Tổng kết</span><span class="rule"></span><span class="k">Lá bùa</span></div>
   <h2 class="display h-fin" data-rv="up">Lá bùa của bạn</h2>
   <p class="body-lg" data-rv="up">Các môn gặp nhau ở đây: một câu tóm tắt, điểm theo lĩnh vực, ba lời khuyên và dấu vết suy luận để bạn tự kiểm chứng.</p>
   <div id="summary-app" class="summary"></div>
-  <a class="btn" href="#hero" data-rv="fade"><span>Quay về cổng chùa</span></a>
 </section>
 
 <!-- ============================================================ footer -->
 <footer class="foot" data-fg-key="foot" data-cam="6">
-  <div class="foot-grid">
-    <div class="foot-brand">
-      <p>Diệu Giang Tự là trang chiêm nghiệm văn hóa tâm linh phương Đông và phương Tây, dựng trên cảnh chùa Việt ba chiều.</p>
-    </div>
-    <div><h4>Chương</h4><ul>
-      <li><a href="#today">Hôm nay</a></li><li><a href="#fortune">Vận trình</a></li>
-      <li><a href="#charts">Lá số</a></li><li><a href="#reading">Tướng số</a></li>
-    </ul></div>
-    <div><h4>Chùa</h4><ul>
-      <li><a href="#temple">Thắp nhang</a></li><li><a href="#temple">Nghe kinh</a></li><li><a href="#temple">Xin xăm</a></li>
-    </ul></div>
-  </div>
   <p class="disclaimer">Nội dung mang tính tham khảo, giải trí và chiêm nghiệm văn hóa, không thay thế tư vấn y tế, pháp lý hay tài chính.</p>
-  <div class="foot-base"><span>© 2026 Diệu Giang Tự</span><span>Cổng Tam quan</span><span>WebGL · Việt Nam</span></div>
+  <p class="foot-credit">© 2026 Diệu Giang Tự · Mô hình quần thể chùa: “Lukang Longshan Temple, Taiwan” của Fovea trên
+    <a href="https://sketchfab.com/3d-models/lukang-longshan-temple-taiwan-07dba0dafbdf4f5db2ed60e5f84c758d" target="_blank" rel="noopener">Sketchfab</a>,
+    giấy phép <a href="http://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> (chỉ dùng phi thương mại).</p>
 </footer>
 
 </main>
