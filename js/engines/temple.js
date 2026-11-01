@@ -62,3 +62,13 @@ export function thapNhang(so, nen, now = new Date()) {
   if (![1, 3, 9].includes(nen)) throw new Error('Chỉ thắp 1, 3 hoặc 9 nén');
   const k = ngayKey(now); return { ...so, [k]: (so[k] || 0) + nen };
 }
+
+/** Kiểm tra điều nguyện (giống gas/Prayers.gs › prayerOk_). Trả { ok, text } hoặc { ok:false, error }. */
+export function kiemTraNguyen(s) {
+  let t = String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
+  if (!t) return { ok: false, error: 'empty' };
+  if (t.length > 120) t = t.slice(0, 120);
+  if (/(https?:\/\/|www\.|\.com\b|\.vn\b|@)/i.test(t)) return { ok: false, error: 'no_links' };
+  if (/\d[\d\s.\-]{7,}\d/.test(t)) return { ok: false, error: 'no_numbers' };
+  return { ok: true, text: t };
+}

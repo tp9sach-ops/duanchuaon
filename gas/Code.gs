@@ -46,7 +46,8 @@ function doPost(e) {
       case 'deleteProfile': return json_(deleteProfile_(req));
       case 'analyzeHand':  return json_(analyzeImage_(req, 'hand'));   // Vision.gs
       case 'analyzeFace':  return json_(analyzeImage_(req, 'face'));
-      // TODO Giai đoạn 8: case 'logIncense', 'addPrayer', 'listPrayers'
+      case 'addPrayer':    return json_(addPrayer_(req));      // Prayers.gs
+      case 'listPrayers':  return json_(listPrayers_());
       default:             return json_({ ok: false, error: 'unknown_action' });
     }
   } catch (err) {

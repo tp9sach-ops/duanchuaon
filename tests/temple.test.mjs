@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { xinXam, rutXam, tongKetNhang, thapNhang, ngayKey, SO_QUE } from '../js/engines/temple.js';
+import { xinXam, rutXam, tongKetNhang, thapNhang, ngayKey, SO_QUE, kiemTraNguyen } from '../js/engines/temple.js';
 
 test('100 quẻ đều khác nhau và hợp lệ', () => {
   const loi = new Set();
@@ -20,3 +20,10 @@ test('hôm nay chưa thắp: chuỗi vẫn tính đến hôm qua; cách 1 ngày 
   assert.equal(tongKetNhang({ '2026-10-30': 1 }, new Date(2026, 10, 2)).chuoi, 0);
 });
 test('ngayKey dùng giờ địa phương', () => { assert.equal(ngayKey(new Date(2026, 0, 5)), '2026-01-05'); });
+test('kiểm tra điều nguyện: cắt 120 ký tự, chặn link, email, số điện thoại', () => {
+  assert.equal(kiemTraNguyen('   ').ok, false);
+  assert.equal(kiemTraNguyen('x'.repeat(200)).text.length, 120);
+  assert.equal(kiemTraNguyen('xem www.abc.vn').error, 'no_links'); assert.equal(kiemTraNguyen('a@b').error, 'no_links');
+  assert.equal(kiemTraNguyen('gọi 0912 345 678 nhé').error, 'no_numbers');
+  assert.equal(kiemTraNguyen('Cầu cho  mẹ   khỏe.').text, 'Cầu cho mẹ khỏe.');
+});

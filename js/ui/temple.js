@@ -1,5 +1,6 @@
 // Chương "Chùa online": thắp nhang, gõ mõ / rung chuông / niệm 108, xin xăm, tường nguyện (lưu trong trình duyệt).
-import { rutXam, tongKetNhang, thapNhang, SO_QUE } from '../engines/temple.js';
+import { rutXam, tongKetNhang, thapNhang, SO_QUE, kiemTraNguyen } from '../engines/temple.js';
+import { callApi, apiEnabled, getUserKey } from '../api.js';
 
 const K_NHANG = 'lgt.nhang', K_NIEM = 'lgt.niem', K_NGUYEN = 'lgt.nguyen', K_XAM = 'lgt.xam';
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -56,8 +57,11 @@ export function initTemple() {
         <input id="tp-in" maxlength="120" placeholder="Một điều bạn nguyện (ẩn danh)" aria-label="Điều nguyện" autocomplete="off">
         <button class="t-btn" type="submit">Gửi nguyện</button>
       </form>
+      ${apiEnabled() ? '<label class="vs-consent"><input type="checkbox" id="tp-share"> Cũng đăng lên tường chung (ẩn danh, ai cũng đọc được)</label>' : ''}
+      <p class="tp-note" id="tp-msg" aria-live="polite"></p>
       <ul class="tp-wall" id="tp-wall"></ul>
-      <p class="tp-note">Điều nguyện chỉ lưu trong trình duyệt của bạn. Có thể xóa từng dòng.</p>
+      <p class="tp-note">Điều nguyện của bạn lưu trong trình duyệt, có thể xóa từng dòng. Chỉ khi bạn tick, điều nguyện mới được đăng ẩn danh lên tường chung.</p>
+      ${apiEnabled() ? '<p class="ch-k">Tường chung</p><ul class="tp-wall" id="tp-shared"><li class="tp-empty">Đang tải…</li></ul>' : ''}
     </section>
   </div>`;
   const $ = (s) => root.querySelector(s);
@@ -102,10 +106,24 @@ export function initTemple() {
       : '<li class="tp-empty">Chưa có điều nguyện nào.</li>';
   };
   $('#tp-form').addEventListener('submit', (e) => {
-    e.preventDefault(); const v = $('#tp-in').value.trim(); if (!v) return;
-    nguyen = [v.slice(0, 120), ...nguyen].slice(0, 30); save(K_NGUYEN, nguyen); $('#tp-in').value = ''; drawWall();
+    e.preventDefault(); const c = kiemTraNguyen($('#tp-in').value), msg = $('#tp-msg');
+    if (!c.ok) { msg.textContent = { empty: '', no_links: 'Không đưa đường dẫn hoặc email vào điều nguyện.', no_numbers: 'Không đưa số điện thoại hoặc dãy số dài vào điều nguyện.' }[c.error] || ''; return; }
+    msg.textContent = '';
+    nguyen = [c.text, ...nguyen].slice(0, 30); save(K_NGUYEN, nguyen); $('#tp-in').value = ''; drawWall();
+    const share = $('#tp-share');
+    if (share && share.checked) {
+      callApi('addPrayer', { userKey: getUserKey(), noiDung: c.text, congKhai: true }).then((r) => {
+        msg.textContent = r.ok ? 'Đã đăng lên tường chung.' : (r.error === 'rate_limited' ? 'Hôm nay bạn đã đăng đủ 5 điều nguyện lên tường chung.' : 'Chưa đăng được lên tường chung, nhưng điều nguyện đã lưu trong trình duyệt của bạn.');
+        if (r.ok) loadShared();
+      });
+    }
   });
   $('#tp-wall').addEventListener('click', (e) => { const b = e.target.closest('.tp-x'); if (!b) return; nguyen.splice(+b.dataset.i, 1); save(K_NGUYEN, nguyen); drawWall(); });
 
-  drawCenser(); drawNhang(); drawNiem(); showXam(); drawWall();
+  async function loadShared() {
+    const ul = $('#tp-shared'); if (!ul) return;
+    const r = await callApi('listPrayers');
+    ul.innerHTML = r.ok && r.items && r.items.length ? r.items.slice(0, 30).map((w) => `<li><span>${esc(String(w.noiDung).slice(0, 120))}</span><small>${esc(String(w.ngay).slice(0, 10))}</small></li>`).join('') : `<li class="tp-empty">${r.ok ? 'Tường chung chưa có điều nguyện nào.' : 'Chưa tải được tường chung.'}</li>`;
+  }
+  drawCenser(); drawNhang(); drawNiem(); showXam(); drawWall(); loadShared();
 }

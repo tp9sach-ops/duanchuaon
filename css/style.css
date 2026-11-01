@@ -426,3 +426,5 @@ h1,h2,h3{margin:0;font-weight:500}
 .vs-consent{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;color:#c3c8d8;line-height:1.5}.vs-consent input{margin-top:4px;accent-color:var(--gold)}
 .vs-file{cursor:pointer}.vs-file.off{opacity:.45;cursor:not-allowed}
 .vs-res li{margin-bottom:6px}.vs-res li i{font-style:normal;color:var(--muted)}
+
+.tp-wall small{color:var(--muted);font-size:11px;white-space:nowrap}
