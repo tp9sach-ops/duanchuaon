@@ -55,7 +55,8 @@ async function boot() {
     const { createScene } = await import('./scene/index.js');
     created = createScene(document.getElementById('gl'), {
       onProgress: (v) => { setProgress(0.1 + v * 0.9); if (v >= 1) setTimeout(hidePre, 350); },
-      onPick: (id) => stage && stage.open(id),
+      onPick: (id) => stage && stage.go(id),          // bấm điểm sáng/vật 3D: đi tới rồi mới mở
+      onArrive: (id) => stage && stage.open(id),      // nhân vật tới nơi: mở bảng của chương
     });
   } catch (e) { return fallback(e && e.message); }
 
