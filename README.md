@@ -3,7 +3,7 @@
 Web tâm linh 3D dạng trang cuốn, bối cảnh chùa Việt trên núi về đêm.
 Giao diện tĩnh trên GitHub Pages; Google Apps Script chỉ làm backend lưu dữ liệu và gọi AI.
 
-**Bàn giao giữa các phiên: xem [HANDOFF.md](HANDOFF.md).**
+**Prompt riêng của dự án: [PROMPT.md](PROMPT.md). Bàn giao giữa các phiên: [HANDOFF.md](HANDOFF.md).** Mọi phiên làm việc đọc `PROMPT.md` trước, rồi `HANDOFF.md`.
 
 ## Chạy thử trên máy
 
