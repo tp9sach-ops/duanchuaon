@@ -1,14 +1,10 @@
 // Điểm sáng bấm được trong cảnh 3D: nút HTML đặt theo toạ độ chiếu của một điểm 3D (dễ dùng bằng bàn phím, đọc được bằng trình đọc màn hình).
 import * as THREE from 'three';
 
-export const HOTSPOTS = [
-  { id: 'today',   num: '01', label: 'Hôm nay',     at: [0, 15, 34] },
-  { id: 'fortune', num: '02', label: 'Vận trình',   at: [-7, 1.6, 14] },
-  { id: 'charts',  num: '03', label: 'Lá số',       at: [0, 22, -92] },
-  { id: 'reading', num: '04', label: 'Tướng số',    at: [28, 12.5, -4] },
-  { id: 'temple',  num: '05', label: 'Chánh điện',  at: [0, 6.2, -30] },
-  { id: 'summary', num: '06', label: 'Lá bùa',      at: [110, 105, -400] },
-];
+import { SPOTS } from '../world/spots.js';
+
+// Vị trí nhãn và tên lấy từ js/world/spots.js (nơi duy nhất định nghĩa điểm đến + điểm đứng). Bấm nhãn → nhân vật đi tới rồi mới mở bảng.
+export const HOTSPOTS = SPOTS.map((s) => ({ id: s.id, num: s.num, label: s.label, at: s.look }));
 
 export function createHotspots(camera, onPick) {
   const layer = document.getElementById('hotspots');

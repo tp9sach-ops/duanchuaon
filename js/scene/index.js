@@ -9,11 +9,14 @@ import { softDot } from './textures.js';
 import { makeMaterials, buildTamQuan, buildBellTower, buildCenser } from './temple.js';
 import { buildChanhDien } from './chanhdien.js';
 import { buildProps } from './props.js';
+import { buildGarden } from './garden.js';
+import { buildHouses } from './nhato.js';
 import { loadTemple } from './model.js';
 import { buildSky, buildMountains, buildGround, buildPond, buildBodhi, buildBamboo, buildRocks } from './nature.js';
 import { buildFireflies, buildPetals, buildSmoke } from './particles.js';
 import { createRail } from './rail.js';
 import { createHotspots } from './hotspots.js';
+import { createWorld } from '../world/world.js';
 
 /* Biến toàn cục MOOD (-1..1): điểm số sẽ điều khiển màu đèn, độ sáng trăng, tông hậu kỳ.
    -1 = lạnh/xanh, 0 = trung tính, +1 = vàng ấm. Dùng: window.LGT.setMood(0.6) hoặc ?mood=0.6
@@ -21,7 +24,7 @@ import { createHotspots } from './hotspots.js';
 export const LGT = (window.LGT = window.LGT || { mood: 0, _target: 0, setMood(v) { this._target = clamp(+v || 0, -1, 1); } });
 LGT.panelOpen = false;
 
-export function createScene(canvas, { onProgress, onPick } = {}) {
+export function createScene(canvas, { onProgress, onPick, onArrive } = {}) {
   const coarse = isCoarse() || innerWidth < 760;
   const reduce = prefersReduced();
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: !coarse, powerPreference: 'high-performance' });
@@ -54,7 +57,7 @@ export function createScene(canvas, { onProgress, onPick } = {}) {
   const chanh = buildChanhDien(); chanh.group.position.set(0, 0, -30);
   const tower = buildBellTower(); tower.group.position.set(28, 0, -4); tower.group.rotation.y = -0.25;
   const censer = buildCenser(); censer.group.position.set(0, 0, -8);
-  scene.add(tam, chanh.group, tower.group, censer.group, buildProps()); onProgress?.(0.55);
+  scene.add(tam, chanh.group, tower.group, censer.group, buildProps(), buildGarden(), buildHouses()); onProgress?.(0.55);
 
   // --- quần thể chùa (GLB): nạp nền, không chặn màn hình chờ. Lỗi thì bỏ qua.
   loadTemple().then((m) => { if (m) scene.add(m); });
@@ -82,6 +85,9 @@ export function createScene(canvas, { onProgress, onPick } = {}) {
 
   const rail = createRail(camera);
   const hotspots = createHotspots(camera, (id) => onPick?.(id));
+  // Chế độ đi bộ (mặc định). Thêm ?rail=1 vào địa chỉ để quay lại chế độ camera bay cũ.
+  const useRail = new URLSearchParams(location.search).get('rail') === '1';
+  const world = useRail ? null : createWorld({ scene, camera, canvas, coarse, LGT, onArrive });
 
   // --- PERF governor: 0 = đầy đủ; 1 = pixelRatio 1; 2 = tắt bloom; 3 = giảm hạt + pixelRatio .75
   let level = coarse ? 1 : 0, framesAcc = 0, timeAcc = 0;
@@ -129,8 +135,8 @@ export function createScene(canvas, { onProgress, onPick } = {}) {
     bloom.strength = 0.45 + 0.25 * Math.max(0, m);
 
     // Camera + hiệu ứng nhẹ theo con trỏ (tắt khi reduced-motion)
-    rail.update(dt, reduce);
-    if (!reduce && !coarse) {
+    if (world) world.update(dt); else rail.update(dt, reduce);
+    if (!world && !reduce && !coarse) {
       mx = damp(mx, mouseX, 2, dt); my = damp(my, mouseY, 2, dt);
       camera.position.x += mx * 1.2; camera.position.y += -my * 0.6;
     }
@@ -169,5 +175,5 @@ export function createScene(canvas, { onProgress, onPick } = {}) {
   }
 
   applyLevel(); rail.snap(); frame();
-  return { renderer, scene, camera, rail, getLevel: () => level, LGT };
+  return { renderer, scene, camera, rail, world, getLevel: () => level, LGT };
 }
