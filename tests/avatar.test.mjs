@@ -1,0 +1,56 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { AVATAR_COLORS, colorById, DEFAULT_COLOR, cleanName, cleanSay, bubbleLife, wrapText, poseFor, STATES, turnToward } from '../js/world/avatarLogic.js';
+
+test('màu áo: id hợp lệ trả đúng, id lạ/rỗng về mặc định', () => {
+  assert.equal(AVATAR_COLORS.length, 6);
+  assert.equal(colorById('lam').id, 'lam');
+  assert.equal(colorById('xyz').id, DEFAULT_COLOR); assert.equal(colorById().id, DEFAULT_COLOR);
+  assert.equal(new Set(AVATAR_COLORS.map((c) => c.id)).size, 6);
+});
+test('tên: cắt 20 ký tự, gộp khoảng trắng, bỏ HTML/link, rỗng thì Khách', () => {
+  assert.equal(cleanName('  Phan   Trường  Giang '), 'Phan Trường Giang');
+  assert.equal(cleanName('<b>Hi</b>'), 'b Hi /b');
+  assert.equal(cleanName('https://x.com/abc'), 'Khách');
+  assert.equal(cleanName(''), 'Khách'); assert.equal(cleanName(null), 'Khách');
+  assert.equal(Array.from(cleanName('A'.repeat(50))).length, 20);
+  assert.equal(cleanName('\u202eabc\u200b'), 'abc');
+});
+test('tên: không cắt đôi ký tự emoji (cặp thay thế)', () => {
+  const n = cleanName('🙏'.repeat(30)); assert.equal(Array.from(n).length, 20); assert.ok(!/[\ud800-\udbff]$/.test(n));
+});
+test('chat: cắt 80, bỏ link, rỗng thì không hiện', () => {
+  assert.equal(cleanSay('Nam mô A Di Đà Phật'), 'Nam mô A Di Đà Phật');
+  assert.equal(cleanSay('xem www.abc.com nhé'), 'xem nhé');
+  assert.equal(cleanSay('   '), ''); assert.equal(Array.from(cleanSay('a '.repeat(100))).length <= 80, true);
+});
+test('thời gian bong bóng 3–8 giây, dài hơn thì lâu hơn', () => {
+  assert.equal(bubbleLife(''), 3000); assert.equal(bubbleLife('x'.repeat(200)), 8000); assert.ok(bubbleLife('x'.repeat(40)) > bubbleLife('x'.repeat(10)));
+});
+test('ngắt dòng: mỗi dòng ≤ 18, giữ đủ chữ, tối đa 4 dòng có dấu …', () => {
+  const l = wrapText('Nam mô A Di Đà Phật cầu cho gia đình bình an', 18);
+  assert.ok(l.every((x) => Array.from(x).length <= 18)); assert.equal(l.join(' '), 'Nam mô A Di Đà Phật cầu cho gia đình bình an');
+  assert.deepEqual(wrapText('a'.repeat(40), 18), ['a'.repeat(18), 'a'.repeat(18), 'aaaa']);
+  const long = wrapText('abcde '.repeat(30), 10, 4); assert.equal(long.length, 4); assert.ok(long[3].endsWith('…'));
+  assert.deepEqual(wrapText('', 18), []);
+});
+test('tư thế đi: chân đối nhau, nhanh hơn thì bước rộng hơn, biên độ có giới hạn', () => {
+  const p = poseFor('walk', 0.3, 2); assert.ok(Math.abs(p.legL + p.legR) < 1e-9); assert.ok(Math.abs(p.armL + p.legL * 0.8) < 1e-9);
+  let slow = 0, fast = 0; for (let i = 0; i < 200; i++) { slow = Math.max(slow, Math.abs(poseFor('walk', i * 0.01, 0.5).legL)); fast = Math.max(fast, Math.abs(poseFor('walk', i * 0.01, 2.2).legL)); }
+  assert.ok(fast > slow); assert.ok(fast <= 0.62 * 1.15 + 1e-9);
+});
+test('ngồi/gõ mõ: sit = 1; gõ mõ có tay phải dao động; đứng: sit = 0', () => {
+  assert.equal(poseFor('sit', 1).sit, 1); assert.equal(poseFor('mo', 1).sit, 1); assert.equal(poseFor('idle', 1).sit, 0);
+  const v = []; for (let i = 0; i < 100; i++) v.push(poseFor('mo', i * 0.02).armR); assert.ok(Math.max(...v) - Math.min(...v) > 0.4);
+});
+test('lạy: cúi tới ~1 rad rồi trở lại thẳng; mọi trạng thái cho số hữu hạn', () => {
+  let mx = 0, mn = 9; for (let i = 0; i < 400; i++) { const l = poseFor('bow', i * 0.01).lean; mx = Math.max(mx, l); mn = Math.min(mn, l); }
+  assert.ok(mx > 1.0 && mx <= 1.05 + 1e-9); assert.ok(mn < 0.01);
+  for (const s of STATES) for (const t of [0, 0.7, 3.3, 100]) for (const v of Object.values(poseFor(s, t, 1.5))) assert.ok(Number.isFinite(v), s);
+  assert.equal(poseFor('khong-co', 1).sit, 0);   // trạng thái lạ → đứng yên
+});
+test('quay mặt theo đường ngắn nhất, bước tối đa maxStep', () => {
+  assert.ok(Math.abs(turnToward(3.0, -3.0, 10) - (-3.0 + Math.PI * 2)) < 1e-9);   // 3 → -3 đi qua π là cung ngắn
+  assert.ok(Math.abs(turnToward(0, 1, 0.1) - 0.1) < 1e-9); assert.ok(Math.abs(turnToward(0, -1, 0.1) + 0.1) < 1e-9);
+  assert.equal(turnToward(1, 1, 0.5), 1);
+});
