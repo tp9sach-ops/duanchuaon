@@ -46,12 +46,20 @@ export function initStage(rail, fg) {
     if (had && lastFocus && lastFocus.focus) lastFocus.focus({ preventScroll: true });
   }
 
+  /** Đi tới chương `id`: ở chế độ đi bộ thì nhân vật đi tới chỗ của chương rồi mới mở bảng; không có chế độ đi bộ thì mở luôn. */
+  function go(id) {
+    const walk = lgt() && lgt().world && lgt().world.goTo;
+    if (!walk || !byId[id]) return open(id);
+    if (current) close();
+    if (!walk(id)) open(id);
+  }
+
   // Mọi liên kết #chương (menu, nút, chân trang) mở bảng thay vì cuộn
   document.addEventListener('click', (e) => {
     const a = e.target.closest && e.target.closest('a[href^="#"]');
     if (!a) return;
     const id = a.getAttribute('href').slice(1);
-    if (byId[id]) { e.preventDefault(); open(id); }
+    if (byId[id]) { e.preventDefault(); go(id); }
     else if (id === 'hero') { e.preventDefault(); close(); }
   });
   addEventListener('keydown', (e) => { if (e.key === 'Escape' && current) close(); });
@@ -60,5 +68,5 @@ export function initStage(rail, fg) {
 
   const h = location.hash.slice(1);
   if (byId[h]) open(h, { hash: false });
-  return { open, close, get current() { return current; } };
+  return { open, go, close, get current() { return current; } };
 }
