@@ -1,6 +1,6 @@
 // Khung HUD Phiên 13b: thanh menu dưới 9 nút, lưới 6 nút hành động, cụm nút phải-trên, toast giữa-trên, bảng "Bản đồ chùa".
 // Logic và dữ liệu ở menuLogic.js (có test). Biểu tượng SVG tự vẽ (không dùng ảnh của trang mẫu). Mọi nút chưa có tính năng: mờ + báo "sắp có".
-import { BOTTOM_MENU, ACTIONS, TOP_ICONS, WALLET_PLACEHOLDER, HELP_TEXT, WELCOME_TEXT, pressResult, ariaLabel, isReady, mapEntries, formatCount, createToastState } from './menuLogic.js';
+import { BOTTOM_MENU, ACTIONS, TOP_ICONS, WALLET_PLACEHOLDER, HELP_TEXT, WELCOME_TEXT, pressResult, ariaLabel, OUTSIDE_TEXT, isReady, mapEntries, formatCount, createToastState } from './menuLogic.js';
 
 const P = {
   scroll: '<path d="M8 4h10v13a3 3 0 0 0 3 3H8a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3z"/><path d="M10 9h6M10 13h6"/>',
@@ -48,6 +48,7 @@ export function initHudMenu(hud) {
       </div>
       <div class="hm-icons" id="hm-icons"></div>
     </div>
+    <button type="button" class="hm-stand" id="hm-stand" hidden>Đứng dậy</button>
     <div class="hm-grid" id="hm-grid" role="group" aria-label="Hành động"></div>
     <nav class="hm-bar" id="hm-bar" aria-label="Menu chùa"></nav>
     <section class="hm-map" id="hm-map" role="dialog" aria-label="Bản đồ chùa" hidden>
@@ -90,6 +91,12 @@ export function initHudMenu(hud) {
     if (r.kind === 'map') return mapBox.hidden ? openMap() : closeMap();
     if (r.kind === 'help') return toast(HELP_TEXT, 8000);
     if (r.kind === 'share') return share();
+    if (r.kind === 'bow' || r.kind === 'meditate') {
+      if (LGT.panelOpen || !LGT.world) return;
+      const ok = r.kind === 'bow' ? LGT.world.bow() : LGT.world.meditate();
+      if (ok === 'outside') toast(OUTSIDE_TEXT, 4500); else if (ok === false) toast('Bạn đang bận, thử lại sau một chút nhé.', 2500);
+      return;
+    }
     if (r.kind === 'goto') {
       if (LGT.panelOpen) return;
       const a = el('a'); a.href = '#' + r.id; document.body.appendChild(a); a.click(); a.remove();   // cùng đường với menu cũ: stage.go
@@ -107,6 +114,11 @@ export function initHudMenu(hud) {
   TOP_ICONS.forEach((it) => $('hm-icons').appendChild(mkBtn(it, 'hm-ic', false)));
   ACTIONS.forEach((it) => $('hm-grid').appendChild(mkBtn(it, 'hm-act', true)));
   BOTTOM_MENU.forEach((it) => $('hm-bar').appendChild(mkBtn(it, 'hm-mi', true)));
+
+  // ---- nút "Đứng dậy": chỉ hiện khi đang ngồi/thiền (thăm dò nhẹ, giống nút Vào chánh điện)
+  const standBtn = $('hm-stand');
+  standBtn.addEventListener('click', () => { LGT.world && LGT.world.stand(); standBtn.hidden = true; });
+  setInterval(() => { const m = LGT.world && LGT.world.mode; const sit = m === 'sit' || m === 'meditate'; if (standBtn.hidden === sit) standBtn.hidden = !sit; }, 250);
 
   return { toast, welcome: () => toast(WELCOME_TEXT, 9000), closeMap };
 }

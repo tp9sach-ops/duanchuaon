@@ -104,8 +104,8 @@ export function createAvatar({ name = 'Khách', color = 'nau', hair: hairId = 't
   const nameTex = nameTexture(cleanName(name), mine), label = makeSprite(nameTex, 1.28, 0.2, 2.12); group.add(label);
   let bubble = null, bubbleTex = null, bubbleUntil = 0, clock = 0;
 
-  const st = { state: 'idle', speed: 0, ry: 0, targetRy: 0, pose: poseFor('idle', 0), halo: 0 };
-  function setState(s, speed = 0) { st.state = s; st.speed = speed; }
+  const st = { state: 'idle', speed: 0, ry: 0, targetRy: 0, pose: poseFor('idle', 0), halo: 0, t0: 0 };
+  function setState(s, speed = 0) { if (s !== st.state) st.t0 = clock; st.state = s; st.speed = speed; }   // t0: tư thế (lạy, gõ mõ...) tính từ lúc đổi trạng thái
   function setFacing(ry, instant = false) { st.targetRy = ry; if (instant) { st.ry = ry; group.rotation.y = ry; } }
   /** Hiện bong bóng chat (đã làm sạch). Chuỗi rỗng → ẩn. */
   function say(text) {
@@ -121,7 +121,7 @@ export function createAvatar({ name = 'Khách', color = 'nau', hair: hairId = 't
   function update(dt) {
     clock += dt;
     if (arrow) arrow.position.y = 1.86 + Math.sin(clock * 3) * 0.05;
-    const target = poseFor(st.state, clock, st.speed), p = st.pose, k = Math.min(1, 14 * dt);
+    const target = poseFor(st.state, clock - st.t0, st.speed), p = st.pose, k = Math.min(1, 14 * dt);
     for (const key of Object.keys(target)) p[key] += (target[key] - p[key]) * (key === 'sit' ? Math.min(1, 6 * dt) : k);
     // Chân: đổi bước (tiến/lùi) và nhấc lên khi đi
     footL.position.z = 0.22 + p.legL * 0.3; footR.position.z = 0.22 + p.legR * 0.3;

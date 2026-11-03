@@ -6,6 +6,7 @@ import { createAvatar } from './avatar.js';
 import { SPAWN } from './layout.js';
 import { spotById, pickSpot, createArrival, faceAngle } from './spots.js';
 import { findPath } from './path.js';
+import { SEATS, SEAT_Y, pickSeat, seatById, nearestFreeSeat, standPoint, inHall, createActivity } from './seats.js';
 import { damp } from '../util.js';
 import {
   WALK_SPEED, RUN_SPEED, CLICK_SPEED, CAM_DIST, CAM_PITCH, moveVector, joyVector, walkStep, createNavigator, camPose, dragCamera, zoomCamera, facingOf,
@@ -30,6 +31,7 @@ export function createWorld({ scene, camera, canvas, coarse = false, LGT = windo
   const nav = createNavigator(), cam = { x: 0, y: 0, z: 0, lx: 0, ly: 0, lz: 0, init: false };
   const blockedNow = () => !!LGT.panelOpen;
   const arrival = createArrival();
+  const act = createActivity();                              // ngồi / thiền / lạy (seats.js)
 
   // --- dòng nhắc nhỏ khi đang đi tới một chỗ (Esc hoặc tự đi để hủy)
   const hint = document.createElement('div'); hint.id = 'goto-hint'; hint.setAttribute('role', 'status'); hint.setAttribute('aria-live', 'polite'); hint.hidden = true;
@@ -49,7 +51,7 @@ export function createWorld({ scene, camera, canvas, coarse = false, LGT = windo
     if (e.code === 'Escape') { cancelGo(); return; }
     if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') { keys.run = true; return; }
     const k = KEYMAP[e.code]; if (!k) return;
-    if (!blockedNow()) { keys[k] = true; nav.clear(); arrival.cancel(); showHint(null); e.preventDefault(); }
+    if (!blockedNow()) { release(); keys[k] = true; nav.clear(); arrival.cancel(); showHint(null); e.preventDefault(); }
   });
   addEventListener('keyup', (e) => { if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') keys.run = false; const k = KEYMAP[e.code]; if (k) keys[k] = false; });
   addEventListener('blur', () => { keys.f = keys.b = keys.l = keys.r = keys.run = false; });
@@ -89,8 +91,10 @@ export function createWorld({ scene, camera, canvas, coarse = false, LGT = windo
     return h ? h.spot : null;
   }
   function pickGround(cx, cy) {
+    ndc.set((cx / innerWidth) * 2 - 1, -(cy / innerHeight) * 2 + 1); ray.setFromCamera(ndc, camera);
+    const hs = pickSeat(ray.ray.origin, ray.ray.direction); if (hs) { sit(hs.seat.id); return; }   // bấm bồ đoàn → đi tới ngồi
     const sp = spotAt(cx, cy); if (sp) { goTo(sp.id); return; }
-    arrival.cancel(); showHint(null);
+    release(); arrival.cancel(); showHint(null);
     ndc.set((cx / innerWidth) * 2 - 1, -(cy / innerHeight) * 2 + 1); ray.setFromCamera(ndc, camera);
     plane.constant = -P.y;                                    // mặt phẳng ngang tại độ cao của người
     if (!ray.ray.intersectPlane(plane, hit) || Math.hypot(hit.x - camera.position.x, hit.z - camera.position.z) > 90) return;
@@ -106,7 +110,7 @@ export function createWorld({ scene, camera, canvas, coarse = false, LGT = windo
     document.head.appendChild(st);
     const base = document.createElement('div'); base.id = 'joy'; base.setAttribute('aria-hidden', 'true'); const knob = document.createElement('i'); base.appendChild(knob); document.body.appendChild(base);
     let jid = null, c0 = null;
-    base.addEventListener('pointerdown', (e) => { jid = e.pointerId; const r = base.getBoundingClientRect(); c0 = { x: r.left + r.width / 2, y: r.top + r.height / 2 }; base.setPointerCapture(e.pointerId); nav.clear(); arrival.cancel(); showHint(null); onJoy(e); });
+    base.addEventListener('pointerdown', (e) => { jid = e.pointerId; const r = base.getBoundingClientRect(); c0 = { x: r.left + r.width / 2, y: r.top + r.height / 2 }; base.setPointerCapture(e.pointerId); release(); nav.clear(); arrival.cancel(); showHint(null); onJoy(e); });
     base.addEventListener('pointermove', (e) => { if (e.pointerId === jid) onJoy(e); });
     const off = (e) => { if (e.pointerId !== jid) return; jid = null; joy = null; knob.style.transform = ''; };
     base.addEventListener('pointerup', off); base.addEventListener('pointercancel', off);
@@ -119,7 +123,7 @@ export function createWorld({ scene, camera, canvas, coarse = false, LGT = windo
    */
   function goTo(id) {
     const s = spotById(id); if (!s) return false;
-    nav.clear(); arrival.start(s); showHint(s);
+    release(); nav.clear(); arrival.start(s); showHint(s);
     const r = arrival.step(P, false);
     if (r && r.arrived) { arrive(r.arrived); return true; }
     arrival.start(s);
@@ -139,10 +143,39 @@ export function createWorld({ scene, camera, canvas, coarse = false, LGT = windo
   function zoom(delta) { dist = zoomCamera(dist, delta); }
   /** Đi bộ tới điểm (x, z) bất kỳ (tìm đường vòng vật cản), không mở bảng nào. */
   function walkTo(x, z) {
-    arrival.cancel(); showHint(null);
+    release(); arrival.cancel(); showHint(null);
     const path = findPath(P.x, P.z, x, z); if (path && path.length) nav.setPath(path); else nav.setTarget(x, z);
     mark.position.set(x, P.y + 0.06, z); mark.visible = true;
   }
+  /** Rời tư thế ngồi/lạy/đang đi tới bồ đoàn (người chơi muốn đi chỗ khác). Đang ngồi thì bước ra lối đi sau lưng. */
+  function release() {
+    const r = act.stand();
+    if (r.seat && (r.was === 'sit' || r.was === 'meditate')) { const q = standPoint(r.seat); P.x = q.x; P.z = q.z; P.y = SEAT_Y; }
+  }
+  /** Đi tới bồ đoàn `id` rồi ngồi (then: 'sit' | 'meditate'). Trả false nếu không có chỗ đó. */
+  function sit(id, then = 'sit') {
+    const s = seatById(id); if (!s) return false;
+    release(); nav.clear(); arrival.cancel(); showHint(null); act.goSit(s, then);
+    const path = findPath(P.x, P.z, s.x, s.z); if (path && path.length) nav.setPath(path); else nav.setTarget(s.x, s.z);
+    mark.position.set(s.x, SEAT_Y - 0.1, s.z); mark.visible = true;
+    return true;
+  }
+  /** Lạy Phật: đứng trong chánh điện, quay mặt về bàn thờ, chắp tay cúi lạy. Trả true | false (đang bận) | 'outside' (chưa vào chánh điện). */
+  function bow() {
+    if (act.sitting) release();
+    if (!inHall(P)) return 'outside';
+    nav.clear(); arrival.cancel(); showHint(null); mark.visible = false;
+    if (!act.bow()) return false;
+    avatar.setFacing(Math.PI); return true;
+  }
+  /** Thiền: ngồi vào bồ đoàn (gần nhất nếu chưa ngồi) và ngồi yên có hào quang. Trả true | 'outside'. */
+  function meditate() {
+    if (act.sitting) return act.meditate();
+    if (!inHall(P)) return 'outside';
+    const s = nearestFreeSeat(P); return s ? sit(s.id, 'meditate') : false;
+  }
+  function stand() { const was = act.mode; release(); return was; }
+
   function arrive(s) {
     showHint(null); nav.clear(); mark.visible = false;
     avatar.setFacing(faceAngle(P, s));
@@ -154,6 +187,17 @@ export function createWorld({ scene, camera, canvas, coarse = false, LGT = windo
   /** Gọi mỗi khung hình (thay rail.update khi ở chế độ đi bộ). */
   function update(dt) {
     let v = null, spd = WALK_SPEED;
+    act.update(dt);
+    if (act.sitting) {                                        // đang ngồi/thiền: khóa tại bồ đoàn, bỏ qua đi lại
+      const s = act.seat; P.x = s.x; P.z = s.z; P.y = damp(P.y, SEAT_Y, 10, dt); speedNow = 0; nav.clear(); mark.visible = false;
+      avatar.setFacing(s.ry); avatar.setState('sit', 0); avatar.group.position.set(P.x, P.y, P.z); avatar.update(dt);
+      camStep(dt); return;
+    }
+    if (act.mode === 'bow') {                                 // đang lạy: đứng yên (phím/bấm sẽ hủy qua release)
+      speedNow = 0; P.y = damp(P.y, walkStep(P, { x: 0, z: 0 }, dt, 0).y, 14, dt);
+      avatar.setState('bow', 0); avatar.group.position.set(P.x, P.y, P.z); avatar.update(dt);
+      camStep(dt); return;
+    }
     if (!blockedNow()) {
       const m = moveVector(keys, joy, yaw);
       if (m.mag > 0) { v = m; spd = (keys.run ? RUN_SPEED : WALK_SPEED); }
@@ -169,11 +213,18 @@ export function createWorld({ scene, camera, canvas, coarse = false, LGT = windo
       const ev = arrival.step(P, nav.active);
       if (ev && ev.arrived) arrive(ev.arrived); else if (ev && ev.failed) { showHint(null); mark.visible = false; }
     }
+    if (act.mode === 'toSeat') {                              // đang đi tới bồ đoàn: tới nơi thì ngồi, kẹt/hết đường thì thôi
+      if (act.step(P) === 'seated') { nav.clear(); mark.visible = false; P.x = act.seat.x; P.z = act.seat.z; }
+      else if (!nav.active && !v) act.cancelWalk();
+    }
     avatar.setState(speedNow > 0.4 ? 'walk' : 'idle', speedNow);
     avatar.group.position.set(P.x, P.y, P.z); avatar.update(dt);
     if (mark.visible) { const s = 1 + 0.12 * Math.sin(performance.now() / 160); mark.scale.set(s, s, s); mark.position.y = P.y + 0.06; }
+    camStep(dt);
+  }
 
-    // Camera: bám theo, làm mượt (giật cục khi va tường thì mượt hơn)
+  /** Camera: bám theo, làm mượt (giật cục khi va tường thì mượt hơn). */
+  function camStep(dt) {
     const c = camPose(P, yaw, pitch, dist);
     if (!cam.init) { cam.x = c.pos.x; cam.y = c.pos.y; cam.z = c.pos.z; cam.lx = c.look.x; cam.ly = c.look.y; cam.lz = c.look.z; cam.init = true; }
     const k = 9; cam.x = damp(cam.x, c.pos.x, k, dt); cam.y = damp(cam.y, c.pos.y, k, dt); cam.z = damp(cam.z, c.pos.z, k, dt);
@@ -181,7 +232,7 @@ export function createWorld({ scene, camera, canvas, coarse = false, LGT = windo
     camera.position.set(cam.x, Math.max(0.5, cam.y), cam.z); camera.lookAt(cam.lx, cam.ly, cam.lz);
   }
 
-  LGT.world = { setProfile, zoom, walkTo, get pos() { return { x: P.x, z: P.z, y: P.y }; }, teleport, goTo, get avatar() { return avatar; }, get camera() { return { yaw, pitch, dist }; }, nav };
+  LGT.world = { setProfile, zoom, walkTo, sit, bow, meditate, stand, get mode() { return act.mode; }, seats: SEATS, get pos() { return { x: P.x, z: P.z, y: P.y }; }, teleport, goTo, get avatar() { return avatar; }, get camera() { return { yaw, pitch, dist }; }, nav };
   update(0.016);
-  return { update, get avatar() { return avatar; }, setProfile, zoom, walkTo, teleport, goTo, get pos() { return { x: P.x, z: P.z, y: P.y }; } };
+  return { update, get avatar() { return avatar; }, setProfile, zoom, walkTo, sit, bow, meditate, stand, teleport, goTo, get pos() { return { x: P.x, z: P.z, y: P.y }; } };
 }

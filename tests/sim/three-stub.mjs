@@ -1,0 +1,25 @@
+const mk=()=>{const f=function(){return p};const p=new Proxy(f,{get:(t,k)=>k===Symbol.toPrimitive?()=>0:k==='then'?undefined:(k in t?t[k]:p),set:()=>true,apply:()=>p,construct:()=>p});return p};
+class V{constructor(x=0,y=0,z=0){this.x=x;this.y=y;this.z=z}set(x,y,z){this.x=x;this.y=y;this.z=z??this.z;return this}}
+export const AdditiveBlending=mk();
+export const BackSide=mk();
+export const CanvasTexture=mk();
+export const CircleGeometry=mk();
+export const ConeGeometry=mk();
+export const CylinderGeometry=mk();
+export const Group=mk();
+export const InstancedMesh=mk();
+export const LatheGeometry=mk();
+export const Matrix4=mk();
+export const Mesh=mk();
+export const MeshBasicMaterial=mk();
+export const MeshStandardMaterial=mk();
+export const Plane=mk();
+export const Raycaster=mk();
+export const RingGeometry=mk();
+export const SRGBColorSpace=mk();
+export const SphereGeometry=mk();
+export const Sprite=mk();
+export const SpriteMaterial=mk();
+export const TorusGeometry=mk();
+export const Vector2=V;
+export const Vector3=V;

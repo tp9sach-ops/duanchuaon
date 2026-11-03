@@ -5,7 +5,7 @@ export const SPAWN = { x: 0, z: 54, ry: Math.PI };   // ry: góc quay quanh tr�
 
 export const GATE = { z: 34, openings: [[-2.3, 2.3], [6.9, 9.3], [-9.3, -6.9]] };   // cổng giữa và hai cổng phụ
 export const POND = { x: 0, z: 14, r: 10.6, bridgeHalf: 1.9 };
-export const HALL = { cx: 0, cz: -28, platX: 17, platZ0: -38.4, platZ1: -17.5, wallX: 12.7, wallZ0: -34.7, wallZ1: -21.2, step: { x: 5, z0: -17.9, z1: -13.1 }, h: 1.5 };
+export const HALL = { cx: 0, cz: -28, platX: 17, platZ0: -38.4, platZ1: -17.5, wallX: 12.7, wallZ0: -34.7, wallZ1: -21.2, step: { x: 5, z0: -17.9, z1: -13.1 }, h: 1.14 };   // h = mặt sàn gỗ chánh điện (js/scene/chanhdien.js: bệ đá cao 1.0 + sàn gỗ 0.12 + 0.02)
 export const BELL = { x: 28, z: -4, r: 5.2 };
 export const CENSER = { x: 0, z: -8 };
 

@@ -1,6 +1,6 @@
 // Màn vào cửa (nhập tên, chọn áo, chọn kiểu đầu) + HUD trái-trên (chip người chơi, tên chùa, Vào chánh điện/Ra sân, đang online) + nút +/−.
 // Bố cục theo ảnh mẫu (PROMPT.md mục 9.4); chỉ bắt chước bố cục, mọi hình/chữ do mình tự làm. Logic ở hudLogic.js (có test).
-import { cleanProfile, loadProfile, saveProfile, initialOf, robeCss, insideHall, COURTYARD_POINT, PLAYER_COLORS } from './hudLogic.js';
+import { cleanProfile, loadProfile, saveProfile, initialOf, robeCss, insideHall, COURTYARD_POINT, HALL_POINT, PLAYER_COLORS } from './hudLogic.js';
 import { HAIR_STYLES } from '../world/avatarLogic.js';
 import { initHudMenu } from './hudMenu.js';
 
@@ -39,7 +39,7 @@ export function initHud() {
   q('zin').addEventListener('click', () => W.zoom(-420)); q('zout').addEventListener('click', () => W.zoom(420));
   q('btn-hall').addEventListener('click', () => {
     if (LGT.panelOpen) return;
-    if (insideHall(W.pos)) W.walkTo(COURTYARD_POINT.x, COURTYARD_POINT.z); else W.goTo('temple');
+    if (insideHall(W.pos)) W.walkTo(COURTYARD_POINT.x, COURTYARD_POINT.z); else W.walkTo(HALL_POINT.x, HALL_POINT.z);   // đi vào/ra thật; bảng Chánh điện mở bằng cách bấm tượng Phật hoặc Bản đồ chùa
   });
   // Đổi nhãn nút theo vị trí: trong chánh điện → "Ra sân ngắm cảnh"
   let inside = null;

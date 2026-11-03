@@ -27,4 +27,6 @@ export function robeCss(colorId) { return '#' + colorById(colorId).ao.toString(1
 export function insideHall(p) { return Math.abs(p.x) <= HALL.platX && p.z <= HALL.platZ1 - 0.3; }
 /** Điểm đứng khi "Ra sân ngắm cảnh": giữa sân, lệch khỏi lư hương, đi tới được (có test). */
 export const COURTYARD_POINT = { x: 3.2, z: -1 };
+/** Chỗ đứng ngay sau cửa chánh điện (trước lưới bồ đoàn): nút "Vào chánh điện" đi tới đây, KHÔNG mở bảng. */
+export const HALL_POINT = { x: 2.1, z: -20.8 };   // giữa hai cột hàng trước (cột ở x = 0 và 4,17), tránh va cột
 export const PLAYER_COLORS = AVATAR_COLORS;

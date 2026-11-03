@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import '../js/world/placements.js';
-import { BOTTOM_MENU, ACTIONS, TOP_ICONS, pressResult, soonText, ariaLabel, isReady, mapEntries, formatCount, createToastState, HELP_TEXT } from '../js/ui/menuLogic.js';
+import { BOTTOM_MENU, ACTIONS, TOP_ICONS, pressResult, soonText, ariaLabel, isReady, mapEntries, formatCount, createToastState, HELP_TEXT, OUTSIDE_TEXT } from '../js/ui/menuLogic.js';
 import { SPOTS } from '../js/world/spots.js';
 
 test('menu dưới đúng 9 mục như ảnh mẫu, id không trùng', () => {
@@ -20,6 +20,12 @@ test('nút chưa có tính năng báo "sắp có", không im lặng; nhãn đọ
   assert.deepEqual(pressResult(it), { kind: 'soon', text: 'Nhiệm vụ sắp có — đang được làm.' });
   assert.match(soonText(ACTIONS.find((a) => a.id === 'linhthu')), /khóa/);
   assert.equal(ariaLabel(it), 'Nhiệm vụ (sắp có)');
+});
+test('Lạy Phật và Thiền đã có chức năng; Tràng hạt/Tụng kinh còn "sắp có" (Phiên 14b)', () => {
+  assert.deepEqual(pressResult(ACTIONS.find((a) => a.id === 'lay')), { kind: 'bow' });
+  assert.deepEqual(pressResult(ACTIONS.find((a) => a.id === 'thien')), { kind: 'meditate' });
+  for (const id of ['trenghat', 'tungkinh']) assert.equal(pressResult(ACTIONS.find((a) => a.id === id)).kind, 'soon');
+  assert.match(OUTSIDE_TEXT, /chánh điện/);
 });
 test('nút đã có chức năng trả đúng hành động', () => {
   assert.deepEqual(pressResult(BOTTOM_MENU.find((m) => m.id === 'bando')), { kind: 'map' });

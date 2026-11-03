@@ -19,6 +19,7 @@ import { buildFireflies, buildPetals, buildSmoke } from './particles.js';
 import { createRail } from './rail.js';
 import { createHotspots } from './hotspots.js';
 import { createWorld } from '../world/world.js';
+import { buildCushions } from './boduon.js';
 
 /* Biến toàn cục MOOD (-1..1): điểm số sẽ điều khiển màu đèn, độ sáng trăng, tông hậu kỳ.
    -1 = lạnh/xanh, 0 = trung tính, +1 = vàng ấm. Dùng: window.LGT.setMood(0.6) hoặc ?mood=0.6
@@ -60,7 +61,7 @@ export function createScene(canvas, { onProgress, onPick, onArrive } = {}) {
   const chanh = buildChanhDien(); chanh.group.position.set(0, 0, -30);
   const tower = buildBellTower(); tower.group.position.set(28, 0, -4); tower.group.rotation.y = -0.25;
   const censer = buildCenser(); censer.group.position.set(0, 0, -8);
-  scene.add(tam, chanh.group, tower.group, censer.group, buildProps(), buildGarden(), buildHouses()); onProgress?.(0.55);
+  scene.add(tam, chanh.group, tower.group, censer.group, buildProps(), buildGarden(), buildHouses(), buildCushions()); onProgress?.(0.55);
 
   // --- quần thể chùa (GLB): nạp nền, không chặn màn hình chờ. Lỗi thì bỏ qua.
   loadTemple().then((m) => { if (m) scene.add(m); });

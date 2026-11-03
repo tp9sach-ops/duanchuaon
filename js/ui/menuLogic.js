@@ -18,10 +18,10 @@ export const BOTTOM_MENU = [
 
 /** Lưới 3×2 nút hành động phải-dưới. "Dâng lễ" nối tạm tới chương Chánh điện (đã có thắp nhang/gõ mõ/xăm); các nút còn lại làm ở Phiên 14. */
 export const ACTIONS = [
-  { id: 'lay',     label: 'Lạy Phật',  icon: 'bow',    status: 'soon' },
+  { id: 'lay',     label: 'Lạy Phật',  icon: 'bow',    status: 'ready', action: 'bow' },
   { id: 'trenghat', label: 'Tràng hạt', icon: 'beads',  status: 'soon' },
   { id: 'tungkinh', label: 'Tụng kinh', icon: 'book',   status: 'soon' },
-  { id: 'thien',   label: 'Thiền',     icon: 'sit',    status: 'soon' },
+  { id: 'thien',   label: 'Thiền',     icon: 'sit',    status: 'ready', action: 'meditate' },
   { id: 'danglee', label: 'Dâng lễ',   icon: 'incense', status: 'ready', action: 'goto', target: 'temple' },
   { id: 'linhthu', label: 'Linh thú',  icon: 'paw',    status: 'soon', locked: true },
 ];
@@ -39,7 +39,9 @@ export const TOP_ICONS = [
 /** Số hạt sen / ngọc: GIÁ TRỊ TẠM (chưa có tiến trình — Phiên 16). Không bịa số như ảnh mẫu. */
 export const WALLET_PLACEHOLDER = { sen: 0, ngoc: 0 };
 
-export const HELP_TEXT = 'Bấm vào đất để đi · kéo để xoay · cuộn hoặc chụm hai ngón để phóng to · WASD hoặc mũi tên để đi · Esc đóng bảng';
+/** Câu báo khi bấm Lạy Phật / Thiền mà chưa ở trong chánh điện. */
+export const OUTSIDE_TEXT = 'Hãy vào chánh điện trước (nút “Vào chánh điện”), rồi bấm lại nhé.';
+export const HELP_TEXT = 'Bấm vào đất để đi · bấm bồ đoàn để ngồi · kéo để xoay · cuộn hoặc chụm hai ngón để phóng to · WASD hoặc mũi tên để đi · Esc đóng bảng';
 export const WELCOME_TEXT = 'Chào mừng đến Diệu Giang Tự. Bấm vào sân để đi, bấm vào cổng, ao sen, nhà tổ, gác chuông hoặc lư hương để xem.';
 
 export const isReady = (item) => !!item && item.status === 'ready';
@@ -58,7 +60,7 @@ export function pressResult(item) {
   if (!item) return { kind: 'none' };
   if (!isReady(item)) return { kind: 'soon', text: soonText(item) };
   if (item.action === 'goto') return { kind: 'goto', id: item.target };
-  if (item.action === 'map' || item.action === 'share' || item.action === 'help') return { kind: item.action };
+  if (['map', 'share', 'help', 'bow', 'meditate'].includes(item.action)) return { kind: item.action };
   return { kind: 'soon', text: soonText(item) };
 }
 

@@ -27,6 +27,9 @@
 .hm-ic.soon:hover,.hm-act.soon:hover,.hm-mi.soon:hover,.hm-ic.soon:focus-visible,.hm-act.soon:focus-visible,.hm-mi.soon:focus-visible{opacity:.9}
 .hm-act.locked{filter:saturate(.3)}
 
+/* nút Đứng dậy: vàng đặc, ngay trên lưới hành động */
+.hm-stand{position:absolute;right:max(12px,env(safe-area-inset-right));bottom:max(204px,calc(env(safe-area-inset-bottom) + 190px));padding:11px 26px;border-radius:100px;border:1px solid #f1dba0;background:linear-gradient(180deg,#f1d27f,#d9b25f);color:#2a1a08;font:600 14px/1 var(--sans,inherit);cursor:pointer;box-shadow:0 6px 24px rgba(0,0,0,.4)}
+.hm-stand:hover,.hm-stand:focus-visible{background:#fff1c4;outline:none}
 /* phải-dưới: lưới 3×2 */
 .hm-grid{position:absolute;right:max(12px,env(safe-area-inset-right));bottom:max(60px,calc(env(safe-area-inset-bottom) + 44px));display:grid;grid-template-columns:repeat(3,64px);gap:8px}
 .hm-act{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;height:62px;padding:4px 2px;border-radius:14px;border:1px solid rgba(217,178,95,.45);background:rgba(10,8,6,.66);color:var(--gold-soft,#f1dba0);font:500 11px/1.1 var(--sans,inherit);cursor:pointer;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
@@ -57,6 +60,7 @@
   .hm-bar{left:auto;right:max(10px,env(safe-area-inset-right));top:max(118px,calc(env(safe-area-inset-top) + 106px));bottom:auto;transform:none;flex-direction:column;gap:3px;padding:5px;max-width:none;max-height:calc(100vh - 118px - 160px);overflow-y:auto;border-radius:16px}
   .hm-mi{min-width:0;width:42px;height:42px;padding:0;justify-content:center}.hm-mi span{display:none}.hm-mi svg{width:22px;height:22px}
   .hm-grid{grid-template-columns:repeat(3,48px);gap:6px;bottom:max(58px,calc(env(safe-area-inset-bottom) + 46px))}
+  .hm-stand{bottom:max(170px,calc(env(safe-area-inset-bottom) + 158px));padding:10px 20px;font-size:13px}
   .hm-act{height:48px;gap:2px;font-size:9px;border-radius:12px}.hm-act svg{width:19px;height:19px}
   .hm-map{left:auto;right:max(60px,calc(env(safe-area-inset-right) + 54px));top:max(118px,calc(env(safe-area-inset-top) + 106px));bottom:auto;transform:none;width:min(260px,calc(100vw - 80px))}
 }
