@@ -2,6 +2,7 @@
 // Bố cục theo ảnh mẫu (PROMPT.md mục 9.4); chỉ bắt chước bố cục, mọi hình/chữ do mình tự làm. Logic ở hudLogic.js (có test).
 import { cleanProfile, loadProfile, saveProfile, initialOf, robeCss, insideHall, COURTYARD_POINT, PLAYER_COLORS } from './hudLogic.js';
 import { HAIR_STYLES } from '../world/avatarLogic.js';
+import { initHudMenu } from './hudMenu.js';
 
 const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -27,6 +28,8 @@ export function initHud() {
     </div>
     <div class="hud-zoom"><button type="button" id="zin" aria-label="Phóng to">+</button><button type="button" id="zout" aria-label="Thu nhỏ">−</button></div>`;
   document.body.appendChild(hud);
+  let menu = null;
+  try { menu = initHudMenu(hud); } catch (e) { console.warn('[Diệu Giang Tự] Menu HUD lỗi:', e && e.message); }   // lỗi menu không được làm hỏng vào cửa
   const q = (id) => hud.querySelector('#' + id);
 
   function paintChip() {
@@ -74,6 +77,7 @@ export function initHud() {
     profile = { ...saveProfile(localStorage, { name: nameIn.value, color: draft.color, hair: draft.hair }), has: true };
     W.setProfile(profile); paintChip();
     enter.hidden = true; document.body.classList.remove('entering'); LGT.panelOpen = false; hud.hidden = false;
+    menu && menu.welcome();
     document.getElementById('gl')?.focus?.();
   });
 

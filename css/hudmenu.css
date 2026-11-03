@@ -1,0 +1,63 @@
+/* Khung HUD Phiên 13b: menu dưới 9 nút, lưới 6 nút phải-dưới, cụm nút phải-trên, toast, bản đồ chùa.
+   Vật liệu như ảnh mẫu: nền đen nâu kính mờ + viền vàng mảnh; màu vẫn là vàng #d9b25f của Diệu Giang Tự. */
+.hm{position:absolute;inset:0;pointer-events:none}
+.hm>*{pointer-events:auto}
+.hm [hidden]{display:none!important}
+.panel-open .hm-bar,.panel-open .hm-grid,.panel-open .hm-tr,.panel-open .hm-toast{opacity:0;pointer-events:none}
+.hm svg{display:block;flex:none}
+
+/* toast giữa-trên */
+.hm-toast{position:absolute;left:50%;top:max(14px,env(safe-area-inset-top));transform:translateX(-50%);max-width:min(560px,calc(100vw - 150px));padding:9px 18px;border-radius:100px;background:rgba(10,8,6,.72);border:1px solid rgba(217,178,95,.45);color:#f6ecd0;font:400 13px/1.45 var(--sans,inherit);text-align:center;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);box-shadow:0 8px 30px rgba(0,0,0,.35)}
+.hm-toast.in{animation:hm-in .35s ease-out}
+@keyframes hm-in{from{opacity:0;transform:translate(-50%,-8px)}to{opacity:1;transform:translate(-50%,0)}}
+@keyframes hm-in-m{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* phải-trên */
+.hm-tr{position:absolute;right:max(12px,env(safe-area-inset-right));top:max(12px,env(safe-area-inset-top));display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+.hm-wallet{display:flex;gap:8px}
+.hm-pill{display:inline-flex;align-items:center;gap:6px;padding:5px 12px 5px 8px;border-radius:100px;background:rgba(10,8,6,.62);border:1px solid rgba(217,178,95,.5);color:var(--gold-soft,#f1dba0);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.hm-pill svg{width:18px;height:18px}.hm-pill b{font:600 13px/1 var(--sans,inherit);color:#fff}
+.hm-icons{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;max-width:260px}
+.hm-ic{display:grid;place-items:center;width:34px;height:34px;padding:0;border-radius:50%;border:1px solid rgba(217,178,95,.5);background:rgba(10,8,6,.62);color:var(--gold-soft,#f1dba0);cursor:pointer;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.hm-ic svg{width:17px;height:17px}
+
+/* nút dùng chung: nhấn/di chuột = vàng đặc; chưa có tính năng = mờ */
+.hm-ic:hover,.hm-ic:focus-visible,.hm-act:hover,.hm-act:focus-visible,.hm-mi:hover,.hm-mi:focus-visible{background:var(--gold,#d9b25f);color:#2a1a08;outline:none}
+.hm-ic.soon,.hm-act.soon,.hm-mi.soon{opacity:.55}
+.hm-ic.soon:hover,.hm-act.soon:hover,.hm-mi.soon:hover,.hm-ic.soon:focus-visible,.hm-act.soon:focus-visible,.hm-mi.soon:focus-visible{opacity:.9}
+.hm-act.locked{filter:saturate(.3)}
+
+/* phải-dưới: lưới 3×2 */
+.hm-grid{position:absolute;right:max(12px,env(safe-area-inset-right));bottom:max(60px,calc(env(safe-area-inset-bottom) + 44px));display:grid;grid-template-columns:repeat(3,64px);gap:8px}
+.hm-act{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;height:62px;padding:4px 2px;border-radius:14px;border:1px solid rgba(217,178,95,.45);background:rgba(10,8,6,.66);color:var(--gold-soft,#f1dba0);font:500 11px/1.1 var(--sans,inherit);cursor:pointer;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.hm-act svg{width:24px;height:24px}
+
+/* dưới giữa: menu ngang 9 nút */
+.hm-bar{position:absolute;left:50%;bottom:max(46px,calc(env(safe-area-inset-bottom) + 34px));transform:translateX(-50%);display:flex;gap:2px;padding:6px 8px;border-radius:18px;background:rgba(10,8,6,.66);border:1px solid rgba(217,178,95,.45);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);max-width:calc(100vw - 440px)}
+.hm-mi{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:62px;padding:6px 6px 5px;border-radius:12px;border:0;background:transparent;color:var(--gold-soft,#f1dba0);font:500 10.5px/1.1 var(--sans,inherit);cursor:pointer;white-space:nowrap}
+.hm-mi svg{width:22px;height:22px}
+
+/* bản đồ chùa: kính tối viền vàng */
+.hm-map{position:absolute;left:50%;bottom:calc(max(46px,env(safe-area-inset-bottom) + 34px) + 76px);transform:translateX(-50%);width:min(300px,calc(100vw - 24px));padding:12px 14px 10px;border-radius:16px;background:rgba(14,10,7,.86);border:1px solid rgba(217,178,95,.55);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:0 18px 60px rgba(0,0,0,.5);color:var(--moon,#e8eaf2)}
+.hm-map header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.hm-map h3{margin:0;font:600 17px/1.2 var(--serif,Georgia,serif);color:#fff}
+.hm-x{display:grid;place-items:center;width:30px;height:30px;padding:0;border-radius:50%;border:1px solid rgba(217,178,95,.45);background:transparent;color:var(--gold-soft,#f1dba0);cursor:pointer}
+.hm-x svg{width:16px;height:16px}
+.hm-map ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
+.hm-map a{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px;color:var(--moon,#e8eaf2);text-decoration:none;font:400 14px/1.2 var(--sans,inherit)}
+.hm-map a:hover,.hm-map a:focus-visible{background:var(--gold,#d9b25f);color:#2a1a08;outline:none}
+.hm-map .n{font:600 11px/1 var(--sans,inherit);color:var(--gold,#d9b25f);width:20px}.hm-map a:hover .n,.hm-map a:focus-visible .n{color:#2a1a08}
+
+/* màn hình hẹp: menu dọc bên phải chỉ có biểu tượng, lưới nhỏ hơn ở phải-dưới */
+@media (max-width:1180px){.hm-bar{max-width:calc(100vw - 24px - 214px);overflow-x:auto}}
+@media (max-width:899px){
+  .hm-tr{gap:6px}.hm-icons{max-width:170px}.hm-ic{width:30px;height:30px}.hm-ic svg{width:15px;height:15px}
+  .hm-toast{left:12px;right:76px;top:auto;bottom:max(176px,calc(env(safe-area-inset-bottom) + 164px));transform:none;max-width:none;font-size:12px;padding:8px 12px;border-radius:14px;text-align:left}
+  .hm-toast.in{animation:hm-in-m .35s ease-out}
+  .hm-bar{left:auto;right:max(10px,env(safe-area-inset-right));top:max(118px,calc(env(safe-area-inset-top) + 106px));bottom:auto;transform:none;flex-direction:column;gap:3px;padding:5px;max-width:none;max-height:calc(100vh - 118px - 160px);overflow-y:auto;border-radius:16px}
+  .hm-mi{min-width:0;width:42px;height:42px;padding:0;justify-content:center}.hm-mi span{display:none}.hm-mi svg{width:22px;height:22px}
+  .hm-grid{grid-template-columns:repeat(3,48px);gap:6px;bottom:max(58px,calc(env(safe-area-inset-bottom) + 46px))}
+  .hm-act{height:48px;gap:2px;font-size:9px;border-radius:12px}.hm-act svg{width:19px;height:19px}
+  .hm-map{left:auto;right:max(60px,calc(env(safe-area-inset-right) + 54px));top:max(118px,calc(env(safe-area-inset-top) + 106px));bottom:auto;transform:none;width:min(260px,calc(100vw - 80px))}
+}
+@media (prefers-reduced-motion:reduce){.hm-toast.in{animation:none}}
