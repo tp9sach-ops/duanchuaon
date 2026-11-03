@@ -9,18 +9,7 @@ const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&':
 const load = (k, d) => { try { const v = JSON.parse(localStorage.getItem(k) || 'null'); return v == null ? d : v; } catch (_) { return d; } };
 const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) { /* bỏ qua */ } };
 
-// Âm thanh tổng hợp bằng Web Audio, chỉ tạo sau lần bấm đầu tiên (luật autoplay)
-let ac = null;
-const audio = () => { if (!ac) { try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (_) { return null; } } if (ac.state === 'suspended') ac.resume(); return ac; };
-function tone(freq, dur, { type = 'sine', gain = 0.3, decay = dur, slide = 0 } = {}) {
-  const c = audio(); if (!c) return;
-  const o = c.createOscillator(), g = c.createGain(), t = c.currentTime;
-  o.type = type; o.frequency.setValueAtTime(freq, t); if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(30, freq + slide), t + dur);
-  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(gain, t + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, t + decay);
-  o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + dur + 0.05);
-}
-const moSound = () => { tone(520, 0.16, { type: 'triangle', gain: 0.35, decay: 0.14, slide: -180 }); tone(260, 0.2, { gain: 0.18, decay: 0.18 }); };
-const bellSound = () => [[196, 0.28, 3.2], [392, 0.12, 2.6], [587, 0.07, 2], [823, 0.04, 1.4]].forEach(([f, g, d]) => tone(f, d, { gain: g, decay: d }));
+import { moSound, bellSound } from './sound.js';   // âm thanh dùng chung với màn Tụng kinh / Tràng hạt
 const quiet = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 export function initTemple() {

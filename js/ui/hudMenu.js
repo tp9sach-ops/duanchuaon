@@ -1,5 +1,7 @@
 // Khung HUD Phiên 13b: thanh menu dưới 9 nút, lưới 6 nút hành động, cụm nút phải-trên, toast giữa-trên, bảng "Bản đồ chùa".
 // Logic và dữ liệu ở menuLogic.js (có test). Biểu tượng SVG tự vẽ (không dùng ảnh của trang mẫu). Mọi nút chưa có tính năng: mờ + báo "sắp có".
+import { initPractice } from './practice.js';
+import { loadWallet, addSen } from '../engines/kinh.js';
 import { BOTTOM_MENU, ACTIONS, TOP_ICONS, WALLET_PLACEHOLDER, HELP_TEXT, WELCOME_TEXT, pressResult, ariaLabel, OUTSIDE_TEXT, isReady, mapEntries, formatCount, createToastState } from './menuLogic.js';
 
 const P = {
@@ -38,12 +40,13 @@ export function initHudMenu(hud) {
   const toastState = createToastState();
   let toastTimer = 0;
 
+  let wallet = { sen: 0 }; try { wallet = loadWallet(localStorage.getItem('lgt.wallet')); } catch (_) { /* bỏ qua */ }   // hạt sen: công đức từ tụng kinh/tràng hạt (giá trị TẠM, Phiên 16 làm tiến trình thật)
   const root = el('div', 'hm'); root.id = 'hudmenu';
   root.innerHTML = `
     <div class="hm-toast" id="hm-toast" role="status" aria-live="polite" hidden></div>
     <div class="hm-tr">
       <div class="hm-wallet">
-        <span class="hm-pill" title="Hạt sen (giá trị tạm)">${svg('sen')}<b>${formatCount(WALLET_PLACEHOLDER.sen)}</b></span>
+        <span class="hm-pill" title="Hạt sen (công đức, giá trị tạm)">${svg('sen')}<b id="hm-sen">${formatCount(wallet.sen)}</b></span>
         <span class="hm-pill" title="Ngọc (giá trị tạm)">${svg('ngoc')}<b>${formatCount(WALLET_PLACEHOLDER.ngoc)}</b></span>
       </div>
       <div class="hm-icons" id="hm-icons"></div>
@@ -66,6 +69,9 @@ export function initHudMenu(hud) {
     clearTimeout(toastTimer); toastTimer = setTimeout(() => { if (!toastState.get(Date.now())) box.hidden = true; }, Math.max(1200, ms) + 60);
   }
   LGT.toast = toast;
+  const addMerit = (n) => { wallet = addSen(wallet, n); try { localStorage.setItem('lgt.wallet', JSON.stringify(wallet)); } catch (_) { /* bỏ qua */ } const b = root.querySelector('#hm-sen'); if (b) b.textContent = formatCount(wallet.sen); };
+  LGT.addMerit = addMerit;
+  const practice = initPractice(hud, { toast, addMerit });
 
   // ---- bản đồ chùa (lối đi tới chương: liên kết #id, stage.js tự bắt và cho nhân vật đi tới)
   const mapBox = $('hm-map');
@@ -97,6 +103,7 @@ export function initHudMenu(hud) {
       if (ok === 'outside') toast(OUTSIDE_TEXT, 4500); else if (ok === false) toast('Bạn đang bận, thử lại sau một chút nhé.', 2500);
       return;
     }
+    if (r.kind === 'beads' || r.kind === 'chant') return practice.open(r.kind);
     if (r.kind === 'goto') {
       if (LGT.panelOpen) return;
       const a = el('a'); a.href = '#' + r.id; document.body.appendChild(a); a.click(); a.remove();   // cùng đường với menu cũ: stage.go

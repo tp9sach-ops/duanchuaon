@@ -19,8 +19,8 @@ export const BOTTOM_MENU = [
 /** Lưới 3×2 nút hành động phải-dưới. "Dâng lễ" nối tạm tới chương Chánh điện (đã có thắp nhang/gõ mõ/xăm); các nút còn lại làm ở Phiên 14. */
 export const ACTIONS = [
   { id: 'lay',     label: 'Lạy Phật',  icon: 'bow',    status: 'ready', action: 'bow' },
-  { id: 'trenghat', label: 'Tràng hạt', icon: 'beads',  status: 'soon' },
-  { id: 'tungkinh', label: 'Tụng kinh', icon: 'book',   status: 'soon' },
+  { id: 'trenghat', label: 'Tràng hạt', icon: 'beads',  status: 'ready', action: 'beads' },
+  { id: 'tungkinh', label: 'Tụng kinh', icon: 'book',   status: 'ready', action: 'chant' },
   { id: 'thien',   label: 'Thiền',     icon: 'sit',    status: 'ready', action: 'meditate' },
   { id: 'danglee', label: 'Dâng lễ',   icon: 'incense', status: 'ready', action: 'goto', target: 'temple' },
   { id: 'linhthu', label: 'Linh thú',  icon: 'paw',    status: 'soon', locked: true },
@@ -60,7 +60,7 @@ export function pressResult(item) {
   if (!item) return { kind: 'none' };
   if (!isReady(item)) return { kind: 'soon', text: soonText(item) };
   if (item.action === 'goto') return { kind: 'goto', id: item.target };
-  if (['map', 'share', 'help', 'bow', 'meditate'].includes(item.action)) return { kind: item.action };
+  if (['map', 'share', 'help', 'bow', 'meditate', 'beads', 'chant'].includes(item.action)) return { kind: item.action };
   return { kind: 'soon', text: soonText(item) };
 }
 
