@@ -65,3 +65,12 @@ test('đi tới bồ đoàn bị kẹt thì hủy được, không treo ở tr�
 test('nhà tổ vẫn đứng được (độ cao sàn đổi không phá bố cục sân)', () => { const f = buildingFront({ cx: -30, cz: -28, d: 10 }); assert.equal(blocked(f.x, f.z), false); });
 
 function norm(v) { const l = Math.hypot(v.x, v.y, v.z); return { x: v.x / l, y: v.y / l, z: v.z / l }; }
+
+test('máy trạng thái: tụng kinh và tràng hạt (Phiên 14b)', () => {
+  const s = SEATS[0], a = createActivity();
+  assert.equal(a.practice('chant'), false, 'chưa ngồi thì không đổi được');
+  a.goSit(s, 'chant'); assert.equal(a.step({ x: s.x, z: s.z }), 'seated'); assert.equal(a.mode, 'chant'); assert.equal(a.avatarState(), 'mo'); assert.ok(a.sitting);
+  assert.equal(a.practice('beads'), true); assert.equal(a.mode, 'beads'); assert.equal(a.avatarState(), 'beads');
+  assert.equal(a.practice('sit'), true); assert.equal(a.avatarState(), 'sit'); assert.equal(a.practice('bay'), false);
+  assert.equal(a.stand().was, 'sit'); assert.equal(a.mode, 'free');
+});

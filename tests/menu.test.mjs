@@ -21,10 +21,11 @@ test('nút chưa có tính năng báo "sắp có", không im lặng; nhãn đọ
   assert.match(soonText(ACTIONS.find((a) => a.id === 'linhthu')), /khóa/);
   assert.equal(ariaLabel(it), 'Nhiệm vụ (sắp có)');
 });
-test('Lạy Phật và Thiền đã có chức năng; Tràng hạt/Tụng kinh còn "sắp có" (Phiên 14b)', () => {
+test('Lạy Phật, Thiền, Tràng hạt, Tụng kinh đã có chức năng (Phiên 14b)', () => {
   assert.deepEqual(pressResult(ACTIONS.find((a) => a.id === 'lay')), { kind: 'bow' });
   assert.deepEqual(pressResult(ACTIONS.find((a) => a.id === 'thien')), { kind: 'meditate' });
-  for (const id of ['trenghat', 'tungkinh']) assert.equal(pressResult(ACTIONS.find((a) => a.id === id)).kind, 'soon');
+  assert.deepEqual(pressResult(ACTIONS.find((a) => a.id === 'trenghat')), { kind: 'beads' });
+  assert.deepEqual(pressResult(ACTIONS.find((a) => a.id === 'tungkinh')), { kind: 'chant' });
   assert.match(OUTSIDE_TEXT, /chánh điện/);
 });
 test('nút đã có chức năng trả đúng hành động', () => {

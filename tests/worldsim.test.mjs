@@ -15,5 +15,7 @@ test('world.js: lạy, ngồi, thiền, đứng dậy hoạt động đúng tron
   assert.equal(r.medMode, 'meditate'); assert.equal(r.afterStand, 'free'); assert.ok(Math.abs(r.standY - 1.14) < 0.02, 'đứng dậy về mặt sàn');
   assert.equal(r.med2mode, 'meditate', 'thiền khi đang đứng trong chánh điện tự chọn bồ đoàn');
   assert.equal(r.afterWalk, 'free', 'đi chỗ khác thì đứng dậy');
+  assert.equal(r.chantOutside, 'outside'); assert.equal(r.chantGo, true); assert.equal(r.chantMode, 'chant');
+  assert.equal(r.toBeads, true); assert.equal(r.beadsMode, 'beads'); assert.equal(r.rest, true); assert.equal(r.restMode, 'sit'); assert.equal(r.chant2, 'chant'); assert.equal(r.chantStand, 'free');
   assert.deepEqual(r.goToStands, ['meditate', 'free'], 'bấm chương khác thì đứng dậy');
 });
