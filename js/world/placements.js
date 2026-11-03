@@ -25,6 +25,24 @@ export const BENCHES = [
   { x: -10.5, z: -2.4, w: 2.4, d: 0.7 }, { x: 10.5, z: -2.4, w: 2.4, d: 0.7 },
   { x: -31.5, z: 9.2, w: 2.4, d: 0.7 }, { x: 31.5, z: 9.2, w: 2.4, d: 0.7 },
 ];
+/** Cây low-poly trong sân (có va chạm, r = bán kính thân + chút tán): {x, z, s: tỉ lệ}. */
+export const TREES = [
+  { x: -40.5, z: -8, s: 1.05 }, { x: -40.5, z: 0, s: 0.95 }, { x: -40.5, z: 22, s: 1.1 }, { x: -40.5, z: 31, s: 1 },
+  { x: 40.5, z: -14, s: 1.1 }, { x: 40.5, z: 18, s: 1 }, { x: 40.5, z: 28, s: 1.05 }, { x: -21, z: -12, s: 0.9 }, { x: 21, z: -14, s: 0.9 },
+  { x: -21, z: 30, s: 0.95 }, { x: 21, z: 36, s: 0.9 },
+];
+export const TREE_R = 0.7;
+/** Cây xa ngoài sân (chỉ để nhìn, không va chạm): rải theo vòng quanh khu chùa. */
+export function farTrees() {
+  const out = []; let a = 1;
+  const rnd = () => { a = (a * 16807) % 2147483647; return a / 2147483647; };
+  for (let i = 0; i < 46; i++) {
+    const side = i % 3, x = side === 0 ? -(48 + rnd() * 26) : side === 1 ? 48 + rnd() * 26 : (rnd() - 0.5) * 120, z = side === 2 ? -(46 + rnd() * 24) : -42 + rnd() * 108;
+    out.push({ x, z, s: 1.1 + rnd() * 0.9 });
+  }
+  return out;
+}
+
 /** Công trình: Nhà Tổ (trái chính điện) và Nhà Khách (phải). Mặt trước quay +z, đứng ngoài bậc thềm vẫn đi tới. */
 export const BUILDINGS = [
   { id: 'nhato', ten: 'NHÀ TỔ', cx: -30, cz: -28, w: 14, d: 10 },
@@ -52,6 +70,7 @@ export function registerPlacements() {
   STONE_LANTERNS.forEach((l) => addCircle({ x: l.x, z: l.z, r: 0.55 }));
   BENCHES.forEach((b) => addRect({ x0: b.x - b.w / 2, x1: b.x + b.w / 2, z0: b.z - b.d / 2, z1: b.z + b.d / 2 }));
   BUILDINGS.forEach((b) => addRect({ x0: b.cx - b.w / 2, x1: b.cx + b.w / 2, z0: b.cz - b.d / 2, z1: b.cz + b.d / 2 }));
+  TREES.forEach((t) => addCircle({ x: t.x, z: t.z, r: TREE_R }));
   OLD_PROP_CIRCLES.forEach(addCircle); OLD_PROP_RECTS.forEach(addRect);
 }
 registerPlacements();

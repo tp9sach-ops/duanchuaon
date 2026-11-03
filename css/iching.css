@@ -1,0 +1,21 @@
+/* Gieo quẻ Kinh Dịch + xăm thơ (trong chương Chùa online) */
+.ic-topics{display:flex;flex-wrap:wrap;gap:6px}
+.ic-topics button{padding:6px 12px;border-radius:100px;border:1px solid rgba(217,178,95,.4);background:transparent;color:var(--moon,#eee);font:400 12.5px/1 var(--sans,inherit);cursor:pointer}
+.ic-topics button[aria-checked=true]{background:var(--gold,#d9b25f);color:#2a1a08;border-color:var(--gold,#d9b25f);font-weight:600}
+.ic-card{margin-top:4px;padding:14px 16px;border:1px solid rgba(217,178,95,.45);border-radius:8px;background:rgba(217,178,95,.07);display:flex;flex-direction:column;gap:8px}
+.ic-card p{margin:0;font-size:14px;line-height:1.6;color:#dfe3ee}
+.ic-head{display:flex;align-items:center;gap:14px}
+.ic-head small{display:block;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold-soft,#e8d9a6)}
+.ic-head b{display:block;font:500 22px/1.2 var(--serif,Georgia,serif);color:#fff}
+.ic-glyph{font-size:54px;line-height:1;color:var(--gold,#d9b25f)}
+.ic-lv{display:inline-block;margin-top:4px;padding:2px 10px;border-radius:100px;font-size:11px;font-weight:600;letter-spacing:.04em}
+.ic-lv.dc{background:#e8c25a;color:#2a1a08}.ic-lv.c{background:#8fcf9b;color:#10281a}.ic-lv.tc{background:#a8d6c4;color:#10281a}.ic-lv.b{background:#c9ccd6;color:#1d2030}.ic-lv.h{background:#e08a7a;color:#33110b}
+.ic-bars{display:flex;flex-direction:column;gap:6px;width:min(190px,60%)}
+.ic-bars i{display:flex;gap:10px;height:9px;opacity:0;animation:icIn .45s var(--d,0s) forwards}
+.ic-bars i u{flex:1;border-radius:2px;background:var(--gold,#d9b25f)}
+.ic-bars i.y{gap:0}
+.ic-judg{font-family:var(--serif,Georgia,serif);font-size:17px!important;color:var(--gold-soft,#e8d9a6)!important}
+.ic-topic{padding:8px 10px;border-left:3px solid var(--gold,#d9b25f);background:rgba(255,255,255,.04)}
+.ic-poem{font-family:var(--serif,Georgia,serif);font-size:17px!important;line-height:1.8!important;color:#fff!important;text-align:center;padding:6px 0}
+@keyframes icIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.ic-bars i{animation:none;opacity:1}}

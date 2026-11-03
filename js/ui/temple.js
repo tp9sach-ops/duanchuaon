@@ -1,8 +1,10 @@
 // Chương "Chùa online": thắp nhang, gõ mõ / rung chuông / niệm 108, xin xăm, tường nguyện (lưu trong trình duyệt).
 import { rutXam, tongKetNhang, thapNhang, SO_QUE, kiemTraNguyen } from '../engines/temple.js';
 import { callApi, apiEnabled, getUserKey } from '../api.js';
+import { drawReading, TOPICS } from '../engines/iching.js';   // 64 quẻ Kinh Dịch (nguồn Ô Long Viện, MIT; xem THIRD_PARTY.md)
+import { drawXam } from '../engines/xam36.js';                 // 36 thẻ xăm thơ (cùng nguồn)
 
-const K_NHANG = 'lgt.nhang', K_NIEM = 'lgt.niem', K_NGUYEN = 'lgt.nguyen', K_XAM = 'lgt.xam';
+const K_NHANG = 'lgt.nhang', K_NIEM = 'lgt.niem', K_NGUYEN = 'lgt.nguyen', K_XAM = 'lgt.xam', K_IC = 'lgt.iching', K_XT = 'lgt.xam36';
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const load = (k, d) => { try { const v = JSON.parse(localStorage.getItem(k) || 'null'); return v == null ? d : v; } catch (_) { return d; } };
 const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) { /* bỏ qua */ } };
@@ -23,7 +25,7 @@ const quiet = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 export function initTemple() {
   const root = document.getElementById('temple-app'); if (!root) return;
-  let nhang = load(K_NHANG, {}), niem = load(K_NIEM, { dem: 0, vong: 0 }), nguyen = load(K_NGUYEN, []), xam = load(K_XAM, null);
+  let nhang = load(K_NHANG, {}), niem = load(K_NIEM, { dem: 0, vong: 0 }), nguyen = load(K_NGUYEN, []), xam = load(K_XAM, null), ic = load(K_IC, null), xt = load(K_XT, null), chuDe = '';
   let nen = 0, timer = null;
 
   root.innerHTML = `
@@ -50,6 +52,17 @@ export function initTemple() {
       <p class="tp-note">Khấn trong lòng điều bạn băn khoăn, rồi bấm rút xăm. Lời xăm do dự án soạn để chiêm nghiệm, không phải xăm cổ và không thay thế tư vấn chuyên môn.</p>
       <div class="tp-row"><button class="t-btn" id="tp-xam">Rút xăm</button></div>
       <div class="tp-xam" id="tp-xam-out" aria-live="polite"></div>
+    </section>
+    <section class="tp-box tp-iching" aria-labelledby="tp-h5">
+      <h3 id="tp-h5">Gieo quẻ Kinh Dịch</h3>
+      <p class="tp-note">Chọn điều bạn muốn hỏi, giữ lòng thành rồi gieo. Lời quẻ để chiêm nghiệm, không thay thế tư vấn chuyên môn.</p>
+      <div class="ic-topics" role="radiogroup" aria-label="Chủ đề muốn hỏi">
+        <button type="button" role="radio" aria-checked="true" data-k="">Chung</button>${Object.entries(TOPICS).map(([k, v]) => `<button type="button" role="radio" aria-checked="false" data-k="${k}">${esc(v)}</button>`).join('')}
+      </div>
+      <div class="tp-row"><button class="t-btn" id="tp-gieo">Gieo quẻ</button><button class="t-btn" id="tp-xamtho">Rút xăm thơ</button></div>
+      <div id="tp-ic-out" aria-live="polite"></div>
+      <div id="tp-xt-out" aria-live="polite"></div>
+      <p class="tp-note">Nội dung quẻ và xăm tham khảo từ dự án mã nguồn mở Ô Long Viện (giấy phép MIT).</p>
     </section>
     <section class="tp-box" aria-labelledby="tp-h4">
       <h3 id="tp-h4">Tường nguyện</h3>
@@ -100,6 +113,30 @@ export function initTemple() {
   };
   $('#tp-xam').addEventListener('click', () => { xam = rutXam(); save(K_XAM, xam); bellSound(); showXam(); });
 
+  // --- Gieo quẻ Kinh Dịch + xăm thơ 36 thẻ
+  const lvClass = (l) => ({ 'Đại Cát': 'dc', 'Cát': 'c', 'Trung Cát': 'tc', 'Bình': 'b', 'Hung': 'h' }[l] || 'b');
+  const topicHtml = (t) => (t ? `<p class="ic-topic"><b>${esc(t.label)}:</b> ${esc(t.text)}</p>` : '');
+  const showIc = (animate) => {
+    const o = $('#tp-ic-out'); if (!ic) { o.innerHTML = ''; return; }
+    const bars = [...ic.lines].map((v, i) => `<i class="${v ? 'y' : 'n'}" style="--d:${animate && !quiet() ? i * 0.28 : 0}s"><u></u><u></u></i>`).reverse().join('');   // hào 1 ở dưới cùng
+    o.innerHTML = `<div class="ic-card"><div class="ic-head"><div class="ic-glyph" aria-hidden="true">${esc(ic.glyph)}</div><div><small>Quẻ số ${ic.number} / 64</small><b>${esc(ic.name)}</b><span class="ic-lv ${lvClass(ic.level)}">${esc(ic.level)}</span></div></div>
+      <div class="ic-bars" role="img" aria-label="Sáu hào từ dưới lên: ${ic.lines.map((v) => (v ? 'dương' : 'âm')).join(', ')}">${bars}</div>
+      <p class="tp-note">Thượng quái ${esc(ic.upper)} (${esc(ic.upperImage)}) · Hạ quái ${esc(ic.lower)} (${esc(ic.lowerImage)})</p>
+      <p class="ic-judg">${esc(ic.judgment)}</p><p>${esc(ic.meaning)}</p>${topicHtml(ic.topic)}<p class="tp-note"><b>Lời khuyên:</b> ${esc(ic.advice)}</p></div>`;
+  };
+  const showXt = () => {
+    const o = $('#tp-xt-out'); if (!xt) { o.innerHTML = ''; return; }
+    o.innerHTML = `<div class="ic-card"><div class="ic-head"><div><small>Xăm thơ số ${xt.number} / ${xt.total}</small><b>${esc(xt.name)}</b><span class="ic-lv ${lvClass(xt.level)}">${esc(xt.level)}</span></div></div>
+      <p class="ic-poem">${xt.poem.map(esc).join('<br>')}</p><p>${esc(xt.meaning)}</p>${topicHtml(xt.topic)}<p class="tp-note"><b>Lời khuyên:</b> ${esc(xt.advice)}</p></div>`;
+  };
+  root.querySelector('.ic-topics').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-k]'); if (!b) return; chuDe = b.dataset.k;
+    root.querySelectorAll('.ic-topics [data-k]').forEach((x) => x.setAttribute('aria-checked', String(x === b)));
+  });
+  const chuDeText = () => (chuDe ? TOPICS[chuDe] : '');
+  $('#tp-gieo').addEventListener('click', () => { ic = drawReading(chuDeText()); save(K_IC, ic); bellSound(); showIc(true); });
+  $('#tp-xamtho').addEventListener('click', () => { xt = drawXam(chuDeText()); save(K_XT, xt); moSound(); showXt(); });
+
   const drawWall = () => {
     $('#tp-wall').innerHTML = nguyen.length
       ? nguyen.map((w, i) => `<li><span>${esc(w)}</span><button class="tp-x" data-i="${i}" aria-label="Xóa điều nguyện">×</button></li>`).join('')
@@ -125,5 +162,5 @@ export function initTemple() {
     const r = await callApi('listPrayers');
     ul.innerHTML = r.ok && r.items && r.items.length ? r.items.slice(0, 30).map((w) => `<li><span>${esc(String(w.noiDung).slice(0, 120))}</span><small>${esc(String(w.ngay).slice(0, 10))}</small></li>`).join('') : `<li class="tp-empty">${r.ok ? 'Tường chung chưa có điều nguyện nào.' : 'Chưa tải được tường chung.'}</li>`;
   }
-  drawCenser(); drawNhang(); drawNiem(); showXam(); drawWall(); loadShared();
+  drawCenser(); drawNhang(); drawNiem(); showXam(); showIc(false); showXt(); drawWall(); loadShared();
 }

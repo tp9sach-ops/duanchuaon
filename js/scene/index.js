@@ -12,7 +12,9 @@ import { buildProps } from './props.js';
 import { buildGarden } from './garden.js';
 import { buildHouses } from './nhato.js';
 import { loadTemple } from './model.js';
-import { buildSky, buildMountains, buildGround, buildPond, buildBodhi, buildBamboo, buildRocks } from './nature.js';
+import { buildSky, buildMountains, buildGround, buildPond, buildBodhi, buildBamboo, buildRocks, buildLowPolyTrees } from './nature.js';
+import { DAY } from './theme.js';
+import { TREES, farTrees } from '../world/placements.js';
 import { buildFireflies, buildPetals, buildSmoke } from './particles.js';
 import { createRail } from './rail.js';
 import { createHotspots } from './hotspots.js';
@@ -30,21 +32,22 @@ export function createScene(canvas, { onProgress, onPick, onArrive } = {}) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: !coarse, powerPreference: 'high-performance' });
   // Nếu không có WebGL, new WebGLRenderer ném lỗi → main.js bắt và bật fallback.
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.5;
+  renderer.toneMappingExposure = DAY ? 1.05 : 1.5;
 
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x1a2b48);
-  scene.fog = new THREE.FogExp2(0x1a2b48, 0.0042);
+  scene.background = new THREE.Color(DAY ? 0xcfe8f5 : 0x1a2b48);
+  scene.fog = new THREE.FogExp2(DAY ? 0xcfe8f5 : 0x1a2b48, DAY ? 0.0021 : 0.0042);
   const camera = new THREE.PerspectiveCamera(52, 1, 0.1, 1400);
 
   makeMaterials(); onProgress?.(0.15);
 
   // --- ánh sáng
-  const hemi = new THREE.HemisphereLight(0x9bb2e6, 0x3a2e30, 1.6);
-  const moonLight = new THREE.DirectionalLight(0xdfe6ff, 2.2); moonLight.position.set(60, 90, -120);
-  const warm1 = new THREE.PointLight(0xffa24a, 220, 80, 2); warm1.position.set(0, 6, -10);
-  const warm2 = new THREE.PointLight(0xff8a3a, 160, 70, 2); warm2.position.set(0, 7, 31);
-  const ambient = new THREE.AmbientLight(0xb4c2ea, 0.9);
+  const hemi = DAY ? new THREE.HemisphereLight(0xe3f2ff, 0xb9a487, 1.5) : new THREE.HemisphereLight(0x9bb2e6, 0x3a2e30, 1.6);
+  const moonLight = DAY ? new THREE.DirectionalLight(0xfff0d2, 2.9) : new THREE.DirectionalLight(0xdfe6ff, 2.2);   // mặt trời / trăng
+  if (DAY) moonLight.position.set(45, 80, 85); else moonLight.position.set(60, 90, -120);
+  const warm1 = new THREE.PointLight(0xffa24a, DAY ? 60 : 220, 80, 2); warm1.position.set(0, 6, -10);
+  const warm2 = new THREE.PointLight(0xff8a3a, DAY ? 12 : 160, 70, 2); warm2.position.set(0, 7, 31);
+  const ambient = DAY ? new THREE.AmbientLight(0xffffff, 0.5) : new THREE.AmbientLight(0xb4c2ea, 0.9);
   scene.add(hemi, ambient, moonLight, warm1, warm2);
 
   // --- bầu trời, núi (lùi ra sau để nhường chỗ cho quần thể chùa), nền
@@ -66,6 +69,7 @@ export function createScene(canvas, { onProgress, onPick, onArrive } = {}) {
   scene.add(buildBodhi(-24, 6, 1.1), buildBodhi(24, 26, 0.95), buildBodhi(-34, -16, 1.2));
   scene.add(buildBamboo(-40, 12), buildBamboo(42, 8), buildBamboo(-30, 40));
   scene.add(buildRocks(18, 90, -10, 60));
+  if (DAY) scene.add(buildLowPolyTrees([...TREES, ...farTrees()]));   // cây low-poly xanh như ảnh mẫu
   const pond = buildPond(new THREE.Vector3(0, 0, 14), 10, coarse ? 10 : 18); scene.add(pond.group);
   onProgress?.(0.75);
 
@@ -74,12 +78,12 @@ export function createScene(canvas, { onProgress, onPick, onArrive } = {}) {
   const fireflies = buildFireflies(dot, coarse ? 70 : 170);
   const petals = buildPetals(dot, coarse ? 50 : 120);
   const smoke = buildSmoke(dot, new THREE.Vector3(0, 3.2, -8), coarse ? 40 : 70);
-  scene.add(fireflies.obj, petals.obj, smoke.obj);
+  scene.add(fireflies.obj, petals.obj, smoke.obj); fireflies.obj.visible = !DAY;
 
   // --- hậu kỳ: bloom (tắt trên mobile yếu / khi PERF hạ cấp)
   const composer = new EffectComposer(renderer);
   composer.addPass(new RenderPass(scene, camera));
-  const bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), 0.5, 0.6, 0.9);
+  const bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), DAY ? 0.18 : 0.5, 0.6, DAY ? 1.05 : 0.9);
   composer.addPass(bloom); composer.addPass(new OutputPass());
   let bloomOn = true;
 
@@ -124,15 +128,17 @@ export function createScene(canvas, { onProgress, onPick, onArrive } = {}) {
     const dt = Math.min(clock.getDelta(), 0.1), t = clock.elapsedTime;
 
     // MOOD: damp rồi áp lên đèn, trăng, sương, bloom
-    LGT.mood = damp(LGT.mood, LGT._target, 2.2, dt);
-    const m = LGT.mood;
-    moonLight.intensity = 2.2 + 0.6 * m;
-    moonLight.color.setHex(m >= 0 ? 0xe9e0c8 : 0xbccaf5);
-    warm1.intensity = 220 + 80 * Math.max(0, m); warm2.intensity = 160 + 60 * Math.max(0, m);
-    tmp.copy(cNeutral).lerp(m >= 0 ? cWarm : cCool, Math.abs(m) * 0.7);
-    scene.fog.color.copy(tmp); scene.background.copy(tmp);
-    moonMat.color.setRGB(1, 1 - 0.08 * Math.max(0, -m), 1 - 0.2 * Math.max(0, -m));
-    bloom.strength = 0.45 + 0.25 * Math.max(0, m);
+    if (!DAY) {
+      LGT.mood = damp(LGT.mood, LGT._target, 2.2, dt);
+      const m = LGT.mood;
+      moonLight.intensity = 2.2 + 0.6 * m;
+      moonLight.color.setHex(m >= 0 ? 0xe9e0c8 : 0xbccaf5);
+      warm1.intensity = 220 + 80 * Math.max(0, m); warm2.intensity = 160 + 60 * Math.max(0, m);
+      tmp.copy(cNeutral).lerp(m >= 0 ? cWarm : cCool, Math.abs(m) * 0.7);
+      scene.fog.color.copy(tmp); scene.background.copy(tmp);
+      moonMat.color.setRGB(1, 1 - 0.08 * Math.max(0, -m), 1 - 0.2 * Math.max(0, -m));
+      bloom.strength = 0.45 + 0.25 * Math.max(0, m);
+    } else { warm1.intensity = 60; }   // ban ngày: ánh đèn trong điện cố định (lập lòe áp lên phía dưới)
 
     // Camera + hiệu ứng nhẹ theo con trỏ (tắt khi reduced-motion)
     if (world) world.update(dt); else rail.update(dt, reduce);
@@ -148,7 +154,7 @@ export function createScene(canvas, { onProgress, onPick, onArrive } = {}) {
 
     sky.rotation.y = t * 0.004;
     if (!reduce) {
-      fireflies.update(t); petals.update(t, dt); smoke.update(t, dt);
+      if (!DAY) fireflies.update(t); petals.update(t, dt); smoke.update(t, dt);
       pond.update(t); chanh.update(t);
       tower.bell.rotation.z = Math.sin(t * 0.6) * 0.012;
       censer.embers.forEach((e, i) => { e.material.color.setRGB(1, 0.25 + 0.2 * Math.sin(t * 3 + i), 0.12); });

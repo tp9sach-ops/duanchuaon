@@ -13,6 +13,7 @@ import { initTuvi } from './ui/tuvi.js';
 import { initPlanets } from './ui/planets.js';
 import { initVision } from './ui/vision.js';
 import { initStage } from './ui/stage.js';
+import { initHud } from './ui/hud.js';
 
 const pct = document.getElementById('pre-pct'), fill = document.getElementById('pre-fill'), pre = document.getElementById('pre');
 const setProgress = (v) => { const p = Math.round(v * 100); pct.textContent = p; fill.style.right = (100 - p) + '%'; };
@@ -61,6 +62,7 @@ async function boot() {
   } catch (e) { return fallback(e && e.message); }
 
   stage = initAll(created.rail);
+  try { initHud(); } catch (e) { console.warn('[Diệu Giang Tự] HUD lỗi:', e && e.message); }   // màn vào cửa + HUD; lỗi thì giữ giao diện cũ
   // Phòng khi onProgress(1) không tới (tab nền): vẫn mở trang sau 6s
   setTimeout(hidePre, 6000);
 

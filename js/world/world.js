@@ -15,11 +15,12 @@ const isEditable = (el) => !!el && (el.isContentEditable || /^(INPUT|TEXTAREA|SE
 const KEYMAP = { KeyW: 'f', ArrowUp: 'f', KeyS: 'b', ArrowDown: 'b', KeyA: 'l', ArrowLeft: 'l', KeyD: 'r', ArrowRight: 'r' };
 
 function savedName() { try { return localStorage.getItem('lgt.name') || 'Khách'; } catch (_) { return 'Khách'; } }
+function savedHair() { try { return localStorage.getItem('lgt.hair') || 'troc'; } catch (_) { return 'troc'; } }
 function savedColor() { try { return localStorage.getItem('lgt.color') || 'nau'; } catch (_) { return 'nau'; } }
 
 /** opts: { scene, camera, canvas, coarse, LGT } → { update(dt), avatar, teleport(x, z), get pos }. */
 export function createWorld({ scene, camera, canvas, coarse = false, LGT = window.LGT || {}, onArrive = null }) {
-  const avatar = createAvatar({ name: savedName(), color: savedColor(), mine: true });
+  let avatar = createAvatar({ name: savedName(), color: savedColor(), hair: savedHair(), mine: true });
   scene.add(avatar.group);
   const P = { x: SPAWN.x, z: SPAWN.z, y: 0 };
   avatar.group.position.set(P.x, 0, P.z); avatar.setFacing(SPAWN.ry, true);
@@ -127,6 +128,21 @@ export function createWorld({ scene, camera, canvas, coarse = false, LGT = windo
     mark.position.set(s.stand.x, P.y + 0.06, s.stand.z); mark.visible = true;
     return true;
   }
+  /** Đổi tên/màu áo/kiểu đầu: dựng lại nhân vật tại chỗ cũ (giữ vị trí, hướng nhìn). */
+  function setProfile({ name, color, hair }) {
+    const old = avatar, ry = old.group.rotation.y;
+    scene.remove(old.group); old.dispose();
+    avatar = createAvatar({ name, color, hair, mine: true }); scene.add(avatar.group);
+    avatar.group.position.set(P.x, P.y, P.z); avatar.setFacing(ry, true);
+  }
+  /** Thu/phóng camera (delta dương = ra xa), dùng cho nút +/−. */
+  function zoom(delta) { dist = zoomCamera(dist, delta); }
+  /** Đi bộ tới điểm (x, z) bất kỳ (tìm đường vòng vật cản), không mở bảng nào. */
+  function walkTo(x, z) {
+    arrival.cancel(); showHint(null);
+    const path = findPath(P.x, P.z, x, z); if (path && path.length) nav.setPath(path); else nav.setTarget(x, z);
+    mark.position.set(x, P.y + 0.06, z); mark.visible = true;
+  }
   function arrive(s) {
     showHint(null); nav.clear(); mark.visible = false;
     avatar.setFacing(faceAngle(P, s));
@@ -165,7 +181,7 @@ export function createWorld({ scene, camera, canvas, coarse = false, LGT = windo
     camera.position.set(cam.x, Math.max(0.5, cam.y), cam.z); camera.lookAt(cam.lx, cam.ly, cam.lz);
   }
 
-  LGT.world = { get pos() { return { x: P.x, z: P.z, y: P.y }; }, teleport, goTo, get avatar() { return avatar; }, get camera() { return { yaw, pitch, dist }; }, nav };
+  LGT.world = { setProfile, zoom, walkTo, get pos() { return { x: P.x, z: P.z, y: P.y }; }, teleport, goTo, get avatar() { return avatar; }, get camera() { return { yaw, pitch, dist }; }, nav };
   update(0.016);
-  return { update, avatar, teleport, goTo, get pos() { return { x: P.x, z: P.z, y: P.y }; } };
+  return { update, get avatar() { return avatar; }, setProfile, zoom, walkTo, teleport, goTo, get pos() { return { x: P.x, z: P.z, y: P.y }; } };
 }

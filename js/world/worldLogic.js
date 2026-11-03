@@ -4,7 +4,7 @@ import { clamp } from '../util.js';
 import { move, groundY } from './layout.js';
 
 export const WALK_SPEED = 4, RUN_SPEED = 7, CLICK_SPEED = 4.4;
-export const CAM_DIST = { min: 3.2, max: 14, def: 6.6 }, CAM_PITCH = { min: 0.08, max: 1.2, def: 0.36 };
+export const CAM_DIST = { min: 2.6, max: 14, def: 5.2 }, CAM_PITCH = { min: 0.08, max: 1.2, def: 0.36 };
 
 /** Hướng "đi lên" trên màn hình theo yaw camera. */
 export const forwardOf = (yaw) => ({ x: -Math.sin(yaw), z: -Math.cos(yaw) });
@@ -74,7 +74,7 @@ export function createNavigator() {
 
 /** Vị trí camera theo sau người p = {x,y,z}: nhìn vào điểm ngang vai, cách `dist`, nghiêng `pitch`. */
 export function camPose(p, yaw, pitch, dist) {
-  const look = { x: p.x, y: p.y + 1.45, z: p.z };
+  const look = { x: p.x, y: p.y + 1.1, z: p.z };   // nhìn vào đầu nhân vật chibi (cao ~1,5)
   const cp = Math.cos(pitch);
   return { look, pos: { x: look.x + Math.sin(yaw) * cp * dist, y: look.y + Math.sin(pitch) * dist, z: look.z + Math.cos(yaw) * cp * dist } };
 }

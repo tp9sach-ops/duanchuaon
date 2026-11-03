@@ -41,7 +41,7 @@ test('bấm-để-đi: tới nơi thì dừng; điểm trong ao (không tới đ
 test('camera theo sau: nằm phía sau người, nhìn vào ngang vai, cách đúng khoảng', () => {
   const c = camPose({ x: 5, y: 0, z: 10 }, 0, 0.36, 6.6);
   assert.ok(c.pos.z > c.look.z && near(c.pos.x, 5)); assert.ok(near(Math.hypot(c.pos.x - c.look.x, c.pos.y - c.look.y, c.pos.z - c.look.z), 6.6, 1e-9));
-  assert.ok(near(c.look.y, 1.45)); assert.ok(camPose({ x: 0, y: 1.5, z: 0 }, 1, 0.3, 5).look.y > 2.9);
+  assert.ok(near(c.look.y, 1.1)); assert.ok(camPose({ x: 0, y: 1.5, z: 0 }, 1, 0.3, 5).look.y > 2.5);
 });
 test('kéo/zoom camera bị kẹp trong giới hạn', () => {
   const d = dragCamera(0, 0.3, 100, 5000); assert.ok(d.yaw < 0 && d.pitch === CAM_PITCH.max);

@@ -21,7 +21,7 @@ for (const f of files.filter((p) => p.endsWith('.js'))) {
   catch (e) { bad('cú pháp ' + f.slice(root.length + 1) + '\n' + e.stderr); }
 }
 // 2 · file bắt buộc
-for (const f of ['index.html', 'manifest.webmanifest', 'sw.js', 'assets/icon.svg', 'assets/icon-192.png', 'assets/og.png', 'sitemap.xml', 'assets/icon-512.png', 'css/style.css', 'js/main.js', 'js/scene/index.js', 'gas/Code.gs', 'gas/Storage.gs', 'js/ui/profile.js', 'js/engines/personal.js', 'js/data/personal.json', 'js/engines/numerology.js', 'js/engines/astro.js', 'js/engines/zodiac.js', 'js/ui/charts.js', 'js/data/numerology.json', 'js/data/zodiac.json', 'js/engines/batu.js', 'js/ui/fortune.js', 'js/ui/temple.js', 'js/ui/tuvi.js', 'js/ui/planets.js', 'js/ui/vision.js', 'js/engines/vision.js', 'gas/Vision.gs', 'gas/Prayers.gs', 'js/engines/planets.js', 'js/engines/eclipse.js', 'js/engines/tuvi.js', 'js/engines/temple.js', 'js/ui/batu.js', 'js/fg.js', 'css/fg.css', 'HANDOFF.md', 'PROMPT.md', 'js/world/layout.js', 'js/world/avatar.js', 'js/world/avatarLogic.js', 'js/world/placements.js', 'js/world/world.js', 'js/world/worldLogic.js', 'js/world/spots.js', 'js/world/path.js', 'js/scene/garden.js', 'js/scene/nhato.js', '.github/workflows/pages.yml']) {
+for (const f of ['index.html', 'manifest.webmanifest', 'sw.js', 'assets/icon.svg', 'assets/icon-192.png', 'assets/og.png', 'sitemap.xml', 'assets/icon-512.png', 'css/style.css', 'css/hud.css', 'css/iching.css', 'js/engines/iching.js', 'js/engines/xam36.js', 'THIRD_PARTY.md', 'js/ui/hud.js', 'js/ui/hudLogic.js', 'js/main.js', 'js/scene/index.js', 'gas/Code.gs', 'gas/Storage.gs', 'js/ui/profile.js', 'js/engines/personal.js', 'js/data/personal.json', 'js/engines/numerology.js', 'js/engines/astro.js', 'js/engines/zodiac.js', 'js/ui/charts.js', 'js/data/numerology.json', 'js/data/zodiac.json', 'js/engines/batu.js', 'js/ui/fortune.js', 'js/ui/temple.js', 'js/ui/tuvi.js', 'js/ui/planets.js', 'js/ui/vision.js', 'js/engines/vision.js', 'gas/Vision.gs', 'gas/Prayers.gs', 'js/engines/planets.js', 'js/engines/eclipse.js', 'js/engines/tuvi.js', 'js/engines/temple.js', 'js/ui/batu.js', 'js/fg.js', 'css/fg.css', 'HANDOFF.md', 'PROMPT.md', 'js/world/layout.js', 'js/world/avatar.js', 'js/world/avatarLogic.js', 'js/world/placements.js', 'js/world/world.js', 'js/world/worldLogic.js', 'js/world/spots.js', 'js/world/path.js', 'js/scene/garden.js', 'js/scene/nhato.js', '.github/workflows/pages.yml']) {
   existsSync(join(root, f)) ? ok('có ' + f) : bad('thiếu ' + f);
 }
 // 3 · tên chùa là Diệu Giang Tự; không còn "Linh Giang", "Linh Quang", "Kage" hay chữ Hán trong mã nguồn
@@ -31,11 +31,12 @@ for (const f of text) {
   if (/linh\s*(quang|giang)/i.test(s) || /\bkage\b/i.test(s) || /[\u4e00-\u9fff]/.test(s)) bad('còn tên cũ trong ' + f.slice(root.length + 1));
 }
 ok('đã quét tên cũ');
-// 4 · số mốc camera == số section data-cam (trừ footer)
+// 4 · mỗi chương trong index.html có điểm đến trong thế giới đi bộ (js/world/spots.js), vì không còn camera trượt theo mốc
 const html = readFileSync(join(root, 'index.html'), 'utf8');
-const nSec = [...html.matchAll(/<section[^>]*data-cam="(\d+)"/g)].length;
-const nCam = [...readFileSync(join(root, 'js/scene/rail.js'), 'utf8').matchAll(/name:\s*'/g)].length;
-nSec === nCam ? ok(`camera ${nCam} mốc = ${nSec} section`) : bad(`camera ${nCam} mốc ≠ ${nSec} section`);
+const spotIds = [...readFileSync(join(root, 'js/world/spots.js'), 'utf8').matchAll(/id:\s*'([a-z]+)'/g)].map((m) => m[1]);
+const secIds = [...html.matchAll(/<section[^>]*class="[^"]*\bsec\b[^"]*"[^>]*id="([a-z]+)"/g)].map((m) => m[1]);
+const missing = secIds.filter((id) => id !== 'hero' && !spotIds.includes(id));
+missing.length === 0 ? ok(`${secIds.length - 1} chương đều có điểm đến`) : bad('chương chưa có điểm đến: ' + missing.join(', '));
 
 if (fail) { console.error(`\n${fail} lỗi`); process.exit(1); }
 console.log('\nTất cả kiểm tra đạt.');

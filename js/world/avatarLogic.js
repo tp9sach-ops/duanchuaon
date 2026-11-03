@@ -17,6 +17,11 @@ export function colorById(id) {
   return AVATAR_COLORS.find((c) => c.id === id) || AVATAR_COLORS.find((c) => c.id === DEFAULT_COLOR);
 }
 
+/** Kiểu đầu: đầu trọc (mặc định, như tăng ni/cư sĩ) hoặc tóc búi. */
+export const HAIR_STYLES = [{ id: 'troc', ten: 'Đầu trọc' }, { id: 'bui', ten: 'Tóc búi' }];
+export const DEFAULT_HAIR = 'troc';
+export function hairById(id) { return HAIR_STYLES.find((h) => h.id === id) || HAIR_STYLES[0]; }
+
 const URL_RE = /(https?:\/\/|www\.)\S*/gi;
 // Ký tự điều khiển, ký tự định dạng ẩn (zero-width, đảo chiều) và dấu < > dùng để chèn HTML
 const BAD_RE = /[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u202a-\u202e\u2066-\u2069\ufeff<>]/g;

@@ -171,3 +171,52 @@ export function signTexture(text, { font = '600 118px "Cormorant Garamond", "Not
   x.fillText(text, w / 2, h / 2 + 6);
   return tex(c);
 }
+
+// Bầu trời ban ngày: xanh đậm ở đỉnh, nhạt dần về chân trời, vài đám mây mềm
+export function daySkyTexture() {
+  const W = 1024, H = 512, c = cvs(W, H), x = c.getContext('2d');
+  const g = x.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, '#3a86d8'); g.addColorStop(0.28, '#6db4ee'); g.addColorStop(0.46, '#bfe3f7'); g.addColorStop(0.55, '#e4f4fb'); g.addColorStop(1, '#cfe6d2');
+  x.fillStyle = g; x.fillRect(0, 0, W, H);
+  const rnd = mulberry32(512);
+  for (let i = 0; i < 22; i++) {
+    const cx = rnd() * W, cy = H * (0.2 + rnd() * 0.24), w = 70 + rnd() * 120;
+    for (let k = 0; k < 7; k++) {
+      const px = cx + (k - 3) * w * 0.22 + (rnd() - 0.5) * 20, py = cy + (rnd() - 0.5) * 12, r = w * (0.22 + rnd() * 0.18);
+      const gr = x.createRadialGradient(px, py, 0, px, py, r);
+      gr.addColorStop(0, 'rgba(255,255,255,.85)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+      x.fillStyle = gr; x.beginPath(); x.ellipse(px, py, r * 1.5, r * 0.62, 0, 0, TAU); x.fill();
+    }
+  }
+  return tex(c);
+}
+
+// Sân lát gạch đá xám lớn (xếp so le), như sân chùa trong ảnh mẫu
+export function pavingTexture() {
+  const W = 512, H = 512, c = cvs(W, H), x = c.getContext('2d'), rnd = mulberry32(61);
+  x.fillStyle = '#8f897e'; x.fillRect(0, 0, W, H);
+  const rows = 8, bh = H / rows, bw = W / 3;
+  for (let j = 0; j < rows; j++) for (let i = -1; i < 4; i++) {
+    const off = (j % 2) * bw / 2, t = 0.9 + rnd() * 0.22, w = bw * (0.96 + rnd() * 0.06);
+    x.fillStyle = `rgb(${(190 * t) | 0},${(184 * t) | 0},${(172 * t) | 0})`;
+    x.fillRect(i * bw + off + 2, j * bh + 2, w - 4, bh - 4);
+    const g = x.createLinearGradient(0, j * bh, 0, (j + 1) * bh);
+    g.addColorStop(0, 'rgba(255,255,255,.16)'); g.addColorStop(0.5, 'rgba(255,255,255,0)'); g.addColorStop(1, 'rgba(70,60,50,.14)');
+    x.fillStyle = g; x.fillRect(i * bw + off + 2, j * bh + 2, w - 4, bh - 4);
+  }
+  for (let i = 0; i < 160; i++) { x.fillStyle = `rgba(90,84,74,${0.04 + rnd() * 0.07})`; x.beginPath(); x.arc(rnd() * W, rnd() * H, 1 + rnd() * 4, 0, TAU); x.fill(); }
+  const t = tex(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 8; return t;
+}
+
+// Lối đi giữa sân ban ngày: phiến đá dài sáng màu, khe mảnh
+export function dayPathTexture() {
+  const W = 256, H = 512, c = cvs(W, H), x = c.getContext('2d'), rnd = mulberry32(88);
+  x.fillStyle = '#a9a396'; x.fillRect(0, 0, W, H);
+  const rows = 4, bh = H / rows;
+  for (let j = 0; j < rows; j++) {
+    const t = 0.94 + rnd() * 0.12; x.fillStyle = `rgb(${(214 * t) | 0},${(208 * t) | 0},${(194 * t) | 0})`; x.fillRect(3, j * bh + 3, W - 6, bh - 6);
+    const g = x.createLinearGradient(0, j * bh, 0, (j + 1) * bh); g.addColorStop(0, 'rgba(255,255,255,.18)'); g.addColorStop(1, 'rgba(80,70,55,.12)'); x.fillStyle = g; x.fillRect(3, j * bh + 3, W - 6, bh - 6);
+  }
+  for (let i = 0; i < 90; i++) { x.fillStyle = `rgba(110,100,85,${0.04 + rnd() * 0.06})`; x.beginPath(); x.arc(rnd() * W, rnd() * H, 1 + rnd() * 3, 0, TAU); x.fill(); }
+  const t = tex(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 8; return t;
+}
