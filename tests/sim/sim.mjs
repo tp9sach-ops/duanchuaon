@@ -31,4 +31,9 @@ out.med2=w.meditate(); run(15); out.med2mode=LGT.world.mode; log('thiền tự c
 w.walkTo(0,-18); run(10); out.afterWalk=LGT.world.mode; log('đi chỗ khác');
 // 8. bấm Chánh điện (goTo) khi đang ngồi lần nữa
 w.meditate(); run(15); const seatedAgain=LGT.world.mode; w.goTo('temple'); out.goToStands=[seatedAgain, LGT.world.mode];
+// 9. tụng kinh / tràng hạt (Phiên 14b)
+w.stand(); run(1); w.walkTo(3.2,-1); run(60); out.chantOutside=w.chant();
+w.walkTo(2.1,-20.8); run(40); out.chantGo=w.chant(); run(15); out.chantMode=LGT.world.mode; out.chantState=w.avatar&&1;
+out.toBeads=w.beads(); out.beadsMode=LGT.world.mode; out.rest=w.rest(); out.restMode=LGT.world.mode;
+w.chant(); out.chant2=LGT.world.mode; w.stand(); run(1); out.chantStand=LGT.world.mode;
 console.log(JSON.stringify(out));
