@@ -150,7 +150,7 @@ export function createWorld({ scene, camera, canvas, coarse = false, LGT = windo
   /** Rời tư thế ngồi/lạy/đang đi tới bồ đoàn (người chơi muốn đi chỗ khác). Đang ngồi thì bước ra lối đi sau lưng. */
   function release() {
     const r = act.stand();
-    if (r.seat && (r.was === 'sit' || r.was === 'meditate')) { const q = standPoint(r.seat); P.x = q.x; P.z = q.z; P.y = SEAT_Y; }
+    if (r.seat && ['sit', 'meditate', 'chant', 'beads'].includes(r.was)) { const q = standPoint(r.seat); P.x = q.x; P.z = q.z; P.y = SEAT_Y; }
   }
   /** Đi tới bồ đoàn `id` rồi ngồi (then: 'sit' | 'meditate'). Trả false nếu không có chỗ đó. */
   function sit(id, then = 'sit') {
@@ -174,6 +174,15 @@ export function createWorld({ scene, camera, canvas, coarse = false, LGT = windo
     if (!inHall(P)) return 'outside';
     const s = nearestFreeSeat(P); return s ? sit(s.id, 'meditate') : false;
   }
+  /** Tụng kinh / Tràng hạt: ngồi vào bồ đoàn (gần nhất nếu chưa ngồi) rồi chuyển hoạt động. Trả true | false | 'outside'. */
+  function practice(kind) {
+    if (act.sitting) return act.practice(kind);
+    if (!inHall(P)) return 'outside';
+    const s = nearestFreeSeat(P); return s ? sit(s.id, kind) : false;
+  }
+  const chant = () => practice('chant'), beads = () => practice('beads');
+  /** Về lại ngồi yên (đóng màn tụng/tràng hạt nhưng chưa đứng dậy). */
+  const rest = () => act.practice('sit');
   function stand() { const was = act.mode; release(); return was; }
 
   function arrive(s) {
@@ -190,7 +199,7 @@ export function createWorld({ scene, camera, canvas, coarse = false, LGT = windo
     act.update(dt);
     if (act.sitting) {                                        // đang ngồi/thiền: khóa tại bồ đoàn, bỏ qua đi lại
       const s = act.seat; P.x = s.x; P.z = s.z; P.y = damp(P.y, SEAT_Y, 10, dt); speedNow = 0; nav.clear(); mark.visible = false;
-      avatar.setFacing(s.ry); avatar.setState('sit', 0); avatar.group.position.set(P.x, P.y, P.z); avatar.update(dt);
+      avatar.setFacing(s.ry); avatar.setState(act.avatarState() || 'sit', 0); avatar.group.position.set(P.x, P.y, P.z); avatar.update(dt);
       camStep(dt); return;
     }
     if (act.mode === 'bow') {                                 // đang lạy: đứng yên (phím/bấm sẽ hủy qua release)
@@ -232,7 +241,7 @@ export function createWorld({ scene, camera, canvas, coarse = false, LGT = windo
     camera.position.set(cam.x, Math.max(0.5, cam.y), cam.z); camera.lookAt(cam.lx, cam.ly, cam.lz);
   }
 
-  LGT.world = { setProfile, zoom, walkTo, sit, bow, meditate, stand, get mode() { return act.mode; }, seats: SEATS, get pos() { return { x: P.x, z: P.z, y: P.y }; }, teleport, goTo, get avatar() { return avatar; }, get camera() { return { yaw, pitch, dist }; }, nav };
+  LGT.world = { setProfile, zoom, walkTo, sit, bow, meditate, chant, beads, rest, stand, get mode() { return act.mode; }, seats: SEATS, get pos() { return { x: P.x, z: P.z, y: P.y }; }, teleport, goTo, get avatar() { return avatar; }, get camera() { return { yaw, pitch, dist }; }, nav };
   update(0.016);
-  return { update, get avatar() { return avatar; }, setProfile, zoom, walkTo, sit, bow, meditate, stand, teleport, goTo, get pos() { return { x: P.x, z: P.z, y: P.y }; } };
+  return { update, get avatar() { return avatar; }, setProfile, zoom, walkTo, sit, bow, meditate, chant, beads, rest, stand, teleport, goTo, get pos() { return { x: P.x, z: P.z, y: P.y }; } };
 }

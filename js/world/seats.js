@@ -47,12 +47,13 @@ const SIT_ARRIVE = 0.4;
  *  bow() lạy (chỉ khi đang đứng tự do); meditate() chuyển ngồi thường thành thiền; stand() đứng dậy (trả chế độ cũ).
  *  update(dt) cho bow tự kết thúc; avatarState() → trạng thái hoạt ảnh cần đặt hoặc null (để lớp đi bộ tự quyết).
  */
+const SIT_MODES = ['sit', 'meditate', 'chant', 'beads'];
 export function createActivity() {
   let mode = 'free', seat = null, t = 0, then = 'sit';
   return {
     get mode() { return mode; }, get seat() { return seat; },
-    get sitting() { return mode === 'sit' || mode === 'meditate'; },
-    goSit(s, after = 'sit') { if (mode === 'bow') mode = 'free'; mode = 'toSeat'; seat = s; then = after === 'meditate' ? 'meditate' : 'sit'; t = 0; },
+    get sitting() { return SIT_MODES.includes(mode); },
+    goSit(s, after = 'sit') { if (mode === 'bow') mode = 'free'; mode = 'toSeat'; seat = s; then = SIT_MODES.includes(after) ? after : 'sit'; t = 0; },
     step(p) {
       if (mode !== 'toSeat') return null;
       if (Math.hypot(p.x - seat.x, p.z - seat.z) <= SIT_ARRIVE) { mode = then; return 'seated'; }
@@ -60,10 +61,12 @@ export function createActivity() {
     },
     cancelWalk() { if (mode === 'toSeat') { mode = 'free'; seat = null; } },
     bow() { if (mode !== 'free') return false; mode = 'bow'; t = 0; return true; },
-    meditate() { if (mode === 'sit') { mode = 'meditate'; return true; } return mode === 'meditate'; },
+    meditate() { return this.practice('meditate'); },
+    /** Đang ngồi thì đổi hoạt động: 'sit' | 'meditate' | 'chant' (tụng kinh, gõ mõ) | 'beads' (lần tràng hạt). */
+    practice(kind) { if (!this.sitting || !SIT_MODES.includes(kind)) return false; mode = kind; return true; },
     stand() { const was = mode; mode = 'free'; const s = seat; seat = null; t = 0; return { was, seat: s }; },
     update(dt) { if (mode === 'bow') { t += dt; if (t >= BOW_SECONDS) { mode = 'free'; t = 0; } } },
-    avatarState() { return mode === 'bow' ? 'bow' : (mode === 'sit' || mode === 'meditate') ? 'sit' : null; },
+    avatarState() { return mode === 'bow' ? 'bow' : mode === 'chant' ? 'mo' : mode === 'beads' ? 'beads' : (mode === 'sit' || mode === 'meditate') ? 'sit' : null; },
   };
 }
 

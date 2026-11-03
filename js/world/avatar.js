@@ -92,6 +92,12 @@ export function createAvatar({ name = 'Khách', color = 'nau', hair: hairId = 't
     const cap = mesh(new THREE.SphereGeometry(0.435, 24, 14, 0, Math.PI * 2, 0, Math.PI * 0.43), hairM, head, 0, 0.01, -0.025); cap.scale.set(1, 0.97, 1); cap.rotation.x = -0.32;
     mesh(new THREE.SphereGeometry(0.125, 14, 10), hairM, head, 0, 0.5, -0.1);
   }
+  // Chuỗi hạt 108 trước ngực (chỉ hiện khi lần tràng hạt); xoay theo số hạt đã lần
+  const mala = new THREE.Group(); mala.position.set(0, 0.5, 0.5); mala.visible = false; upper.add(mala);
+  const malaG = geo(new THREE.SphereGeometry(0.026, 6, 5)), malaBeads = new THREE.InstancedMesh(malaG, std(0xd9a24a, 0.4), 108);
+  for (let i = 0; i < 108; i++) { const a = (i / 108) * Math.PI * 2; mtx.makeTranslation(Math.sin(a) * 0.2, Math.cos(a) * 0.2, 0); malaBeads.setMatrixAt(i, mtx); }
+  mala.add(malaBeads);
+  let malaTarget = 0, malaCur = 0;
   // Hào quang (khi ngồi thiền/tụng): vòng sáng sau đầu
   const haloC = document.createElement('canvas'); haloC.width = haloC.height = 128; { const g = haloC.getContext('2d'), gr = g.createRadialGradient(64, 64, 18, 64, 64, 62); gr.addColorStop(0, 'rgba(255,248,214,.0)'); gr.addColorStop(0.55, 'rgba(255,240,190,.95)'); gr.addColorStop(0.7, 'rgba(255,224,150,.45)'); gr.addColorStop(1, 'rgba(255,224,150,0)'); g.fillStyle = gr; g.fillRect(0, 0, 128, 128); }
   const haloTex = new THREE.CanvasTexture(haloC); haloTex.colorSpace = THREE.SRGBColorSpace;
@@ -133,7 +139,8 @@ export function createAvatar({ name = 'Khách', color = 'nau', hair: hairId = 't
     rig.position.y = p.dy; body.rotation.z = st.state === 'walk' ? Math.sin(clock * (5 + 4 * Math.min(1, st.speed / 2.2))) * 0.05 : 0;
     shadow.scale.setScalar(1 - Math.min(0.3, p.dy * 4));
     // Hào quang khi ngồi thiền / gõ mõ
-    const wantHalo = st.state === 'sit' || st.state === 'mo' ? 0.9 : 0; st.halo += (wantHalo - st.halo) * Math.min(1, 5 * dt); haloMat.opacity = st.halo;
+    const wantHalo = st.state === 'sit' || st.state === 'mo' || st.state === 'beads' ? 0.9 : 0; st.halo += (wantHalo - st.halo) * Math.min(1, 5 * dt); haloMat.opacity = st.halo;
+    mala.visible = st.state === 'beads'; malaCur += (malaTarget - malaCur) * Math.min(1, 12 * dt); mala.rotation.z = malaCur;
     st.ry = turnToward(st.ry, st.targetRy, 9 * dt); group.rotation.y = st.ry;
     if (bubble && clock > bubbleUntil) say('');
   }
@@ -142,5 +149,7 @@ export function createAvatar({ name = 'Khách', color = 'nau', hair: hairId = 't
     say(''); label.material.dispose(); nameTex.dispose(); haloMat.dispose(); haloTex.dispose(); geos.forEach((g) => g.dispose()); mats.forEach((m) => m.dispose());
   }
 
-  return { group, setState, setFacing, say, update, dispose, get state() { return st.state; } };
+  /** Số hạt đã lần (0..108): xoay chuỗi hạt 3D. */
+  function setBeadCount(n) { malaTarget = -(Math.max(0, +n || 0) / 108) * Math.PI * 2; }
+  return { group, setState, setFacing, say, setBeadCount, update, dispose, get state() { return st.state; } };
 }

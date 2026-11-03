@@ -58,7 +58,7 @@ export function wrapText(text, maxChars = 18, maxLines = 4) {
   return lines;
 }
 
-export const STATES = ['idle', 'walk', 'sit', 'mo', 'bow'];   // đứng, đi, ngồi thiền, gõ mõ (ngồi), cúi lạy
+export const STATES = ['idle', 'walk', 'sit', 'mo', 'beads', 'bow'];   // đứng, đi, ngồi thiền, gõ mõ (ngồi), cúi lạy
 
 /**
  * Tư thế (góc quay rad, độ cao) theo trạng thái và thời gian t (giây). Thuần hàm.
@@ -78,6 +78,9 @@ export function poseFor(state, t, speed = 0) {
     }
     case 'mo': {   // ngồi, tay phải gõ mõ nhịp đều (~1,6 lần/giây), cánh tay trái đỡ mõ
       P.sit = 1; P.armL = -0.7; P.armR = -0.9 + Math.max(0, Math.sin(t * 10)) * 0.55; P.head = Math.sin(t * 5) * 0.03; break;
+    }
+    case 'beads': {   // ngồi, hai tay lần chuỗi hạt trước ngực, đầu hơi cúi
+      P.sit = 1; P.armL = -0.75 + Math.sin(t * 3) * 0.12; P.armR = -0.75 - Math.sin(t * 3) * 0.12; P.head = 0.08 + Math.sin(t * 0.9) * 0.02; break;
     }
     case 'bow': {  // lạy: cúi thân rồi lên, chu kỳ 3 giây
       const u = (Math.sin(t * 2.1 - Math.PI / 2) + 1) / 2;
