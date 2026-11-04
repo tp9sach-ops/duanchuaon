@@ -23,6 +23,7 @@ import { buildCushions } from './boduon.js';
 import { buildHoaSen } from './hoasen.js';
 import { buildLandscape } from './landscape.js';
 import { buildGlbTrees } from './glbprops.js';
+import { inHall } from '../world/landscape.js';
 
 /* Biến toàn cục MOOD (-1..1): điểm số sẽ điều khiển màu đèn, độ sáng trăng, tông hậu kỳ.
    -1 = lạnh/xanh, 0 = trung tính, +1 = vàng ấm. Dùng: window.LGT.setMood(0.6) hoặc ?mood=0.6
@@ -82,7 +83,7 @@ export function createScene(canvas, { onProgress, onPick, onArrive } = {}) {
   scene.add(shade(buildBodhi(-24, 6, 1.1)), shade(buildBodhi(24, 26, 0.95)), shade(buildBodhi(-34, -16, 1.2)));
   scene.add(buildBamboo(-40, 12), buildBamboo(42, 8), buildBamboo(-30, 40));
   scene.add(buildRocks(18, 90, -10, 60));
-  if (DAY) scene.add(shade(buildLowPolyTrees([...TREES, ...farTrees()])));   // cây low-poly xanh như ảnh mẫu
+  if (DAY) scene.add(shade(buildLowPolyTrees([...TREES, ...farTrees()].filter((t) => !inHall(t.x ?? t[0], t.z ?? t[1])))));   // cây low-poly xanh như ảnh mẫu
   const pond = buildPond(new THREE.Vector3(0, 0, 14), 10, coarse ? 10 : 18); scene.add(pond.group);
   onProgress?.(0.75);
 
