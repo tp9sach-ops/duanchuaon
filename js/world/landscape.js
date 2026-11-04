@@ -68,8 +68,9 @@ export const FEATURES = [
 ];
 
 // ---- Cây GLB (Phiên 14f, Bước 3): vị trí tất định rải ngoài lối đi, ngoài vật cản. model = id file trong assets/models/trees/
+// h = chiều cao cây (mét) khi s = 1; w = trọng số rải. File GLB đã chuẩn hoá cao 1 đơn vị, gốc ở đáy (xem HANDOFF Phiên 14f, Bước 3).
 export const TREE_MODELS = [
-  { id: 'gn', w: 2 }, { id: 'linden', w: 3 }, { id: 'real', w: 3 }, { id: 'oak', w: 2 }, { id: 'maple', w: 1 }, { id: 'birch', w: 2 },
+  { id: 'gn', w: 3, h: 9 }, { id: 'real', w: 3, h: 9 }, { id: 'oak', w: 3, h: 8 }, { id: 'maple', w: 2, h: 7 }, { id: 'lowpoly', w: 2, h: 7 }, { id: 'pine', w: 1, h: 10 },
 ];
 function distToSeg(px, pz, [ax, az], [bx, bz]) {
   const dx = bx - ax, dz = bz - az, L2 = dx * dx + dz * dz, t = L2 ? Math.max(0, Math.min(1, ((px - ax) * dx + (pz - az) * dz) / L2)) : 0;
