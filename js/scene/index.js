@@ -22,6 +22,7 @@ import { createWorld } from '../world/world.js';
 import { buildCushions } from './boduon.js';
 import { buildHoaSen } from './hoasen.js';
 import { buildLandscape } from './landscape.js';
+import { buildGlbTrees } from './glbprops.js';
 
 /* Biến toàn cục MOOD (-1..1): điểm số sẽ điều khiển màu đèn, độ sáng trăng, tông hậu kỳ.
    -1 = lạnh/xanh, 0 = trung tính, +1 = vàng ấm. Dùng: window.LGT.setMood(0.6) hoặc ?mood=0.6
@@ -72,6 +73,7 @@ export function createScene(canvas, { onProgress, onPick, onArrive } = {}) {
   scene.add(shade(tam), chanh.group, shade(tower.group), shade(censer.group), shade(buildProps()), shade(buildGarden()), shade(buildHouses()), shade(buildCushions())); onProgress?.(0.55);
   const hoaSen = buildHoaSen(LGT); scene.add(hoaSen.group);   // hoa sen vàng nhận lộc
   const land = buildLandscape(); scene.add(shade(land.group));   // cảnh quan mở rộng (Phiên 14f)
+  scene.add(buildGlbTrees().group);   // cây GLB rải trong vườn (Phiên 14f, Bước 3): nạp nền, từng loại hiện khi nạp xong
 
   // --- quần thể chùa (GLB): nạp nền, không chặn màn hình chờ. Lỗi thì bỏ qua.
   loadTemple().then((m) => { if (m) scene.add(m); });
