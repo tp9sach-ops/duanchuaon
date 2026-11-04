@@ -169,6 +169,7 @@ Việc ptg làm song song (không chặn các phiên trên): bật Pages (Settin
 - **2026-11-03 (Phiên 14a):** ptg nói "tiếp tục". Không có yêu cầu mới. Làm bước 14a (bồ đoàn, ngồi, lạy, thiền) + O3.
 
 - **2026-11-04 (Phiên 14c):** ptg nói "đọc lại trang github xem file bàn giao và tiếp tục" kèm HANDOFF + zip 14b (ptg đã tự tải 14b lên repo). Không có yêu cầu mới. Làm bước 14c (Đèn nguyện, Dâng lễ, hoa sen vàng).
+- **2026-11-04 (Phiên 14d):** ptg gửi 2 ảnh áo polo 9 Sạch (thân vàng, tay + cổ xanh lá, logo ngực trái và logo lớn ở lưng) và yêu cầu: tiếp tục, thiết kế nhân vật mặc chiếc áo này, và CHỈ gửi các file cần thay/thêm để tải lên GitHub. Đã làm kiểu "Đồng phục 9 Sạch" (màu áo `9sach`); chi tiết ở `HANDOFF.md` mục 7. **Quy tắc giao file (mới, ghi nhận):** cuối mỗi phiên chỉ giao các file đã đổi/thêm (đúng đường dẫn, trùng tên ghi đè), không giao cả dự án.
 
 ## 8. PROMPT KHỞI ĐỘNG PHIÊN MỚI (dán nguyên văn)
 
