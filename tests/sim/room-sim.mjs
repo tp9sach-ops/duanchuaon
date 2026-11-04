@@ -1,0 +1,23 @@
+// Chạy js/net/room.js THẬT (nối world → máy chủ) với three.js giả và máy chủ Room.gs thật trong vm. Chạy bởi tests/room.test.mjs.
+import vm from 'node:vm';
+import { readFileSync } from 'node:fs';
+const mkEl=()=>new Proxy(function(){},{get:(t,k)=>k==='style'?{}:k==='getContext'?()=>new Proxy({}, {get:()=>()=>({addColorStop(){}})}):k==='appendChild'?()=>{}:k==='addEventListener'?()=>{}:k==='setAttribute'?()=>{}:k==='getBoundingClientRect'?()=>({left:0,top:0,width:1,height:1}):k==='width'||k==='height'?0:undefined,set:()=>true,apply:()=>undefined});
+const store = {}; const ctx = { Date, CacheService: { getScriptCache: () => ({ get: (k) => store[k] ?? null, put: (k, v) => { store[k] = v; } }) }, LockService: { getScriptLock: () => ({ tryLock: () => true, releaseLock() {} }) } };
+vm.createContext(ctx); vm.runInContext(readFileSync(new URL('../../gas/Room.gs', import.meta.url), 'utf8'), ctx);
+const server = (req) => JSON.parse(JSON.stringify(vm.runInContext('roomSync_', ctx)(req)));
+const seen = [];
+globalThis.fetch = async (url, init) => { const req = JSON.parse(init.body); seen.push(req); return { ok: true, json: async () => server(req) }; };
+const online = { textContent: '' }, scene = { kids: new Set(), add(g) { this.kids.add(g); }, remove(g) { this.kids.delete(g); } };
+globalThis.window = globalThis;
+globalThis.document = { createElement: mkEl, body: { classList: { contains: (k) => k === 'world-mode' } }, getElementById: (id) => (id === 'online-tx' ? online : null), addEventListener() {}, hidden: false };
+globalThis.localStorage = { getItem: (k) => ({ 'lgt.name': 'Tg', 'lgt.color': '9sach', 'lgt.hair': 'troc' }[k] || null), setItem() {} };
+globalThis.requestAnimationFrame = () => 0; globalThis.performance = globalThis.performance || { now: () => Date.now() };
+window.LGT = { world: { get pos() { return { x: 2, y: 0, z: 3 }; }, avatar: { group: { parent: scene, rotation: { y: 0.5 } }, state: 'walk', say() {} } } };
+server({ action: 'sync', id: 'other-page-01', n: 'Khách A', c: 'lam', h: 'bui', x: 5, y: 0, z: 5, r: 0, s: 'idle', since: 0 });
+const { initRoom } = await import('../../js/net/room.js');
+const client = initRoom();
+await new Promise((r) => setTimeout(r, 400));
+client.frame(0.016);
+const out = { started: !!client, sent: seen[0] && { action: seen[0].action, n: seen[0].n, c: seen[0].c, x: seen[0].x, z: seen[0].z, s: seen[0].s, noUserKey: !('userKey' in seen[0]) }, online: online.textContent, remotes: scene.kids.size, roomApi: typeof window.LGT.room.say };
+client.stop(); out.afterStop = scene.kids.size;
+console.log(JSON.stringify(out)); process.exit(0);

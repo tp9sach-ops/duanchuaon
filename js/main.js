@@ -14,6 +14,7 @@ import { initPlanets } from './ui/planets.js';
 import { initVision } from './ui/vision.js';
 import { initStage } from './ui/stage.js';
 import { initHud } from './ui/hud.js';
+import { initRoom } from './net/room.js';
 
 const pct = document.getElementById('pre-pct'), fill = document.getElementById('pre-fill'), pre = document.getElementById('pre');
 const setProgress = (v) => { const p = Math.round(v * 100); pct.textContent = p; fill.style.right = (100 - p) + '%'; };
@@ -63,6 +64,7 @@ async function boot() {
 
   stage = initAll(created.rail);
   try { initHud(); } catch (e) { console.warn('[Diệu Giang Tự] HUD lỗi:', e && e.message); }   // màn vào cửa + HUD; lỗi thì giữ giao diện cũ
+  try { initRoom(); } catch (e) { console.warn('[Diệu Giang Tự] Đa người lỗi:', e && e.message); }   // thấy người khác trong chùa; lỗi thì vẫn chơi một mình
   // Phòng khi onProgress(1) không tới (tab nền): vẫn mở trang sau 6s
   setTimeout(hidePre, 6000);
 
