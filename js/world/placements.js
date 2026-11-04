@@ -37,7 +37,7 @@ export function farTrees() {
   const out = []; let a = 1;
   const rnd = () => { a = (a * 16807) % 2147483647; return a / 2147483647; };
   for (let i = 0; i < 46; i++) {
-    const side = i % 3, x = side === 0 ? -(60 + rnd() * 26) : side === 1 ? 60 + rnd() * 26 : (rnd() - 0.5) * 120, z = side === 2 ? -(62 + rnd() * 24) : -42 + rnd() * 108;
+    const side = i % 3, x = side === 0 ? -(82 + rnd() * 26) : side === 1 ? 82 + rnd() * 26 : (rnd() - 0.5) * 180, z = side === 2 ? -(82 + rnd() * 24) : -78 + rnd() * 140;
     out.push({ x, z, s: 1.1 + rnd() * 0.9 });
   }
   return out;
