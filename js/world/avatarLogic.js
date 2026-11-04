@@ -9,6 +9,8 @@ export const AVATAR_COLORS = [
   { id: 'xam',   ten: 'Áo xám',     ao: 0x7d858d, dai: 0x4b5258 },
   { id: 'trang', ten: 'Áo trắng',   ao: 0xe8e4d8, dai: 0xb9b4a4 },
   { id: 'do',    ten: 'Áo đỏ sẫm',  ao: 0x9a2f2a, dai: 0x5e1a17 },
+  // Đồng phục 9 Sạch (áo polo): thân vàng, tay + cổ + gấu xanh lá, logo 9 SẠCH ở ngực trái và lưng (theo ảnh áo của ptg)
+  { id: '9sach', ten: 'Đồng phục 9 Sạch', ao: 0xf8d80c, dai: 0x0e8f2c, tay: 0x12a53a, co: 0x0e8f2c, soc: 0xf8d80c, polo: true },
 ];
 export const DEFAULT_COLOR = 'nau';
 
@@ -21,6 +23,30 @@ export function colorById(id) {
 export const HAIR_STYLES = [{ id: 'troc', ten: 'Đầu trọc' }, { id: 'bui', ten: 'Tóc búi' }];
 export const DEFAULT_HAIR = 'troc';
 export function hairById(id) { return HAIR_STYLES.find((h) => h.id === id) || HAIR_STYLES[0]; }
+
+/** Hình dáng thân áo (mặt cắt xoay quanh trục đứng): [bán kính, độ cao]. Dùng chung cho avatar.js và việc dán logo lên áo. */
+export const BELL_PROFILE = [[0.001, 0], [0.36, 0], [0.4, 0.03], [0.39, 0.14], [0.33, 0.34], [0.27, 0.55], [0.23, 0.7], [0.2, 0.82], [0.001, 0.85]];
+/** Bán kính thân áo tại độ cao y (nội suy tuyến tính theo BELL_PROFILE; ngoài khoảng thì kẹp ở hai đầu). */
+export function bellRadius(y) {
+  const P = BELL_PROFILE;
+  if (y <= P[0][1]) return P[0][0];
+  for (let i = 1; i < P.length; i++) {
+    if (y <= P[i][1]) { const [r0, y0] = P[i - 1], [r1, y1] = P[i], k = (y - y0) / (y1 - y0); return r0 + (r1 - r0) * k; }
+  }
+  return P[P.length - 1][0];
+}
+/**
+ * Mảnh logo hình tròn dán cong theo thân áo. spec: { y: độ cao tâm, d: đường kính (m), theta: hướng tâm (rad; 0 = trước, + = bên TRÁI người mặc, π = lưng) }.
+ * Trả tham số CylinderGeometry (mở hai đầu): bán kính trên/dưới theo đúng độ nghiêng thân áo (+ lề nổi `lift`), cao, góc bắt đầu/độ dài cung.
+ */
+export function logoPatch({ y, d, theta }, lift = 0.012) {
+  const h = d, yTop = y + h / 2, yBot = y - h / 2, rTop = bellRadius(yTop) + lift, rBot = bellRadius(yBot) + lift, rMid = (rTop + rBot) / 2;
+  const arc = d / rMid;                                  // chiều dài cung = đường kính → logo tròn, không méo
+  return { rTop, rBot, h, thetaStart: theta - arc / 2, thetaLength: arc, y };
+}
+/** Vị trí logo trên áo đồng phục: ngực trái (nhỏ) và lưng (lớn), như ảnh áo mẫu. */
+// (ngực đặt thấp hơn ngực thật một chút vì hai tay chắp trước ngực che phần trên)
+export const POLO_LOGOS = { chest: { y: 0.4, d: 0.17, theta: 0.55 }, back: { y: 0.4, d: 0.36, theta: Math.PI } };
 
 const URL_RE = /(https?:\/\/|www\.)\S*/gi;
 // Ký tự điều khiển, ký tự định dạng ẩn (zero-width, đảo chiều) và dấu < > dùng để chèn HTML

@@ -2,13 +2,32 @@
 // Gốc tọa độ = dưới bàn chân, nhìn về +z (khớp quy ước ry của layout.js). Cao ~1,7 đơn vị.
 // Logic tư thế/tên/chat nằm ở avatarLogic.js (có test). Dùng: const a = createAvatar({ name, color }); scene.add(a.group); mỗi khung: a.update(dt).
 import * as THREE from 'three';
-import { colorById, hairById, cleanName, cleanSay, bubbleLife, wrapText, poseFor, turnToward } from './avatarLogic.js';
+import { colorById, hairById, cleanName, cleanSay, bubbleLife, wrapText, poseFor, turnToward, BELL_PROFILE, bellRadius, logoPatch, POLO_LOGOS } from './avatarLogic.js';
 
 const SKIN = 0xe8934c, HAIR = 0x1f1511, OUTLINE = 0x3a2314;
 const FONT = '600 38px "Be Vietnam Pro", "Noto Sans", system-ui, sans-serif';
 
 function canvas(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
 function roundRect(g, x, y, w, h, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
+
+// Logo 9 SẠCH dán lên áo đồng phục: một texture dùng chung cho mọi nhân vật. Vẽ tạm bằng code rồi thay bằng ảnh thật khi tải xong (lỗi tải thì giữ bản tạm).
+const LOGO_URL = new URL('../../assets/logo-9sach.webp', import.meta.url).href;
+let LOGO_TEX = null;
+function logoTexture() {
+  if (LOGO_TEX) return LOGO_TEX;
+  const c = canvas(256, 256), g = c.getContext('2d');
+  g.fillStyle = '#f6c21c'; g.beginPath(); g.arc(128, 128, 124, 0, Math.PI * 2); g.fill();
+  g.strokeStyle = '#13802a'; g.lineWidth = 14; g.beginPath(); g.arc(128, 128, 112, 0, Math.PI * 2); g.stroke();
+  g.fillStyle = '#e21f26'; g.font = '900 64px "Be Vietnam Pro", system-ui, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('9 SẠCH', 128, 132, 190);
+  LOGO_TEX = new THREE.CanvasTexture(c); LOGO_TEX.colorSpace = THREE.SRGBColorSpace;
+  if (typeof Image !== 'undefined') {
+    const im = new Image();
+    im.onload = () => { g.clearRect(0, 0, 256, 256); g.drawImage(im, 0, 0, 256, 256); LOGO_TEX.needsUpdate = true; };
+    im.onerror = () => {};
+    im.src = LOGO_URL;
+  }
+  return LOGO_TEX;
+}
 
 function makeSprite(tex, w, h, y) {
   const m = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false, depthWrite: false });
@@ -43,7 +62,8 @@ export function createAvatar({ name = 'Khách', color = 'nau', hair: hairId = 't
   const geo = (g) => (geos.push(g), g);
   const std = (c, r = 0.62) => { const m = new THREE.MeshStandardMaterial({ color: c, roughness: r }); mats.push(m); return m; };
   const basic = (c, o = {}) => { const m = new THREE.MeshBasicMaterial({ color: c, ...o }); mats.push(m); return m; };
-  const robeM = std(col.ao, 0.7), beltM = std(col.dai, 0.6), skinM = std(SKIN, 0.55), hairM = std(HAIR, 0.8), goldM = std(0xe0a93a, 0.45), beadM = std(0xc9792f, 0.4), shoeM = std(0x4a2f1c, 0.8);
+  const polo = !!col.polo;
+  const robeM = std(col.ao, 0.7), beltM = std(col.dai, 0.6), sleeveM = polo ? std(col.tay, 0.7) : robeM, stripeM = polo ? std(col.soc, 0.6) : null, skinM = std(SKIN, 0.55), hairM = std(HAIR, 0.8), goldM = std(0xe0a93a, 0.45), beadM = std(0xc9792f, 0.4), shoeM = std(0x4a2f1c, 0.8);
   const outM = basic(OUTLINE, { side: THREE.BackSide });
   const mesh = (g, m, parent, x = 0, y = 0, z = 0) => { const o = new THREE.Mesh(geo(g), m); o.position.set(x, y, z); parent.add(o); return o; };
 
@@ -59,14 +79,29 @@ export function createAvatar({ name = 'Khách', color = 'nau', hair: hairId = 't
   // Thân: áo hình chuông (xoay quanh gót khi cúi lạy)
   const body = new THREE.Group(); rig.add(body);
   const robe = new THREE.Group(); body.add(robe);          // co lại theo chiều cao khi ngồi
-  const bell = geo(new THREE.LatheGeometry([[0.001, 0], [0.36, 0], [0.4, 0.03], [0.39, 0.14], [0.33, 0.34], [0.27, 0.55], [0.23, 0.7], [0.2, 0.82], [0.001, 0.85]].map(([r, y]) => new THREE.Vector2(r, y)), 30));
+  const bell = geo(new THREE.LatheGeometry(BELL_PROFILE.map(([r, y]) => new THREE.Vector2(r, y)), 30));
   const bellMesh = new THREE.Mesh(bell, robeM); robe.add(bellMesh);
   const bellOut = new THREE.Mesh(bell, outM); bellOut.scale.set(1.07, 1.03, 1.07); robe.add(bellOut);
   const hem = mesh(new THREE.TorusGeometry(0.385, 0.026, 8, 30), beltM, robe, 0, 0.035, 0); hem.rotation.x = Math.PI / 2;
 
   const upper = new THREE.Group(); body.add(upper);        // đầu, tay, dải vai: hạ xuống khi ngồi
   // Dải vàng chéo vai
-  const sash = mesh(new THREE.TorusGeometry(0.285, 0.05, 8, 30), goldM, upper, 0, 0.46, 0); sash.rotation.set(Math.PI / 2 - 0.85, 0.15, 0.4);
+  if (!polo) { const sash = mesh(new THREE.TorusGeometry(0.285, 0.05, 8, 30), goldM, upper, 0, 0.46, 0); sash.rotation.set(Math.PI / 2 - 0.85, 0.15, 0.4); }   // áo polo không đeo dải chéo vai
+  // Áo polo 9 Sạch: cổ xanh viền vàng (gắn vào phần trên, theo đầu), nẹp cúc + logo ngực trái + logo lưng (gắn vào thân, giữ nguyên tỉ lệ khi ngồi)
+  const trim = [];   // các chi tiết dán trên thân: bù lại phép co chiều cao của `robe` khi ngồi để không bị méo
+  if (polo) {
+    const collar = mesh(new THREE.TorusGeometry(0.235, 0.05, 8, 28), beltM, upper, 0, 0.7, 0); collar.rotation.x = Math.PI / 2; collar.scale.set(1, 1, 0.6);
+    const edge = mesh(new THREE.TorusGeometry(0.262, 0.012, 6, 28), stripeM, upper, 0, 0.72, 0); edge.rotation.x = Math.PI / 2;
+    const tilt = -Math.atan((bellRadius(0.4) - bellRadius(0.7)) / 0.3);   // độ nghiêng mặt thân áo (đỉnh thu nhỏ lại)
+    const placket = mesh(new THREE.BoxGeometry(0.055, 0.2, 0.014), beltM, robe, 0, 0.56, bellRadius(0.56) + 0.006); placket.rotation.x = tilt; trim.push(placket);
+    const btnM = std(0xf4f1e6, 0.4);
+    for (const by of [0.61, 0.53]) { const b = mesh(new THREE.SphereGeometry(0.014, 8, 6), btnM, robe, 0, by, bellRadius(by) + 0.016); trim.push(b); }
+    const logoM = new THREE.MeshStandardMaterial({ map: logoTexture(), transparent: true, roughness: 0.7, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }); mats.push(logoM);
+    for (const spec of [POLO_LOGOS.chest, POLO_LOGOS.back]) {
+      const q = logoPatch(spec), m = new THREE.Mesh(geo(new THREE.CylinderGeometry(q.rTop, q.rBot, q.h, 18, 1, true, q.thetaStart, q.thetaLength)), logoM);
+      m.position.y = q.y; m.renderOrder = 2; robe.add(m); trim.push(m);
+    }
+  }
   // Chuỗi hạt quanh cổ
   const beadG = geo(new THREE.SphereGeometry(0.045, 8, 6)), beads = new THREE.InstancedMesh(beadG, beadM, 15), mtx = new THREE.Matrix4();
   for (let i = 0; i < 15; i++) { const a = (i / 15) * Math.PI * 2; mtx.makeTranslation(Math.sin(a) * 0.255, 0.74 - Math.cos(a) * 0.02 - (Math.cos(a) > 0 ? 0.05 * Math.cos(a) : 0), Math.cos(a) * 0.255); beads.setMatrixAt(i, mtx); }
@@ -74,7 +109,14 @@ export function createAvatar({ name = 'Khách', color = 'nau', hair: hairId = 't
   // Tay: ngắn mập, hai bàn tay chụm trước ngực
   const armG = geo(new THREE.CylinderGeometry(0.062, 0.056, 0.3, 8)); armG.translate(0, -0.15, 0);
   const handG = geo(new THREE.SphereGeometry(0.07, 10, 8));
-  const mkArm = (x) => { const p = new THREE.Group(); p.position.set(x, 0.64, 0.04); const a = new THREE.Mesh(armG, robeM); p.add(a); const h = new THREE.Mesh(handG, skinM); h.position.y = -0.31; p.add(h); upper.add(p); return p; };
+  const mkArm = (x) => {
+    const p = new THREE.Group(); p.position.set(x, 0.64, 0.04); const a = new THREE.Mesh(armG, sleeveM); p.add(a); const h = new THREE.Mesh(handG, skinM); h.position.y = -0.31; p.add(h); upper.add(p);
+    if (polo) {   // áo polo: vai tròn xanh + viền vàng ở cổ tay áo
+      mesh(new THREE.SphereGeometry(0.07, 10, 8), sleeveM, p, 0, 0.005, 0);
+      const cuff = mesh(new THREE.TorusGeometry(0.06, 0.014, 6, 14), stripeM, p, 0, -0.255, 0); cuff.rotation.x = Math.PI / 2;
+    }
+    return p;
+  };
   const armL = mkArm(-0.25), armR = mkArm(0.25);
 
   // Đầu: cầu tròn to không cổ, tai, mắt cười, miệng, má hồng, tóc
@@ -136,6 +178,7 @@ export function createAvatar({ name = 'Khách', color = 'nau', hair: hairId = 't
     armL.rotation.set(-1.2 + p.armL * 0.7, 0, 0.8); armR.rotation.set(-1.2 + p.armR * 0.7, 0, -0.8);
     body.rotation.x = p.lean; head.rotation.x = p.head;
     robe.scale.y = 1 - 0.4 * p.sit; upper.position.y = -0.34 * p.sit;
+    for (const m of trim) m.scale.y = 1 / robe.scale.y;   // chi tiết trên thân (nẹp, cúc, logo) giữ nguyên hình dạng khi ngồi
     rig.position.y = p.dy; body.rotation.z = st.state === 'walk' ? Math.sin(clock * (5 + 4 * Math.min(1, st.speed / 2.2))) * 0.05 : 0;
     shadow.scale.setScalar(1 - Math.min(0.3, p.dy * 4));
     // Hào quang khi ngồi thiền / gõ mõ
