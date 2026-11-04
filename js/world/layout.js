@@ -1,6 +1,8 @@
 // Bố cục thế giới chùa (đơn vị mét, +z là hướng ra cổng, -z là chính điện) và va chạm. Thuần hàm, không đụng three.js, có test.
 // Toạ độ khớp với các hàm dựng trong js/scene/temple.js (Tam quan z=34, ao sen z=14, lư hương z=-8, chính điện z=-28).
 
+// Phiên 14f: khuôn viên mở rộng thành 156 × 110 m (hoa viên Tây/Đông, vườn tháp phía sau). Một nguồn duy nhất cho ranh giới.
+export const BOUNDS = { xMax: 78, zMin: -78 };
 export const SPAWN = { x: 0, z: 54, ry: Math.PI };   // ry: góc quay quanh trục Y (0 = nhìn về +z)
 
 export const GATE = { z: 34, openings: [[-2.3, 2.3], [6.9, 9.3], [-9.3, -6.9]] };   // cổng giữa và hai cổng phụ
@@ -31,6 +33,10 @@ export const RECTS = [
 /** Thêm vật cản động (nhà tổ, am, ghế...) từ các module khác. */
 export const addCircle = (c) => CIRCLES.push(c);
 export const addRect = (r) => RECTS.push(r);
+/** Hồ nước thêm (Phiên 14f): {x,z,r, bridges:[{x0,x1,z0,z1,y}]}. Trong hồ là vật cản, trừ các mảng cầu/đảo (đi được, cao y). */
+export const WATERS = [];
+export const addWater = (w) => WATERS.push(w);
+export const bridgeAt = (x, z) => { for (const w of WATERS) for (const b of w.bridges || []) if (x >= b.x0 && x <= b.x1 && z >= b.z0 && z <= b.z1) return b; return null; };
 
 const inRect = (x, z, r) => x >= r.x0 && x <= r.x1 && z >= r.z0 && z <= r.z1;
 const inGateOpening = (x) => GATE.openings.some(([a, b]) => x >= a && x <= b);
@@ -43,24 +49,27 @@ export function region(x, z) {
   return 'ground';
 }
 
-/** Độ cao mặt đi tại (x, z): sàn chính điện, bậc thềm (dốc), cầu đá qua ao. */
+/** Độ cao mặt đi tại (x, z): sàn chính điện, bậc thềm (dốc), cầu đá qua ao, cầu/đảo của hồ thêm. */
 export function groundY(x, z) {
   const r = region(x, z), s = HALL.step;
   if (r === 'plat') return HALL.h;
   if (r === 'step') { const t = (s.z1 - z) / (s.z1 - s.z0); return Math.max(0, Math.min(1, t)) * HALL.h; }
   if (Math.abs(x) <= POND.bridgeHalf && Math.abs(z - POND.z) <= POND.r + 0.6) return 0.34;
+  const br = bridgeAt(x, z); if (br) return br.y;
   return 0;
 }
 
 /** Điểm (x, z) có bị chặn không (không xét việc chuyển vùng; xem canStep). */
 export function blocked(x, z) {
   // Ranh giới: trong sân, hoặc đường ngoài cổng
-  const inside = Math.abs(x) <= 56 && z >= -58 && z <= GATE.z - 1.8;
+  const inside = Math.abs(x) <= BOUNDS.xMax && z >= BOUNDS.zMin && z <= GATE.z - 1.8;
   const outside = Math.abs(x) <= 14 && z >= GATE.z + 2.4 && z <= 62;
   const inGate = z > GATE.z - 1.8 && z < GATE.z + 2.4 && inGateOpening(x);
   if (!inside && !outside && !inGate) return true;
   // Ao sen: chặn trừ lối cầu đá
   if (Math.hypot(x - POND.x, z - POND.z) < POND.r && Math.abs(x) > POND.bridgeHalf) return true;
+  // Hồ thêm: chặn trừ cầu/đảo
+  for (const w of WATERS) if (Math.hypot(x - w.x, z - w.z) < w.r && !bridgeAt(x, z)) return true;
   // Chính điện: tường bên, tường hậu
   const r = region(x, z);
   if (r === 'plat') {
