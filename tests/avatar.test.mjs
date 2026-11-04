@@ -1,12 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { AVATAR_COLORS, colorById, DEFAULT_COLOR, cleanName, cleanSay, bubbleLife, wrapText, poseFor, STATES, turnToward } from '../js/world/avatarLogic.js';
+import { AVATAR_COLORS, colorById, DEFAULT_COLOR, BELL_PROFILE, bellRadius, logoPatch, POLO_LOGOS, cleanName, cleanSay, bubbleLife, wrapText, poseFor, STATES, turnToward } from '../js/world/avatarLogic.js';
 
 test('màu áo: id hợp lệ trả đúng, id lạ/rỗng về mặc định', () => {
-  assert.equal(AVATAR_COLORS.length, 6);
+  assert.equal(AVATAR_COLORS.length, 7);
   assert.equal(colorById('lam').id, 'lam');
   assert.equal(colorById('xyz').id, DEFAULT_COLOR); assert.equal(colorById().id, DEFAULT_COLOR);
-  assert.equal(new Set(AVATAR_COLORS.map((c) => c.id)).size, 6);
+  assert.equal(new Set(AVATAR_COLORS.map((c) => c.id)).size, 7);
 });
 test('tên: cắt 20 ký tự, gộp khoảng trắng, bỏ HTML/link, rỗng thì Khách', () => {
   assert.equal(cleanName('  Phan   Trường  Giang '), 'Phan Trường Giang');
@@ -53,4 +53,30 @@ test('quay mặt theo đường ngắn nhất, bước tối đa maxStep', () =>
   assert.ok(Math.abs(turnToward(3.0, -3.0, 10) - (-3.0 + Math.PI * 2)) < 1e-9);   // 3 → -3 đi qua π là cung ngắn
   assert.ok(Math.abs(turnToward(0, 1, 0.1) - 0.1) < 1e-9); assert.ok(Math.abs(turnToward(0, -1, 0.1) + 0.1) < 1e-9);
   assert.equal(turnToward(1, 1, 0.5), 1);
+});
+
+test('đồng phục 9 Sạch: có trong danh sách, thân vàng + tay/cổ xanh, chỉ kiểu này là polo', () => {
+  const u = colorById('9sach');
+  assert.equal(u.id, '9sach'); assert.equal(u.polo, true);
+  assert.ok(u.tay && u.co && u.soc && u.dai && u.ao);
+  assert.notEqual(u.ao, u.tay);                                   // thân và tay khác màu
+  assert.equal(AVATAR_COLORS.filter((c) => c.polo).length, 1);
+});
+test('bán kính thân áo: khớp mốc, giảm dần khi lên cao, kẹp ngoài khoảng', () => {
+  for (const [r, y] of BELL_PROFILE.slice(2)) assert.ok(Math.abs(bellRadius(y) - r) < 1e-9);
+  assert.ok(bellRadius(0.3) > bellRadius(0.6) && bellRadius(0.6) > bellRadius(0.8));
+  assert.equal(bellRadius(-1), BELL_PROFILE[0][0]); assert.equal(bellRadius(9), BELL_PROFILE.at(-1)[0]);
+});
+test('logo trên áo: tròn (cung = đường kính), ôm đúng thân áo, ngực trái lệch trái, lưng ở phía sau', () => {
+  for (const spec of [POLO_LOGOS.chest, POLO_LOGOS.back]) {
+    const q = logoPatch(spec);
+    assert.ok(q.rBot > q.rTop && q.rTop > bellRadius(spec.y + spec.d / 2));          // nổi hơn mặt áo, đáy rộng hơn đỉnh
+    assert.ok(Math.abs(q.thetaLength * (q.rTop + q.rBot) / 2 - spec.d) < 1e-9);      // chiều dài cung = đường kính → không méo
+    assert.ok(Math.abs(q.thetaStart + q.thetaLength / 2 - spec.theta) < 1e-9);
+    assert.ok(spec.y - spec.d / 2 > 0.1 && spec.y + spec.d / 2 < 0.8);               // nằm trọn trên thân, trên gấu, dưới cổ
+  }
+  assert.ok(POLO_LOGOS.chest.theta > 0 && POLO_LOGOS.chest.theta < 1);                // bên trái người mặc (+x), không lấn nẹp giữa
+  assert.ok(POLO_LOGOS.chest.theta - logoPatch(POLO_LOGOS.chest).thetaLength / 2 > 0.1);
+  assert.equal(POLO_LOGOS.back.theta, Math.PI);
+  assert.ok(POLO_LOGOS.back.d > POLO_LOGOS.chest.d * 2);                              // lưng lớn hơn ngực (như áo mẫu)
 });
