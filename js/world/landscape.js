@@ -83,6 +83,8 @@ export const NO_TREE_ZONES = [
   { id: 'chanh-dien', x0: -36, x1: 36, z0: -62, z1: 36 },
   { id: 'vuon-thien', x0: ZEN.x0 - 4, x1: ZEN.x1 + 4, z0: ZEN.z0 - 4, z1: ZEN.z1 + 4 },
 ];
+/** Riêng lòng chánh điện + phía sau điện (z < 4): TUYỆT ĐỐI không cây nào, kể cả cây low-poly của placements.js. */
+export const inHall = (x, z) => x > -36 && x < 36 && z > -62 && z < 4;
 export const inNoTree = (x, z) => NO_TREE_ZONES.some((r) => x > r.x0 && x < r.x1 && z > r.z0 && z < r.z1);
 /** Danh sách cây GLB {model,x,z,s,ry}. Chỉ giữ chỗ cách đường ≥ 2,5 m, cách điểm đến ≥ 6 m, cách vật cản ≥ 2 m. `n` = số cây tối đa. */
 export function glbTrees(n = 90) {
