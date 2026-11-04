@@ -21,6 +21,7 @@ import { createHotspots } from './hotspots.js';
 import { createWorld } from '../world/world.js';
 import { buildCushions } from './boduon.js';
 import { buildHoaSen } from './hoasen.js';
+import { buildLandscape } from './landscape.js';
 
 /* Biến toàn cục MOOD (-1..1): điểm số sẽ điều khiển màu đèn, độ sáng trăng, tông hậu kỳ.
    -1 = lạnh/xanh, 0 = trung tính, +1 = vàng ấm. Dùng: window.LGT.setMood(0.6) hoặc ?mood=0.6
@@ -70,6 +71,7 @@ export function createScene(canvas, { onProgress, onPick, onArrive } = {}) {
   const censer = buildCenser(); censer.group.position.set(0, 0, -8);
   scene.add(shade(tam), chanh.group, shade(tower.group), shade(censer.group), shade(buildProps()), shade(buildGarden()), shade(buildHouses()), shade(buildCushions())); onProgress?.(0.55);
   const hoaSen = buildHoaSen(LGT); scene.add(hoaSen.group);   // hoa sen vàng nhận lộc
+  const land = buildLandscape(); scene.add(shade(land.group));   // cảnh quan mở rộng (Phiên 14f)
 
   // --- quần thể chùa (GLB): nạp nền, không chặn màn hình chờ. Lỗi thì bỏ qua.
   loadTemple().then((m) => { if (m) scene.add(m); });
@@ -162,7 +164,7 @@ export function createScene(canvas, { onProgress, onPick, onArrive } = {}) {
     if (Math.abs(viewX) > 0.5) camera.setViewOffset(w, h, viewX, 0, w, h); else if (camera.view && camera.view.enabled) camera.clearViewOffset();
 
     if (world) { const wp = world.pos; moonLight.target.position.set(wp.x, 0, wp.z); moonLight.position.set(wp.x + sunOffset.x, sunOffset.y, wp.z + sunOffset.z); }   // vùng đổ bóng đi theo người chơi
-    hoaSen.update(t);
+    hoaSen.update(t); land.update(t);
     sky.rotation.y = t * 0.004;
     if (!reduce) {
       if (!DAY) fireflies.update(t); petals.update(t, dt); smoke.update(t, dt);
