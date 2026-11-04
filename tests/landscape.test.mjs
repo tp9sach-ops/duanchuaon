@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { blocked, SPAWN, BOUNDS, groundY, canStep, CIRCLES, RECTS } from '../js/world/layout.js';
 import { findPath, free } from '../js/world/path.js';
+import fs from 'node:fs';
 import { STONE_PATHS, FEATURES, KOI, ZEN, FLOWER_FIELDS, PLAZA, glbTrees, distToPaths, registerGlbTrees, TREE_MODELS } from '../js/world/landscape.js';
 
 // Đi dọc đường tim, mẫu mỗi 0,25 m: mọi điểm phải đi được (cả khi chừa lề như bộ tìm đường) và từng bước canStep.
@@ -79,4 +80,11 @@ test('cây GLB: tất định, ngoài đường, ngoài vật cản; đăng ký 
   registerGlbTrees(a);
   for (const f of FEATURES) assert.ok(findPath(SPAWN.x, SPAWN.z, f.stand.x, f.stand.z), f.id + ' mất đường sau khi trồng cây');
   for (const p of STONE_PATHS) assert.ok(walkCenterline(p.pts).ok, p.id + ' bị cây chặn');
+});
+
+test('cây GLB: mỗi loại có chiều cao và file trong assets/models/trees/', () => {
+  for (const m of TREE_MODELS) {
+    assert.ok(m.h >= 4 && m.h <= 14 && m.w >= 1, m.id + ' thiếu h/w');
+    assert.ok(fs.existsSync(new URL('../assets/models/trees/' + m.id + '.glb', import.meta.url)), m.id + '.glb không có');
+  }
 });
