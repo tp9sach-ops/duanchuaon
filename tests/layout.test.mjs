@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { blocked, canStep, move, groundY, region, SPAWN, CENSER, POND, HALL, COLUMNS } from '../js/world/layout.js';
+import { blocked, canStep, move, groundY, region, SPAWN, CENSER, POND, HALL, COLUMNS, BOUNDS } from '../js/world/layout.js';
 
 test('điểm xuất hiện không bị chặn và trên mặt đất', () => { assert.equal(blocked(SPAWN.x, SPAWN.z), false); assert.equal(groundY(SPAWN.x, SPAWN.z), 0); });
 test('qua cổng giữa được, đâm vào tường tam quan thì không', () => {
@@ -24,5 +24,8 @@ test('lên chính điện chỉ qua bậc thềm giữa, không leo từ bên h�
 test('trong chính điện: tường bên và tường hậu chặn, bàn thờ chặn', () => {
   assert.equal(blocked(20.5, -30), true); assert.equal(blocked(0, -48.5), true); assert.equal(blocked(0, -45), true); assert.equal(blocked(0, -26), false); assert.equal(blocked(0, -36), false);   // lòng điện rộng, đi lại được
 });
-test('ngoài ranh giới bị chặn', () => { assert.equal(blocked(60, 0), true); assert.equal(blocked(0, -60), true); assert.equal(blocked(20, 50), true); });
+test('ngoài ranh giới bị chặn (khuôn viên mở rộng 78 / -78, Phiên 14f)', () => {
+  assert.equal(blocked(BOUNDS.xMax + 1, 0), true); assert.equal(blocked(0, BOUNDS.zMin - 1), true); assert.equal(blocked(20, 50), true);
+  assert.equal(blocked(60, 0), false); assert.equal(blocked(0, -60), false);   // vùng mới mở rộng: đi được
+});
 test('move trượt dọc tường thay vì đứng yên', () => { const p = move(-20, 30, 0.5, 1.5); assert.ok(p.x > -20); });
