@@ -33,7 +33,7 @@ export function initHud() {
   const q = (id) => hud.querySelector('#' + id);
 
   function paintChip() {
-    const av = q('me-av'); av.textContent = initialOf(profile.name); av.style.background = robeCss(profile.color);
+    const av = q('me-av'); av.textContent = initialOf(profile.name); av.style.background = robeCss(profile.color); av.style.color = profile.color === '9sach' ? '#0e6b22' : '';   // chữ xanh đậm trên nền vàng của đồng phục
     q('me-name').textContent = profile.name;
   }
   q('zin').addEventListener('click', () => W.zoom(-420)); q('zout').addEventListener('click', () => W.zoom(420));
