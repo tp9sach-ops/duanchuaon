@@ -33,3 +33,8 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+## Mô hình cây GLB (`assets/models/trees/`) — NGUỒN VÀ GIẤY PHÉP CHƯA RÕ
+
+- 6 file `gn, real, oak, maple, lowpoly, pine` là bản đã tối ưu (bằng `tools/optimize-glb.mjs`) từ 7 file ptg gửi ngày 2026-11-04 (`tree_gn`, `realistic_tree`, `oak_tree`, `maple_tree`, `tree_low_poly_lowpoly`, `pine_tree`; tên gốc có hậu tố "-tối_đa-compressed").
+- **Tác giả / link nguồn / giấy phép: CHƯA BIẾT** (cấu trúc node kiểu Sketchfab, thường là CC-BY nên cần ghi công). ptg cần gửi link từng mô hình để ghi vào đây trước khi công bố rộng. Chưa dùng: `tree_house`, `tree_animate`.

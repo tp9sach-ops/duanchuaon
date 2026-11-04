@@ -170,6 +170,7 @@ Việc ptg làm song song (không chặn các phiên trên): bật Pages (Settin
 
 - **2026-11-04 (Phiên 14c):** ptg nói "đọc lại trang github xem file bàn giao và tiếp tục" kèm HANDOFF + zip 14b (ptg đã tự tải 14b lên repo). Không có yêu cầu mới. Làm bước 14c (Đèn nguyện, Dâng lễ, hoa sen vàng).
 - **2026-11-04 (Phiên 14d):** ptg gửi 2 ảnh áo polo 9 Sạch (thân vàng, tay + cổ xanh lá, logo ngực trái và logo lớn ở lưng) và yêu cầu: tiếp tục, thiết kế nhân vật mặc chiếc áo này, và CHỈ gửi các file cần thay/thêm để tải lên GitHub. Đã làm kiểu "Đồng phục 9 Sạch" (màu áo `9sach`); chi tiết ở `HANDOFF.md` mục 7. **Quy tắc giao file (mới, ghi nhận):** cuối mỗi phiên chỉ giao các file đã đổi/thêm (đúng đường dẫn, trùng tên ghi đè), không giao cả dự án.
+- **2026-11-04 (Phiên 14f):** ptg gửi 9 file GLB cây + `landscape.js`/`layout.js`/test và nói "đọc PROMPT.md rồi HANDOFF.md, rồi tiếp tục các bước còn lại" (Bước 1 test landscape, 2 cảnh 3D landscape nối `index.js`, 3 GLB cây, 4 NPC, 5 sàn gỗ + `buddha.webp` + đế sen). Đã xong Bước 3 (cây GLB đã tối ưu, `js/scene/glbprops.js`); Bước 4–5 chưa. Quy ước mới: GLB đưa vào dự án phải qua `tools/optimize-glb.mjs` (nhẹ, cao 1 đơn vị, gốc ở đáy) và phải ghi nguồn/giấy phép ở `THIRD_PARTY.md`.
 
 ## 8. PROMPT KHỞI ĐỘNG PHIÊN MỚI (dán nguyên văn)
 
