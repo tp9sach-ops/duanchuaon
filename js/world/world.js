@@ -3,6 +3,7 @@
 import * as THREE from 'three';
 import './placements.js';                                  // đăng ký vật cản của hoa viên, nhà... vào layout.js
 import { createAvatar } from './avatar.js';
+import { DEFAULT_COLOR } from './avatarLogic.js';
 import { SPAWN } from './layout.js';
 import { spotById, pickSpot, createArrival, faceAngle } from './spots.js';
 import { findPath } from './path.js';
@@ -17,7 +18,7 @@ const KEYMAP = { KeyW: 'f', ArrowUp: 'f', KeyS: 'b', ArrowDown: 'b', KeyA: 'l', 
 
 function savedName() { try { return localStorage.getItem('lgt.name') || 'Khách'; } catch (_) { return 'Khách'; } }
 function savedHair() { try { return localStorage.getItem('lgt.hair') || 'troc'; } catch (_) { return 'troc'; } }
-function savedColor() { try { return localStorage.getItem('lgt.color') || 'nau'; } catch (_) { return 'nau'; } }
+function savedColor() { try { return localStorage.getItem('lgt.color') || DEFAULT_COLOR; } catch (_) { return DEFAULT_COLOR; } }
 
 /** opts: { scene, camera, canvas, coarse, LGT } → { update(dt), avatar, teleport(x, z), get pos }. */
 export function createWorld({ scene, camera, canvas, coarse = false, LGT = window.LGT || {}, onArrive = null }) {

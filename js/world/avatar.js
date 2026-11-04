@@ -2,7 +2,7 @@
 // Gốc tọa độ = dưới bàn chân, nhìn về +z (khớp quy ước ry của layout.js). Cao ~1,7 đơn vị.
 // Logic tư thế/tên/chat nằm ở avatarLogic.js (có test). Dùng: const a = createAvatar({ name, color }); scene.add(a.group); mỗi khung: a.update(dt).
 import * as THREE from 'three';
-import { colorById, hairById, cleanName, cleanSay, bubbleLife, wrapText, poseFor, turnToward, BELL_PROFILE, bellRadius, logoPatch, POLO_LOGOS } from './avatarLogic.js';
+import { DEFAULT_COLOR, colorById, hairById, cleanName, cleanSay, bubbleLife, wrapText, poseFor, turnToward, BELL_PROFILE, bellRadius, logoPatch, POLO_LOGOS } from './avatarLogic.js';
 
 const SKIN = 0xe8934c, HAIR = 0x1f1511, OUTLINE = 0x3a2314;
 const FONT = '600 38px "Be Vietnam Pro", "Noto Sans", system-ui, sans-serif';
@@ -55,7 +55,7 @@ function bubbleTexture(text) {
 /** Tạo nhân vật chibi: đầu tròn to, thân áo hình chuông, mắt cười, má hồng, viền hoạt hình, hai tay chắp trước ngực.
  *  opts: { name, color (id màu áo), hair ('troc' | 'bui'), mine (true = nhân vật của mình: nhãn tên màu ngọc, mũi tên vàng ▼) }
  *  Gốc = dưới bàn chân, nhìn +z. Cao ~1,5 (đầu bán kính 0,42). Giao diện hàm giữ nguyên: group, setState, setFacing, say, update, dispose. */
-export function createAvatar({ name = 'Khách', color = 'nau', hair: hairId = 'troc', mine = false } = {}) {
+export function createAvatar({ name = 'Khách', color = DEFAULT_COLOR, hair: hairId = 'troc', mine = false } = {}) {
   const col = colorById(color), group = new THREE.Group(), rig = new THREE.Group();
   group.add(rig);
   const geos = [], mats = [];

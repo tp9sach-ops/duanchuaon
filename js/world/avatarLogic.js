@@ -3,16 +3,16 @@ import { clamp } from '../util.js';
 
 /** Các màu áo cho người chơi chọn. */
 export const AVATAR_COLORS = [
+  // Đồng phục 9 Sạch (áo polo): thân vàng, tay + cổ + gấu xanh lá, logo 9 SẠCH ở ngực trái và lưng (theo ảnh áo của ptg)
+  { id: '9sach', ten: 'Đồng phục 9 Sạch', ao: 0xf8d80c, dai: 0x0e8f2c, tay: 0x12a53a, co: 0x0e8f2c, soc: 0xf8d80c, polo: true },
   { id: 'nau',   ten: 'Áo nâu',     ao: 0x8a5a36, dai: 0x5a3820 },
   { id: 'lam',   ten: 'Áo lam',     ao: 0x3f6fa8, dai: 0x24456e },
   { id: 'vang',  ten: 'Cà sa vàng', ao: 0xd9a63a, dai: 0xa9421f },
   { id: 'xam',   ten: 'Áo xám',     ao: 0x7d858d, dai: 0x4b5258 },
   { id: 'trang', ten: 'Áo trắng',   ao: 0xe8e4d8, dai: 0xb9b4a4 },
   { id: 'do',    ten: 'Áo đỏ sẫm',  ao: 0x9a2f2a, dai: 0x5e1a17 },
-  // Đồng phục 9 Sạch (áo polo): thân vàng, tay + cổ + gấu xanh lá, logo 9 SẠCH ở ngực trái và lưng (theo ảnh áo của ptg)
-  { id: '9sach', ten: 'Đồng phục 9 Sạch', ao: 0xf8d80c, dai: 0x0e8f2c, tay: 0x12a53a, co: 0x0e8f2c, soc: 0xf8d80c, polo: true },
 ];
-export const DEFAULT_COLOR = 'nau';
+export const DEFAULT_COLOR = '9sach';   // mặc định: đồng phục áo polo 9 Sạch
 
 /** Lấy màu theo id; id lạ trả về màu mặc định (không bao giờ undefined). */
 export function colorById(id) {
