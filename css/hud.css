@@ -38,6 +38,7 @@
 .en-colors{display:flex;gap:10px;flex-wrap:wrap}
 .sw{width:36px;height:36px;border-radius:50%;border:2px solid rgba(255,255,255,.3);cursor:pointer}
 .sw[aria-checked=true]{border-color:#fff;box-shadow:0 0 0 3px var(--gold)}
+.sw[data-color="9sach"]{background:linear-gradient(135deg,#f8d80c 50%,#12a53a 50%)!important}   /* đồng phục 9 Sạch: vàng + xanh */
 .en-hair{display:flex;gap:8px}
 .hr{flex:1;padding:9px 10px;border-radius:10px;border:1px solid rgba(217,178,95,.4);background:transparent;color:var(--moon);font:400 13px/1 var(--sans,inherit);cursor:pointer}
 .hr[aria-checked=true]{background:var(--gold);color:#2a1a08;border-color:var(--gold);font-weight:600}
