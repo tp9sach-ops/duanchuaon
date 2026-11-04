@@ -23,3 +23,6 @@ export const SpriteMaterial=mk();
 export const TorusGeometry=mk();
 export const Vector2=V;
 export const Vector3=V;
+export const BoxGeometry=mk();
+export const DoubleSide=mk();
+export const Quaternion=mk();

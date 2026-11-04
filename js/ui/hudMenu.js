@@ -1,6 +1,7 @@
 // Khung HUD Phiên 13b: thanh menu dưới 9 nút, lưới 6 nút hành động, cụm nút phải-trên, toast giữa-trên, bảng "Bản đồ chùa".
 // Logic và dữ liệu ở menuLogic.js (có test). Biểu tượng SVG tự vẽ (không dùng ảnh của trang mẫu). Mọi nút chưa có tính năng: mờ + báo "sắp có".
 import { initPractice } from './practice.js';
+import { initDen } from './den.js';
 import { loadWallet, addSen } from '../engines/kinh.js';
 import { BOTTOM_MENU, ACTIONS, TOP_ICONS, WALLET_PLACEHOLDER, HELP_TEXT, WELCOME_TEXT, pressResult, ariaLabel, OUTSIDE_TEXT, isReady, mapEntries, formatCount, createToastState } from './menuLogic.js';
 
@@ -11,6 +12,7 @@ const P = {
   people: '<circle cx="9" cy="8" r="3"/><path d="M3 19a6 6 0 0 1 12 0"/><path d="M16 5.5a2.6 2.6 0 0 1 0 5M17.5 14a5 5 0 0 1 3.5 5"/>',
   rank: '<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3"/>',
   map: '<path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14"/>',
+  lamp: '<path d="M9 3h6M12 3v3M8 6h8l1 3v7a3 3 0 0 1-3 3h-4a3 3 0 0 1-3-3V9l1-3zM10 21h4M8 11h8"/>',
   lotus: '<path d="M12 20c-4 0-7-2-8-6 3 0 5 1 8 4 3-3 5-4 8-4-1 4-4 6-8 6z"/><path d="M12 18c-2.2-2-3-5 0-11 3 6 2.2 9 0 11z"/>',
   chat: '<path d="M4 5h16v11H9l-5 4V5z"/>',
   gear: '<circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/>',
@@ -72,6 +74,7 @@ export function initHudMenu(hud) {
   const addMerit = (n) => { wallet = addSen(wallet, n); try { localStorage.setItem('lgt.wallet', JSON.stringify(wallet)); } catch (_) { /* bỏ qua */ } const b = root.querySelector('#hm-sen'); if (b) b.textContent = formatCount(wallet.sen); };
   LGT.addMerit = addMerit;
   const practice = initPractice(hud, { toast, addMerit });
+  const den = initDen(hud, { toast, addMerit });
 
   // ---- bản đồ chùa (lối đi tới chương: liên kết #id, stage.js tự bắt và cho nhân vật đi tới)
   const mapBox = $('hm-map');
@@ -104,6 +107,8 @@ export function initHudMenu(hud) {
       return;
     }
     if (r.kind === 'beads' || r.kind === 'chant') return practice.open(r.kind);
+    if (r.kind === 'le') return den.openLe();
+    if (r.kind === 'den') return den.openDen();
     if (r.kind === 'goto') {
       if (LGT.panelOpen) return;
       const a = el('a'); a.href = '#' + r.id; document.body.appendChild(a); a.click(); a.remove();   // cùng đường với menu cũ: stage.go
@@ -127,5 +132,9 @@ export function initHudMenu(hud) {
   standBtn.addEventListener('click', () => { LGT.world && LGT.world.stand(); standBtn.hidden = true; });
   setInterval(() => { const m = LGT.world && LGT.world.mode; const sit = m === 'sit' || m === 'meditate'; if (standBtn.hidden === sit) standBtn.hidden = !sit; }, 250);
 
-  return { toast, welcome: () => toast(WELCOME_TEXT, 9000), closeMap };
+  const welcome = () => {
+    toast(WELCOME_TEXT, 9000);
+    setTimeout(() => { if (LGT.loc && LGT.loc.active()) toast('Đi tới gần hoa sen vàng phát sáng trong sân để nhận lộc.', 7000); }, 9800);   // gợi ý như ảnh mẫu
+  };
+  return { toast, welcome, closeMap };
 }

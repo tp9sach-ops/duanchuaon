@@ -30,7 +30,8 @@ test('Lạy Phật, Thiền, Tràng hạt, Tụng kinh đã có chức năng (Ph
 });
 test('nút đã có chức năng trả đúng hành động', () => {
   assert.deepEqual(pressResult(BOTTOM_MENU.find((m) => m.id === 'bando')), { kind: 'map' });
-  assert.deepEqual(pressResult(ACTIONS.find((a) => a.id === 'danglee')), { kind: 'goto', id: 'temple' });
+  assert.deepEqual(pressResult(ACTIONS.find((a) => a.id === 'danglee')), { kind: 'le' });
+  assert.deepEqual(pressResult(TOP_ICONS.find((a) => a.id === 'den')), { kind: 'den' });
   assert.deepEqual(pressResult(TOP_ICONS.find((a) => a.id === 'chiase')), { kind: 'share' });
   assert.deepEqual(pressResult(TOP_ICONS.find((a) => a.id === 'trogiup')), { kind: 'help' });
   assert.deepEqual(pressResult(null), { kind: 'none' });

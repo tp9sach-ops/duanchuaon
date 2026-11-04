@@ -20,6 +20,7 @@ import { createRail } from './rail.js';
 import { createHotspots } from './hotspots.js';
 import { createWorld } from '../world/world.js';
 import { buildCushions } from './boduon.js';
+import { buildHoaSen } from './hoasen.js';
 
 /* Biến toàn cục MOOD (-1..1): điểm số sẽ điều khiển màu đèn, độ sáng trăng, tông hậu kỳ.
    -1 = lạnh/xanh, 0 = trung tính, +1 = vàng ấm. Dùng: window.LGT.setMood(0.6) hoặc ?mood=0.6
@@ -62,6 +63,7 @@ export function createScene(canvas, { onProgress, onPick, onArrive } = {}) {
   const tower = buildBellTower(); tower.group.position.set(28, 0, -4); tower.group.rotation.y = -0.25;
   const censer = buildCenser(); censer.group.position.set(0, 0, -8);
   scene.add(tam, chanh.group, tower.group, censer.group, buildProps(), buildGarden(), buildHouses(), buildCushions()); onProgress?.(0.55);
+  const hoaSen = buildHoaSen(LGT); scene.add(hoaSen.group);   // hoa sen vàng nhận lộc
 
   // --- quần thể chùa (GLB): nạp nền, không chặn màn hình chờ. Lỗi thì bỏ qua.
   loadTemple().then((m) => { if (m) scene.add(m); });
@@ -153,6 +155,7 @@ export function createScene(canvas, { onProgress, onPick, onArrive } = {}) {
     viewX = reduce ? want : damp(viewX, want, 4, dt);
     if (Math.abs(viewX) > 0.5) camera.setViewOffset(w, h, viewX, 0, w, h); else if (camera.view && camera.view.enabled) camera.clearViewOffset();
 
+    hoaSen.update(t);
     sky.rotation.y = t * 0.004;
     if (!reduce) {
       if (!DAY) fireflies.update(t); petals.update(t, dt); smoke.update(t, dt);

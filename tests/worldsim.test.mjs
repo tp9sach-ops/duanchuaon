@@ -19,3 +19,12 @@ test('world.js: lạy, ngồi, thiền, đứng dậy hoạt động đúng tron
   assert.equal(r.toBeads, true); assert.equal(r.beadsMode, 'beads'); assert.equal(r.rest, true); assert.equal(r.restMode, 'sit'); assert.equal(r.chant2, 'chant'); assert.equal(r.chantStand, 'free');
   assert.deepEqual(r.goToStands, ['meditate', 'free'], 'bấm chương khác thì đứng dậy');
 });
+
+test('hoasen.js: hoa nở, nhận lộc đúng một lần khi tới gần, hồi chiêu rồi chuyển điểm, bảng mở thì không nhận', () => {
+  const dir = path.join(path.dirname(fileURLToPath(import.meta.url)), 'sim');
+  const out = execFileSync(process.execPath, ['--import', './reg.mjs', 'hoasen-sim.mjs'], { cwd: dir, encoding: 'utf8', timeout: 60000 }).trim().split('\n').pop();
+  const r = JSON.parse(out);
+  assert.equal(r.activeStart, true); assert.equal(r.farGot, 0);
+  assert.equal(r.nearGot, 1); assert.equal(r.again, 1); assert.equal(r.savedLoc, 1); assert.equal(r.activeAfter, false);
+  assert.equal(r.activeBack, true); assert.equal(r.spot, true); assert.equal(r.panelBlocks, 1);
+});
