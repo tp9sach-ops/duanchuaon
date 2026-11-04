@@ -220,3 +220,60 @@ export function dayPathTexture() {
   for (let i = 0; i < 90; i++) { x.fillStyle = `rgba(110,100,85,${0.04 + rnd() * 0.06})`; x.beginPath(); x.arc(rnd() * W, rnd() * H, 1 + rnd() * 3, 0, TAU); x.fill(); }
   const t = tex(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 8; return t;
 }
+
+// Sàn gỗ chánh điện (Phiên 14e): ván dài 0,2 m, mỗi cột ván so le mối nối, vân dọc, mắt gỗ, khe tối giữa các ván.
+// Một ô lặp = 4,8 × 4,8 m (1024 px): ván rộng 0,2 m = 42,7 px. Dùng cả làm bumpMap để khe lõm ăn sáng.
+export function woodFloorTexture() {
+  const S = 1024, c = cvs(S, S), x = c.getContext('2d'), rnd = mulberry32(2026);
+  const n = 24, pw = S / n;
+  x.fillStyle = '#2a170b'; x.fillRect(0, 0, S, S);
+  for (let i = 0; i < n; i++) {
+    let y = -rnd() * 300;
+    while (y < S) {
+      const len = 260 + rnd() * 330, hue = 24 + rnd() * 8, sat = 42 + rnd() * 14, lit = 30 + rnd() * 12;
+      const x0 = i * pw + 1.2, w = pw - 2.4, y0 = y + 1.2, h = len - 2.4;
+      const g = x.createLinearGradient(x0, 0, x0 + w, 0);
+      g.addColorStop(0, `hsl(${hue},${sat}%,${lit - 4}%)`); g.addColorStop(0.5, `hsl(${hue + 2},${sat}%,${lit + 3}%)`); g.addColorStop(1, `hsl(${hue},${sat}%,${lit - 5}%)`);
+      x.fillStyle = g; x.fillRect(x0, y0, w, h);
+      x.save(); x.beginPath(); x.rect(x0, y0, w, h); x.clip();
+      for (let k = 0; k < 16; k++) {                                   // vân gỗ chạy dọc, hơi lượn
+        const gx = x0 + rnd() * w, a = 0.05 + rnd() * 0.1, dark = rnd() > 0.45;
+        x.strokeStyle = dark ? `rgba(30,14,4,${a})` : `rgba(255,214,150,${a * 0.7})`; x.lineWidth = 0.6 + rnd() * 1.2;
+        x.beginPath(); x.moveTo(gx, y0);
+        for (let q = 1; q <= 6; q++) x.lineTo(gx + Math.sin(q * 1.3 + k) * 1.6 + (rnd() - 0.5) * 0.8, y0 + (h * q) / 6);
+        x.stroke();
+      }
+      if (rnd() < 0.22) {                                              // mắt gỗ
+        const kx = x0 + w * (0.3 + rnd() * 0.4), ky = y0 + h * (0.2 + rnd() * 0.6);
+        for (let r = 3; r >= 1; r--) { x.strokeStyle = `rgba(35,16,5,${0.22 + (3 - r) * 0.1})`; x.lineWidth = 1; x.beginPath(); x.ellipse(kx, ky, r * 2.2, r * 5.4, 0, 0, TAU); x.stroke(); }
+      }
+      x.restore();
+      const hl = x.createLinearGradient(0, y0, 0, y0 + h); hl.addColorStop(0, 'rgba(255,255,255,.07)'); hl.addColorStop(1, 'rgba(0,0,0,.08)');
+      x.fillStyle = hl; x.fillRect(x0, y0, w, h);
+      y += len;
+    }
+  }
+  const t = tex(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 8; return t;
+}
+
+// Bóng mờ tròn mềm (hào quang sau tượng): chấm sáng vàng, mờ dần ra rìa
+export function haloGlowTexture() {
+  const c = cvs(256, 256), x = c.getContext('2d'), g = x.createRadialGradient(128, 128, 10, 128, 128, 126);
+  g.addColorStop(0, 'rgba(255,236,170,.95)'); g.addColorStop(0.45, 'rgba(255,214,120,.5)'); g.addColorStop(1, 'rgba(255,200,90,0)');
+  x.fillStyle = g; x.fillRect(0, 0, 256, 256); return tex(c);
+}
+
+// Thảm đỏ chánh điện: len dệt đỏ thẫm, viền vàng kép, hoa văn thoi chìm nhẹ. 1 ô = 2,4 m.
+export function rugTexture() {
+  const S = 512, c = cvs(S, S), x = c.getContext('2d'), rnd = mulberry32(77);
+  x.fillStyle = '#7d1612'; x.fillRect(0, 0, S, S);
+  for (let i = 0; i < 4200; i++) { const a = rnd(); x.fillStyle = a > 0.5 ? `rgba(180,50,40,${0.05 + rnd() * 0.08})` : `rgba(40,0,0,${0.06 + rnd() * 0.1})`; x.fillRect(rnd() * S, rnd() * S, 1 + rnd() * 2, 1 + rnd() * 6); }
+  x.strokeStyle = 'rgba(217,178,95,.30)'; x.lineWidth = 2;
+  for (let i = 0; i < 2; i++) for (let j = 0; j < 2; j++) {
+    const cx = 128 + i * 256, cy = 128 + j * 256;
+    x.beginPath(); x.moveTo(cx, cy - 70); x.lineTo(cx + 70, cy); x.lineTo(cx, cy + 70); x.lineTo(cx - 70, cy); x.closePath(); x.stroke();
+    x.beginPath(); x.arc(cx, cy, 24, 0, TAU); x.stroke();
+    for (let k = 0; k < 8; k++) { const a = k * TAU / 8; x.beginPath(); x.moveTo(cx + Math.cos(a) * 24, cy + Math.sin(a) * 24); x.lineTo(cx + Math.cos(a) * 44, cy + Math.sin(a) * 44); x.stroke(); }
+  }
+  const t = tex(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 8; return t;
+}

@@ -5,8 +5,15 @@ export const SPAWN = { x: 0, z: 54, ry: Math.PI };   // ry: góc quay quanh tr�
 
 export const GATE = { z: 34, openings: [[-2.3, 2.3], [6.9, 9.3], [-9.3, -6.9]] };   // cổng giữa và hai cổng phụ
 export const POND = { x: 0, z: 14, r: 10.6, bridgeHalf: 1.9 };
-export const HALL = { cx: 0, cz: -28, platX: 17, platZ0: -38.4, platZ1: -17.5, wallX: 12.7, wallZ0: -34.7, wallZ1: -21.2, step: { x: 5, z0: -17.9, z1: -13.1 }, h: 1.14 };   // h = mặt sàn gỗ chánh điện (js/scene/chanhdien.js: bệ đá cao 1.0 + sàn gỗ 0.12 + 0.02)
+// Chánh điện rộng (Phiên 14e): lòng điện 39 × 26 m (x ±19,5; z -47 … -21), nền cao 1,14 m, bậc thềm giữa rộng 10 m. Cảnh 3D (chanhdien.js) dựng từ chính các số này.
+export const HALL = { cx: 0, cz: -34, platX: 22, platZ0: -52, platZ1: -17.5, wallX: 19.5, wallZ0: -47, wallZ1: -21.2, step: { x: 5, z0: -17.9, z1: -13.1 }, h: 1.14 };   // h = mặt sàn gỗ chánh điện (js/scene/chanhdien.js: bệ đá cao 1.0 + sàn gỗ 0.12 + 0.02)
 export const BELL = { x: 28, z: -4, r: 5.2 };
+/** Cột chính điện: hàng trước (chừa lối giữa rộng 5 m), hai hàng cột dọc hai bên lòng điện. {x,z,r} */
+export const COLUMN_R = 0.5;
+export const COLUMNS = [
+  ...[-17.5, -12.5, -7.5, -2.5, 2.5, 7.5, 12.5, 17.5].map((x) => ({ x, z: -21.5, r: COLUMN_R })),
+  ...[-27, -33, -39, -45].flatMap((z) => [-17, 17].map((x) => ({ x, z, r: COLUMN_R }))),
+];
 export const CENSER = { x: 0, z: -8 };
 
 // Vật cản tròn {x,z,r} và hình chữ nhật {x0,x1,z0,z1}. Thêm vật mới vào đây để nhân vật không đi xuyên.
@@ -16,10 +23,9 @@ export const CIRCLES = [
   { x: -24, z: 6, r: 1.0 }, { x: 24, z: 26, r: 1.0 }, { x: -34, z: -16, r: 1.1 },   // cây bồ đề
   { x: -40, z: 12, r: 2.4 }, { x: 42, z: 8, r: 2.4 },                                // bụi tre
 ];
-// Hai hàng cột chính điện (7 cột mỗi hàng, cách 25/6)
-for (let i = 0; i < 7; i++) { const x = -14 + 1.5 + i * (25 / 6); CIRCLES.push({ x, z: HALL.cz + 6.5, r: 0.6 }, { x, z: HALL.cz - 6.5, r: 0.6 }); }
+for (const c of COLUMNS) CIRCLES.push(c);
 export const RECTS = [
-  { x0: -6.2, x1: 6.2, z0: -34.8, z1: -31.6 },    // bàn thờ chính và bệ tượng Phật
+  { x0: -9, x1: 9, z0: -47.5, z1: -43.4 },    // bàn thờ chính và bệ tượng Phật
 ];
 
 /** Thêm vật cản động (nhà tổ, am, ghế...) từ các module khác. */
@@ -49,7 +55,7 @@ export function groundY(x, z) {
 /** Điểm (x, z) có bị chặn không (không xét việc chuyển vùng; xem canStep). */
 export function blocked(x, z) {
   // Ranh giới: trong sân, hoặc đường ngoài cổng
-  const inside = Math.abs(x) <= 44 && z >= -40 && z <= GATE.z - 1.8;
+  const inside = Math.abs(x) <= 56 && z >= -58 && z <= GATE.z - 1.8;
   const outside = Math.abs(x) <= 14 && z >= GATE.z + 2.4 && z <= 62;
   const inGate = z > GATE.z - 1.8 && z < GATE.z + 2.4 && inGateOpening(x);
   if (!inside && !outside && !inGate) return true;

@@ -37,7 +37,7 @@ export function farTrees() {
   const out = []; let a = 1;
   const rnd = () => { a = (a * 16807) % 2147483647; return a / 2147483647; };
   for (let i = 0; i < 46; i++) {
-    const side = i % 3, x = side === 0 ? -(48 + rnd() * 26) : side === 1 ? 48 + rnd() * 26 : (rnd() - 0.5) * 120, z = side === 2 ? -(46 + rnd() * 24) : -42 + rnd() * 108;
+    const side = i % 3, x = side === 0 ? -(60 + rnd() * 26) : side === 1 ? 60 + rnd() * 26 : (rnd() - 0.5) * 120, z = side === 2 ? -(62 + rnd() * 24) : -42 + rnd() * 108;
     out.push({ x, z, s: 1.1 + rnd() * 0.9 });
   }
   return out;
@@ -45,8 +45,8 @@ export function farTrees() {
 
 /** Công trình: Nhà Tổ (trái chính điện) và Nhà Khách (phải). Mặt trước quay +z, đứng ngoài bậc thềm vẫn đi tới. */
 export const BUILDINGS = [
-  { id: 'nhato', ten: 'NHÀ TỔ', cx: -30, cz: -28, w: 14, d: 10 },
-  { id: 'nhakhach', ten: 'NHÀ KHÁCH', cx: 30, cz: -28, w: 14, d: 10 },
+  { id: 'nhato', ten: 'NHÀ TỔ', cx: -38, cz: -28, w: 14, d: 10 },
+  { id: 'nhakhach', ten: 'NHÀ KHÁCH', cx: 38, cz: -28, w: 14, d: 10 },
 ];
 /** Điểm đứng trước cửa mỗi công trình (cho hotspot Phiên 12). */
 export const buildingFront = (b) => ({ x: b.cx, z: b.cz + b.d / 2 + 1.6 });

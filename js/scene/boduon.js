@@ -2,6 +2,7 @@
 import * as THREE from 'three';
 import { SEATS, RUG, SEAT_R } from '../world/seats.js';
 import { HALL } from '../world/layout.js';
+import { rugTexture } from './textures.js';
 
 export function buildCushions() {
   const g = new THREE.Group(); g.name = 'boduon';
@@ -9,7 +10,8 @@ export function buildCushions() {
   const w = RUG.x1 - RUG.x0, d = RUG.z1 - RUG.z0, b = RUG.border;
   const gold = new THREE.Mesh(new THREE.BoxGeometry(w + b * 2, 0.02, d + b * 2), new THREE.MeshStandardMaterial({ color: 0xd9b25f, roughness: 0.6, metalness: 0.25 }));
   gold.position.set((RUG.x0 + RUG.x1) / 2, y + 0.005, (RUG.z0 + RUG.z1) / 2);
-  const red = new THREE.Mesh(new THREE.BoxGeometry(w, 0.03, d), new THREE.MeshStandardMaterial({ color: 0x9a1f1a, roughness: 0.95 }));
+  const rt = rugTexture(); rt.repeat.set(w / 2.4, d / 2.4);
+  const red = new THREE.Mesh(new THREE.BoxGeometry(w, 0.03, d), new THREE.MeshStandardMaterial({ map: rt, color: 0xffffff, roughness: 0.95 }));
   red.position.set(gold.position.x, y + 0.012, gold.position.z);
   g.add(gold, red);
 

@@ -5,7 +5,7 @@ export const LOC_RADIUS = 1.5;
 /** Tám điểm trong sân (đã kiểm: trống, cách vật cản ≥ 1,8 m, đi tới được). Hoa lần lượt xuất hiện ở từng điểm. */
 export const LOC_SPOTS = [
   { x: -14, z: 28 }, { x: 14, z: 28 }, { x: -20, z: 10 }, { x: 20, z: 12 },
-  { x: -15, z: -4 }, { x: 15, z: -3 }, { x: -18, z: -20 }, { x: 18, z: -20 },
+  { x: -15, z: -4 }, { x: 15, z: -3 }, { x: -27, z: -16 }, { x: 27, z: -16 },
 ];
 const num = (v) => (Number.isFinite(+v) && +v >= 0 ? Math.floor(+v) : 0);
 export function loadLoc(raw) {

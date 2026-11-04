@@ -3,13 +3,13 @@
 import { HALL, region, blocked } from './layout.js';
 import { raySphere } from './spots.js';
 
-export const SEAT_COLS = [-8.2, -5.2, -2.2, 2.2, 5.2, 8.2];   // lối đi giữa |x| < 2.2 để trống
-export const SEAT_ROWS = [-29.6, -27.2, -24.8];
+export const SEAT_COLS = [-12.6, -9.6, -6.6, -3.6, 3.6, 6.6, 9.6, 12.6];   // lối đi giữa |x| < 3,6 để trống (Phiên 14e: 8 cột × 6 hàng = 48 chỗ)
+export const SEAT_ROWS = [-41, -38, -35, -32, -29, -26];
 export const SEAT_FACING = Math.PI;                              // ry = π: nhìn về -z (bàn thờ)
 export const SEAT_Y = HALL.h + 0.26;                             // độ cao hông khi ngồi trên bồ đoàn
 export const SEAT_R = 0.42;
 /** Thảm đỏ viền vàng bao cả lưới bồ đoàn. */
-export const RUG = { x0: -10.6, x1: 10.6, z0: -31.0, z1: -23.2, border: 0.22 };
+export const RUG = { x0: -14.8, x1: 14.8, z0: -42.8, z1: -24.2, border: 0.25 };
 
 export const SEATS = SEAT_ROWS.flatMap((z, r) => SEAT_COLS.map((x, c) => ({ id: `bd${r}${c}`, row: r, col: c, x, z, ry: SEAT_FACING })));
 

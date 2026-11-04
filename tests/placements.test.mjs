@@ -41,7 +41,7 @@ test('không vật mới nào đè lên cầu đá, trục giữa, ao sen, chín
   const rects = [...BEDS.map(bedRect), ...BENCHES.map((b) => ({ x0: b.x - b.w / 2, x1: b.x + b.w / 2, z0: b.z - b.d / 2, z1: b.z + b.d / 2 })), ...BUILDINGS.map((b) => ({ x0: b.cx - b.w / 2, x1: b.cx + b.w / 2, z0: b.cz - b.d / 2, z1: b.cz + b.d / 2 }))];
   for (const r of rects) {
     assert.ok(!(r.x0 < 2.2 && r.x1 > -2.2 && r.z1 > -17 && r.z0 < 36), 'đè trục giữa');
-    assert.ok(r.x0 > -44 && r.x1 < 44 && r.z0 > -40 && r.z1 < 32, 'ra ngoài sân');
+    assert.ok(r.x0 > -56 && r.x1 < 56 && r.z0 > -58 && r.z1 < 32, 'ra ngoài sân');
     assert.ok(!(r.x1 > -HALL.platX && r.x0 < HALL.platX && r.z0 < HALL.platZ1 + 0.5), 'đè chính điện');
   }
   for (let i = 0; i < rects.length; i++) for (let j = i + 1; j < rects.length; j++) {

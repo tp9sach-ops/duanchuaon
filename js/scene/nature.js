@@ -48,14 +48,14 @@ export function buildGround() {
   const bt = DAY ? pavingTexture() : brickTexture(); bt.repeat.set(DAY ? 22 : 16, DAY ? 22 : 16);
   const court = new THREE.Mesh(new THREE.PlaneGeometry(130, 130),
     new THREE.MeshStandardMaterial({ map: bt, roughness: 0.8, metalness: 0 }));
-  court.rotation.x = -Math.PI / 2; g.add(court);
+  court.rotation.x = -Math.PI / 2; court.receiveShadow = true; g.add(court);
   // Lối đi lát đá xanh từ Tam quan vòng qua ao sen lên chính điện
   // (đoạn qua ao sen là cầu đá, dựng trong buildPond)
   const st = DAY ? dayPathTexture() : slabTexture(); st.repeat.set(1, DAY ? 14 : 12);
   const slabMat = new THREE.MeshStandardMaterial({ map: st, roughness: 0.6, metalness: 0.1, color: 0xffffff });
   [[24.4, 66], [-13, 3.6]].forEach(([z0, z1]) => {
     const seg = new THREE.Mesh(new THREE.PlaneGeometry(5, z1 - z0), slabMat);
-    seg.rotation.x = -Math.PI / 2; seg.position.set(0, 0.03, (z0 + z1) / 2); g.add(seg);
+    seg.rotation.x = -Math.PI / 2; seg.position.set(0, 0.03, (z0 + z1) / 2); seg.receiveShadow = true; g.add(seg);
   });
   // Nền đất tối kéo dài đến chân núi
   const far = new THREE.Mesh(new THREE.PlaneGeometry(900, 900), new THREE.MeshStandardMaterial({ color: DAY ? 0x7fb35a : 0x14201f, roughness: 1 }));

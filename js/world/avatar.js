@@ -152,6 +152,7 @@ export function createAvatar({ name = 'Khách', color = DEFAULT_COLOR, hair: hai
   const nameTex = nameTexture(cleanName(name), mine), label = makeSprite(nameTex, 1.28, 0.2, 2.12); group.add(label);
   let bubble = null, bubbleTex = null, bubbleUntil = 0, clock = 0;
 
+  group.traverse((o) => { if (o.isMesh && o.material !== outM && !o.material.isMeshBasicMaterial) o.castShadow = true; });   // đổ bóng xuống sàn (trừ viền hoạt hình và bóng tròn)
   const st = { state: 'idle', speed: 0, ry: 0, targetRy: 0, pose: poseFor('idle', 0), halo: 0, t0: 0 };
   function setState(s, speed = 0) { if (s !== st.state) st.t0 = clock; st.state = s; st.speed = speed; }   // t0: tư thế (lạy, gõ mõ...) tính từ lúc đổi trạng thái
   function setFacing(ry, instant = false) { st.targetRy = ry; if (instant) { st.ry = ry; group.rotation.y = ry; } }

@@ -1,8 +1,10 @@
-// Chánh điện: nhà thờ Phật mở mặt trước, bệ đá, cột son, mái hai tầng, bàn thờ ba bậc với ba pho tượng Phật,
-// mâm ngũ quả, nến, bình hoa, bát hương, mõ, chuông, trống, phướn, đèn lồng, đệm ngồi.
-// Trả về { group, update(t), buddhaAnchor } — update làm nến lung linh.
+// Chánh điện rộng (Phiên 14e): dựng THEO ĐÚNG số liệu của js/world/layout.js (HALL, COLUMNS) nên cột, tường, bàn thờ khớp va chạm.
+// Nền đá cao, sàn gỗ ván dài, hai hàng cột dọc + hàng cột mặt tiền, tường lưới gỗ hai bên (nắng lọt qua đổ vạch sáng xuống sàn),
+// mái hai tầng, bàn thờ ba bậc với ba pho tượng (ảnh assets/buddha.webp), đèn lồng, phướn, trống, chuông, mõ.
+// Tọa độ THẾ GIỚI (group đặt ở gốc). Trả về { group, update(t, camera) } — update làm nến lung linh và xoay tượng về phía camera.
 import * as THREE from 'three';
-import { signTexture, coupletTexture } from './textures.js';
+import { signTexture, coupletTexture, woodFloorTexture, pavingTexture, haloGlowTexture } from './textures.js';
+import { HALL, COLUMNS } from '../world/layout.js';
 import { M, roofWithRidge, box, pillar, makeLantern } from './temple.js';
 import { buildBuddha } from './buddha.js';
 
@@ -70,85 +72,118 @@ function bellStand(parent, x, y, z) {
 }
 
 export function buildChanhDien() {
-  const g = new THREE.Group(), flames = [];
-  const W = 22, D = 13, H = 5.4, y0 = 1.0;
-  const front = D / 2 - 0.8, back = -D / 2 + 0.7;
+  const g = new THREE.Group(), flames = [], statues = [];
+  const { platX, platZ0, platZ1, wallX, wallZ0, wallZ1, h: Y0 } = HALL;
+  const W = wallX * 2, D = wallZ1 - wallZ0, zc = (wallZ0 + wallZ1) / 2, H = 9.0;     // lòng điện 39 × 25,8 m, cột cao 9 m
+  const yb = Y0 + H;                                                                  // đỉnh cột / đáy xà
+  const front = wallZ1, back = wallZ0;
 
-  // Bệ đá + bậc thềm phía trước
-  box(W + 4, 1.0, D + 4, M.stone, 0, 0.5, 0, g);
-  for (let i = 0; i < 4; i++) box(8 - i * 0.3, 0.25, 0.8, M.stone, 0, 0.12 + i * 0.25, D / 2 + 2 + (3 - i) * 0.8, g);
-  // Sàn lát gỗ + thảm đỏ lối giữa
-  box(W - 0.6, 0.12, D - 1.2, M.wood, 0, y0 + 0.06, 0, g);
-  box(4.2, 0.04, D - 1.4, mat(0x8f1f1a, { roughness: 0.95 }), 0, y0 + 0.14, 0, g);
+  // ----- Nền đá + mặt lát đá hiên + bậc thềm
+  box(platX * 2, Y0 - 0.02, platZ1 - platZ0, M.stone, 0, (Y0 - 0.02) / 2, (platZ0 + platZ1) / 2, g);
+  const slabTex = pavingTexture().clone(); slabTex.needsUpdate = true; slabTex.repeat.set(platX * 2 / 6, (platZ1 - platZ0) / 6);
+  const porch = new THREE.Mesh(new THREE.PlaneGeometry(platX * 2, platZ1 - platZ0), new THREE.MeshStandardMaterial({ map: slabTex, roughness: 0.85, color: 0xd8d2c6 }));
+  porch.rotation.x = -Math.PI / 2; porch.position.set(0, Y0 + 0.001, (platZ0 + platZ1) / 2); g.add(porch);
+  for (let i = 0; i < 5; i++) box(10, (i + 1) * Y0 / 5, 0.88, M.stone, 0, (i + 1) * Y0 / 10, HALL.step.z1 - 0.44 - i * 0.88, g);   // 5 bậc, bậc cao nhất sát hiên
+  for (const s of [-1, 1]) box(0.45, Y0 + 0.5, 4.8, M.stone, s * 5.45, (Y0 + 0.5) / 2, (HALL.step.z0 + HALL.step.z1) / 2, g);        // thành bậc
 
-  // Cột son: hàng trước và hàng sau, tường hậu, hai vách bên
-  const nCol = 5;
-  for (let i = 0; i < nCol; i++) {
-    const x = -W / 2 + 1.6 + i * ((W - 3.2) / (nCol - 1));
-    pillar(0.36, H, M.lacquer, x, y0, front, g);
-    pillar(0.36, H, M.lacquer, x, y0, back + 1.4, g);
+  // ----- Sàn gỗ ván dài, bóng nhẹ
+  const wt = woodFloorTexture().clone(); wt.needsUpdate = true; wt.repeat.set(W / 4.8, D / 4.8);
+  const woodMat = new THREE.MeshStandardMaterial({ map: wt, bumpMap: wt, bumpScale: 0.6, roughness: 0.42, metalness: 0.04, color: 0xffffff });
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(W, D), woodMat);
+  floor.rotation.x = -Math.PI / 2; floor.position.set(0, Y0 + 0.004, zc); g.add(floor);
+
+  // ----- Cột son: chân đá, thân sơn mài, mũ vàng
+  const plinthM = M.stone, capM = M.gold;
+  for (const c of COLUMNS) {
+    const sh = new THREE.Mesh(new THREE.CylinderGeometry(c.r * 0.9, c.r, H, 24), M.lacquer); sh.position.set(c.x, Y0 + H / 2, c.z); g.add(sh);
+    const pl = new THREE.Mesh(new THREE.CylinderGeometry(c.r * 1.45, c.r * 1.6, 0.34, 20), plinthM); pl.position.set(c.x, Y0 + 0.17, c.z); g.add(pl);
+    const cap = new THREE.Mesh(new THREE.CylinderGeometry(c.r * 1.25, c.r * 0.95, 0.4, 20), capM); cap.position.set(c.x, yb - 0.2, c.z); g.add(cap);
   }
-  box(W - 1, H, 0.5, M.wall, 0, y0 + H / 2, back, g);
-  for (const s of [-1, 1]) box(0.5, H, D - 1.4, M.wall, s * (W / 2 - 0.8), y0 + H / 2, 0, g);
-  // Gian giữa phát sáng sau lưng tượng (ánh vàng)
-  const glow = new THREE.Mesh(new THREE.PlaneGeometry(10, H - 0.8), new THREE.MeshBasicMaterial({ color: 0xffa84a, transparent: true, opacity: 0.55 }));
-  glow.position.set(0, y0 + H / 2, back + 0.3); g.add(glow);
+  // ----- Xà ngang dọc: hàng trước, hai hàng bên, ba xà ngang giữa lòng điện, xà sau
+  const beam = (w, d, x, z) => box(w, 0.62, d, M.lacquer, x, yb + 0.31, z, g);
+  beam(W + 3, 0.6, 0, front);
+  for (const s of [-1, 1]) beam(0.6, D, s * 17, zc);
+  for (const z of [-27, -33, -39, -45]) beam(34, 0.5, 0, z);
+  beam(W + 1, 0.6, 0, back + 0.2);
+  for (const z of [-27, -33, -39, -45]) for (let i = -3; i <= 3; i++) box(0.18, 0.5, 0.18, M.gold, i * 4.8, yb - 0.25, z, g);   // quả nhót (nút gỗ vàng) dọc xà
 
-  // Xà ngang, hoành phi, câu đối
-  box(W + 1, 0.7, D - 0.6, M.lacquer, 0, y0 + H + 0.1, 0, g);
-  const sign = new THREE.Mesh(new THREE.PlaneGeometry(6.2, 1.55), new THREE.MeshBasicMaterial({ map: signTexture('DIỆU GIANG TỰ') }));
-  sign.position.set(0, y0 + H + 1.1, D / 2 - 0.2); g.add(sign);
+  // ----- Tường hậu (vữa vàng), tường bên: chân tường đặc + lưới gỗ + xà trên
+  box(W + 1, H + 0.6, 0.5, M.wall, 0, Y0 + (H + 0.6) / 2, back - 0.25, g);
+  const glow = new THREE.Mesh(new THREE.PlaneGeometry(26, H - 0.6), new THREE.MeshBasicMaterial({ color: 0xffa84a, transparent: true, opacity: 0.42, depthWrite: false }));
+  glow.position.set(0, Y0 + H / 2 + 0.2, back + 0.02); g.add(glow);
+  const barM = new THREE.MeshStandardMaterial({ color: 0x5a2f18, roughness: 0.7 });
+  const nBars = Math.floor(D / 0.34), bars = new THREE.InstancedMesh(new THREE.BoxGeometry(0.1, 5.4, 0.12), barM, nBars * 2), m4 = new THREE.Matrix4();
+  for (const s of [-1, 1]) {
+    box(0.5, 1.5, D, M.wall, s * (wallX + 0.25), Y0 + 0.75, zc, g);                                        // chân tường đặc
+    box(0.5, H - 7.0, D, M.wall, s * (wallX + 0.25), Y0 + 7.0 + (H - 7.0) / 2, zc, g);                     // mảng tường trên
+    box(0.4, 0.22, D, barM, s * (wallX + 0.1), Y0 + 1.5, zc, g); box(0.4, 0.22, D, barM, s * (wallX + 0.1), Y0 + 7.0, zc, g);   // thanh ngang
+    for (let i = 0; i < nBars; i++) bars.setMatrixAt(s < 0 ? i : nBars + i, m4.makeTranslation(s * (wallX + 0.1), Y0 + 4.25, wallZ0 + 0.4 + i * 0.34));
+  }
+  bars.instanceMatrix.needsUpdate = true; g.add(bars);
+
+  // ----- Trần gỗ
+  const ceilT = wt.clone(); ceilT.needsUpdate = true; ceilT.repeat.set(W / 3, D / 3);
+  const ceil = new THREE.Mesh(new THREE.PlaneGeometry(W, D), new THREE.MeshStandardMaterial({ map: ceilT, color: 0xa86a3a, roughness: 0.85, side: THREE.DoubleSide }));
+  ceil.rotation.x = Math.PI / 2; ceil.position.set(0, yb + 0.02, zc); g.add(ceil);
+
+  // ----- Hoành phi + câu đối mặt tiền
+  const sign = new THREE.Mesh(new THREE.PlaneGeometry(8.4, 2.1), new THREE.MeshBasicMaterial({ map: signTexture('DIỆU GIANG TỰ') }));
+  sign.position.set(0, yb + 1.7, front + 1.4); g.add(sign);
   [['PHẬT', 'PHÁP', 'VÔ', 'BIÊN'], ['TỪ', 'BI', 'HỶ', 'XẢ']].forEach((w, i) => {
-    const c = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 4.2), new THREE.MeshBasicMaterial({ map: coupletTexture(w) }));
-    c.position.set(i ? 2.2 : -2.2, y0 + 3.0, front + 0.42); g.add(c);
+    const c = new THREE.Mesh(new THREE.PlaneGeometry(1.0, 4.9), new THREE.MeshBasicMaterial({ map: coupletTexture(w) }));
+    c.position.set(i ? 2.5 : -2.5, Y0 + 4.2, front + 0.62); g.add(c);
   });
 
-  // Mái hai tầng
-  const low = roofWithRidge(W + 6, D + 4, 3.0, 1.6); low.position.y = y0 + H + 0.4; g.add(low);
-  box(W - 6, 2.2, D - 4, M.lacquer, 0, y0 + H + 0.5 + 1.1, 0, g);
-  const up = roofWithRidge(W - 2, D - 1, 2.8, 1.8); up.position.y = y0 + H + 2.9; g.add(up);
+  // ----- Mái hai tầng (đổ bóng xuống sân và lòng điện)
+  const low = roofWithRidge(W + 9, D + 8, 5.0, 2.4); low.position.set(0, yb + 0.45, zc); g.add(low);
+  box(W - 9, 3.8, D - 7, M.lacquer, 0, yb + 0.45 + 2.2, zc, g);
+  const up = roofWithRidge(W - 3, D - 2, 4.0, 2.2); up.position.set(0, yb + 0.45 + 4.0, zc); g.add(up);
 
-  // Bàn thờ ba bậc (bậc cao nhất ở giữa, sau cùng)
-  const az = back + 2.2;
-  box(14, 0.5, 3.8, M.lacquer, 0, y0 + 0.4, az + 0.9, g);
-  box(11, 0.45, 2.8, M.lacquer, 0, y0 + 0.9, az + 0.3, g);
-  box(7.4, 0.45, 2.0, M.lacquer, 0, y0 + 1.35, az - 0.1, g);
-  for (const yy of [0.66, 1.14, 1.59]) box(14 - (yy - 0.66) * 4, 0.05, 3.9 - (yy - 0.66) * 0.9, M.gold, 0, y0 + yy, az + 0.9 - (yy - 0.66) * 0.7, g);
-  const topY = y0 + 1.6;
+  // ----- Bàn thờ ba bậc sát tường hậu
+  const aT = (w, d, y0, hh, z, c) => { box(w, hh, d, M.lacquer, 0, Y0 + y0 + hh / 2, z, g); box(w + 0.1, 0.07, d + 0.1, M.gold, 0, Y0 + y0 + hh + 0.03, z, g); };
+  aT(18, 4.1, 0, 0.6, -45.45); aT(14, 3.0, 0.6, 0.6, -45.9); aT(9, 2.2, 1.2, 0.6, -46.2);
+  const topY = Y0 + 1.87;
+  const halo = new THREE.Mesh(new THREE.PlaneGeometry(14, 14), new THREE.MeshBasicMaterial({ map: haloGlowTexture(), transparent: true, opacity: 0.55, depthWrite: false, blending: THREE.AdditiveBlending }));
+  halo.position.set(0, topY + 3.6, back + 0.12); g.add(halo);
+  const mainB = buildBuddha(6.6); mainB.group.position.set(0, topY, -46.3); g.add(mainB.group); statues.push(mainB);
+  for (const s of [-1, 1]) { const b = buildBuddha(4.2); b.group.position.set(s * 6.6, Y0 + 1.27, -45.7); g.add(b.group); statues.push(b); }
 
-  // Ba pho tượng: giữa lớn, hai bên nhỏ hơn đặt bậc thấp
-  const mainB = buildBuddha(); mainB.position.set(0, topY, az - 0.2); mainB.scale.setScalar(0.95); g.add(mainB);
-  for (const s of [-1, 1]) { const b = buildBuddha(); b.position.set(s * 3.6, y0 + 1.12, az + 0.3); b.scale.setScalar(0.6); g.add(b); }
+  // ----- Lễ vật trên bàn thờ
+  fruitTray(g, -3.6, Y0 + 0.66, -44.2, 1.1); fruitTray(g, 3.6, Y0 + 0.66, -44.2, 1.1); fruitTray(g, -7.2, Y0 + 0.66, -44.4, 0.9); fruitTray(g, 7.2, Y0 + 0.66, -44.4, 0.9);
+  for (const s of [-1, 1]) { candle(g, s * 1.6, Y0 + 0.66, -44.1, flames); candle(g, s * 5.2, Y0 + 0.66, -44.3, flames); candle(g, s * 3.4, Y0 + 1.27, -45.0, flames); candle(g, s * 8.2, Y0 + 0.66, -44.6, flames); }
+  vase(g, -2.4, Y0 + 0.66, -43.9, 1.2); vase(g, 2.4, Y0 + 0.66, -43.9, 1.2); vase(g, -5.4, Y0 + 1.27, -45.0, 1.1); vase(g, 5.4, Y0 + 1.27, -45.0, 1.1);
+  censerSmall(g, 0, Y0 + 0.66, -43.9);
+  // bàn lễ giữa lối đi (trước bàn thờ) + lư đồng lớn
+  box(3.4, 0.95, 1.3, M.lacquer, 0, Y0 + 0.475, -42.0, g); box(3.5, 0.06, 1.4, M.gold, 0, Y0 + 0.97, -42.0, g);
+  censerSmall(g, 0, Y0 + 0.96, -42.0); fruitTray(g, -1.1, Y0 + 0.96, -42.0, 0.6); fruitTray(g, 1.1, Y0 + 0.96, -42.0, 0.6);
 
-  // Vật dụng trên bàn thờ
-  fruitTray(g, -1.9, y0 + 0.62, az + 2.2, 1); fruitTray(g, 1.9, y0 + 0.62, az + 2.2, 1);
-  fruitTray(g, -5.4, y0 + 0.62, az + 1.8, 0.8); fruitTray(g, 5.4, y0 + 0.62, az + 1.8, 0.8);
-  [-1, 1].forEach((s) => { candle(g, s * 1.2, y0 + 1.15, az + 1.0, flames); candle(g, s * 4.6, y0 + 0.62, az + 2.6, flames); candle(g, s * 2.6, topY, az - 0.2, flames); });
-  vase(g, -3.0, y0 + 1.15, az + 0.9, 1); vase(g, 3.0, y0 + 1.15, az + 0.9, 1);
-  censerSmall(g, 0, y0 + 1.15, az + 1.6);
-  censerSmall(g, 0, y0 + 0.62, az + 2.9);
+  // ----- Vật dụng trong điện: trống bên phải, chuông + mõ bên trái, phướn, đèn lồng
+  drum(g, 15.4, Y0, -44.4); woodenFish(g, -14.8, Y0, -44.6); bellStand(g, -16.0, Y0, -44.6);
+  for (const x of [-15, 15]) for (const z of [-30, -36, -42]) {
+    const p = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 4.6), new THREE.MeshBasicMaterial({ color: (x + z) % 2 ? 0xd9a421 : 0xc8322b, side: THREE.DoubleSide }));
+    p.position.set(x, yb - 2.9, z); g.add(p);
+  }
+  for (let i = 0; i < 9; i++) makeLantern(g, -17.5 + i * 4.375, yb - 0.9, front + 0.9, 0.85);
+  for (const z of [-27, -33, -39]) for (const x of [-9, 0, 9]) makeLantern(g, x, yb - 1.1, z, 0.8);
+  for (const x of [-12, 12]) makeLantern(g, x, yb - 1.1, -45, 0.8);
 
-  // Vật dụng trong điện
-  woodenFish(g, -4.6, y0 + 0.12, front - 2.2); bellStand(g, -5.5, y0 + 0.12, front - 2.2);
-  drum(g, 8.2, y0 + 0.12, back + 3.2);
-  [-2.6, 0, 2.6].forEach((x) => { const c = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.46, 0.16, 16), mat(0xe2b95c, { emissive: 0x5a3e0c, emissiveIntensity: 0.4 })); c.position.set(x, y0 + 0.22, front - 3.4 - (x === 0 ? 0.8 : 0)); g.add(c); }); // đệm ngồi
-  // Phướn (cờ dài) treo giữa điện
-  [[-3.4, 0xd9a421], [3.4, 0xc8322b]].forEach(([x, c]) => {
-    const p = new THREE.Mesh(new THREE.PlaneGeometry(0.6, 3.2), new THREE.MeshBasicMaterial({ color: c, side: THREE.DoubleSide }));
-    p.position.set(x, y0 + H - 1.8, front - 3.8); g.add(p);
+  // ----- Ánh sáng ấm trong điện (không đổ bóng)
+  const lights = [];
+  for (const z of [-29, -37, -44]) { const L = new THREE.PointLight(0xffb060, 42, 30, 2); L.position.set(0, Y0 + 5.2, z); g.add(L); lights.push(L); }
+
+  // ----- Đổ bóng: mọi khối đặc đều đổ + nhận bóng; sàn/trần/tấm phẳng sáng chỉ nhận
+  g.traverse((o) => {
+    if (!o.isMesh || o.material.isMeshBasicMaterial || o.material.transparent) return;
+    o.castShadow = o.receiveShadow = true;
   });
-  // Đèn lồng dọc hiên
-  for (let i = 0; i < 5; i++) makeLantern(g, -W / 2 + 3 + i * ((W - 6) / 4), y0 + H - 0.7, front + 0.9, 0.8);
-  makeLantern(g, -2.2, y0 + H - 1.3, front - 3.4, 0.7); makeLantern(g, 2.2, y0 + H - 1.3, front - 3.4, 0.7);
-
-  // Ánh sáng ấm trong điện
-  const light = new THREE.PointLight(0xffb060, 60, 26, 2); light.position.set(0, y0 + 3.2, az + 3); g.add(light);
+  floor.castShadow = porch.castShadow = ceil.castShadow = false; floor.receiveShadow = porch.receiveShadow = true;
 
   return {
     group: g,
-    update(t) {
+    update(t, camera) {
       flames.forEach((f, i) => { const k = 1 + 0.18 * Math.sin(t * 9 + i * 1.7) * Math.sin(t * 5.3 + i); f.scale.set(1, k, 1); });
-      light.intensity = 56 + 6 * Math.sin(t * 6.1) * Math.sin(t * 2.3);
+      lights.forEach((L, i) => { L.intensity = 40 + 5 * Math.sin(t * 6.1 + i) * Math.sin(t * 2.3 + i * 2); });
+      if (camera) statues.forEach((b) => b.face(camera));
     },
   };
 }

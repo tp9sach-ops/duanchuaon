@@ -7,10 +7,10 @@ import { findPath } from '../js/world/path.js';
 import { HALL_POINT } from '../js/ui/hudLogic.js';
 import { buildingFront } from '../js/world/placements.js';
 
-test('lưới bồ đoàn: 3 hàng × 6, id không trùng, lối giữa để trống, quay mặt về bàn thờ', () => {
-  assert.equal(SEATS.length, SEAT_ROWS.length * SEAT_COLS.length); assert.equal(SEATS.length, 18);
-  assert.equal(new Set(SEATS.map((s) => s.id)).size, 18);
-  assert.ok(SEATS.every((s) => Math.abs(s.x) > 2), 'lối đi giữa trống');
+test('lưới bồ đoàn: 6 hàng × 8, id không trùng, lối giữa để trống, quay mặt về bàn thờ', () => {
+  assert.equal(SEATS.length, SEAT_ROWS.length * SEAT_COLS.length); assert.equal(SEATS.length, 48);
+  assert.equal(new Set(SEATS.map((s) => s.id)).size, 48);
+  assert.ok(SEATS.every((s) => Math.abs(s.x) > 3), 'lối đi giữa trống');
   assert.ok(SEATS.every((s) => Math.abs(s.ry - Math.PI) < 1e-9));
 });
 test('mọi bồ đoàn nằm trên sàn chánh điện, không trong vật cản, không đè nhau, nằm trong thảm', () => {
@@ -38,8 +38,8 @@ test('tia từ trên cao xuống trúng đúng bồ đoàn; tia xa lệch thì k
   assert.equal(seatById('khongco'), null);
 });
 test('bồ đoàn trống gần nhất; bỏ qua chỗ đã có người', () => {
-  const near = nearestFreeSeat({ x: 2.3, z: -24.6 }); assert.equal(near.id, 'bd23');
-  assert.notEqual(nearestFreeSeat({ x: 2.3, z: -24.6 }, new Set(['bd23'])).id, 'bd23');
+  const near = nearestFreeSeat({ x: 2.3, z: -24.6 }); assert.equal(near.id, 'bd54');
+  assert.notEqual(nearestFreeSeat({ x: 2.3, z: -24.6 }, new Set(['bd54'])).id, 'bd54');
   assert.equal(nearestFreeSeat({ x: 0, z: 0 }, new Set(SEATS.map((q) => q.id))), null);
 });
 test('máy trạng thái: đi tới → ngồi → thiền → đứng dậy', () => {

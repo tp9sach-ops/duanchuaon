@@ -13,9 +13,9 @@ const nhaTo = BUILDINGS.find((b) => b.id === 'nhato');
 export const SPOTS = [
   { id: 'today',   num: '01', label: 'Hôm nay',    look: [0, 15, 34],   stand: { x: 0, z: 29.5 },  r: 2.5, face: [0, 6, 34],    pick: { c: [0, 11, 35.5], r: 4 } },
   { id: 'fortune', num: '02', label: 'Vận trình',  look: [-7, 1.6, 14], stand: { x: -12.2, z: 14 }, r: 2.5, face: [-7, 0, 14],   pick: { c: [-7, 0.8, 14], r: 2.2 } },
-  { id: 'charts',  num: '03', label: 'Lá số',      look: [-30, 9, -28], stand: buildingFront(nhaTo), r: 2.5, face: [-30, 1, -28], pick: { c: [-30, 4, -28], r: 6 } },
+  { id: 'charts',  num: '03', label: 'Lá số',      look: [-38, 9, -28], stand: buildingFront(nhaTo), r: 2.5, face: [-38, 1, -28], pick: { c: [-38, 4, -28], r: 6 } },
   { id: 'reading', num: '04', label: 'Tướng số',   look: [28, 12.5, -4], stand: { x: 21.8, z: -3 }, r: 2.5, face: [28, 2, -4],   pick: { c: [28, 5, -4], r: 6 } },
-  { id: 'temple',  num: '05', label: 'Chánh điện', look: [0, 6.2, -30], stand: { x: 2.1, z: -24 }, r: 2.5, face: [0, 2, -32],   pick: { c: [0, 3, -33], r: 3.2 } },
+  { id: 'temple',  num: '05', label: 'Chánh điện', look: [0, 10, -46], stand: { x: 0, z: -23.4 }, r: 2.5, face: [0, 5, -46],   pick: { c: [0, 6.5, -46], r: 4.2 } },
   { id: 'summary', num: '06', label: 'Lá bùa',     look: [0, 4.4, -8],  stand: { x: 0, z: -4.4 },  r: 2.2, face: [0, 1, -8],    pick: { c: [0, 1.6, -8], r: 2.2 } },
 ];
 

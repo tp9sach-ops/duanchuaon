@@ -33,6 +33,7 @@ export function createScene(canvas, { onProgress, onPick, onArrive } = {}) {
   const reduce = prefersReduced();
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: !coarse, powerPreference: 'high-performance' });
   // Nếu không có WebGL, new WebGLRenderer ném lỗi → main.js bắt và bật fallback.
+  renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;   // đổ bóng: mặt trời/trăng chiếu theo người chơi
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = DAY ? 1.05 : 1.5;
 
@@ -50,7 +51,12 @@ export function createScene(canvas, { onProgress, onPick, onArrive } = {}) {
   const warm1 = new THREE.PointLight(0xffa24a, DAY ? 60 : 220, 80, 2); warm1.position.set(0, 6, -10);
   const warm2 = new THREE.PointLight(0xff8a3a, DAY ? 12 : 160, 70, 2); warm2.position.set(0, 7, 31);
   const ambient = DAY ? new THREE.AmbientLight(0xffffff, 0.5) : new THREE.AmbientLight(0xb4c2ea, 0.9);
-  scene.add(hemi, ambient, moonLight, warm1, warm2);
+  const sunOffset = moonLight.position.clone();
+  moonLight.castShadow = true;
+  { const sh = moonLight.shadow, R = 46; const ms = +new URLSearchParams(location.search).get('shadow') || (coarse ? 1024 : 2048); sh.mapSize.set(ms, ms); Object.assign(sh.camera, { left: -R, right: R, top: R, bottom: -R, near: 20, far: 300 }); sh.bias = -0.0006; sh.normalBias = 0.05; sh.radius = 2.5; sh.camera.updateProjectionMatrix(); }
+  scene.add(hemi, ambient, moonLight, moonLight.target, warm1, warm2);
+  /** Cho mọi khối đặc của `obj` đổ và nhận bóng (khối sáng tự phát / trong suốt bỏ qua). */
+  const shade = (obj, receive = true) => { obj.traverse((o) => { if (o.isMesh && !o.material.isMeshBasicMaterial && !o.material.transparent) { o.castShadow = true; o.receiveShadow = receive; } }); return obj; };
 
   // --- bầu trời, núi (lùi ra sau để nhường chỗ cho quần thể chùa), nền
   const { sky, moon, moonMat } = buildSky();
@@ -59,20 +65,20 @@ export function createScene(canvas, { onProgress, onPick, onArrive } = {}) {
 
   // --- kiến trúc (hướng chính về +z, camera nhìn từ +z)
   const tam = buildTamQuan(); tam.position.set(0, 0, 34);
-  const chanh = buildChanhDien(); chanh.group.position.set(0, 0, -30);
+  const chanh = buildChanhDien();   // tọa độ thế giới (dựng theo layout.js)
   const tower = buildBellTower(); tower.group.position.set(28, 0, -4); tower.group.rotation.y = -0.25;
   const censer = buildCenser(); censer.group.position.set(0, 0, -8);
-  scene.add(tam, chanh.group, tower.group, censer.group, buildProps(), buildGarden(), buildHouses(), buildCushions()); onProgress?.(0.55);
+  scene.add(shade(tam), chanh.group, shade(tower.group), shade(censer.group), shade(buildProps()), shade(buildGarden()), shade(buildHouses()), shade(buildCushions())); onProgress?.(0.55);
   const hoaSen = buildHoaSen(LGT); scene.add(hoaSen.group);   // hoa sen vàng nhận lộc
 
   // --- quần thể chùa (GLB): nạp nền, không chặn màn hình chờ. Lỗi thì bỏ qua.
   loadTemple().then((m) => { if (m) scene.add(m); });
 
   // --- cây, tre, đá, ao sen
-  scene.add(buildBodhi(-24, 6, 1.1), buildBodhi(24, 26, 0.95), buildBodhi(-34, -16, 1.2));
+  scene.add(shade(buildBodhi(-24, 6, 1.1)), shade(buildBodhi(24, 26, 0.95)), shade(buildBodhi(-34, -16, 1.2)));
   scene.add(buildBamboo(-40, 12), buildBamboo(42, 8), buildBamboo(-30, 40));
   scene.add(buildRocks(18, 90, -10, 60));
-  if (DAY) scene.add(buildLowPolyTrees([...TREES, ...farTrees()]));   // cây low-poly xanh như ảnh mẫu
+  if (DAY) scene.add(shade(buildLowPolyTrees([...TREES, ...farTrees()])));   // cây low-poly xanh như ảnh mẫu
   const pond = buildPond(new THREE.Vector3(0, 0, 14), 10, coarse ? 10 : 18); scene.add(pond.group);
   onProgress?.(0.75);
 
@@ -144,7 +150,7 @@ export function createScene(canvas, { onProgress, onPick, onArrive } = {}) {
     } else { warm1.intensity = 60; }   // ban ngày: ánh đèn trong điện cố định (lập lòe áp lên phía dưới)
 
     // Camera + hiệu ứng nhẹ theo con trỏ (tắt khi reduced-motion)
-    if (world) world.update(dt); else rail.update(dt, reduce);
+    if (world && !LGT.freeCam) world.update(dt); else if (!world) rail.update(dt, reduce);   // freeCam: chỉ dùng khi chụp thử (?debug=1)
     if (!world && !reduce && !coarse) {
       mx = damp(mx, mouseX, 2, dt); my = damp(my, mouseY, 2, dt);
       camera.position.x += mx * 1.2; camera.position.y += -my * 0.6;
@@ -155,11 +161,12 @@ export function createScene(canvas, { onProgress, onPick, onArrive } = {}) {
     viewX = reduce ? want : damp(viewX, want, 4, dt);
     if (Math.abs(viewX) > 0.5) camera.setViewOffset(w, h, viewX, 0, w, h); else if (camera.view && camera.view.enabled) camera.clearViewOffset();
 
+    if (world) { const wp = world.pos; moonLight.target.position.set(wp.x, 0, wp.z); moonLight.position.set(wp.x + sunOffset.x, sunOffset.y, wp.z + sunOffset.z); }   // vùng đổ bóng đi theo người chơi
     hoaSen.update(t);
     sky.rotation.y = t * 0.004;
     if (!reduce) {
       if (!DAY) fireflies.update(t); petals.update(t, dt); smoke.update(t, dt);
-      pond.update(t); chanh.update(t);
+      pond.update(t); chanh.update(t, camera);
       tower.bell.rotation.z = Math.sin(t * 0.6) * 0.012;
       censer.embers.forEach((e, i) => { e.material.color.setRGB(1, 0.25 + 0.2 * Math.sin(t * 3 + i), 0.12); });
       warm1.intensity *= 0.97 + 0.06 * Math.sin(t * 7.3) * Math.sin(t * 3.1);
@@ -184,6 +191,7 @@ export function createScene(canvas, { onProgress, onPick, onArrive } = {}) {
     if (frameCount === 3) onProgress?.(1);
   }
 
+  if (new URLSearchParams(location.search).get('debug') === '1') LGT.dbg = { scene, camera, renderer, THREE };   // móc chụp thử, không ảnh hưởng người dùng
   applyLevel(); rail.snap(); frame();
   return { renderer, scene, camera, rail, world, getLevel: () => level, LGT };
 }
