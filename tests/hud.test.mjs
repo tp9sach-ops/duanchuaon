@@ -9,9 +9,9 @@ import { blocked } from '../js/world/layout.js';
 const fake = (init = {}) => { const m = { ...init }; return { getItem: (k) => (k in m ? m[k] : null), setItem: (k, v) => { m[k] = String(v); }, m }; };
 
 test('hồ sơ: tên sạch ≤ 20 ký tự, màu/kiểu đầu lạ về mặc định', () => {
-  assert.deepEqual(cleanProfile({}), { name: 'Khách', color: 'nau', hair: 'troc' });
+  assert.deepEqual(cleanProfile({}), { name: 'Khách', color: '9sach', hair: 'troc' });
   assert.deepEqual(cleanProfile({ name: '  Minh   An ', color: 'lam', hair: 'bui' }), { name: 'Minh An', color: 'lam', hair: 'bui' });
-  assert.equal(cleanProfile({ color: 'xx', hair: 'yy' }).color, 'nau'); assert.equal(cleanProfile({ hair: 'yy' }).hair, 'troc');
+  assert.equal(cleanProfile({ color: 'xx', hair: 'yy' }).color, '9sach'); assert.equal(cleanProfile({ hair: 'yy' }).hair, 'troc');
   assert.equal(Array.from(cleanProfile({ name: 'A'.repeat(60) }).name).length, 20);
   assert.equal(cleanProfile({ name: 'https://x.vn' }).name, 'Khách');
 });
@@ -28,7 +28,7 @@ test('storage hỏng (chế độ riêng tư) không làm vỡ trang', () => {
 });
 test('chữ cái đầu viết hoa kể cả tiếng Việt có dấu; màu áo là #rrggbb', () => {
   assert.equal(initialOf('minh'), 'M'); assert.equal(initialOf('Đức'), 'Đ'); assert.equal(initialOf('ánh'), 'Á'); assert.equal(initialOf(''), 'K');
-  assert.match(robeCss('nau'), /^#[0-9a-f]{6}$/); assert.equal(robeCss('xxx'), robeCss('nau'));
+  assert.match(robeCss('nau'), /^#[0-9a-f]{6}$/); assert.equal(robeCss('xxx'), robeCss('9sach'));
 });
 test('kiểu đầu: có 2 kiểu, mặc định đầu trọc', () => { assert.equal(HAIR_STYLES.length, 2); assert.equal(hairById('lạ').id, 'troc'); assert.equal(hairById('bui').id, 'bui'); });
 test('trong/ngoài chánh điện: sân và cổng là ngoài, trên nền điện là trong, bậc thềm tính ngoài', () => {
