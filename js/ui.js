@@ -31,29 +31,85 @@ export function initNav() {
   addEventListener('keydown', (e) => { if (e.key === 'Escape') setMenu(false); });
 }
 
-// Nhạc nền: pad hai dao động trầm bằng Web Audio. Chỉ bắt đầu sau lần bấm đầu tiên (luật autoplay).
+// Âm thanh nền (nút "Âm thanh"): nhạc + thác nước + chuông chùa. Chỉ bắt đầu sau lần bấm đầu tiên (luật autoplay).
 export function initSound() {
+  // Âm thanh nền: nhạc (file assets/audio/nhac-nen.m4a, lặp liền) + tiếng thác nước (tổng hợp bằng nhiễu lọc) + chuông chùa thỉnh thoảng ngân.
   const btn = document.getElementById('sound');
-  let ctx = null, master = null, on = false;
+  const MUSIC = 'assets/audio/nhac-nen.m4a';
+  const VOL = { music: 0.55, water: 0.16, bell: 0.5 };
+  let ctx = null, master = null, musicG = null, waterG = null, bellG = null, el = null, on = false, bellTimer = 0;
   try { on = localStorage.getItem('lgt.sound') === '1'; } catch (_) { /* bỏ qua */ }
+
+  const pinkBuffer = (c, sec) => {                                  // nhiễu hồng (Paul Kellet), lặp được
+    const n = Math.floor(c.sampleRate * sec), buf = c.createBuffer(2, n, c.sampleRate);
+    for (let ch = 0; ch < 2; ch++) {
+      const d = buf.getChannelData(ch); let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+      for (let i = 0; i < n; i++) {
+        const w = Math.random() * 2 - 1;
+        b0 = 0.99886 * b0 + w * 0.0555179; b1 = 0.99332 * b1 + w * 0.0750759; b2 = 0.969 * b2 + w * 0.153852;
+        b3 = 0.8665 * b3 + w * 0.3104856; b4 = 0.55 * b4 + w * 0.5329522; b5 = -0.7616 * b5 - w * 0.016898;
+        d[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + w * 0.5362) * 0.11; b6 = w * 0.115926;
+      }
+      const f = Math.floor(c.sampleRate * 0.25);                    // hòa đầu-đuôi 0,25 giây để vòng lặp không "tách"
+      for (let i = 0; i < f; i++) { const k = i / f; d[i] = d[i] * k + d[n - f + i] * (1 - k); }
+    }
+    return buf;
+  };
+  const waterfall = (c, out) => {
+    const src = c.createBufferSource(); src.buffer = pinkBuffer(c, 6); src.loop = true;
+    const hp = c.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 220;
+    const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 4200;
+    const body = c.createGain(); body.gain.value = 1;
+    src.connect(hp); hp.connect(lp); lp.connect(body); body.connect(out);
+    const lfo = c.createOscillator(), lg = c.createGain(); lfo.frequency.value = 0.17; lg.gain.value = 0.12;   // nước chảy dâng nhẹ, không đều tăm tắp
+    lfo.connect(lg); lg.connect(body.gain);
+    const lfo2 = c.createOscillator(), lg2 = c.createGain(); lfo2.frequency.value = 0.05; lg2.gain.value = 900;
+    lfo2.connect(lg2); lg2.connect(lp.frequency);
+    src.start(); lfo.start(); lfo2.start();
+  };
+  const ring = () => {                                              // một hồi chuông: các hài âm lệch (không chẵn) + ngân dài
+    if (!ctx || !on || ctx.state !== 'running') return;
+    const base = [196, 220, 233][Math.floor(Math.random() * 3)], t = ctx.currentTime + 0.02;
+    [[1, 0.5, 11], [2.01, 0.28, 8], [2.76, 0.16, 6], [4.07, 0.1, 4], [5.4, 0.06, 3], [6.8, 0.03, 2]].forEach(([m, g, d], i) => {
+      [0, 1.1].forEach((beat) => {                                  // hai dao động lệch nhẹ nhau → tiếng ngân "ù ù" của chuông đồng
+        const o = ctx.createOscillator(), e = ctx.createGain();
+        o.type = 'sine'; o.frequency.value = base * m + beat * (0.6 + i * 0.2);
+        e.gain.setValueAtTime(0.0001, t); e.gain.exponentialRampToValueAtTime(g / 2, t + 0.01); e.gain.exponentialRampToValueAtTime(0.0001, t + d);
+        o.connect(e); e.connect(bellG); o.start(t); o.stop(t + d + 0.1);
+      });
+    });
+  };
+  const scheduleBell = (first) => {
+    clearTimeout(bellTimer);
+    if (!on) return;
+    bellTimer = setTimeout(() => { ring(); scheduleBell(false); }, first ? 4000 : 40000 + Math.random() * 40000);
+  };
   const build = () => {
     ctx = new (window.AudioContext || window.webkitAudioContext)();
     master = ctx.createGain(); master.gain.value = 0; master.connect(ctx.destination);
-    [[110, 0], [164.8, 4], [220.5, -3]].forEach(([f, d]) => {
-      const o = ctx.createOscillator(), g = ctx.createGain();
-      o.type = 'sine'; o.frequency.value = f; o.detune.value = d; g.gain.value = 0.35; o.connect(g); g.connect(master); o.start();
-    });
+    musicG = ctx.createGain(); musicG.gain.value = VOL.music; musicG.connect(master);
+    waterG = ctx.createGain(); waterG.gain.value = VOL.water; waterG.connect(master);
+    bellG = ctx.createGain(); bellG.gain.value = VOL.bell; bellG.connect(master);
+    waterfall(ctx, waterG);
+    el = new Audio(MUSIC); el.loop = true; el.preload = 'auto'; el.crossOrigin = 'anonymous';
+    ctx.createMediaElementSource(el).connect(musicG);
   };
   const apply = () => {
     btn.setAttribute('aria-pressed', String(on));
     if (!ctx) return;
-    master.gain.setTargetAtTime(on ? 0.05 : 0, ctx.currentTime, 0.6);
+    master.gain.setTargetAtTime(on ? 1 : 0, ctx.currentTime, on ? 1.5 : 0.5);
+    if (on) { el.play().catch(() => { /* chưa tải được nhạc: vẫn còn tiếng thác */ }); scheduleBell(true); }
+    else { clearTimeout(bellTimer); setTimeout(() => { if (!on && el) el.pause(); }, 1800); }
   };
   btn.addEventListener('click', async () => {
     if (!ctx) build();
     if (ctx.state === 'suspended') await ctx.resume();
     on = !on; try { localStorage.setItem('lgt.sound', on ? '1' : '0'); } catch (_) { /* bỏ qua */ }
     apply();
+  });
+  document.addEventListener('visibilitychange', () => {             // đổi tab / khóa màn hình: tạm dừng nhạc cho đỡ tốn pin
+    if (!el || !on) return;
+    if (document.hidden) el.pause(); else el.play().catch(() => {});
   });
   btn.setAttribute('aria-pressed', 'false'); // luôn tắt cho tới khi người dùng bấm
 }
