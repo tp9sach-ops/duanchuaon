@@ -1,6 +1,6 @@
 // Service worker: mở lại được khi mất mạng. Mạng trước, bộ nhớ đệm sau (để luôn thấy bản mới khi có mạng).
 // Đổi VERSION mỗi khi muốn buộc làm mới toàn bộ.
-const VERSION = 'dgt-v10';
+const VERSION = 'dgt-v11';
 self.addEventListener('install', (e) => { self.skipWaiting(); e.waitUntil(caches.open(VERSION).then((c) => c.addAll(['./', 'index.html', 'manifest.webmanifest', 'assets/icon.svg', 'assets/icon-192.png']).catch(() => {}))); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== VERSION).map((k) => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', (e) => {

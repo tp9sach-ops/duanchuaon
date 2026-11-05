@@ -172,6 +172,8 @@ Việc ptg làm song song (không chặn các phiên trên): bật Pages (Settin
 - **2026-11-04 (Phiên 14d):** ptg gửi 2 ảnh áo polo 9 Sạch (thân vàng, tay + cổ xanh lá, logo ngực trái và logo lớn ở lưng) và yêu cầu: tiếp tục, thiết kế nhân vật mặc chiếc áo này, và CHỈ gửi các file cần thay/thêm để tải lên GitHub. Đã làm kiểu "Đồng phục 9 Sạch" (màu áo `9sach`); chi tiết ở `HANDOFF.md` mục 7. **Quy tắc giao file (mới, ghi nhận):** cuối mỗi phiên chỉ giao các file đã đổi/thêm (đúng đường dẫn, trùng tên ghi đè), không giao cả dự án.
 - **2026-11-04 (Phiên 14f):** ptg gửi 9 file GLB cây + `landscape.js`/`layout.js`/test và nói "đọc PROMPT.md rồi HANDOFF.md, rồi tiếp tục các bước còn lại" (Bước 1 test landscape, 2 cảnh 3D landscape nối `index.js`, 3 GLB cây, 4 NPC, 5 sàn gỗ + `buddha.webp` + đế sen). Đã xong Bước 3 (cây GLB đã tối ưu, `js/scene/glbprops.js`); Bước 4–5 chưa. Quy ước mới: GLB đưa vào dự án phải qua `tools/optimize-glb.mjs` (nhẹ, cao 1 đơn vị, gốc ở đáy) và phải ghi nguồn/giấy phép ở `THIRD_PARTY.md`.
 
+- **2026-11-05 (Phiên 18):** ptg nhắc các việc "chưa làm" (tự giảm cảnh khi máy yếu; nhiều phòng và chọn chùa; túi đồ, cửa hàng, xếp hạng; mô hình con trâu của Bé Tí), nói "tiếp tục", bảo xem lại repo vì **đã đổi cách lưu trữ trên Firebase và phân tích**, làm nốt cho hoàn thiện và chính xác, **đẩy lên GitHub (trùng tên ghi đè)**. **QUY TẮC MỚI (tự ghi): làm TỪNG MỤC NHỎ MỘT → đẩy lên GitHub → báo ptg → CHỜ ptg đồng ý rồi mới làm mục kế.** Mục 1 (PERF) đã làm; GitHub 403 nên giao zip. Chi tiết: `HANDOFF.md` mục 7.
+
 ## 8. PROMPT KHỞI ĐỘNG PHIÊN MỚI (dán nguyên văn)
 
 ```
