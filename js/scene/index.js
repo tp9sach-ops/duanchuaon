@@ -24,6 +24,7 @@ import { buildHoaSen } from './hoasen.js';
 import { buildNpcs } from './npc.js';
 import { buildLandscape } from './landscape.js';
 import { buildOutside } from './outside.js';
+import { createGovernor, levelPlan, startLevel, loadSaved, save as savePerf } from './perfLogic.js';
 import { buildGlbTrees } from './glbprops.js';
 import { inHall } from '../world/landscape.js';
 
@@ -103,7 +104,6 @@ export function createScene(canvas, { onProgress, onPick, onArrive } = {}) {
   composer.addPass(new RenderPass(scene, camera));
   const bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), DAY ? 0.18 : 0.5, 0.6, DAY ? 1.05 : 0.9);
   composer.addPass(bloom); composer.addPass(new OutputPass());
-  let bloomOn = true;
 
   const rail = createRail(camera);
   const hotspots = createHotspots(camera, (id) => onPick?.(id));
@@ -111,14 +111,20 @@ export function createScene(canvas, { onProgress, onPick, onArrive } = {}) {
   const useRail = new URLSearchParams(location.search).get('rail') === '1';
   const world = useRail ? null : createWorld({ scene, camera, canvas, coarse, LGT, onArrive });
 
-  // --- PERF governor: 0 = đầy đủ; 1 = pixelRatio 1; 2 = tắt bloom; 3 = giảm hạt + pixelRatio .75
-  let level = coarse ? 1 : 0, framesAcc = 0, timeAcc = 0;
+  // --- PERF governor (logic ở perfLogic.js, có test): bậc 0 = đầy đủ … 5 = nhẹ nhất; chỉ hạ, nhớ bậc đã hạ 7 ngày. ?perf=N (0–5) ép cố định.
+  const store = (() => { try { return window.localStorage; } catch { return null; } })();
+  const shadowBase = moonLight.shadow.mapSize.x;
+  const start = startLevel({ coarse, saved: loadSaved(store), query: location.search });
+  const gov = createGovernor({ start: start.level, fixed: start.fixed });
+  let level = gov.level, appliedShadowSize = shadowBase, bloomOn = true;
   const applyLevel = () => {
-    const dpr = Math.min(devicePixelRatio || 1, 2);
-    const pr = level >= 3 ? 0.75 : level >= 1 ? 1 : dpr;
-    renderer.setPixelRatio(pr); composer.setPixelRatio(pr);
-    bloomOn = level < 2;
-    if (level >= 3) { fireflies.setCount(40); petals.setCount(30); }
+    const plan = levelPlan(level, { dpr: devicePixelRatio || 1, shadowBase });
+    renderer.setPixelRatio(plan.pixelRatio); composer.setPixelRatio(plan.pixelRatio);
+    bloomOn = plan.bloom;
+    if (plan.shadowSize !== appliedShadowSize) { appliedShadowSize = plan.shadowSize; moonLight.shadow.mapSize.set(plan.shadowSize, plan.shadowSize); if (moonLight.shadow.map) { moonLight.shadow.map.dispose(); moonLight.shadow.map = null; } }
+    moonLight.castShadow = plan.shadows;
+    outside.group.traverse((o) => { if (o.isInstancedMesh) { o.visible = plan.forest; o.castShadow = plan.forest && plan.forestShadow; } });   // trong khu ngoài chùa chỉ rừng dùng InstancedMesh (outside.js, hàm mk)
+    if (plan.particles === 'low') { fireflies.setCount(40); petals.setCount(30); }
     resize();
   };
   function resize() {
@@ -143,7 +149,7 @@ export function createScene(canvas, { onProgress, onPick, onArrive } = {}) {
   function frame() {
     requestAnimationFrame(frame);
     if (!running) return;
-    const dt = Math.min(clock.getDelta(), 0.1), t = clock.elapsedTime;
+    const rawDt = clock.getDelta(), dt = Math.min(rawDt, 0.1), t = clock.elapsedTime;
 
     // MOOD: damp rồi áp lên đèn, trăng, sương, bloom
     if (!DAY) {
@@ -187,20 +193,14 @@ export function createScene(canvas, { onProgress, onPick, onArrive } = {}) {
     hotspots.setVisible(!LGT.panelOpen);
     hotspots.update(w, h);
 
-    // PERF governor: đo trung bình sau 60 khung đầu, đánh giá mỗi 2 giây
+    // PERF governor: đo FPS theo cửa sổ 2 giây; chậm 2 cửa sổ liền thì hạ một bậc (xem perfLogic.js)
     frameCount++;
-    if (frameCount > 60) {
-      framesAcc++; timeAcc += dt;
-      if (timeAcc >= 2) {
-        const fps = framesAcc / timeAcc;
-        if (fps < 38 && level < 3) { level++; applyLevel(); }
-        framesAcc = 0; timeAcc = 0;
-      }
-    }
+    const down = gov.feed(rawDt);   // dt thô: khung ≥ 0,5 s (đổi tab) bị bỏ qua
+    if (down) { level = down.level; applyLevel(); savePerf(store, level); LGT.perfLevel = level; }
     if (frameCount === 3) onProgress?.(1);
   }
 
   if (new URLSearchParams(location.search).get('debug') === '1') LGT.dbg = { scene, camera, renderer, THREE };   // móc chụp thử, không ảnh hưởng người dùng
-  applyLevel(); rail.snap(); frame();
+  applyLevel(); LGT.perfLevel = level; rail.snap(); frame();
   return { renderer, scene, camera, rail, world, getLevel: () => level, LGT };
 }
