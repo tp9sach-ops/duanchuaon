@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { OUT_WALKS, PLACES, WALKERS, STALLS, VILLAGE_GATE, STREET_LAMPS, THAC, placesAt, placeById } from '../js/world/outside.js';
+import { OUT_WALKS, PLACES, WALKERS, STALLS, VILLAGE_GATE, STREET_LAMPS, THAC, STORE_9SACH, STORE_TACHHOA, placesAt, placeById } from '../js/world/outside.js';
+import { readFileSync } from 'node:fs';
 import { VILLAGERS, ACTS } from '../js/world/npc.js';
 import { blocked, canStep, SPAWN } from '../js/world/layout.js';
 import { findPath } from '../js/world/path.js';
@@ -56,4 +57,29 @@ test('tìm đường từ cổng chùa tới dân làng, thác nước, rừng t
     const p = findPath(SPAWN.x, SPAWN.z, t.stand.x, t.stand.z); assert.ok(p && p.length, t.id + ' có đường đi');
     for (const q of p) assert.equal(blocked(q.x, q.z), false, t.id + ' đường không xuyên vật cản');
   }
+});
+
+test('Cửa hàng 9 Sạch: địa chỉ 124 Mậu Thân (không còn địa chỉ trong ảnh mẫu), sân trước đi tới được, thân nhà và đồ trước cửa chặn, cửa vào còn lối rộng', () => {
+  assert.equal(STORE_9SACH.diaChi, '124 Mậu Thân');
+  const code = readFileSync(new URL('../js/scene/store9sach.js', import.meta.url), 'utf8') + readFileSync(new URL('../js/world/outside.js', import.meta.url), 'utf8');
+  assert.ok(!/468A|Trần Phú|Ba Đình/.test(code), 'địa chỉ của ảnh mẫu không được còn trong mã');
+  const { san, than, props } = STORE_9SACH;
+  for (const [x, z] of [[san.x0 + 0.5, STORE_9SACH.z], [16.5, 81.5], [15, 82.5], [18, 80.5]]) { assert.equal(blocked(x, z), false, `sân trước (${x},${z}) phải đi được`); assert.ok(has(x, z), `(${x},${z}) phải đi tới được từ chỗ xuất hiện`); }
+  for (const [x, z] of [[than.x0 + 1, STORE_9SACH.z], [than.x1 - 1, than.z0 + 1], [22, 78]]) assert.equal(blocked(x, z), true, `thân nhà (${x},${z}) chặn`);
+  for (const c of Object.values(props)) { assert.equal(blocked(c.x, c.z), true, 'đồ trước cửa chặn'); assert.ok(c.x > san.x0 && c.x < san.x1 && c.z > san.z0 && c.z < san.z1, 'đồ nằm trong sân'); }
+  // lối thẳng từ vỉa hè tới cửa rộng ≥ 3 m (dọc z = tâm) — không bị phông, giỏ hoa, standee chặn
+  let free = 0; for (let z = san.z0; z <= san.z1; z += 0.25) { let ok = true; for (let x = 13; x <= than.x0 - 0.3; x += 0.25) if (blocked(x, z)) { ok = false; break; } if (ok) free += 0.25; }
+  assert.ok(free >= 3, 'lối vào cửa hàng rộng ' + free + ' m');
+  assert.ok(findPath(0, 80, 17, 81.5)?.length, 'tìm đường từ giữa đường làng tới trước cửa hàng');
+});
+
+test('Tách Hoa: sân trước đi tới được, thân nhà và xe hồng chặn, lối vào ≥ 3 m, không chồng lên Cửa hàng 9 Sạch', () => {
+  const { san, than, props } = STORE_TACHHOA;
+  assert.ok(san.z0 >= STORE_9SACH.san.z1, 'sân hai cửa hàng không chồng nhau');
+  for (const [x, z] of [[san.x0 + 0.5, STORE_TACHHOA.z], [16.5, 89], [18, STORE_TACHHOA.z]]) { assert.equal(blocked(x, z), false, `(${x},${z}) đi được`); assert.ok(has(x, z), `(${x},${z}) tới được`); }
+  for (const [x, z] of [[than.x0 + 1, STORE_TACHHOA.z], [22, 90]]) assert.equal(blocked(x, z), true);
+  for (const c of Object.values(props)) { assert.equal(blocked(c.x, c.z), true); assert.ok(c.x > san.x0 && c.x < san.x1 && c.z > san.z0 && c.z < san.z1); }
+  let free = 0; for (let z = san.z0; z <= san.z1; z += 0.25) { let ok = true; for (let x = 13; x <= than.x0 - 0.3; x += 0.25) if (blocked(x, z)) { ok = false; break; } if (ok) free += 0.25; }
+  assert.ok(free >= 3, 'lối vào rộng ' + free + ' m');
+  assert.ok(findPath(0, 90, 17, 89)?.length, 'tìm đường tới Tách Hoa');
 });
