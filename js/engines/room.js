@@ -54,6 +54,7 @@ export function angleDiff(a, b) { let d = (b - a) % (Math.PI * 2); if (d > Math.
 export function createRemotes() {
   const m = new Map();
   const API = {
+    follow: 1.4,        // hệ số bám theo đích (1/giây): Apps Script trễ nên bám chậm; Firebase đặt cao hơn
     get size() { return m.size; },
     has: (id) => m.has(id),
     ingest(list, selfId = '') {
@@ -67,7 +68,7 @@ export function createRemotes() {
       }
     },
     step(dt) {
-      const k = 1 - Math.exp(-Math.max(0, dt) * 1.4), out = [], vmax = 6.5 * Math.max(0, dt);   // tối đa 6,5 m/s: không phóng nhanh sau khi trễ
+      const k = 1 - Math.exp(-Math.max(0, dt) * API.follow), out = [], vmax = 6.5 * Math.max(0, dt);   // tối đa 6,5 m/s: không phóng nhanh sau khi trễ
       for (const p of m.values()) {
         const ox = p.x, oz = p.z, dx = p.tx - p.x, dz = p.tz - p.z;
         if (Math.hypot(dx, dz) > 12) { p.x = p.tx; p.z = p.tz; }          // dịch chuyển xa: nhảy tới luôn, không trượt xuyên chùa
