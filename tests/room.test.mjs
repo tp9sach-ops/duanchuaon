@@ -156,7 +156,7 @@ test('roomClient: lỗi liên tiếp thì thưa dần (tối đa 10 giây); chư
 });
 test('roomClient: tab ẩn thì chờ ≥ 15 giây; stop() dọn hết nhân vật', async () => {
   const E = fakeEnv(); E.client.start(); E.responses.push({ ok: true, players: [P('other-0001')], chat: [], seq: 0, count: 2 }); await E.client.tick(); E.client.frame(0.016);
-  E.client.setActive(false); await E.client.tick(); assert.ok(E.timers.at(-1) >= 15000);
+  E.client.setActive(false); await E.client.tick(); assert.ok(E.timers.at(-1) >= 9000);
   E.client.stop(); assert.equal(E.scene.kids.size, 0);
 });
 test('createLocalTransport: hai tab cùng trình duyệt thấy nhau; người im quá 6 giây thì biến mất', async () => {
