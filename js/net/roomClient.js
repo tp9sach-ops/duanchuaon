@@ -62,7 +62,7 @@ export function createRoomClient(deps) {
         if (res && res.error === 'room_full') onOnline(null);
       }
     } catch (_) { fails++; wait = Math.min(10000, ROOM_CFG.minPollMs * Math.pow(2, Math.min(fails, 3))); }
-    finally { busy = false; if (running) timer = schedule(API.tick, active ? wait : Math.max(wait, 15000)); }
+    finally { busy = false; if (running) timer = schedule(API.tick, active ? wait : Math.max(wait, 9000)); }
   };
 
   /** Gửi một lời nhắn (hiện bong bóng trên đầu mình ở lượt đồng bộ kế tiếp của người khác). Trả chuỗi đã làm sạch hoặc ''. */
