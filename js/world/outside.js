@@ -30,6 +30,27 @@ export const STREET_LAMPS = [70, 86, 102, 118, 134, 148].flatMap((z) => [-12, 12
 /** Đá lớn quanh hồ thác. */
 export const OUT_ROCKS = [{ x: 100, z: 92, r: 1.2 }, { x: 101, z: 117, r: 1.5 }, { x: 109, z: 90, r: 1.3 }, { x: 108, z: 118, r: 1.4 }];
 
+/** Cửa hàng 9 Sạch (nhà phố mặt tiền bên phải đường làng, quay mặt về phía -x ra đường). Dữ liệu thuần; cảnh 3D ở js/scene/store9sach.js.
+ *  Mặt tiền tại x = front; thân nhà kéo dài về +x (sâu `sau` m); `z` là tâm bề ngang `rong`. Sân trước (lát gạch) nối liền vỉa hè để đi tới tận cửa.
+ *  Đồ trước cửa đặt theo tọa độ THẾ GIỚI {x,z,r} (r = bán kính vật cản): phông Grand Opening, giỏ hoa hồng đỏ, giỏ hoa hồng phấn, standee "MUA 1 ĐƯỢC 3". */
+export const STORE_9SACH = {
+  id: 'cuahang9sach', ten: 'Cửa hàng 9 Sạch', diaChi: '124 Mậu Thân', dienThoai: '0939 999 132',
+  front: 19, z: 80.5, rong: 10, sau: 9,
+  san: { x0: 13, x1: 19, z0: 75.5, z1: 85.5 },                 // sân trước đi được (chồng 1 m lên vỉa hè x ≤ 14 cho liền)
+  than: { x0: 18.4, x1: 28, z0: 75.5, z1: 85.5 },              // thân nhà + biển (chặn)
+  props: { phong: { x: 16.2, z: 76.7, r: 1.3 }, hoaDo: { x: 15.8, z: 78.7, r: 0.7 }, hoaHong: { x: 15.0, z: 76.3, r: 0.8 }, standee: { x: 17.4, z: 84.4, r: 0.6 } },
+};
+
+/** Cửa hàng trà Tách Hoa (nhà phố cạnh Cửa hàng 9 Sạch, cùng phía đường; dựng theo ảnh khai trương). Cùng cấu trúc STORE_9SACH; chưa có địa chỉ (ptg chưa cung cấp, KHÔNG tự bịa).
+ *  props (tọa độ thế giới {x,z,r}): xe = chiếc xe tay ga màu hồng đỗ trước cửa. */
+export const STORE_TACHHOA = {
+  id: 'tachhoa', ten: 'Tách Hoa',
+  front: 19, z: 91, rong: 8, sau: 9,
+  san: { x0: 13, x1: 19, z0: 87, z1: 95 },
+  than: { x0: 18.4, x1: 28, z0: 87, z1: 95 },
+  props: { xe: { x: 15.9, z: 93.7, r: 0.9 } },
+};
+
 /** Điểm mà người chơi đặt chân tới thì tính "đã ghé" (nhiệm vụ). {id, ten, x, z, r} — dùng chung cho trong và ngoài chùa. */
 export const PLACES = [
   { id: 'sanchua', ten: 'Sân chùa', x: 0, z: 6, r: 14 }, { id: 'chanhdien', ten: 'Chánh điện', x: 0, z: -30, r: 14 },
@@ -62,5 +83,8 @@ export function registerOutside() {
   [DA_LANG, GIENG, CO_THU, ...OUT_ROCKS, ...STREET_LAMPS, ...VILLAGE_GATE.posts.map((x) => ({ x, z: VILLAGE_GATE.z, r: VILLAGE_GATE.r }))].forEach((c) => addCircle({ x: c.x, z: c.z, r: c.r }));
   STALLS.forEach((s) => addRect({ x0: s.x0, x1: s.x1, z0: s.z0, z1: s.z1 }));
   addRect(DINH_NGHI); addRect(MIEU);
+  // Cửa hàng 9 Sạch: sân trước đi được; thân nhà và đồ trước cửa là vật cản
+  addWalk(STORE_9SACH.san); addRect(STORE_9SACH.than); Object.values(STORE_9SACH.props).forEach((c) => addCircle({ x: c.x, z: c.z, r: c.r }));
+  addWalk(STORE_TACHHOA.san); addRect(STORE_TACHHOA.than); Object.values(STORE_TACHHOA.props).forEach((c) => addCircle({ x: c.x, z: c.z, r: c.r }));
 }
 registerOutside();
