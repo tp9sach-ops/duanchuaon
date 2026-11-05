@@ -48,6 +48,7 @@ function doPost(e) {
       case 'analyzeFace':  return json_(analyzeImage_(req, 'face'));
       case 'addPrayer':    return json_(addPrayer_(req));      // Prayers.gs
       case 'listPrayers':  return json_(listPrayers_());
+      case 'sync':         return json_(roomSync_(req));       // Room.gs (đa người)
       default:             return json_({ ok: false, error: 'unknown_action' });
     }
   } catch (err) {
