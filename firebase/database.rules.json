@@ -1,0 +1,36 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "players": {
+      ".read": "auth != null",
+      "$uid": {
+        ".write": "auth != null && auth.uid === $uid",
+        ".validate": "newData.hasChildren(['n','c','h','x','y','z','r','s','t'])",
+        "n": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 20" },
+        "c": { ".validate": "newData.isString() && newData.val().matches(/^[a-z0-9]{1,12}$/)" },
+        "h": { ".validate": "newData.isString() && newData.val().matches(/^[a-z0-9]{1,12}$/)" },
+        "x": { ".validate": "newData.isNumber() && newData.val() >= -200 && newData.val() <= 200" },
+        "y": { ".validate": "newData.isNumber() && newData.val() >= -5 && newData.val() <= 20" },
+        "z": { ".validate": "newData.isNumber() && newData.val() >= -200 && newData.val() <= 200" },
+        "r": { ".validate": "newData.isNumber() && newData.val() >= -7 && newData.val() <= 7" },
+        "s": { ".validate": "newData.isString() && (newData.val() == 'idle' || newData.val() == 'walk' || newData.val() == 'sit' || newData.val() == 'mo' || newData.val() == 'beads' || newData.val() == 'bow')" },
+        "t": { ".validate": "newData.isNumber()" },
+        "$other": { ".validate": false }
+      }
+    },
+    "chat": {
+      ".read": "auth != null",
+      ".indexOn": ["t"],
+      "$id": {
+        ".write": "auth != null && !data.exists()",
+        ".validate": "newData.hasChildren(['id','n','m','t']) && newData.child('id').val() === auth.uid",
+        "id": { ".validate": "newData.isString()" },
+        "n": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 20" },
+        "m": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 80" },
+        "t": { ".validate": "newData.isNumber()" },
+        "$other": { ".validate": false }
+      }
+    }
+  }
+}
