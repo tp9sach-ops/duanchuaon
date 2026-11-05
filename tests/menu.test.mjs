@@ -15,11 +15,13 @@ test('lưới hành động có 6 nút; Linh thú bị khóa; mọi mục có bi
   for (const x of [...BOTTOM_MENU, ...ACTIONS, ...TOP_ICONS]) assert.ok(x.icon && x.label && (x.status === 'ready' || x.status === 'soon'), x.id);
 });
 test('nút chưa có tính năng báo "sắp có", không im lặng; nhãn đọc có ghi (sắp có)', () => {
-  const it = BOTTOM_MENU.find((m) => m.id === 'nhiemvu');
+  const it = BOTTOM_MENU.find((m) => m.id === 'xephang');
   assert.equal(isReady(it), false);
-  assert.deepEqual(pressResult(it), { kind: 'soon', text: 'Nhiệm vụ sắp có — đang được làm.' });
+  assert.deepEqual(pressResult(it), { kind: 'soon', text: 'Xếp hạng sắp có — đang được làm.' });
   assert.match(soonText(ACTIONS.find((a) => a.id === 'linhthu')), /khóa/);
-  assert.equal(ariaLabel(it), 'Nhiệm vụ (sắp có)');
+  assert.equal(ariaLabel(it), 'Xếp hạng (sắp có)');
+  assert.equal(isReady(BOTTOM_MENU.find((m) => m.id === 'nhiemvu')), true, 'Nhiệm vụ đã có (Phiên 17)');
+  assert.deepEqual(pressResult(BOTTOM_MENU.find((m) => m.id === 'nhiemvu')), { kind: 'quest' });
 });
 test('Lạy Phật, Thiền, Tràng hạt, Tụng kinh đã có chức năng (Phiên 14b)', () => {
   assert.deepEqual(pressResult(ACTIONS.find((a) => a.id === 'lay')), { kind: 'bow' });

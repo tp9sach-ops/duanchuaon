@@ -2,7 +2,7 @@
 // chừa một khoảng sát tường (0,3 m) rồi làm thẳng đường (bỏ điểm thừa nếu đi thẳng được). Trả danh sách điểm {x,z} hoặc null.
 import { blocked, canStep, CIRCLES, RECTS } from './layout.js';
 
-const S = 0.5, CLEAR = 0.5, X0 = -80, Z0 = -80, W = 320, H = 290;     // lưới phủ trọn khuôn viên mở rộng + đường ngoài cổng (|x|≤80; −80…65)
+const S = 0.5, CLEAR = 0.5, X0 = -130, Z0 = -80, W = 520, H = 480;     // lưới phủ khuôn viên + đường làng, rừng, thác ngoài cổng (−130…130; −80…160)
 const SQ2 = Math.SQRT2;
 
 /**

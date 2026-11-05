@@ -12,17 +12,24 @@ export const AVATAR_COLORS = [
   { id: 'trang', ten: 'Áo trắng',   ao: 0xe8e4d8, dai: 0xb9b4a4 },
   { id: 'do',    ten: 'Áo đỏ sẫm',  ao: 0x9a2f2a, dai: 0x5e1a17 },
 ];
+/** Trang phục chỉ NPC dùng (không có trong bảng chọn của người chơi). Cà sa Trụ trì: áo trong màu kem, cà sa vàng nghệ đắp lệch vai, viền ô ruộng nâu đỏ. */
+export const NPC_COLORS = [
+  { id: 'casa', ten: 'Cà sa Trụ trì', ao: 0xe9dcb5, dai: 0x7a2c12, casa: 0xc98a1c, vien: 0x7a2c12 },
+];
 export const DEFAULT_COLOR = '9sach';   // mặc định: đồng phục áo polo 9 Sạch
 
 /** Lấy màu theo id; id lạ trả về màu mặc định (không bao giờ undefined). */
 export function colorById(id) {
-  return AVATAR_COLORS.find((c) => c.id === id) || AVATAR_COLORS.find((c) => c.id === DEFAULT_COLOR);
+  return AVATAR_COLORS.find((c) => c.id === id) || NPC_COLORS.find((c) => c.id === id) || AVATAR_COLORS.find((c) => c.id === DEFAULT_COLOR);
 }
 
 /** Kiểu đầu: đầu trọc (mặc định, như tăng ni/cư sĩ) hoặc tóc búi. */
 export const HAIR_STYLES = [{ id: 'troc', ten: 'Đầu trọc' }, { id: 'bui', ten: 'Tóc búi' }];
 export const DEFAULT_HAIR = 'troc';
 export function hairById(id) { return HAIR_STYLES.find((h) => h.id === id) || HAIR_STYLES[0]; }
+/** Râu: '' (không), 'bac' (râu bạc dài, ria + lông mày bạc) hoặc 'den' (râu đen). Chỉ NPC dùng. */
+export const BEARDS = [{ id: '', ten: 'Không râu' }, { id: 'bac', ten: 'Râu bạc', mau: 0xece8e0 }, { id: 'den', ten: 'Râu đen', mau: 0x2a1c14 }];
+export function beardById(id) { return BEARDS.find((b) => b.id === id) || BEARDS[0]; }
 
 /** Hình dáng thân áo (mặt cắt xoay quanh trục đứng): [bán kính, độ cao]. Dùng chung cho avatar.js và việc dán logo lên áo. */
 export const BELL_PROFILE = [[0.001, 0], [0.36, 0], [0.4, 0.03], [0.39, 0.14], [0.33, 0.34], [0.27, 0.55], [0.23, 0.7], [0.2, 0.82], [0.001, 0.85]];

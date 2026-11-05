@@ -33,6 +33,9 @@ export const RECTS = [
 /** Thêm vật cản động (nhà tổ, am, ghế...) từ các module khác. */
 export const addCircle = (c) => CIRCLES.push(c);
 export const addRect = (r) => RECTS.push(r);
+/** Vùng đi bộ ngoài cổng chùa (Phiên 17: đường làng, chợ, đường mòn rừng/thác): hình chữ nhật {x0,x1,z0,z1}. Ngoài mọi vùng thì bị chặn. */
+export const WALKS = [];
+export const addWalk = (r) => WALKS.push(r);
 /** Hồ nước thêm (Phiên 14f): {x,z,r, bridges:[{x0,x1,z0,z1,y}]}. Trong hồ là vật cản, trừ các mảng cầu/đảo (đi được, cao y). */
 export const WATERS = [];
 export const addWater = (w) => WATERS.push(w);
@@ -63,7 +66,7 @@ export function groundY(x, z) {
 export function blocked(x, z) {
   // Ranh giới: trong sân, hoặc đường ngoài cổng
   const inside = Math.abs(x) <= BOUNDS.xMax && z >= BOUNDS.zMin && z <= GATE.z - 1.8;
-  const outside = Math.abs(x) <= 14 && z >= GATE.z + 2.4 && z <= 62;
+  const outside = (Math.abs(x) <= 14 && z >= GATE.z + 2.4 && z <= 62) || WALKS.some((w) => inRect(x, z, w));
   const inGate = z > GATE.z - 1.8 && z < GATE.z + 2.4 && inGateOpening(x);
   if (!inside && !outside && !inGate) return true;
   // Ao sen: chặn trừ lối cầu đá

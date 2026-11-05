@@ -2,7 +2,7 @@
 // Gốc tọa độ = dưới bàn chân, nhìn về +z (khớp quy ước ry của layout.js). Cao ~1,7 đơn vị.
 // Logic tư thế/tên/chat nằm ở avatarLogic.js (có test). Dùng: const a = createAvatar({ name, color }); scene.add(a.group); mỗi khung: a.update(dt).
 import * as THREE from 'three';
-import { DEFAULT_COLOR, colorById, hairById, cleanName, cleanSay, bubbleLife, wrapText, poseFor, turnToward, BELL_PROFILE, bellRadius, logoPatch, POLO_LOGOS } from './avatarLogic.js';
+import { DEFAULT_COLOR, colorById, hairById, beardById, cleanName, cleanSay, bubbleLife, wrapText, poseFor, turnToward, BELL_PROFILE, bellRadius, logoPatch, POLO_LOGOS } from './avatarLogic.js';
 
 const SKIN = 0xe8934c, HAIR = 0x1f1511, OUTLINE = 0x3a2314;
 const FONT = '600 38px "Be Vietnam Pro", "Noto Sans", system-ui, sans-serif';
@@ -27,6 +27,20 @@ function logoTexture() {
     im.src = LOGO_URL;
   }
   return LOGO_TEX;
+}
+
+// Texture cà sa: ô ruộng (hình chữ nhật vàng nghệ viền nâu đỏ, nhiều hàng) như áo cà sa truyền thống; dùng chung cho mọi cà sa.
+let CASA_TEX = null;
+function casaTexture() {
+  if (CASA_TEX) return CASA_TEX;
+  const c = canvas(128, 128), g = c.getContext('2d');
+  g.fillStyle = '#7a2c12'; g.fillRect(0, 0, 128, 128);
+  for (let r = 0; r < 4; r++) for (let q = 0; q < 2; q++) {
+    const x = q * 64 + 4, y = r * 32 + 4; g.fillStyle = r % 2 ? '#d6951f' : '#c98a1c'; g.fillRect(x, y, 56, 24);
+    g.fillStyle = 'rgba(255,230,150,.25)'; g.fillRect(x, y, 56, 4);
+  }
+  CASA_TEX = new THREE.CanvasTexture(c); CASA_TEX.colorSpace = THREE.SRGBColorSpace; CASA_TEX.wrapS = CASA_TEX.wrapT = THREE.RepeatWrapping; CASA_TEX.repeat.set(2, 1.2);
+  return CASA_TEX;
 }
 
 function makeSprite(tex, w, h, y) {
@@ -55,14 +69,14 @@ function bubbleTexture(text) {
 /** Tạo nhân vật chibi: đầu tròn to, thân áo hình chuông, mắt cười, má hồng, viền hoạt hình, hai tay chắp trước ngực.
  *  opts: { name, color (id màu áo), hair ('troc' | 'bui'), mine (true = nhân vật của mình: nhãn tên màu ngọc, mũi tên vàng ▼) }
  *  Gốc = dưới bàn chân, nhìn +z. Cao ~1,5 (đầu bán kính 0,42). Giao diện hàm giữ nguyên: group, setState, setFacing, say, update, dispose. */
-export function createAvatar({ name = 'Khách', color = DEFAULT_COLOR, hair: hairId = 'troc', mine = false } = {}) {
+export function createAvatar({ name = 'Khách', color = DEFAULT_COLOR, hair: hairId = 'troc', beard: beardId = '', mine = false } = {}) {
   const col = colorById(color), group = new THREE.Group(), rig = new THREE.Group();
   group.add(rig);
   const geos = [], mats = [];
   const geo = (g) => (geos.push(g), g);
   const std = (c, r = 0.62) => { const m = new THREE.MeshStandardMaterial({ color: c, roughness: r }); mats.push(m); return m; };
   const basic = (c, o = {}) => { const m = new THREE.MeshBasicMaterial({ color: c, ...o }); mats.push(m); return m; };
-  const polo = !!col.polo;
+  const polo = !!col.polo, casa = !!col.casa;
   const robeM = std(col.ao, 0.7), beltM = std(col.dai, 0.6), sleeveM = polo ? std(col.tay, 0.7) : robeM, stripeM = polo ? std(col.soc, 0.6) : null, skinM = std(SKIN, 0.55), hairM = std(HAIR, 0.8), goldM = std(0xe0a93a, 0.45), beadM = std(0xc9792f, 0.4), shoeM = std(0x4a2f1c, 0.8);
   const outM = basic(OUTLINE, { side: THREE.BackSide });
   const mesh = (g, m, parent, x = 0, y = 0, z = 0) => { const o = new THREE.Mesh(geo(g), m); o.position.set(x, y, z); parent.add(o); return o; };
@@ -84,9 +98,17 @@ export function createAvatar({ name = 'Khách', color = DEFAULT_COLOR, hair: hai
   const bellOut = new THREE.Mesh(bell, outM); bellOut.scale.set(1.07, 1.03, 1.07); robe.add(bellOut);
   const hem = mesh(new THREE.TorusGeometry(0.385, 0.026, 8, 30), beltM, robe, 0, 0.035, 0); hem.rotation.x = Math.PI / 2;
 
+  if (casa) {   // cà sa đắp lệch vai: một vỏ chuông hở phía trước-phải, có ô ruộng vàng/nâu đỏ, viền nâu đỏ ở mép và gấu
+    const prof = BELL_PROFILE.map(([r, y]) => new THREE.Vector2(r * 1.035 + 0.004, y));
+    const drape = new THREE.Mesh(geo(new THREE.LatheGeometry(prof, 36, -0.55, Math.PI * 2 - 1.05)), new THREE.MeshStandardMaterial({ map: casaTexture(), roughness: 0.75, side: THREE.DoubleSide })); mats.push(drape.material);
+    robe.add(drape);
+    const vienM = std(col.vien, 0.6);
+    const gau = mesh(new THREE.TorusGeometry(0.405, 0.022, 8, 36), vienM, robe, 0, 0.04, 0); gau.rotation.x = Math.PI / 2;
+    const strap = mesh(new THREE.TorusGeometry(0.29, 0.05, 8, 24), vienM, body, 0, 0.5, 0); strap.rotation.set(Math.PI / 2 - 0.85, 0.15, 0.4);   // dải vắt vai chéo ngực
+  }
   const upper = new THREE.Group(); body.add(upper);        // đầu, tay, dải vai: hạ xuống khi ngồi
   // Dải vàng chéo vai
-  if (!polo) { const sash = mesh(new THREE.TorusGeometry(0.285, 0.05, 8, 30), goldM, upper, 0, 0.46, 0); sash.rotation.set(Math.PI / 2 - 0.85, 0.15, 0.4); }   // áo polo không đeo dải chéo vai
+  if (!polo && !casa) { const sash = mesh(new THREE.TorusGeometry(0.285, 0.05, 8, 30), goldM, upper, 0, 0.46, 0); sash.rotation.set(Math.PI / 2 - 0.85, 0.15, 0.4); }   // áo polo không đeo dải chéo vai
   // Áo polo 9 Sạch: cổ xanh viền vàng (gắn vào phần trên, theo đầu), nẹp cúc + logo ngực trái + logo lưng (gắn vào thân, giữ nguyên tỉ lệ khi ngồi)
   const trim = [];   // các chi tiết dán trên thân: bù lại phép co chiều cao của `robe` khi ngồi để không bị méo
   if (polo) {
@@ -109,8 +131,10 @@ export function createAvatar({ name = 'Khách', color = DEFAULT_COLOR, hair: hai
   // Tay: ngắn mập, hai bàn tay chụm trước ngực
   const armG = geo(new THREE.CylinderGeometry(0.062, 0.056, 0.3, 8)); armG.translate(0, -0.15, 0);
   const handG = geo(new THREE.SphereGeometry(0.07, 10, 8));
+  const casaM = casa ? std(col.casa, 0.7) : null;
   const mkArm = (x) => {
-    const p = new THREE.Group(); p.position.set(x, 0.64, 0.04); const a = new THREE.Mesh(armG, sleeveM); p.add(a); const h = new THREE.Mesh(handG, skinM); h.position.y = -0.31; p.add(h); upper.add(p);
+    const sm = casa && x > 0 ? casaM : sleeveM;   // cà sa: tay trái (x > 0) phủ cà sa, tay phải lộ áo trong
+    const p = new THREE.Group(); p.position.set(x, 0.64, 0.04); const a = new THREE.Mesh(armG, sm); p.add(a); const h = new THREE.Mesh(handG, skinM); h.position.y = -0.31; p.add(h); upper.add(p);
     if (polo) {   // áo polo: vai tròn xanh + viền vàng ở cổ tay áo
       mesh(new THREE.SphereGeometry(0.07, 10, 8), sleeveM, p, 0, 0.005, 0);
       const cuff = mesh(new THREE.TorusGeometry(0.06, 0.014, 6, 14), stripeM, p, 0, -0.255, 0); cuff.rotation.x = Math.PI / 2;
@@ -130,6 +154,16 @@ export function createAvatar({ name = 'Khách', color = DEFAULT_COLOR, hair: hai
   const mouth = new THREE.Mesh(geo(new THREE.TorusGeometry(0.034, 0.011, 6, 12, Math.PI)), eyeM); mouth.position.set(0, -0.1, 0.408); mouth.rotation.z = Math.PI; head.add(mouth);
   const cheekM = basic(0xf06a6a, { transparent: true, opacity: 0.55, depthWrite: false }), cheekG = geo(new THREE.CircleGeometry(0.062, 14));
   for (const sx of [-1, 1]) { const c = new THREE.Mesh(cheekG, cheekM); c.position.set(sx * 0.255, -0.06, 0.332); c.rotation.y = sx * 0.85; head.add(c); }
+  const bd = beardById(beardId);
+  if (bd.id) {   // râu: ria mép + chòm râu dài dưới cằm + lông mày cùng màu
+    const bm = std(bd.mau, 0.85);
+    for (const sx of [-1, 1]) {
+      const mu = mesh(new THREE.SphereGeometry(0.075, 10, 8), bm, head, sx * 0.065, -0.062, 0.4); mu.scale.set(1.25, 0.5, 0.6); mu.rotation.z = sx * -0.35;
+      const br = mesh(new THREE.SphereGeometry(0.06, 8, 6), bm, head, sx * 0.16, 0.115, 0.375); br.scale.set(1.5, 0.35, 0.5); br.rotation.z = sx * -0.25;
+    }
+    const chin = mesh(new THREE.SphereGeometry(0.2, 16, 12), bm, head, 0, -0.27, 0.27); chin.scale.set(1.05, 1.15, 0.55);   // râu quanh cằm
+    const tail = mesh(new THREE.ConeGeometry(0.17, 0.5, 14), bm, head, 0, -0.55, 0.3); tail.rotation.x = Math.PI + 0.12; tail.scale.set(1, 1, 0.55);   // chòm râu dài buông xuống ngực
+  }
   if (hairById(hairId).id === 'bui') {   // tóc đen phủ đỉnh đầu + búi tròn
     const cap = mesh(new THREE.SphereGeometry(0.435, 24, 14, 0, Math.PI * 2, 0, Math.PI * 0.43), hairM, head, 0, 0.01, -0.025); cap.scale.set(1, 0.97, 1); cap.rotation.x = -0.32;
     mesh(new THREE.SphereGeometry(0.125, 14, 10), hairM, head, 0, 0.5, -0.1);

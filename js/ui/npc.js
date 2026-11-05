@@ -12,7 +12,8 @@ export function initNpc({ toast, addMerit }) {
     if (!r) return;
     save(r.state);
     const a = LGT.npcs && LGT.npcs[id]; if (a && a.say) a.say(r.line);
-    toast(`${r.npc.ten}: “${r.line}”`, 6500);
+    toast(r.npc.act ? `${r.npc.ten}: ${r.line}` : `${r.npc.ten}: “${r.line}”`, 6500);
+    if (LGT.act) LGT.act(r.npc.act ? 'visit' : 'npc', id);   // nhiệm vụ: trò chuyện / ghé điểm cảnh
     if (r.reward) { addMerit(r.reward); setTimeout(() => toast(`${r.npc.ten} tặng bạn ${r.reward} hạt sen hôm nay.`, 3500), 2500); }
   };
 }

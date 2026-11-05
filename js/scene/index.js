@@ -23,6 +23,7 @@ import { buildCushions } from './boduon.js';
 import { buildHoaSen } from './hoasen.js';
 import { buildNpcs } from './npc.js';
 import { buildLandscape } from './landscape.js';
+import { buildOutside } from './outside.js';
 import { buildGlbTrees } from './glbprops.js';
 import { inHall } from '../world/landscape.js';
 
@@ -76,6 +77,7 @@ export function createScene(canvas, { onProgress, onPick, onArrive } = {}) {
   const hoaSen = buildHoaSen(LGT); scene.add(hoaSen.group);
   const npcs = buildNpcs(scene, LGT);   // NPC: Trụ trì, Tri khách, cư sĩ vườn thiền (Phiên 14g)   // hoa sen vàng nhận lộc
   const land = buildLandscape(); scene.add(shade(land.group));   // cảnh quan mở rộng (Phiên 14f)
+  const outside = buildOutside(); scene.add(shade(outside.group));   // khu ngoài chùa: làng, chợ, rừng, thác (Phiên 17)
   scene.add(buildGlbTrees().group);   // cây GLB rải trong vườn (Phiên 14f, Bước 3): nạp nền, từng loại hiện khi nạp xong
 
   // --- quần thể chùa (GLB): nạp nền, không chặn màn hình chờ. Lỗi thì bỏ qua.
@@ -169,7 +171,7 @@ export function createScene(canvas, { onProgress, onPick, onArrive } = {}) {
     if (Math.abs(viewX) > 0.5) camera.setViewOffset(w, h, viewX, 0, w, h); else if (camera.view && camera.view.enabled) camera.clearViewOffset();
 
     if (world) { const wp = world.pos; moonLight.target.position.set(wp.x, 0, wp.z); moonLight.position.set(wp.x + sunOffset.x, sunOffset.y, wp.z + sunOffset.z); }   // vùng đổ bóng đi theo người chơi
-    hoaSen.update(t); land.update(t); if (world) npcs.update(dt, world.pos);
+    hoaSen.update(t); land.update(t); outside.update(t); if (world) npcs.update(dt, world.pos);
     sky.rotation.y = t * 0.004;
     if (!reduce) {
       if (!DAY) fireflies.update(t); petals.update(t, dt); smoke.update(t, dt);

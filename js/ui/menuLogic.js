@@ -5,7 +5,7 @@ import { SPOTS } from '../world/spots.js';
 
 /** Thanh menu dưới (desktop) / menu dọc bên phải (điện thoại): đúng 9 mục như ảnh mẫu. */
 export const BOTTOM_MENU = [
-  { id: 'nhiemvu',   label: 'Nhiệm vụ',    icon: 'scroll', status: 'soon' },
+  { id: 'nhiemvu',   label: 'Nhiệm vụ',    icon: 'scroll', status: 'ready', action: 'quest' },
   { id: 'tuido',     label: 'Túi đồ',      icon: 'bag',    status: 'soon' },
   { id: 'cuahang',   label: 'Cửa hàng',    icon: 'shop',   status: 'soon' },
   { id: 'congdong',  label: 'Cộng đồng',   icon: 'people', status: 'ready', action: 'chat' },
@@ -61,7 +61,7 @@ export function pressResult(item) {
   if (!item) return { kind: 'none' };
   if (!isReady(item)) return { kind: 'soon', text: soonText(item) };
   if (item.action === 'goto') return { kind: 'goto', id: item.target };
-  if (['map', 'share', 'help', 'bow', 'meditate', 'le', 'den', 'chat', 'beads', 'chant'].includes(item.action)) return { kind: item.action };
+  if (['map', 'share', 'help', 'bow', 'meditate', 'le', 'den', 'chat', 'quest', 'beads', 'chant'].includes(item.action)) return { kind: item.action };
   return { kind: 'soon', text: soonText(item) };
 }
 

@@ -3,7 +3,7 @@
 // Thuần hàm (không three.js, có test). Đổi vị trí ở ĐÂY rồi chạy `npm test` (test kiểm điểm đứng đi tới được từ chỗ xuất hiện).
 import { BUILDINGS, buildingFront } from './placements.js';
 import { facingOf } from './worldLogic.js';
-import { NPCS, npcSpot } from './npc.js';
+import { TALKERS, npcSpot } from './npc.js';
 
 const nhaTo = BUILDINGS.find((b) => b.id === 'nhato');
 
@@ -21,7 +21,7 @@ export const SPOTS = [
 ];
 
 /** Spot của các NPC (bấm vào NPC → đi tới → thưa chuyện). Không nằm trong SPOTS để không hiện ở nhãn nổi / bản đồ chương. */
-export const NPC_SPOTS = NPCS.map(npcSpot);
+export const NPC_SPOTS = TALKERS.map(npcSpot);
 const ALL_SPOTS = [...SPOTS, ...NPC_SPOTS];
 export const isNpcSpot = (id) => NPC_SPOTS.some((s) => s.id === id);
 export const spotById = (id) => ALL_SPOTS.find((s) => s.id === id) || null;

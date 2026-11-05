@@ -52,7 +52,7 @@ export function initDen(hud, { toast = () => {}, addMerit = () => {} } = {}) {
   root.querySelector('.dn-row').addEventListener('click', (e) => {
     const b = e.target.closest('[data-n]'); if (!b) return;
     const n = +b.dataset.n; nhang = thapNhang(nhang, n); write(K_NHANG, nhang); bellSound(); drawLe();
-    const m = nhangMerit(n); if (m) addMerit(m);
+    const m = nhangMerit(n); if (m) addMerit(m); window.LGT && window.LGT.act && window.LGT.act('nhang', n);
     pushLog('nhang', `Thắp ${n} nén nhang`); toast(`Đã thắp ${n} nén nhang${m ? ` · +${m} hạt sen` : ''}.`, 3500);
   });
   $('dn-to-den').addEventListener('click', () => show('den'));
@@ -88,7 +88,7 @@ export function initDen(hud, { toast = () => {}, addMerit = () => {} } = {}) {
     e.preventDefault(); const msg = $('dn-msg'), r = makeLamp($('dn-in').value, profileName());
     if (!r.ok) { msg.textContent = { empty: 'Hãy viết điều bạn nguyện.', no_links: 'Không đưa đường dẫn hoặc email vào điều nguyện.', no_numbers: 'Không đưa số điện thoại hoặc dãy số dài vào điều nguyện.' }[r.error] || ''; return; }
     msg.textContent = ''; lamps = addLamp(lamps, r.lamp); write(K_DEN, lamps); $('dn-in').value = '';
-    tab = 'chua'; drawTabs(); drawList(); bellSound(); addMerit(DEN_MERIT.lamp); pushLog('den', 'Thả một ngọn đèn nguyện');
+    tab = 'chua'; drawTabs(); drawList(); bellSound(); addMerit(DEN_MERIT.lamp); pushLog('den', 'Thả một ngọn đèn nguyện'); window.LGT && window.LGT.act && window.LGT.act('den');
     toast(`Đèn nguyện đã được thả · +${DEN_MERIT.lamp} hạt sen.`, 3500);
     const sh = $('dn-share');
     if (sh && sh.checked) callApi('addPrayer', { userKey: getUserKey(), noiDung: r.lamp.text, congKhai: true }).then((x) => {
@@ -118,6 +118,6 @@ export function initDen(hud, { toast = () => {}, addMerit = () => {} } = {}) {
   }
   function openDen() { if (LGT.panelOpen) return; show('den'); }
   /** Nhận lộc từ hoa sen vàng (gọi bởi js/scene/hoasen.js qua LGT.onLoc). */
-  LGT.onLoc = () => { bellSound(); addMerit(DEN_MERIT.loc); pushLog('loc', 'Nhận lộc hoa sen vàng'); toast(`Bạn nhận được lộc từ hoa sen vàng · +${DEN_MERIT.loc} hạt sen.`, 4500); if (view === 'den') drawList(); };
+  LGT.onLoc = () => { bellSound(); addMerit(DEN_MERIT.loc); pushLog('loc', 'Nhận lộc hoa sen vàng'); window.LGT.act && window.LGT.act('loc'); toast(`Bạn nhận được lộc từ hoa sen vàng · +${DEN_MERIT.loc} hạt sen.`, 4500); if (view === 'den') drawList(); };
   return { openLe, openDen, close };
 }

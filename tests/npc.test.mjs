@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { NPCS, npcById, npcSpot, talk, loadNpcState, dayKey, REWARD, NPC_R } from '../js/world/npc.js';
+import { NPCS, ACTS, TALKERS, VILLAGERS, npcById, npcSpot, talk, loadNpcState, dayKey, REWARD, NPC_R } from '../js/world/npc.js';
 import { spotById, pickSpot, NPC_SPOTS, isNpcSpot, SPOTS } from '../js/world/spots.js';
 import { blocked, canStep, SPAWN } from '../js/world/layout.js';
 import '../js/world/placements.js';
@@ -27,8 +27,8 @@ test('NPC đứng trong vật cản của chính nó, điểm đứng đi tới 
   }
 });
 test('NPC dùng chung cơ chế bấm → đi tới: có spot, bấm trúng khối cầu, không lẫn vào 6 chương', () => {
-  assert.equal(SPOTS.length, 6); assert.equal(NPC_SPOTS.length, NPCS.length);
-  for (const n of NPCS) { const s = spotById('npc-' + n.id); assert.ok(s && isNpcSpot(s.id)); }
+  assert.equal(SPOTS.length, 6); assert.equal(NPC_SPOTS.length, TALKERS.length);
+  for (const n of TALKERS) { const s = spotById('npc-' + n.id); assert.ok(s && isNpcSpot(s.id)); }
   const n = NPCS[0], s = npcSpot(n), L = Math.hypot(0, s.pick.c[1] - 1.6, -5);
   const hit = pickSpot({ x: n.x, y: 1.6, z: n.z + 5 }, { x: 0, y: (s.pick.c[1] - 1.6) / L, z: -5 / L });
   assert.equal(hit && hit.spot.id, 'npc-' + n.id);
@@ -48,4 +48,18 @@ test('trạng thái hỏng/độc không làm vỡ: chuỗi sai, id lạ, số �
   assert.deepEqual(loadNpcState({ last: { x: '2026-01-01' }, n: { x: 5 } }), { last: {}, n: {} });
   assert.equal(loadNpcState({ n: { truru: -4 } }).n.truru, 0);
   assert.equal(dayKey(new Date(2026, 0, 2).getTime()), '2026-01-02');
+});
+
+test('dân làng và hoạt động ngoài chùa: id duy nhất, lời ≤ 80 ký tự, điểm đứng/spot đi tới được và bấm trúng được', () => {
+  assert.equal(VILLAGERS.length, 6); assert.equal(new Set(TALKERS.map((t) => t.id)).size, TALKERS.length);
+  for (const t of TALKERS) {
+    assert.ok(t.lines.length >= 3, t.id);
+    for (const l of t.lines) { assert.ok(Array.from(l).length <= 80, l); assert.equal(cleanSay(l), l, l); }
+    assert.equal(blocked(t.stand.x, t.stand.z), false, t.id + ' điểm đứng trống'); assert.ok(has(t.stand.x, t.stand.z), t.id + ' đi tới được');
+  }
+  for (const a of ACTS) {   // bấm từ chỗ đứng nhìn vào tâm khối cầu phải trúng đúng hoạt động đó
+    const s = npcSpot(a), c = s.pick.c, o = { x: a.stand.x, y: 1.6, z: a.stand.z }, d = { x: c[0] - o.x, y: c[1] - o.y, z: c[2] - o.z }, L = Math.hypot(d.x, d.y, d.z);
+    const hit = pickSpot(o, { x: d.x / L, y: d.y / L, z: d.z / L }); assert.ok(hit, a.id); assert.ok(hit.spot.npc, a.id);
+  }
+  const r = talk(null, 'thacnuoc'); assert.ok(r && r.reward === REWARD && r.npc.act);
 });

@@ -4,6 +4,7 @@ import { initPractice } from './practice.js';
 import { initDen } from './den.js';
 import { initNpc } from './npc.js';
 import { initChat } from './chat.js';
+import { initQuest } from './quest.js';
 import { loadWallet, addSen } from '../engines/kinh.js';
 import { callApi, apiEnabled, getUserKey } from '../api.js';
 import { loadProfile } from './hudLogic.js';
@@ -90,6 +91,7 @@ export function initHudMenu(hud) {
   const den = initDen(hud, { toast, addMerit });
   initNpc({ toast, addMerit });
   const chat = initChat(hud, { toast });
+  const quest = initQuest(hud, { toast, addMerit, pillHost: root.querySelector('.hm-wallet') });   // nhiệm vụ + cấp độ (Phiên 17)
 
   // ---- bản đồ chùa (lối đi tới chương: liên kết #id, stage.js tự bắt và cho nhân vật đi tới)
   const mapBox = $('hm-map');
@@ -118,11 +120,12 @@ export function initHudMenu(hud) {
     if (r.kind === 'bow' || r.kind === 'meditate') {
       if (LGT.panelOpen || !LGT.world) return;
       const ok = r.kind === 'bow' ? LGT.world.bow() : LGT.world.meditate();
-      if (ok === 'outside') toast(OUTSIDE_TEXT, 4500); else if (ok === false) toast('Bạn đang bận, thử lại sau một chút nhé.', 2500);
+      if (ok === 'outside') toast(OUTSIDE_TEXT, 4500); else if (ok === false) toast('Bạn đang bận, thử lại sau một chút nhé.', 2500); else if (ok && LGT.act) LGT.act(r.kind === 'bow' ? 'bow' : 'thien');
       return;
     }
     if (r.kind === 'beads' || r.kind === 'chant') return practice.open(r.kind);
     if (r.kind === 'chat') return chat.toggle();
+    if (r.kind === 'quest') return quest.toggle();
     if (r.kind === 'le') return den.openLe();
     if (r.kind === 'den') return den.openDen();
     if (r.kind === 'goto') {

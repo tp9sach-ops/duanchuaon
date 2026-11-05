@@ -1,0 +1,120 @@
+// Nhiệm vụ + cấp độ của người chơi (Phiên 16 sớm). LOGIC THUẦN (không DOM, không three.js, có test): tests/quests.test.mjs.
+// Mọi giá trị (điểm kinh nghiệm, hạt sen thưởng, ngưỡng cấp) là QUY ƯỚC TẠM của dự án, chờ ptg duyệt.
+// Cách dùng: prog = loadProg(raw); r = record(prog, { type:'nhang', n:3 }, Date.now()); r.prog (lưu lại), r.done (nhiệm vụ vừa xong), r.levelUp.
+// Giao diện: js/ui/quest.js. Các nơi phát sự kiện gọi window.LGT.act(type, arg|n) (xem js/ui/quest.js).
+
+/** Các loại sự kiện hợp lệ. 'npc' và 'visit' có `arg` (id NPC / id điểm đến); 'nhang' có n = số nén. */
+export const EVENT_TYPES = ['nhang', 'bow', 'thien', 'kinh', 'niem', 'den', 'loc', 'npc', 'visit', 'chat'];
+
+/** Cấp độ: ngưỡng điểm tối thiểu để đạt cấp i+1 và danh hiệu. Cấp tối đa = số phần tử. */
+export const LEVELS = [
+  { xp: 0, ten: 'Khách vãng lai' }, { xp: 30, ten: 'Người sơ tâm' }, { xp: 80, ten: 'Phật tử' }, { xp: 150, ten: 'Thiện tín' },
+  { xp: 250, ten: 'Hộ pháp' }, { xp: 400, ten: 'Cư sĩ' }, { xp: 600, ten: 'Thiện tri thức' }, { xp: 900, ten: 'Đạo hữu' },
+  { xp: 1300, ten: 'Tịnh nhân' }, { xp: 1800, ten: 'Trưởng lão cư sĩ' },
+];
+/** Thưởng hạt sen khi lên tới cấp `lv` (cấp 1 không thưởng). */
+export const levelReward = (lv) => (lv > 1 ? lv * 2 : 0);
+
+/**
+ * Danh sách nhiệm vụ. loai: 'ngay' (làm lại mỗi ngày, tính theo ngày địa phương) | 'mot' (một lần suốt đời).
+ * dk.key: 'nhang' | 'bow' | ... hoặc 'visit:<id>' (đến đúng điểm) ; dk.distinct = đếm số id KHÁC NHAU của sự kiện (npc, visit); dk.n = số cần đạt.
+ */
+export const QUESTS = [
+  { id: 'n-nhang', loai: 'ngay', ten: 'Thắp nén nhang đầu ngày', mo: 'Mở "Dâng lễ" và thắp ít nhất 1 nén nhang.', dk: { key: 'nhang', n: 1 }, xp: 10, sen: 1 },
+  { id: 'n-lay', loai: 'ngay', ten: 'Lạy Phật ba lạy', mo: 'Vào chánh điện, bấm "Lạy Phật" 3 lần.', dk: { key: 'bow', n: 3 }, xp: 15, sen: 1 },
+  { id: 'n-kinh', loai: 'ngay', ten: 'Tụng trọn một thời kinh', mo: 'Bấm "Tụng kinh", gõ mõ tới hết một lần.', dk: { key: 'kinh', n: 1 }, xp: 20, sen: 2 },
+  { id: 'n-thien', loai: 'ngay', ten: 'Ngồi thiền một lát', mo: 'Bấm "Thiền" trong chánh điện.', dk: { key: 'thien', n: 1 }, xp: 10, sen: 1 },
+  { id: 'n-npc', loai: 'ngay', ten: 'Hỏi thăm một người', mo: 'Bấm vào một thầy hoặc một người dân để trò chuyện.', dk: { key: 'npc', n: 1 }, xp: 10, sen: 1 },
+  { id: 'm-npc', loai: 'mot', ten: 'Làm quen mọi người', mo: 'Trò chuyện với 5 người khác nhau trong và ngoài chùa.', dk: { key: 'npc', n: 5, distinct: true }, xp: 40, sen: 3 },
+  { id: 'm-lang', loai: 'mot', ten: 'Ra làng', mo: 'Đi ra khỏi cổng chùa, tới làng.', dk: { key: 'visit:lang', n: 1 }, xp: 25, sen: 2 },
+  { id: 'm-thac', loai: 'mot', ten: 'Nghe tiếng thác', mo: 'Theo đường mòn tới thác nước trong rừng.', dk: { key: 'visit:thacnuoc', n: 1 }, xp: 40, sen: 3 },
+  { id: 'm-rung', loai: 'mot', ten: 'Dạo rừng thông', mo: 'Đi tới khu rừng thông phía Tây.', dk: { key: 'visit:rung', n: 1 }, xp: 25, sen: 2 },
+  { id: 'm-dao', loai: 'mot', ten: 'Dạo khắp nơi', mo: 'Đặt chân tới 8 nơi khác nhau (sân, vườn, hồ, làng, rừng, thác...).', dk: { key: 'visit', n: 8, distinct: true }, xp: 60, sen: 5 },
+  { id: 'm-den', loai: 'mot', ten: 'Thả ngọn đèn nguyện đầu tiên', mo: 'Mở "Đèn nguyện" và viết điều bạn nguyện.', dk: { key: 'den', n: 1 }, xp: 25, sen: 2 },
+  { id: 'm-niem', loai: 'mot', ten: 'Lần đủ 108 hạt', mo: 'Bấm "Tràng hạt" và lần đủ một vòng.', dk: { key: 'niem', n: 1 }, xp: 30, sen: 3 },
+  { id: 'm-nhang', loai: 'mot', ten: 'Hai mươi mốt nén hương', mo: 'Thắp tổng cộng 21 nén nhang.', dk: { key: 'nhang', n: 21 }, xp: 40, sen: 3 },
+  { id: 'm-kinh', loai: 'mot', ten: 'Năm thời kinh', mo: 'Tụng trọn 5 lần kinh.', dk: { key: 'kinh', n: 5 }, xp: 50, sen: 4 },
+  { id: 'm-loc', loai: 'mot', ten: 'Nhận lộc hoa sen vàng', mo: 'Tìm hoa sen vàng trong chùa và nhận lộc.', dk: { key: 'loc', n: 1 }, xp: 20, sen: 2 },
+];
+export const questById = (id) => QUESTS.find((q) => q.id === id) || null;
+
+/** Ngày địa phương YYYY-MM-DD. */
+export const dayKey = (now = Date.now()) => { const d = new Date(now), p = (x) => String(x).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`; };
+
+const cnt = (x, max = 1e6) => (Number.isFinite(+x) ? Math.max(0, Math.min(max, Math.floor(+x))) : 0);
+const isObj = (o) => o && typeof o === 'object' && !Array.isArray(o);
+const idStr = (s) => (typeof s === 'string' && /^[\w-]{1,30}$/.test(s) ? s : null);
+
+/** Trạng thái trống. */
+export const emptyProg = () => ({ xp: 0, tot: {}, seen: {}, done: {}, day: { k: '', n: {}, seen: {}, done: {} } });
+
+/** Đọc trạng thái đã lưu (chuỗi JSON hoặc đối tượng). Dữ liệu hỏng/lạ → bỏ phần hỏng, không bao giờ ném lỗi. */
+export function loadProg(raw) {
+  let o = raw; if (typeof raw === 'string') { try { o = JSON.parse(raw); } catch (_) { o = null; } }
+  const p = emptyProg(); if (!isObj(o)) return p;
+  p.xp = cnt(o.xp, 1e9);
+  if (isObj(o.tot)) for (const k of Object.keys(o.tot)) if (/^[\w:-]{1,40}$/.test(k)) p.tot[k] = cnt(o.tot[k]);
+  if (isObj(o.seen)) for (const k of Object.keys(o.seen)) if (EVENT_TYPES.includes(k) && Array.isArray(o.seen[k])) p.seen[k] = [...new Set(o.seen[k].map(idStr).filter(Boolean))].slice(0, 100);
+  if (isObj(o.done)) for (const q of QUESTS) if (q.loai === 'mot' && o.done[q.id] === true) p.done[q.id] = true;
+  if (isObj(o.day) && typeof o.day.k === 'string') {
+    p.day.k = o.day.k.slice(0, 10);
+    if (isObj(o.day.n)) for (const k of Object.keys(o.day.n)) if (/^[\w:-]{1,40}$/.test(k)) p.day.n[k] = cnt(o.day.n[k]);
+    if (isObj(o.day.seen)) for (const k of Object.keys(o.day.seen)) if (EVENT_TYPES.includes(k) && Array.isArray(o.day.seen[k])) p.day.seen[k] = [...new Set(o.day.seen[k].map(idStr).filter(Boolean))].slice(0, 100);
+    if (isObj(o.day.done)) for (const q of QUESTS) if (q.loai === 'ngay' && o.day.done[q.id] === true) p.day.done[q.id] = true;
+  }
+  return p;
+}
+
+/** Cấp hiện tại theo điểm: { lv, ten, xp, xp0 (ngưỡng cấp này), xp1 (ngưỡng cấp sau, null nếu tối đa), pct (0..100 tới cấp sau) }. */
+export function levelOf(xp) {
+  const x = cnt(xp, 1e9); let i = 0; while (i + 1 < LEVELS.length && x >= LEVELS[i + 1].xp) i++;
+  const xp0 = LEVELS[i].xp, nxt = LEVELS[i + 1], xp1 = nxt ? nxt.xp : null;
+  return { lv: i + 1, ten: LEVELS[i].ten, xp: x, xp0, xp1, pct: xp1 == null ? 100 : Math.round(((x - xp0) / (xp1 - xp0)) * 100) };
+}
+
+/** Sang ngày mới thì làm lại bộ đếm hằng ngày (trả bản sao). */
+function rollDay(prog, now) {
+  const k = dayKey(now), p = { ...prog, tot: { ...prog.tot }, seen: { ...prog.seen }, done: { ...prog.done }, day: { ...prog.day } };
+  if (p.day.k !== k) p.day = { k, n: {}, seen: {}, done: {} };
+  else p.day = { k, n: { ...p.day.n }, seen: { ...p.day.seen }, done: { ...p.day.done } };
+  return p;
+}
+
+/** Giá trị tiến độ hiện có của nhiệm vụ q (trước khi giới hạn bởi dk.n). */
+export function progressValue(prog, q, now = Date.now()) {
+  const daily = q.loai === 'ngay', src = daily ? (prog.day.k === dayKey(now) ? prog.day : { n: {}, seen: {} }) : prog;
+  if (q.dk.distinct) { const base = q.dk.key.split(':')[0]; return (src.seen[base] || []).length; }
+  return (daily ? src.n : src.tot)[q.dk.key] || 0;
+}
+const isDone = (prog, q, now) => (q.loai === 'ngay' ? prog.day.k === dayKey(now) && !!prog.day.done[q.id] : !!prog.done[q.id]);
+
+/** Danh sách nhiệm vụ kèm tiến độ để hiển thị: { q, cur, need, done }. Hằng ngày trước, một lần sau. */
+export function questStatus(prog, now = Date.now()) {
+  return QUESTS.map((q) => { const d = isDone(prog, q, now); return { q, need: q.dk.n, cur: d ? q.dk.n : Math.min(q.dk.n, progressValue(prog, q, now)), done: d }; })
+    .sort((a, b) => (a.q.loai === b.q.loai ? 0 : a.q.loai === 'ngay' ? -1 : 1));
+}
+
+/**
+ * Ghi một sự kiện. ev = { type, n?, arg? }. Trả { prog (mới, không sửa bản cũ), done: [nhiệm vụ vừa hoàn thành], gain: {xp, sen}, levelUp: {from,to,sen}|null }.
+ * Sự kiện lạ/hỏng → không làm gì. Hoàn thành nhiệm vụ cộng điểm + hạt sen; lên cấp cộng thêm levelReward.
+ */
+export function record(prog0, ev, now = Date.now()) {
+  const none = { prog: prog0, done: [], gain: { xp: 0, sen: 0 }, levelUp: null };
+  if (!ev || !EVENT_TYPES.includes(ev.type)) return none;
+  const arg = ev.arg == null ? null : idStr(String(ev.arg)); if ((ev.type === 'npc' || ev.type === 'visit') && !arg) return none;
+  const n = ev.type === 'nhang' ? Math.max(1, Math.min(9, cnt(ev.n || 1))) : 1;
+  const p = rollDay(prog0, now), keys = [ev.type]; if (arg) keys.push(ev.type + ':' + arg);
+  for (const k of keys) { p.tot[k] = cnt((p.tot[k] || 0) + n); p.day.n[k] = cnt((p.day.n[k] || 0) + n); }
+  if (arg) {
+    for (const holder of [p, p.day]) { const list = holder.seen[ev.type] || []; if (!list.includes(arg)) holder.seen[ev.type] = [...list, arg].slice(0, 100); }
+  }
+  const done = []; let xp = 0, sen = 0;
+  for (const q of QUESTS) {
+    if (isDone(p, q, now)) continue;
+    if (progressValue(p, q, now) >= q.dk.n) { if (q.loai === 'ngay') p.day.done[q.id] = true; else p.done[q.id] = true; done.push(q); xp += q.xp; sen += q.sen; }
+  }
+  const before = levelOf(p.xp).lv; p.xp = cnt(p.xp + xp, 1e9);
+  const after = levelOf(p.xp).lv; let levelUp = null;
+  if (after > before) { let bonus = 0; for (let l = before + 1; l <= after; l++) bonus += levelReward(l); sen += bonus; levelUp = { from: before, to: after, sen: bonus }; }
+  return { prog: p, done, gain: { xp, sen }, levelUp };
+}

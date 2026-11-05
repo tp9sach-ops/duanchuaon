@@ -46,7 +46,7 @@ export function initPractice(hud, { toast = () => {}, addMerit = () => {} } = {}
     if (kind !== 'beads') return;
     const r = beads.pull(); beadSound(); save(K_NIEM, beads.state()); drawBeads();
     const m = meritForPull(r); if (m) addMerit(m);
-    if (r.full) { setTimeout(bellSound, 150); toast('Đã lần đủ 108 hạt. Công đức tròn đầy.', 4500); }
+    if (r.full) { window.LGT && window.LGT.act && window.LGT.act('niem'); setTimeout(bellSound, 150); toast('Đã lần đủ 108 hạt. Công đức tròn đầy.', 4500); }
   }
   const ring = $('pr-ring'); ring.style.touchAction = 'none';
   ring.addEventListener('pointerup', pull);
@@ -69,7 +69,7 @@ export function initPractice(hud, { toast = () => {}, addMerit = () => {} } = {}
     if (kind !== 'chant' || !chanter) return;
     moSound(); const ev = chanter.tap(); drawChant();
     const m = meritForChant(ev); if (m) addMerit(m);
-    if (ev.round) { setTimeout(bellSound, 200); toast('Đã tụng trọn một lần. Công đức tròn đầy.', 4000); }
+    if (ev.round) { window.LGT && window.LGT.act && window.LGT.act('kinh'); setTimeout(bellSound, 200); toast('Đã tụng trọn một lần. Công đức tròn đầy.', 4000); }
   }
   $('pr-mo').addEventListener('click', tap);
   $('pr-auto').addEventListener('change', (e) => { clearInterval(autoTimer); if (e.target.checked) autoTimer = setInterval(tap, 625); });
