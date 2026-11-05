@@ -67,11 +67,11 @@ export function createRemotes() {
       }
     },
     step(dt) {
-      const k = 1 - Math.exp(-Math.max(0, dt) * 3.2), out = [];
+      const k = 1 - Math.exp(-Math.max(0, dt) * 1.4), out = [], vmax = 6.5 * Math.max(0, dt);   // tối đa 6,5 m/s: không phóng nhanh sau khi trễ
       for (const p of m.values()) {
         const ox = p.x, oz = p.z, dx = p.tx - p.x, dz = p.tz - p.z;
         if (Math.hypot(dx, dz) > 12) { p.x = p.tx; p.z = p.tz; }          // dịch chuyển xa: nhảy tới luôn, không trượt xuyên chùa
-        else { p.x += dx * k; p.z += dz * k; }
+        else { let sx = dx * k, sz = dz * k; const sl = Math.hypot(sx, sz); if (sl > vmax) { sx *= vmax / sl; sz *= vmax / sl; } p.x += sx; p.z += sz; }
         p.y += (p.ty - p.y) * (1 - Math.exp(-Math.max(0, dt) * 8));
         p.r += angleDiff(p.r, p.tr) * (1 - Math.exp(-Math.max(0, dt) * 8));
         p.speed = dt > 0 ? Math.hypot(p.x - ox, p.z - oz) / dt : 0;
