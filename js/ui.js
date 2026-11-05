@@ -107,9 +107,19 @@ export function initSound() {
     on = !on; try { localStorage.setItem('lgt.sound', on ? '1' : '0'); } catch (_) { /* bỏ qua */ }
     apply();
   });
+  // Mặc định BẬT: trình duyệt chỉ cho phát tiếng sau một lần chạm, nên bắt đầu ở lần chạm/nhấn phím đầu tiên (vd. "Vào chùa").
+  // Ai đã tự tắt (lgt.sound = 0) thì giữ tắt.
+  let optedOut = false; try { optedOut = localStorage.getItem('lgt.sound') === '0'; } catch (_) { /* bỏ qua */ }
+  const autoStart = async () => {
+    removeEventListener('pointerdown', autoStart, true); removeEventListener('keydown', autoStart, true);
+    if (optedOut || on) return;
+    try { if (!ctx) build(); if (ctx.state === 'suspended') await ctx.resume(); } catch (_) { return; }
+    on = true; apply();
+  };
+  if (!optedOut) { addEventListener('pointerdown', autoStart, true); addEventListener('keydown', autoStart, true); }
   document.addEventListener('visibilitychange', () => {             // đổi tab / khóa màn hình: tạm dừng nhạc cho đỡ tốn pin
     if (!el || !on) return;
     if (document.hidden) el.pause(); else el.play().catch(() => {});
   });
-  btn.setAttribute('aria-pressed', 'false'); // luôn tắt cho tới khi người dùng bấm
+  btn.setAttribute('aria-pressed', 'false'); // nút hiện bật khi autoStart chạy ở lần chạm đầu tiên
 }
