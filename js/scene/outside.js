@@ -3,7 +3,9 @@
 import * as THREE from 'three';
 import { mulberry32 } from '../util.js';
 import { pavingTexture } from './textures.js';
-import { OUT_WALKS, THAC, DA_LANG, GIENG, DINH_NGHI, MIEU, CO_THU, STALLS, STREET_LAMPS, OUT_ROCKS, VILLAGE_GATE } from '../world/outside.js';
+import { OUT_WALKS, THAC, DA_LANG, GIENG, DINH_NGHI, MIEU, CO_THU, STALLS, STREET_LAMPS, OUT_ROCKS, VILLAGE_GATE, STORE_9SACH, STORE_TACHHOA } from '../world/outside.js';
+import { buildStore9Sach } from './store9sach.js';
+import { buildTachHoa } from './tachhoa.js';
 
 const std = (c, o = {}) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.85, ...o });
 const flat = (c, o = {}) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.95, flatShading: true, ...o });
@@ -67,7 +69,10 @@ function buildHouses(g) {
   for (const sx of [-1, 1]) for (let z = 70; z <= 146; z += 10.5) {
     if (sx < 0 && z > 80 && z < 99) continue;      // chừa đường mòn rừng
     if (sx > 0 && z > 94 && z < 113) continue;     // chừa đường mòn thác
-    house(g, sx * 19.5, z + (rnd() - 0.5) * 1.2, -sx, rnd);
+    const hz = z + (rnd() - 0.5) * 1.2;
+    // Hai ô nhà phố bên phải (z≈80,5 và z≈91) nhường chỗ cho Cửa hàng 9 Sạch và Tách Hoa; vẫn gọi house() vào nhóm bỏ đi để dãy số ngẫu nhiên (màu, cỡ) của các nhà khác giữ nguyên
+    const slot = sx > 0 && (Math.abs(z - STORE_9SACH.z) < 0.1 || Math.abs(z - STORE_TACHHOA.z) < 0.1);
+    house(slot ? new THREE.Group() : g, sx * 19.5, hz, -sx, rnd);
   }
   // nhà trong ruộng phía sau hàng phố
   for (const [x, z] of [[-34, 76], [-42, 100], [36, 78], [44, 122], [-46, 134], [40, 148], [30, 150], [-28, 154]]) house(g, x, z, x < 0 ? 1 : -1, rnd);
@@ -195,6 +200,7 @@ export function buildOutside() {
   const group = new THREE.Group();
   buildGround(group); buildStreet(group); buildVillageGate(group); buildHouses(group); lamps(group); buildMarket(group); buildForest(group); mountains(group);
   const wf = buildWaterfall(group); buildForestGlade(group);
+  group.add(buildStore9Sach()); group.add(buildTachHoa());   // Cửa hàng 9 Sạch (nhà phố mặt đường làng, bên phải)
   // đường mòn đất (Đông, Tây) và hai bãi
   const dt = dirtTex(); dt.repeat.set(30, 3);
   for (const w of OUT_WALKS) if (w.id !== 'duong-lang' && w.id !== 'cho') { const t = dt.clone(); t.needsUpdate = true; t.repeat.set((w.x1 - w.x0) / 4, (w.z1 - w.z0) / 4); plane(w.x1 - w.x0, w.z1 - w.z0, new THREE.MeshStandardMaterial({ map: t, roughness: 1 }), (w.x0 + w.x1) / 2, 0.025, (w.z0 + w.z1) / 2, group); }
