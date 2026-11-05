@@ -16,6 +16,7 @@ import { initStage } from './ui/stage.js';
 import { initHud } from './ui/hud.js';
 import { initRoom } from './net/room.js';
 import { isNpcSpot } from './world/spots.js';
+import { initWind } from './scene/wind.js';
 
 const pct = document.getElementById('pre-pct'), fill = document.getElementById('pre-fill'), pre = document.getElementById('pre');
 const setProgress = (v) => { const p = Math.round(v * 100); pct.textContent = p; fill.style.right = (100 - p) + '%'; };
@@ -63,7 +64,11 @@ async function boot() {
     });
   } catch (e) { return fallback(e && e.message); }
 
+  window.LGT = window.LGT || {};
+  window.LGT.getPos = () => (created.world ? created.world.pos : null);   // vị trí người chơi {x, z}: ui.js dùng để chỉnh to/nhỏ tiếng thác và chuông
+
   stage = initAll(created.rail);
+  try { initWind(created.scene); } catch (e) { console.warn('[Diệu Giang Tự] Gió lỗi:', e && e.message); }   // cây lung lay; lỗi thì cây đứng yên
   try { initHud(); } catch (e) { console.warn('[Diệu Giang Tự] HUD lỗi:', e && e.message); }   // màn vào cửa + HUD; lỗi thì giữ giao diện cũ
   try { initRoom(); } catch (e) { console.warn('[Diệu Giang Tự] Đa người lỗi:', e && e.message); }   // thấy người khác trong chùa; lỗi thì vẫn chơi một mình
   // Phòng khi onProgress(1) không tới (tab nền): vẫn mở trang sau 6s
