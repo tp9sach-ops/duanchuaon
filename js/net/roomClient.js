@@ -17,7 +17,7 @@ export function createRoomClient(deps) {
   const { call, getSelf, makeAvatar, scene, onOnline = () => {}, pageId } = deps;
   const schedule = deps.schedule || ((fn, ms) => setTimeout(fn, ms)), cancel = deps.cancel || ((h) => clearTimeout(h));
   const remotes = createRemotes(), views = new Map();       // id → { av, key }
-  let cursor = 0, first = true, pendingSay = '', timer = null, running = false, active = true, fails = 0, busy = false, lastCount = 1;
+  let cursor = 0, first = true, pendingSay = '', timer = null, running = false, active = true, fails = 0, busy = false, lastCount = 1, hiddenMs = 9000;
   const API = {};
 
   function viewFor(p) {
@@ -55,16 +55,21 @@ export function createRoomClient(deps) {
           if (c && c.id !== pageId) { const v = views.get(c.id), t = chatOk(c.m); if (v && t) { v.av.say(t); if (deps.onChat) deps.onChat({ name: v.name, text: t }); } }
         }
         first = false; cursor = seq;
-        wait = Number(res.pollMs) > 0 ? Math.max(ROOM_CFG.minPollMs, Math.min(ROOM_CFG.maxPollMs, Number(res.pollMs))) : pollInterval(lastCount);
+        // Đường truyền nhanh (Firebase) tự khai chu kỳ ngắn/hệ số bám/chu kỳ khi tab ẩn; Apps Script không khai thì dùng mặc định cũ
+        const lo = Number(res.minPollMs) > 0 ? Number(res.minPollMs) : ROOM_CFG.minPollMs;
+        hiddenMs = Number(res.hiddenMs) > 0 ? Number(res.hiddenMs) : 9000; remotes.follow = Number(res.follow) > 0 ? Number(res.follow) : 1.4;
+        wait = Number(res.pollMs) > 0 ? Math.max(lo, Math.min(ROOM_CFG.maxPollMs, Number(res.pollMs))) : pollInterval(lastCount);
       } else {
         if (say) pendingSay = say;                          // chưa gửi được thì giữ lại gửi lần sau
         fails++; wait = Math.min(10000, ROOM_CFG.minPollMs * Math.pow(2, Math.min(fails, 3)));   // lỗi liên tiếp: thưa dần, tối đa 10 giây
         if (res && res.error === 'room_full') onOnline(null);
       }
     } catch (_) { fails++; wait = Math.min(10000, ROOM_CFG.minPollMs * Math.pow(2, Math.min(fails, 3))); }
-    finally { busy = false; if (running) timer = schedule(API.tick, active ? wait : Math.max(wait, 9000)); }
+    finally { busy = false; if (running) timer = schedule(API.tick, active ? wait : Math.max(wait, hiddenMs)); }
   };
 
+  /** Đổi sang đường truyền khác: quên mốc lời nhắn của nơi cũ, bỏ mọi người của nơi cũ (khung hình kế tiếp sẽ dọn nhân vật). */
+  API.reset = () => { cursor = 0; first = true; remotes.ingest([], pageId); };
   /** Gửi một lời nhắn (hiện bong bóng trên đầu mình ở lượt đồng bộ kế tiếp của người khác). Trả chuỗi đã làm sạch hoặc ''. */
   API.say = (text) => { const t = chatOk(text); if (t) pendingSay = t; return t; };
   API.start = () => { if (running) return; running = true; timer = schedule(API.tick, 0); };
