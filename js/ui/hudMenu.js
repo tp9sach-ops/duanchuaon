@@ -5,6 +5,8 @@ import { initDen } from './den.js';
 import { initNpc } from './npc.js';
 import { initChat } from './chat.js';
 import { loadWallet, addSen } from '../engines/kinh.js';
+import { callApi, apiEnabled, getUserKey } from '../api.js';
+import { loadProfile } from './hudLogic.js';
 import { BOTTOM_MENU, ACTIONS, TOP_ICONS, WALLET_PLACEHOLDER, HELP_TEXT, WELCOME_TEXT, pressResult, ariaLabel, OUTSIDE_TEXT, isReady, mapEntries, formatCount, createToastState } from './menuLogic.js';
 
 const P = {
@@ -73,7 +75,16 @@ export function initHudMenu(hud) {
     clearTimeout(toastTimer); toastTimer = setTimeout(() => { if (!toastState.get(Date.now())) box.hidden = true; }, Math.max(1200, ms) + 60);
   }
   LGT.toast = toast;
-  const addMerit = (n) => { wallet = addSen(wallet, n); try { localStorage.setItem('lgt.wallet', JSON.stringify(wallet)); } catch (_) { /* bỏ qua */ } const b = root.querySelector('#hm-sen'); if (b) b.textContent = formatCount(wallet.sen); };
+  let scoreTimer = 0;
+  const pushScore = async () => {   // gửi điểm lên Sheet, chờ 4 giây sau lần cộng cuối để đỡ gọi nhiều
+    if (!apiEnabled()) return;
+    try {
+      const prof = loadProfile(localStorage);
+      const res = await callApi('saveScore', { userKey: getUserKey(), n: prof.name, sen: wallet.sen });
+      if (res && res.ok && Number(res.sen) > wallet.sen) { wallet = { ...wallet, sen: Number(res.sen) }; localStorage.setItem('lgt.wallet', JSON.stringify(wallet)); const b = root.querySelector('#hm-sen'); if (b) b.textContent = formatCount(wallet.sen); }
+    } catch (_) { /* mạng lỗi: lần cộng sau sẽ gửi lại */ }
+  };
+  const addMerit = (n) => { wallet = addSen(wallet, n); try { localStorage.setItem('lgt.wallet', JSON.stringify(wallet)); } catch (_) { /* bỏ qua */ } const b = root.querySelector('#hm-sen'); if (b) b.textContent = formatCount(wallet.sen); clearTimeout(scoreTimer); scoreTimer = setTimeout(pushScore, 4000); };
   LGT.addMerit = addMerit;
   const practice = initPractice(hud, { toast, addMerit });
   const den = initDen(hud, { toast, addMerit });
