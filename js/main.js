@@ -22,6 +22,8 @@ const pct = document.getElementById('pre-pct'), fill = document.getElementById('
 const setProgress = (v) => { const p = Math.round(v * 100); pct.textContent = p; fill.style.right = (100 - p) + '%'; };
 const hidePre = () => { pre.classList.add('done'); document.body.classList.remove('is-locked'); };
 document.body.classList.add('is-locked');
+// Âm thanh: thử phát nhạc nền NGAY từ lúc trang khởi động (trước cả khi cảnh 3D nạp xong). Bị chặn thì hiện lời mời bật âm thanh, phát ở lần chạm đầu tiên.
+try { initSound(); } catch (e) { console.warn('[Diệu Giang Tự] Âm thanh lỗi:', e && e.message); }
 
 // Hạt nhiễu cho lớp grain (sinh bằng canvas, không cần ảnh)
 (function grain() {
