@@ -22,6 +22,7 @@ export function initRoom() {
   };
   const client = createRoomClient({
     call, scene, pageId: newId(), onOnline: setOnline,
+    onChat: (c) => document.dispatchEvent(new CustomEvent('lgt:chat', { detail: { name: c.name, text: c.text, mine: false } })),
     makeAvatar: (p) => createAvatar({ name: p.name, color: p.color, hair: p.hair, mine: false }),
     getSelf() {
       const b = document.body.classList;
@@ -37,6 +38,6 @@ export function initRoom() {
   client.start();
 
   // LGT.room.say('...'): gửi lời nhắn (giao diện chat là Phiên 15b); bong bóng của mình hiện ngay.
-  LGT.room = { say(text) { const t = client.say(text); if (t && W.avatar.say) W.avatar.say(t); return t; }, get count() { return client.count; }, get remoteCount() { return client.remoteCount; } };
+  LGT.room = { say(text) { const t = client.say(text); if (t && W.avatar.say) W.avatar.say(t); if (t) document.dispatchEvent(new CustomEvent('lgt:chat', { detail: { name: 'Bạn', text: t, mine: true } })); return t; }, get count() { return client.count; }, get remoteCount() { return client.remoteCount; } };
   return client;
 }

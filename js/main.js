@@ -15,6 +15,7 @@ import { initVision } from './ui/vision.js';
 import { initStage } from './ui/stage.js';
 import { initHud } from './ui/hud.js';
 import { initRoom } from './net/room.js';
+import { isNpcSpot } from './world/spots.js';
 
 const pct = document.getElementById('pre-pct'), fill = document.getElementById('pre-fill'), pre = document.getElementById('pre');
 const setProgress = (v) => { const p = Math.round(v * 100); pct.textContent = p; fill.style.right = (100 - p) + '%'; };
@@ -58,7 +59,7 @@ async function boot() {
     created = createScene(document.getElementById('gl'), {
       onProgress: (v) => { setProgress(0.1 + v * 0.9); if (v >= 1) setTimeout(hidePre, 350); },
       onPick: (id) => stage && stage.go(id),          // bấm điểm sáng/vật 3D: đi tới rồi mới mở
-      onArrive: (id) => stage && stage.open(id),      // nhân vật tới nơi: mở bảng của chương
+      onArrive: (id) => (isNpcSpot(id) ? window.LGT.onNpc && window.LGT.onNpc(id) : stage && stage.open(id)),      // nhân vật tới nơi: mở bảng của chương, hoặc NPC nói chuyện
     });
   } catch (e) { return fallback(e && e.message); }
 

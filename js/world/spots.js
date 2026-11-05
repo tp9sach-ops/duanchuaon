@@ -3,6 +3,7 @@
 // Thuần hàm (không three.js, có test). Đổi vị trí ở ĐÂY rồi chạy `npm test` (test kiểm điểm đứng đi tới được từ chỗ xuất hiện).
 import { BUILDINGS, buildingFront } from './placements.js';
 import { facingOf } from './worldLogic.js';
+import { NPCS, npcSpot } from './npc.js';
 
 const nhaTo = BUILDINGS.find((b) => b.id === 'nhato');
 
@@ -19,7 +20,11 @@ export const SPOTS = [
   { id: 'summary', num: '06', label: 'Lá bùa',     look: [0, 4.4, -8],  stand: { x: 0, z: -4.4 },  r: 2.2, face: [0, 1, -8],    pick: { c: [0, 1.6, -8], r: 2.2 } },
 ];
 
-export const spotById = (id) => SPOTS.find((s) => s.id === id) || null;
+/** Spot của các NPC (bấm vào NPC → đi tới → thưa chuyện). Không nằm trong SPOTS để không hiện ở nhãn nổi / bản đồ chương. */
+export const NPC_SPOTS = NPCS.map(npcSpot);
+const ALL_SPOTS = [...SPOTS, ...NPC_SPOTS];
+export const isNpcSpot = (id) => NPC_SPOTS.some((s) => s.id === id);
+export const spotById = (id) => ALL_SPOTS.find((s) => s.id === id) || null;
 /** Khoảng cách ngang từ p = {x,z} tới điểm đứng của spot. */
 export const distTo = (p, s) => Math.hypot(p.x - s.stand.x, p.z - s.stand.z);
 /** Góc quay (ry của avatar) để người ở p nhìn vào `face` của spot. */
@@ -38,7 +43,7 @@ export function raySphere(o, d, c, r) {
 /** Tia trúng khối cầu của spot nào gần nhất → { spot, t } hoặc null. */
 export function pickSpot(o, d, maxT = 120) {
   let best = null;
-  for (const s of SPOTS) {
+  for (const s of ALL_SPOTS) {
     if (!s.pick) continue;
     const t = raySphere(o, d, s.pick.c, s.pick.r);
     if (t !== null && t <= maxT && (!best || t < best.t)) best = { spot: s, t };

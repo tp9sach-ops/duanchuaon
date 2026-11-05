@@ -23,7 +23,7 @@ export function createRoomClient(deps) {
   function viewFor(p) {
     const key = p.n + '|' + p.c + '|' + p.h; let v = views.get(p.id);
     if (v && v.key !== key) { scene.remove(v.av.group); v.av.dispose(); views.delete(p.id); v = null; }   // đổi tên/áo: dựng lại
-    if (!v) { const av = makeAvatar({ name: p.n, color: p.c, hair: p.h }); scene.add(av.group); av.group.position.set(p.x, p.y, p.z); av.setFacing(p.ry, true); v = { av, key }; views.set(p.id, v); }
+    if (!v) { const av = makeAvatar({ name: p.n, color: p.c, hair: p.h }); scene.add(av.group); av.group.position.set(p.x, p.y, p.z); av.setFacing(p.ry, true); v = { av, key, name: p.n }; views.set(p.id, v); }
     return v;
   }
 
@@ -52,7 +52,7 @@ export function createRoomClient(deps) {
         lastCount = Math.max(1, Number(res.count) || remotes.size + 1); onOnline(lastCount);
         const seq = Number(res.seq) || 0;
         if (!first) for (const c of Array.isArray(res.chat) ? res.chat : []) {      // lần đầu chỉ lấy mốc, không hiện lại lời nhắn cũ
-          if (c && c.id !== pageId) { const v = views.get(c.id), t = chatOk(c.m); if (v && t) v.av.say(t); }
+          if (c && c.id !== pageId) { const v = views.get(c.id), t = chatOk(c.m); if (v && t) { v.av.say(t); if (deps.onChat) deps.onChat({ name: v.name, text: t }); } }
         }
         first = false; cursor = seq;
         wait = Number(res.pollMs) > 0 ? Math.max(ROOM_CFG.minPollMs, Math.min(ROOM_CFG.maxPollMs, Number(res.pollMs))) : pollInterval(lastCount);

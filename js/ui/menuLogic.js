@@ -8,7 +8,7 @@ export const BOTTOM_MENU = [
   { id: 'nhiemvu',   label: 'Nhiệm vụ',    icon: 'scroll', status: 'soon' },
   { id: 'tuido',     label: 'Túi đồ',      icon: 'bag',    status: 'soon' },
   { id: 'cuahang',   label: 'Cửa hàng',    icon: 'shop',   status: 'soon' },
-  { id: 'congdong',  label: 'Cộng đồng',   icon: 'people', status: 'soon' },
+  { id: 'congdong',  label: 'Cộng đồng',   icon: 'people', status: 'ready', action: 'chat' },
   { id: 'xephang',   label: 'Xếp hạng',    icon: 'rank',   status: 'soon' },
   { id: 'bando',     label: 'Bản đồ chùa', icon: 'map',    status: 'ready', action: 'map' },
   { id: 'thienphai', label: 'Thiền phái',  icon: 'lotus',  status: 'soon' },
@@ -61,7 +61,7 @@ export function pressResult(item) {
   if (!item) return { kind: 'none' };
   if (!isReady(item)) return { kind: 'soon', text: soonText(item) };
   if (item.action === 'goto') return { kind: 'goto', id: item.target };
-  if (['map', 'share', 'help', 'bow', 'meditate', 'le', 'den', 'beads', 'chant'].includes(item.action)) return { kind: item.action };
+  if (['map', 'share', 'help', 'bow', 'meditate', 'le', 'den', 'chat', 'beads', 'chant'].includes(item.action)) return { kind: item.action };
   return { kind: 'soon', text: soonText(item) };
 }
 

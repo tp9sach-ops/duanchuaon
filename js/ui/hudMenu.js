@@ -2,6 +2,8 @@
 // Logic và dữ liệu ở menuLogic.js (có test). Biểu tượng SVG tự vẽ (không dùng ảnh của trang mẫu). Mọi nút chưa có tính năng: mờ + báo "sắp có".
 import { initPractice } from './practice.js';
 import { initDen } from './den.js';
+import { initNpc } from './npc.js';
+import { initChat } from './chat.js';
 import { loadWallet, addSen } from '../engines/kinh.js';
 import { BOTTOM_MENU, ACTIONS, TOP_ICONS, WALLET_PLACEHOLDER, HELP_TEXT, WELCOME_TEXT, pressResult, ariaLabel, OUTSIDE_TEXT, isReady, mapEntries, formatCount, createToastState } from './menuLogic.js';
 
@@ -75,6 +77,8 @@ export function initHudMenu(hud) {
   LGT.addMerit = addMerit;
   const practice = initPractice(hud, { toast, addMerit });
   const den = initDen(hud, { toast, addMerit });
+  initNpc({ toast, addMerit });
+  const chat = initChat(hud, { toast });
 
   // ---- bản đồ chùa (lối đi tới chương: liên kết #id, stage.js tự bắt và cho nhân vật đi tới)
   const mapBox = $('hm-map');
@@ -107,6 +111,7 @@ export function initHudMenu(hud) {
       return;
     }
     if (r.kind === 'beads' || r.kind === 'chant') return practice.open(r.kind);
+    if (r.kind === 'chat') return chat.toggle();
     if (r.kind === 'le') return den.openLe();
     if (r.kind === 'den') return den.openDen();
     if (r.kind === 'goto') {

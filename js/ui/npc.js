@@ -1,0 +1,18 @@
+// Giao diện thưa chuyện với NPC (Phiên 14g): bong bóng trên đầu NPC + thông báo; mỗi NPC tặng 1 hạt sen mỗi ngày.
+import { talk, loadNpcState } from '../world/npc.js';
+
+const KEY = 'lgt.npc';
+const load = () => { try { return loadNpcState(localStorage.getItem(KEY)); } catch (_) { return loadNpcState(null); } };
+const save = (s) => { try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (_) { /* bỏ qua */ } };
+
+export function initNpc({ toast, addMerit }) {
+  const LGT = window.LGT;
+  LGT.onNpc = (spotId) => {
+    const id = String(spotId).replace(/^npc-/, ''), r = talk(load(), id);
+    if (!r) return;
+    save(r.state);
+    const a = LGT.npcs && LGT.npcs[id]; if (a && a.say) a.say(r.line);
+    toast(`${r.npc.ten}: “${r.line}”`, 6500);
+    if (r.reward) { addMerit(r.reward); setTimeout(() => toast(`${r.npc.ten} tặng bạn ${r.reward} hạt sen hôm nay.`, 3500), 2500); }
+  };
+}
