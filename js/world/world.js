@@ -4,13 +4,13 @@ import * as THREE from 'three';
 import './placements.js';                                  // đăng ký vật cản của hoa viên, nhà... vào layout.js
 import { createAvatar } from './avatar.js';
 import { DEFAULT_COLOR } from './avatarLogic.js';
-import { SPAWN } from './layout.js';
+import { SPAWN, solidAt } from './layout.js';
 import { spotById, pickSpot, createArrival, faceAngle } from './spots.js';
 import { findPath } from './path.js';
 import { SEATS, SEAT_Y, pickSeat, seatById, nearestFreeSeat, standPoint, inHall, createActivity } from './seats.js';
 import { damp } from '../util.js';
 import {
-  WALK_SPEED, RUN_SPEED, CLICK_SPEED, CAM_DIST, CAM_PITCH, moveVector, joyVector, walkStep, createNavigator, camPose, dragCamera, zoomCamera, facingOf,
+  WALK_SPEED, RUN_SPEED, CLICK_SPEED, CAM_DIST, CAM_PITCH, moveVector, joyVector, walkStep, createNavigator, camPose, clipCamDist, dragCamera, zoomCamera, facingOf,
 } from './worldLogic.js';
 
 const isEditable = (el) => !!el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName));
@@ -28,7 +28,7 @@ export function createWorld({ scene, camera, canvas, coarse = false, LGT = windo
   avatar.group.position.set(P.x, 0, P.z); avatar.setFacing(SPAWN.ry, true);
 
   const keys = { f: false, b: false, l: false, r: false, run: false };
-  let joy = null, yaw = 0, pitch = CAM_PITCH.def, dist = CAM_DIST.def, speedNow = 0;
+  let camD = null, joy = null, yaw = 0, pitch = CAM_PITCH.def, dist = CAM_DIST.def, speedNow = 0;
   const nav = createNavigator(), cam = { x: 0, y: 0, z: 0, lx: 0, ly: 0, lz: 0, init: false };
   const blockedNow = () => !!LGT.panelOpen;
   const arrival = createArrival();
@@ -235,7 +235,9 @@ export function createWorld({ scene, camera, canvas, coarse = false, LGT = windo
 
   /** Camera: bám theo, làm mượt (giật cục khi va tường thì mượt hơn). */
   function camStep(dt) {
-    const c = camPose(P, yaw, pitch, dist);
+    const want = clipCamDist(P, yaw, pitch, dist, solidAt);   // Phiên 31: camera không xuyên tường/vật cản
+    camD = camD == null ? want : damp(camD, want, want < camD ? 16 : 3, dt);   // bị chắn thì lùi vào nhanh, thoáng thì ra từ từ
+    const c = camPose(P, yaw, pitch, camD);
     if (!cam.init) { cam.x = c.pos.x; cam.y = c.pos.y; cam.z = c.pos.z; cam.lx = c.look.x; cam.ly = c.look.y; cam.lz = c.look.z; cam.init = true; }
     const k = 9; cam.x = damp(cam.x, c.pos.x, k, dt); cam.y = damp(cam.y, c.pos.y, k, dt); cam.z = damp(cam.z, c.pos.z, k, dt);
     cam.lx = damp(cam.lx, c.look.x, 12, dt); cam.ly = damp(cam.ly, c.look.y, 12, dt); cam.lz = damp(cam.lz, c.look.z, 12, dt);

@@ -71,6 +71,24 @@ export function groundY(x, z) {
   return 0;
 }
 
+/** Khối đặc của chính điện (tường bên, tường hậu, khối đá nền). y = độ cao điểm xét: khối đá nền chỉ chặn khi y thấp hơn mặt nền (camera bay cao hơn thì không bị chặn). */
+function hallSolid(x, z, y) {
+  const r = region(x, z);
+  if (r === 'plat') {
+    if (z >= HALL.wallZ0 - 0.1 && z <= HALL.wallZ1 && Math.abs(x) > HALL.wallX) return true;
+    if (z < HALL.wallZ0) return true;
+  } else if (r === 'ground' && Math.abs(x) < HALL.platX && z >= HALL.platZ0 && z <= HALL.platZ1) {
+    return y < HALL.h;   // dải 0,5 m sát hai bên nền: khối đá của nền chính điện (nền rộng ±platX, vùng sàn đi được chỉ tới ±(platX − 0,5))
+  }
+  return false;
+}
+/** Điểm (x, z, y) có là VẬT ĐẶC chắn tầm nhìn camera không (Phiên 31): vật cản tròn/chữ nhật + khối chính điện. Không tính ranh giới, ao, hồ (camera bay được trên mặt nước). */
+export function solidAt(x, z, y = 1.6) {
+  for (const c of CIRCLES) if (Math.hypot(x - c.x, z - c.z) < c.r) return true;
+  for (const q of RECTS) if (inRect(x, z, q)) return true;
+  return hallSolid(x, z, y);
+}
+
 /** Phần chặn do ĐỊA HÌNH (ranh giới, ao, hồ, tường và nền chính điện), chưa tính vật cản tròn/chữ nhật. */
 function terrainBlocked(x, z) {
   // Ranh giới: trong sân, hoặc đường ngoài cổng
@@ -82,14 +100,7 @@ function terrainBlocked(x, z) {
   if (Math.hypot(x - POND.x, z - POND.z) < POND.r && Math.abs(x) > POND.bridgeHalf) return true;
   // Hồ thêm: chặn trừ cầu/đảo
   for (const w of WATERS) if (Math.hypot(x - w.x, z - w.z) < w.r && !bridgeAt(x, z)) return true;
-  // Chính điện: tường bên, tường hậu
-  const r = region(x, z);
-  if (r === 'plat') {
-    if (z >= HALL.wallZ0 - 0.1 && z <= HALL.wallZ1 && Math.abs(x) > HALL.wallX) return true;
-    if (z < HALL.wallZ0) return true;
-  } else if (r === 'ground' && Math.abs(x) < HALL.platX && z >= HALL.platZ0 && z <= HALL.platZ1) {
-    return true;   // dải 0,5 m sát hai bên nền: khối đá của nền chính điện (nền rộng ±platX, vùng sàn đi được chỉ tới ±(platX − 0,5))
-  }
+  if (hallSolid(x, z, 0)) return true;
   return false;
 }
 

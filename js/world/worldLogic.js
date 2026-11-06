@@ -81,6 +81,16 @@ export function camPose(p, yaw, pitch, dist) {
   return { look, pos: { x: look.x + Math.sin(yaw) * cp * dist, y: look.y + Math.sin(pitch) * dist, z: look.z + Math.cos(yaw) * cp * dist } };
 }
 
+/** Cắt khoảng cách camera để KHÔNG xuyên tường/vật cản (Phiên 31): đi từ đầu nhân vật (p.y+1,1) dọc tia tới camera, gặp vật đặc đầu tiên thì lùi `margin` m.
+ *  solid(x, z, y) → true nếu điểm là vật đặc. Nhân vật đang đứng sát/ngay trong vật cản (cửa, bậc) thì không cắt. Kết quả ≥ minDist. */
+export function clipCamDist(p, yaw, pitch, dist, solid, { margin = 0.4, minDist = 0.9, step = 0.25 } = {}) {
+  const cp = Math.cos(pitch), sp = Math.sin(pitch), ox = p.x, oy = p.y + 1.1, oz = p.z;
+  if (solid(ox, oz, oy)) return dist;
+  const at = (d) => solid(ox + Math.sin(yaw) * cp * d, oz + Math.cos(yaw) * cp * d, oy + sp * d);
+  for (let d = step; d < dist + step; d += step) { const dd = Math.min(d, dist); if (at(dd)) return Math.max(minDist, Math.min(dist, d - step - margin)); }
+  return dist;
+}
+
 /** Kéo chuột/ngón tay (dx, dy px) → đổi yaw/pitch camera (đã kẹp). */
 export function dragCamera(yaw, pitch, dx, dy) {
   return { yaw: yaw - dx * 0.0055, pitch: clamp(pitch + dy * 0.004, CAM_PITCH.min, CAM_PITCH.max) };
