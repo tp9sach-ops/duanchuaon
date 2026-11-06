@@ -2,14 +2,14 @@
 // chừa một khoảng sát tường (0,3 m) rồi làm thẳng đường (bỏ điểm thừa nếu đi thẳng được). Trả danh sách điểm {x,z} hoặc null.
 import { blocked, canStep, CIRCLES, RECTS } from './layout.js';
 
-const S = 0.5, CLEAR = 0.5, X0 = -130, Z0 = -80, W = 520, H = 480;     // lưới phủ khuôn viên + đường làng, rừng, thác ngoài cổng (−130…130; −80…160)
+const S = 0.5, CLEAR = 0.7, X0 = -130, Z0 = -80, W = 520, H = 480;     // lưới phủ khuôn viên + đường làng, rừng, thác ngoài cổng (−130…130; −80…160)
 const SQ2 = Math.SQRT2;
 
 /**
  * Điểm có đi được không, kể cả chừa khoảng CLEAR (0,5 m) sát vật cản VÀ sát "tường vô hình" giữa sàn chính điện và sân (chỉ qua bậc thềm được).
- * CLEAR (0,5 m) và M (0,45 m) phải lớn hơn dung sai đổi mốc của navigator (0,3 m) để đi tắt ở góc không bao giờ xuyên qua chỗ cấm.
+ * CLEAR và M (0,7 m, Phiên 29) phải ≥ bán kính thân người (layout.PLAYER_R 0,35 m) + dung sai đổi mốc của navigator (0,3 m), để đi theo đường không bao giờ kẹt thân vào vật mảnh hay xuyên chỗ cấm.
  */
-const NB = [[CLEAR, 0], [-CLEAR, 0], [0, CLEAR], [0, -CLEAR]], M = 0.45;     // M: lề tính từ MẶT vật cản (kể cả cột đèn mảnh r=0,2 mà 4 điểm mẫu có thể lọt qua)
+const NB = [[CLEAR, 0], [-CLEAR, 0], [0, CLEAR], [0, -CLEAR]], M = 0.7;     // M: lề tính từ MẶT vật cản (kể cả cột đèn mảnh r=0,2 mà 4 điểm mẫu có thể lọt qua)
 function nearObstacle(x, z) {
   for (const c of CIRCLES) if (Math.hypot(x - c.x, z - c.z) < c.r + M) return true;
   for (const q of RECTS) if (x >= q.x0 - M && x <= q.x1 + M && z >= q.z0 - M && z <= q.z1 + M) return true;

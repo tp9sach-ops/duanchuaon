@@ -118,7 +118,7 @@ export function move(x, z, dx, dz) {
 
 // ---- Va chạm theo THÂN NGƯỜI (Phiên 29) -------------------------------------------------------------------------------------------------------------
 // Trước đây nhân vật là MỘT ĐIỂM nên thân (rộng ~0,7 m) lún vào tường, góc nhà, cột, thành bậc. Nay thân là đường tròn bán kính PLAYER_R.
-// PLAYER_R (0,35 m) PHẢI nhỏ hơn khoảng chừa của tìm đường (path.js: CLEAR 0,5 m, M 0,45 m) để đường tự tìm không bao giờ dẫn vào chỗ thân không lọt.
+// Khoảng chừa của tìm đường (path.js: CLEAR 0,7 m, M 0,7 m) PHẢI ≥ PLAYER_R (0,35 m) + dung sai đổi mốc của navigator (0,3 m) để người đi theo đường tự tìm không bị kẹt vào trụ đèn/vật mảnh.
 export const PLAYER_R = 0.35;
 const RING = Array.from({ length: 8 }, (_, k) => [Math.cos(k * Math.PI / 4) * PLAYER_R, Math.sin(k * Math.PI / 4) * PLAYER_R]);
 
