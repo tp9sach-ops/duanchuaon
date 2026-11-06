@@ -17,9 +17,9 @@
 - Test cũ không kiểm đồ trang trí có lọt vào thân cửa hàng không → đã thêm.
 
 ## CHƯA làm
-- Chưa chụp ảnh ban đêm / mưa với mô hình mới; chưa đo FPS điện thoại (thêm InstancedMesh song sắt ~ vài trăm, nhẹ).
+- Ban đêm ĐÃ kiểm (gio=21): dây đèn, đèn lồng, hàng rào hiển thị ổn. Chưa chụp ngày mưa; chưa đo FPS điện thoại (thêm InstancedMesh song sắt ~ vài trăm, nhẹ).
 - Chưa có vạch trắng cong đánh dấu khu chợ như ảnh mẫu (đó là giao diện chiếm khu của game mẫu, không phải yêu cầu rõ).
-- Trẻ cầm lồng đèn, âm thanh theo mùa, camera xuyên tường, gộp HANDOFF.md/PROMPT.md Phiên 26–33 (xem PHIEN31.md mục "Việc kế").
+- Lưu ý: "trẻ cầm lồng đèn" ĐÃ có trong repo (js/world/lantern.js, scene/npc.js, trẻ d7–d9 trong WALKERS) — bỏ khỏi danh sách việc kế. Còn lại: âm thanh theo mùa, camera xuyên tường, gộp HANDOFF.md/PROMPT.md Phiên 26–33 (xem PHIEN31.md mục "Việc kế").
 - GitHub: không đẩy được (tích hợp chỉ đọc) → tải file lên tay theo đúng đường dẫn, trùng tên ghi đè; hoặc `git apply phien33.patch`.
 
 ## File thay đổi
