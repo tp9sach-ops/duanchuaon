@@ -189,13 +189,13 @@ export function createScene(canvas, { onProgress, onPick, onArrive } = {}) {
       if (m.userData.season === 'grass' || m.userData.wet) wetMats.push({ m, color: m.color.clone(), rough: m.roughness });
     }); }
   const WX = parseWeatherParam(location.search);
-  const weather = createWeather({ season: SEA.name, level: DAY ? (WX.fixed ? WX.level : null) : 0 });   // ?dem=1 (đêm cố định cũ) không có thời tiết
+  const weather = createWeather({ season: SEA.name, level: DAY ? (WX.fixed ? WX.level : null) : 0, shared: DAY && !WX.fixed, nowMs: Date.now() + (LGT.clockOffsetMs || 0) });   // ?dem=1 (đêm cố định cũ) không có thời tiết
   LGT.weather = weather; let wxLevel = weather.level, wetApplied = -1, rainCap = 1;
   petals.mul = SEA.petals.mul; petals.speed = SEA.petals.speed; petals.setCount(PETAL_BASE);
   petals.obj.material.color.setHex(SEA.petals.color); petals.obj.material.size = SEA.petals.size; petals.obj.material.opacity = SEA.petals.opacity;
   function applyDay(dt) {
     if (sharedClock) LGT.hour = gameNow(); else if (!hp.fixed) LGT.hour = wrapHour(LGT.hour + dt * HOURS_PER_SECOND);   // giờ chung đọc lại từ đồng hồ thật mỗi khung: không trôi, đổi tab quay lại vẫn đúng giờ
-    const evs = weather.update(dt), E = weather.fx, fl = (reduce ? 0.3 : 1) * weather.flash;   // fl: độ lóe chớp (người bật "giảm chuyển động" chỉ thấy lóe nhẹ, tránh nhấp nháy mạnh)
+    const evs = weather.update(dt, Date.now() + (LGT.clockOffsetMs || 0)), E = weather.fx, fl = (reduce ? 0.3 : 1) * weather.flash;   // fl: độ lóe chớp (người bật "giảm chuyển động" chỉ thấy lóe nhẹ, tránh nhấp nháy mạnh)
     for (const e of evs) window.dispatchEvent(new CustomEvent('lgt:thunder', { detail: e }));
     if (weather.level !== wxLevel) { const msg = changeMessage(wxLevel, weather.level); wxLevel = weather.level; if (msg && LGT.toast) LGT.toast(msg, 4200); }
     const S = dayState(LGT.hour, SEA.warmBias), L = lightDir(LGT.hour), M = moonDir(LGT.hour);
