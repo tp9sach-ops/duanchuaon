@@ -44,7 +44,7 @@ export function initSound() {
   const btn = document.getElementById('sound');
   if (!btn) return null;
   const MUSIC = 'assets/audio/nhac-nen.m4a';
-  const VOL = { music: 0.55, water: 0.5, bell: 0.5, wind: 0.22, insects: 0.16, frogs: 0.3, mo: 0.4, rain: 0.5, thunder: 0.9 };   // mức gốc từng lớp (trước khi nhân âm lượng người chơi)
+  const VOL = { music: 0.55, water: 0.5, bell: 0.5, wind: 0.22, insects: 0.16, cicada: 0.1, frogs: 0.3, mo: 0.4, rain: 0.5, thunder: 0.9 };   // mức gốc từng lớp (trước khi nhân âm lượng người chơi)
   const isNight = () => !DAY || !!(window.LGT && window.LGT.night > 0.55);   // đêm cố định (?dem=1) hoặc chu kỳ ngày đêm đã tối (LGT.night do scene/index.js cập nhật)
   const S = loadSettings(localStorage);                              // { on, music, sfx }
   let want = wantsSound(S), playing = false, userVol = { music: S.music, sfx: S.sfx };
@@ -116,6 +116,15 @@ export function initSound() {
       o.connect(gate); gate.connect(out); o.start(); lfo.start();
     });
   };
+  const cicadas = (c, out) => {                                     // ve mùa hạ (Phiên 31): tiếng rè ~5 kHz, nhịp rung nhanh, độ lớn dập dềnh chậm như bầy ve hòa nhau
+    [[5200, 31, 0.13], [4700, 27, 0.17]].forEach(([f, rate, swell]) => {
+      const o = c.createOscillator(), bp = c.createBiquadFilter(), am = c.createGain(), lfo = c.createOscillator(), ld = c.createGain(), sw = c.createOscillator(), sd = c.createGain();
+      o.type = 'sawtooth'; o.frequency.value = f; bp.type = 'bandpass'; bp.frequency.value = f; bp.Q.value = 6; am.gain.value = 0.5;
+      lfo.type = 'sine'; lfo.frequency.value = rate; ld.gain.value = 0.45; lfo.connect(ld); ld.connect(am.gain);
+      sw.type = 'sine'; sw.frequency.value = swell; sd.gain.value = 0.3; sw.connect(sd); sd.connect(am.gain);
+      o.connect(bp); bp.connect(am); am.connect(out); o.start(); lfo.start(); sw.start();
+    });
+  };
   const tone = (freq, dur, { type = 'sine', gain = 0.3, slide = 0, to = null, at = 0, lp = 0 } = {}) => {   // một nốt ngắn đi vào lớp hiệu ứng
     if (!ctx) return;
     const t = ctx.currentTime + at, o = ctx.createOscillator(), e = ctx.createGain();
@@ -163,9 +172,9 @@ export function initSound() {
     const p = window.LGT && typeof window.LGT.getPos === 'function' ? window.LGT.getPos() : null;
     const wx = window.LGT && window.LGT.weather ? window.LGT.weather : null, fx = wx ? wx.fx : null;
     const sheltered = !!(p && p.z < -21.2 && p.z > -47 && Math.abs(p.x) < 19.5);   // trong chánh điện (HALL: x ±19,5; z -47…-21,2)
-    const m = ambientMix({ p, night: isNight(), rain: fx ? fx.rain : 0, wind: fx ? fx.wind : 0, sheltered }); g.mix = m;
+    const m = ambientMix({ p, night: isNight(), rain: fx ? fx.rain : 0, wind: fx ? fx.wind : 0, sheltered, season: window.LGT && window.LGT.season }); g.mix = m;
     const t = ctx.currentTime;
-    ['water', 'bell', 'wind', 'insects', 'rain'].forEach((k) => g[k].gain.setTargetAtTime(VOL[k] * m[k], t, k === 'rain' ? 1.2 : 0.3));   // mưa vào/ra từ từ theo cấp
+    ['water', 'bell', 'wind', 'insects', 'cicada', 'rain'].forEach((k) => g[k].gain.setTargetAtTime(VOL[k] * m[k], t, k === 'rain' ? 1.2 : 0.3));   // mưa vào/ra từ từ theo cấp
     g.out.gain.setTargetAtTime(1, t, 0.3);                           // chim, ếch, mõ đi thẳng vào g.out, độ lớn đã nằm trong tần suất kêu
   };
 
@@ -174,10 +183,10 @@ export function initSound() {
     master = ctx.createGain(); master.gain.value = 0; master.connect(ctx.destination);
     musicG = ctx.createGain(); musicG.gain.value = VOL.music * userVol.music; musicG.connect(master);
     sfxG = ctx.createGain(); sfxG.gain.value = userVol.sfx; sfxG.connect(master);
-    ['water', 'bell', 'wind', 'insects', 'rain'].forEach((k) => { g[k] = ctx.createGain(); g[k].gain.value = 0; g[k].connect(sfxG); });
+    ['water', 'bell', 'wind', 'insects', 'cicada', 'rain'].forEach((k) => { g[k] = ctx.createGain(); g[k].gain.value = 0; g[k].connect(sfxG); });
     g.thunder = ctx.createGain(); g.thunder.gain.value = 1; g.thunder.connect(sfxG);
     g.out = ctx.createGain(); g.out.gain.value = 0.35; g.out.connect(sfxG);   // chim/ếch/mõ
-    waterfall(ctx, g.water); wind(ctx, g.wind); crickets(ctx, g.insects); rainSound(ctx, g.rain);   // côn trùng luôn dựng, độ lớn theo mix.insects (0 ban ngày)
+    waterfall(ctx, g.water); wind(ctx, g.wind); crickets(ctx, g.insects); cicadas(ctx, g.cicada); rainSound(ctx, g.rain);   // côn trùng luôn dựng, độ lớn theo mix.insects (0 ban ngày)
     el = new Audio(MUSIC); el.loop = true; el.preload = 'auto'; el.crossOrigin = 'anonymous';
     ctx.createMediaElementSource(el).connect(musicG);
     mixTimer = setInterval(updateMix, 250);
