@@ -38,3 +38,8 @@ SOFTWARE.
 
 - 6 file `gn, real, oak, maple, lowpoly, pine` là bản đã tối ưu (bằng `tools/optimize-glb.mjs`) từ 7 file ptg gửi ngày 2026-11-04 (`tree_gn`, `realistic_tree`, `oak_tree`, `maple_tree`, `tree_low_poly_lowpoly`, `pine_tree`; tên gốc có hậu tố "-tối_đa-compressed").
 - **Tác giả / link nguồn / giấy phép: CHƯA BIẾT** (cấu trúc node kiểu Sketchfab, thường là CC-BY nên cần ghi công). ptg cần gửi link từng mô hình để ghi vào đây trước khi công bố rộng. Chưa dùng: `tree_house`, `tree_animate`.
+
+## Âm thanh thiên nhiên (`assets/audio/ech-nhai.mp3`, `chim-ngay.mp3`, `de-dem.mp3`) — GIẤY PHÉP CHƯA XÁC NHẬN
+
+- Do ptg gửi ngày 2026-11-06, đã xử lý bằng `tools/make-nature-audio.py` (mono, lọc tiếng ù, chỉnh cùng mức, nối vòng lặp). Tên file gốc: `dragon-studio-frogs-croaking-329854.mp3` (ếch nhái), `audiopapkin-beautiful-birdsong-3-301866.mp3` (chim, dùng đoạn 20–80 s), `loswin23-birds-and-crickets-2-627567.mp3` (chim và dế).
+- Tên file giống kiểu đặt tên của kho âm thanh miễn phí (có thể là Pixabay) nhưng **đây chỉ là suy đoán**: ptg cần gửi link nguồn từng file để ghi tác giả và giấy phép vào đây trước khi công bố rộng.
