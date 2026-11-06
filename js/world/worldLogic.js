@@ -1,10 +1,12 @@
 // Logic thuần của chế độ đi bộ (không three.js, có test): hướng đi theo camera, bước đi có va chạm, bấm-để-đi, joystick, tư thế camera theo sau.
 // Quy ước góc camera `yaw`: camera đứng ở phía +z của người khi yaw = 0 và nhìn về -z; yaw tăng thì camera vòng sang phía +x.
 import { clamp } from '../util.js';
-import { move, groundY } from './layout.js';
+import { moveBody, groundY } from './layout.js';
 
 export const WALK_SPEED = 4, RUN_SPEED = 7, CLICK_SPEED = 4.4;
 export const CAM_DIST = { min: 2.6, max: 14, def: 5.2 }, CAM_PITCH = { min: 0.08, max: 1.2, def: 0.36 };
+/** Mỗi bước con tối đa 0,2 m (< bán kính thân 0,35 m) nên chạy nhanh hay khung hình chậm cũng không nhảy qua tường mỏng, cột, thành bậc. */
+export const MAX_SUBSTEP = 0.2;
 
 /** Hướng "đi lên" trên màn hình theo yaw camera. */
 export const forwardOf = (yaw) => ({ x: -Math.sin(yaw), z: -Math.cos(yaw) });
@@ -32,15 +34,15 @@ export function joyVector(dx, dy, radius) {
 }
 
 /**
- * Đi một bước có va chạm: p = {x,z}, v = vectơ hướng (độ dài ≤ 1), speed m/s. Trượt dọc tường (layout.move). Trả {x, z, y, moved}.
- * Mỗi bước tối đa 0,5 m để không xuyên tường khi khung hình chậm.
+ * Đi một bước có va chạm: p = {x,z}, v = vectơ hướng (độ dài ≤ 1), speed m/s. Thân người có bán kính (layout.moveBody), trượt dọc tường. Trả {x, z, y, moved}.
+ * Mỗi bước con tối đa MAX_SUBSTEP (0,2 m) để không xuyên tường khi khung hình chậm.
  */
 export function walkStep(p, v, dt, speed) {
   const len = Math.hypot(v.x, v.z) * speed * dt;
   if (len < 1e-9) return { x: p.x, z: p.z, y: groundY(p.x, p.z), moved: 0 };
-  const n = Math.max(1, Math.ceil(len / 0.5)), sx = v.x * speed * dt / n, sz = v.z * speed * dt / n;
+  const n = Math.max(1, Math.ceil(len / MAX_SUBSTEP)), sx = v.x * speed * dt / n, sz = v.z * speed * dt / n;
   let x = p.x, z = p.z;
-  for (let i = 0; i < n; i++) { const q = move(x, z, sx, sz); x = q.x; z = q.z; }
+  for (let i = 0; i < n; i++) { const q = moveBody(x, z, sx, sz); x = q.x; z = q.z; }
   return { x, z, y: groundY(x, z), moved: Math.hypot(x - p.x, z - p.z) };
 }
 

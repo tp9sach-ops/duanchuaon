@@ -18,6 +18,14 @@ export const COLUMNS = [
 ];
 export const CENSER = { x: 0, z: -8 };
 
+/**
+ * Bậc thềm chính điện (Phiên 29): js/scene/chanhdien.js dựng 5 BẬC ĐÁ rời, mỗi bậc sâu `run` m, mặt bậc thứ i cao (i+1)·h/5, bậc 0 sát sân (z = step.z1), bậc 4 sát hiên (z = platZ1).
+ * Trước đây mặt đi là một dốc thoải nằm DƯỚI các bậc nên chân nhân vật lún vào đá; nay độ cao đi theo đúng mặt từng bậc.
+ */
+export const STAIRS = { n: 5, run: (HALL.step.z1 - HALL.platZ1) / 5 };
+/** Thành bậc: hai khối đá dài hai bên cầu thang (chanhdien.js: box 0,45 × 4,8 tại x = ±5,45) — vật cản để không đi xuyên từ bên hông. */
+export const STAIR_RAILS = [1, -1].map((s) => ({ x0: Math.min(s * 5.225, s * 5.675), x1: Math.max(s * 5.225, s * 5.675), z0: HALL.step.z0, z1: HALL.step.z1 }));
+
 // Vật cản tròn {x,z,r} và hình chữ nhật {x0,x1,z0,z1}. Thêm vật mới vào đây để nhân vật không đi xuyên.
 export const CIRCLES = [
   { x: BELL.x, z: BELL.z, r: BELL.r },
@@ -28,6 +36,7 @@ export const CIRCLES = [
 for (const c of COLUMNS) CIRCLES.push(c);
 export const RECTS = [
   { x0: -9, x1: 9, z0: -47.5, z1: -43.4 },    // bàn thờ chính và bệ tượng Phật
+  ...STAIR_RAILS,                              // thành bậc thềm hai bên
 ];
 
 /** Thêm vật cản động (nhà tổ, am, ghế...) từ các module khác. */
@@ -52,18 +61,18 @@ export function region(x, z) {
   return 'ground';
 }
 
-/** Độ cao mặt đi tại (x, z): sàn chính điện, bậc thềm (dốc), cầu đá qua ao, cầu/đảo của hồ thêm. */
+/** Độ cao mặt đi tại (x, z): sàn chính điện, mặt từng bậc thềm (bậc rời), cầu đá qua ao, cầu/đảo của hồ thêm. */
 export function groundY(x, z) {
   const r = region(x, z), s = HALL.step;
   if (r === 'plat') return HALL.h;
-  if (r === 'step') { const t = (s.z1 - z) / (s.z1 - s.z0); return Math.max(0, Math.min(1, t)) * HALL.h; }
+  if (r === 'step') { const i = Math.max(0, Math.min(STAIRS.n - 1, Math.floor((s.z1 - z) / STAIRS.run))); return (i + 1) * HALL.h / STAIRS.n; }
   if (Math.abs(x) <= POND.bridgeHalf && Math.abs(z - POND.z) <= POND.r + 0.6) return 0.34;
   const br = bridgeAt(x, z); if (br) return br.y;
   return 0;
 }
 
-/** Điểm (x, z) có bị chặn không (không xét việc chuyển vùng; xem canStep). */
-export function blocked(x, z) {
+/** Phần chặn do ĐỊA HÌNH (ranh giới, ao, hồ, tường và nền chính điện), chưa tính vật cản tròn/chữ nhật. */
+function terrainBlocked(x, z) {
   // Ranh giới: trong sân, hoặc đường ngoài cổng
   const inside = Math.abs(x) <= BOUNDS.xMax && z >= BOUNDS.zMin && z <= GATE.z - 1.8;
   const outside = (Math.abs(x) <= 14 && z >= GATE.z + 2.4 && z <= 62) || WALKS.some((w) => inRect(x, z, w));
@@ -78,7 +87,15 @@ export function blocked(x, z) {
   if (r === 'plat') {
     if (z >= HALL.wallZ0 - 0.1 && z <= HALL.wallZ1 && Math.abs(x) > HALL.wallX) return true;
     if (z < HALL.wallZ0) return true;
+  } else if (r === 'ground' && Math.abs(x) < HALL.platX && z >= HALL.platZ0 && z <= HALL.platZ1) {
+    return true;   // dải 0,5 m sát hai bên nền: khối đá của nền chính điện (nền rộng ±platX, vùng sàn đi được chỉ tới ±(platX − 0,5))
   }
+  return false;
+}
+
+/** Điểm (x, z) có bị chặn không (không xét việc chuyển vùng; xem canStep). */
+export function blocked(x, z) {
+  if (terrainBlocked(x, z)) return true;
   for (const c of CIRCLES) if (Math.hypot(x - c.x, z - c.z) < c.r) return true;
   for (const q of RECTS) if (inRect(x, z, q)) return true;
   return false;
@@ -96,5 +113,44 @@ export function move(x, z, dx, dz) {
   if (canStep(x, z, x + dx, z + dz)) return { x: x + dx, z: z + dz };
   if (dx !== 0 && canStep(x, z, x + dx, z)) return { x: x + dx, z };
   if (dz !== 0 && canStep(x, z, x, z + dz)) return { x, z: z + dz };
+  return { x, z };
+}
+
+// ---- Va chạm theo THÂN NGƯỜI (Phiên 29) -------------------------------------------------------------------------------------------------------------
+// Trước đây nhân vật là MỘT ĐIỂM nên thân (rộng ~0,7 m) lún vào tường, góc nhà, cột, thành bậc. Nay thân là đường tròn bán kính PLAYER_R.
+// PLAYER_R (0,35 m) PHẢI nhỏ hơn khoảng chừa của tìm đường (path.js: CLEAR 0,5 m, M 0,45 m) để đường tự tìm không bao giờ dẫn vào chỗ thân không lọt.
+export const PLAYER_R = 0.35;
+const RING = Array.from({ length: 8 }, (_, k) => [Math.cos(k * Math.PI / 4) * PLAYER_R, Math.sin(k * Math.PI / 4) * PLAYER_R]);
+
+/**
+ * Thân người tại (x, z) có chạm vật cản không: vật tròn/chữ nhật (đo đúng bán kính thân), ranh giới/ao/tường (8 điểm quanh thân),
+ * và mép nền chính điện (đất sát nền hoặc sàn sát mép: thân không được gác lên mép nền đá; chỉ qua bậc thềm).
+ */
+export function bodyBlocked(x, z) {
+  if (terrainBlocked(x, z)) return true;
+  for (const c of CIRCLES) if (Math.hypot(x - c.x, z - c.z) < c.r + PLAYER_R) return true;
+  for (const q of RECTS) if (x > q.x0 - PLAYER_R && x < q.x1 + PLAYER_R && z > q.z0 - PLAYER_R && z < q.z1 + PLAYER_R) return true;
+  const rc = region(x, z);
+  for (const [dx, dz] of RING) {
+    const px = x + dx, pz = z + dz;
+    if (terrainBlocked(px, pz)) return true;
+    const rp = region(px, pz);
+    if (rp !== rc && ((rc === 'ground' && rp === 'plat') || (rc === 'plat' && rp === 'ground'))) return true;
+  }
+  return false;
+}
+
+/** Như canStep nhưng cho THÂN người: tâm đi được và thân ở vị trí mới không chạm gì. */
+export const canStepBody = (x0, z0, x1, z1) => canStep(x0, z0, x1, z1) && !bodyBlocked(x1, z1);
+
+/**
+ * Như move nhưng thân người có bán kính PLAYER_R (trượt dọc vật cản). Nếu thân ĐANG chạm sẵn (vừa dịch chuyển tới, vừa đứng dậy khỏi bồ đoàn sát cột...)
+ * thì dùng va chạm điểm như cũ để vẫn bước ra được, không bị kẹt cứng.
+ */
+export function moveBody(x, z, dx, dz) {
+  if (bodyBlocked(x, z)) return move(x, z, dx, dz);
+  if (canStepBody(x, z, x + dx, z + dz)) return { x: x + dx, z: z + dz };
+  if (dx !== 0 && canStepBody(x, z, x + dx, z)) return { x: x + dx, z };
+  if (dz !== 0 && canStepBody(x, z, x, z + dz)) return { x, z: z + dz };
   return { x, z };
 }
