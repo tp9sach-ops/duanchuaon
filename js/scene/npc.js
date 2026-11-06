@@ -6,6 +6,7 @@ import { createAvatar } from '../world/avatar.js';
 import { groundY } from '../world/layout.js';
 import { NPCS } from '../world/npc.js';
 import { WALKERS } from '../world/outside.js';
+import { lanternGlow, lanternSway, candleFlicker, carriesLantern, PHASE } from '../world/lantern.js';
 import { isCovered, umbrellaOpen, newWalker, stepWalker } from '../world/shelter.js';
 
 // Dù: tán hình nón hơi bẹt + cán mảnh, cầm ở tay phải, tán che trên đầu. Hình học dùng chung; mỗi người một màu (vật liệu dùng chung theo màu).
@@ -19,6 +20,17 @@ function makeUmbrella(i) {
   const pole = new THREE.Mesh(umbGeo.pole, poleMat); pole.position.y = 0.39; g.add(pole);
   const canopy = new THREE.Mesh(umbGeo.canopy, m); canopy.position.set(-0.34, 0.78, -0.05); g.add(canopy);
   g.visible = false; g.scale.setScalar(0.001); return g;
+}
+
+const lanGeo = {};
+function makeLantern(i) {   // lồng đèn giấy cầm bằng cây tre ngắn ở tay trái; gốc xoay = bàn tay
+  lanGeo.body = lanGeo.body || new THREE.SphereGeometry(0.15, 14, 10); lanGeo.stick = lanGeo.stick || new THREE.CylinderGeometry(0.01, 0.01, 0.34, 5);
+  const g = new THREE.Group(); g.position.set(-0.32, 0.78, 0.12);
+  const stick = new THREE.Mesh(lanGeo.stick, poleMat); stick.position.y = 0.12; g.add(stick);
+  const hang = new THREE.Group(); hang.position.y = 0.28; g.add(hang);
+  const mat = new THREE.MeshStandardMaterial({ color: 0xff8a3a, emissive: 0xff7a1e, emissiveIntensity: 0.4, roughness: 0.6 });
+  const body = new THREE.Mesh(lanGeo.body, mat); body.scale.set(1, 1.15, 1); body.position.y = -0.2; hang.add(body);
+  return { g, hang, mat, ph: PHASE(i) };
 }
 
 export function buildNpcs(scene, LGT) {
@@ -36,7 +48,8 @@ export function buildNpcs(scene, LGT) {
     a.group.children.forEach((c) => { if (c.isSprite) c.visible = false; });   // không hiện nhãn tên
     const k = newWalker(w); a.group.position.set(k.x, 0, k.z); scene.add(a.group);
     const umb = makeUmbrella(i + 2); a.group.add(umb);
-    return { w, a, k, umb, open: 0 };
+    const lan = carriesLantern(w) ? makeLantern(i) : null; if (lan) a.group.add(lan.g);
+    return { w, a, k, umb, lan, open: 0 };
   });
   const byId = Object.fromEntries(list.map(({ n, a }) => [n.id, a]));
   LGT.npcs = byId;
@@ -61,6 +74,7 @@ export function buildNpcs(scene, LGT) {
         a.group.visible = !k.hidden;   // trẻ em vào nhà tránh mưa lớn
         setUmb(o, rainy && k.mode !== 'in' && !k.hidden, dt);   // đang đứng dưới mái chỗ trú thì thu dù
         a.group.position.set(k.x, 0, k.z); a.update(dt);
+        if (o.lan) { const t = performance.now() / 1000; o.lan.hang.rotation.z = lanternSway(t, r.moving ? r.speed : 0, o.lan.ph); o.lan.mat.emissiveIntensity = lanternGlow(LGT.night || 0) * candleFlicker(t, o.lan.ph); }
       }
     },
   };
