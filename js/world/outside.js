@@ -63,6 +63,30 @@ export const STORE_DIDONG = {
   nv: { x: -14.6, z: 109.9 },
 };
 
+/** Siêu thị điện máy "Điện Máy Lam Sen" (nhà phố lớn BÊN TRÁI đường làng, ngay sau cổng làng z≈70, quay mặt về +x). Dựng theo ảnh siêu thị điện máy mặt tiền xanh-vàng của ptg
+ *  nhưng dùng tên/hình hiệu RIÊNG của dự án (không dùng nhãn hiệu thật), không ghi hãng thật, không ghi giá/khuyến mãi thật. Cùng cấu trúc STORE_DIDONG (front/z/rong/sau, san, than, props, nv). Chưa có địa chỉ (KHÔNG bịa).
+ *  props: xeA = ba xe máy đỗ, xeB = hai xe máy đỗ, thung = chồng thùng hàng. */
+export const STORE_DIENMAY = {
+  id: 'dienmaylamsen', ten: 'Điện Máy Lam Sen',
+  front: -19, z: 70, rong: 12, sau: 8,
+  san: { x0: -19, x1: -13, z0: 64, z1: 76 },
+  than: { x0: -27, x1: -18.4, z0: 64, z1: 76 },
+  props: { xeA: { x: -15.6, z: 66, r: 1.5 }, xeB: { x: -15.4, z: 74.2, r: 1.1 }, thung: { x: -14.4, z: 75.2, r: 0.8 } },
+  nv: { x: -14.6, z: 71.2 },
+};
+
+/** Trung tâm kim hoàn "Kim Hoàn Ngọc Lan" (nhà phố BÊN PHẢI đường làng, cạnh chợ, z≈131; xa Cửa hàng 9 Sạch và Tách Hoa). Dựng theo ảnh trung tâm kim hoàn mặt tiền đá xám + biển xanh navy của ptg
+ *  nhưng dùng tên/hình hiệu RIÊNG (không dùng nhãn hiệu thật), KHÔNG chép địa chỉ/số điện thoại thật; chưa có địa chỉ (chờ ptg). Cùng cấu trúc STORE_TACHHOA (nhóm quay π).
+ *  props: du = dù xanh + bàn bảo vệ, bang = bảng quảng cáo đứng, xe = bốn xe tay ga đỗ, chau = chậu cây. */
+export const STORE_KIMHOAN = {
+  id: 'kimhoanngoclan', ten: 'Kim Hoàn Ngọc Lan',
+  front: 19, z: 131.5, rong: 9, sau: 8,
+  san: { x0: 13, x1: 19, z0: 127, z1: 136 },
+  than: { x0: 18.4, x1: 27, z0: 127, z1: 136 },
+  props: { du: { x: 15.7, z: 128.3, r: 1.2 }, bang: { x: 16.9, z: 129.3, r: 0.45 }, xe: { x: 15.4, z: 134.4, r: 1.1 }, chau: { x: 16.7, z: 135.4, r: 0.5 } },
+  nv: { x: 16.4, z: 129.6 },
+};
+
 /** Điểm mà người chơi đặt chân tới thì tính "đã ghé" (nhiệm vụ). {id, ten, x, z, r} — dùng chung cho trong và ngoài chùa. */
 export const PLACES = [
   { id: 'sanchua', ten: 'Sân chùa', x: 0, z: 6, r: 14 }, { id: 'chanhdien', ten: 'Chánh điện', x: 0, z: -30, r: 14 },
@@ -71,6 +95,7 @@ export const PLACES = [
   { id: 'hoca', ten: 'Hồ cá', x: 52, z: 10, r: 8 }, { id: 'quanam', ten: 'Quan Âm đài', x: 0, z: -59, r: 7 },
   { id: 'lang', ten: 'Đường làng', x: 0, z: 88, r: 14 }, { id: 'cho', ten: 'Chợ làng', x: 0, z: 128, r: 14 },
   { id: 'rung', ten: 'Rừng thông', x: -98, z: 89, r: 9 }, { id: 'thacnuoc', ten: 'Thác nước', x: 95, z: 104, r: 7 },
+  { id: 'dienmaylamsen', ten: 'Điện Máy Lam Sen', x: -15.5, z: 70, r: 7 }, { id: 'kimhoanngoclan', ten: 'Kim Hoàn Ngọc Lan', x: 15.5, z: 131.5, r: 6 },
   { id: 'didongsenvang', ten: 'Di Động Sen Vàng', x: -15.5, z: 112, r: 6 },
 ];
 export const placeById = (id) => PLACES.find((p) => p.id === id) || null;
@@ -81,7 +106,7 @@ export const placesAt = (p) => PLACES.filter((q) => Math.hypot(p.x - q.x, p.z - 
 export const WALKERS = [
   { id: 'd1', color: 'nau', hair: 'troc', path: [[-6, 64], [-6, 110]], speed: 0.9 },
   { id: 'd2', color: 'lam', hair: 'bui', path: [[7, 140], [7, 72]], speed: 1.1 },
-  { id: 'd3', color: 'do', hair: 'bui', path: [[-30, 135], [30, 135]], speed: 0.8 },
+  { id: 'd3', color: 'do', hair: 'bui', path: [[-30, 124.5], [30, 124.5]], speed: 0.8 },
   { id: 'd4', color: 'xam', hair: 'troc', path: [[30, 138], [-30, 138]], speed: 0.7 },
   { id: 'd5', color: 'trang', hair: 'bui', path: [[16, 104], [90, 104]], speed: 1.0 },
   { id: 'd6', color: 'nau', hair: 'troc', path: [[-16, 89], [-92, 89]], speed: 0.95 },
@@ -99,6 +124,7 @@ export function registerOutside() {
   // Cửa hàng 9 Sạch: sân trước đi được; thân nhà và đồ trước cửa là vật cản
   addWalk(STORE_9SACH.san); addRect(STORE_9SACH.than); Object.values(STORE_9SACH.props).forEach((c) => addCircle({ x: c.x, z: c.z, r: c.r }));
   addWalk(STORE_DIDONG.san); addRect(STORE_DIDONG.than); Object.values(STORE_DIDONG.props).forEach((c) => addCircle({ x: c.x, z: c.z, r: c.r }));
+  for (const st of [STORE_DIENMAY, STORE_KIMHOAN]) { addWalk(st.san); addRect(st.than); Object.values(st.props).forEach((c) => addCircle({ x: c.x, z: c.z, r: c.r })); }
   addWalk(STORE_TACHHOA.san); addRect(STORE_TACHHOA.than); Object.values(STORE_TACHHOA.props).forEach((c) => addCircle({ x: c.x, z: c.z, r: c.r }));
 }
 registerOutside();

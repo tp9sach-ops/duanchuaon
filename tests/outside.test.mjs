@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { OUT_WALKS, PLACES, WALKERS, STALLS, VILLAGE_GATE, STREET_LAMPS, THAC, STORE_9SACH, STORE_TACHHOA, STORE_DIDONG, placesAt, placeById } from '../js/world/outside.js';
+import { OUT_WALKS, PLACES, WALKERS, STALLS, VILLAGE_GATE, STREET_LAMPS, THAC, STORE_9SACH, STORE_TACHHOA, STORE_DIDONG, STORE_DIENMAY, STORE_KIMHOAN, placesAt, placeById } from '../js/world/outside.js';
 import { readFileSync } from 'node:fs';
 import { VILLAGERS, ACTS } from '../js/world/npc.js';
 import { blocked, canStep, SPAWN } from '../js/world/layout.js';
@@ -97,4 +97,24 @@ test('Di Động Sen Vàng: bên trái đường, sân trước đi tới đư�
   assert.ok(free >= 3, 'lối vào rộng ' + free + ' m');
   assert.ok(findPath(0, 112, -15.5, 112.5)?.length, 'tìm đường từ giữa đường làng tới trước tiệm');
   assert.ok(placesAt({ x: -15.5, z: 112 }).includes('didongsenvang'));
+});
+
+test('Điện Máy Lam Sen và Kim Hoàn Ngọc Lan: tên riêng, đi tới được, thân nhà/đồ chặn, lối vào ≥ 3 m, nhân viên trong sân, KHÔNG đặt cạnh nhau hay cạnh các cửa hàng khác', () => {
+  const code = ['../js/scene/dienmay.js', '../js/scene/kimhoan.js', '../js/world/outside.js', '../js/world/npc.js'].map((f) => readFileSync(new URL(f, import.meta.url), 'utf8')).join('\n');
+  assert.ok(!/Điện máy XANH|Điện Máy Xanh|PNJ|32 Quang Trung|Quang Trung|1800 ?545457/i.test(code.replace(/PNJ-?like/g, '')), 'không dùng nhãn hiệu/địa chỉ/điện thoại thật');
+  const stores = [STORE_9SACH, STORE_TACHHOA, STORE_DIDONG, STORE_DIENMAY, STORE_KIMHOAN];
+  for (let i = 0; i < stores.length; i++) for (let j = i + 1; j < stores.length; j++) { const a = stores[i], b = stores[j], sameSide = Math.sign(a.front) === Math.sign(b.front); if (sameSide) assert.ok(Math.abs(a.z - b.z) >= 20 || [a, b].includes(STORE_TACHHOA) && [a, b].includes(STORE_9SACH), `${a.id} và ${b.id} đứng quá gần nhau`); }
+  assert.ok(Math.abs(STORE_DIENMAY.z - STORE_KIMHOAN.z) > 50, 'siêu thị điện máy và kim hoàn ở hai khu khác nhau');
+  for (const [st, left] of [[STORE_DIENMAY, true], [STORE_KIMHOAN, false]]) {
+    const { san, than, props, nv } = st, mid = (san.z0 + san.z1) / 2;
+    assert.equal(left, st.front < 0);
+    assert.equal(blocked(left ? than.x1 - 1 : than.x0 + 1, mid), true, st.id + ' thân nhà chặn');
+    for (const c of Object.values(props)) { assert.equal(blocked(c.x, c.z), true, st.id + ' đồ chặn'); assert.ok(c.x > san.x0 && c.x < san.x1 && c.z > san.z0 && c.z < san.z1, st.id + ' đồ nằm trong sân'); }
+    assert.equal(blocked(nv.x, nv.z), true, st.id + ' nhân viên có va chạm'); assert.ok(nv.x > san.x0 && nv.x < san.x1 && nv.z > san.z0 && nv.z < san.z1);
+    let free = 0; for (let z = san.z0; z <= san.z1; z += 0.25) { let ok = true; for (let x = left ? san.x1 : san.x0; left ? x >= than.x1 + 0.3 : x <= than.x0 - 0.3; x += left ? -0.25 : 0.25) if (blocked(x, z)) { ok = false; break; } if (ok) free += 0.25; }
+    assert.ok(free >= 3, st.id + ' lối vào rộng ' + free + ' m');
+    const fx = left ? san.x1 - 0.5 : san.x0 + 0.5; assert.equal(blocked(fx, mid), false); assert.ok(has(fx, mid), st.id + ' tới được từ chỗ xuất hiện');
+    assert.ok(findPath(6, mid, left ? san.x1 - 0.5 : san.x0 + 0.5, mid)?.length, st.id + ' tìm đường tới trước cửa');
+  }
+  assert.ok(placesAt({ x: -15.5, z: 70 }).includes('dienmaylamsen')); assert.ok(placesAt({ x: 15.5, z: 131.5 }).includes('kimhoanngoclan'));
 });

@@ -33,7 +33,7 @@ export function initNav() {
   addEventListener('keydown', (e) => { if (e.key === 'Escape') setMenu(false); });
 }
 
-// Âm thanh nền: nhạc thiền + chuông + mõ + gió + chim (ngày) + côn trùng và ếch (đêm) + thác nước. Logic tính toán nằm ở js/ui/soundLogic.js (có test).
+// Âm thanh nền: nhạc thiền + chuông + mõ + gió + côn trùng và ếch (đêm) + thác nước. Logic tính toán nằm ở js/ui/soundLogic.js (có test).
 // - Gọi sớm từ main.js ngay khi trang khởi động: THỬ phát nhạc thật (autoplay). Chỉ coi là "đang phát" khi AudioContext chạy và nhạc thực sự phát.
 // - Nếu trình duyệt chặn: hiện lời mời rõ ràng ở giữa-dưới màn hình, phát nhạc ngay ở lần chạm/nhấn phím đầu tiên. Không bao giờ báo "đang phát" khi chưa phát.
 // - Mặc định BẬT; ai đã tự tắt thì giữ tắt. Hai thanh âm lượng riêng: Nhạc nền và Hiệu ứng (gió, chim, thác, chuông, mõ...), nhớ lại cho lần sau.
@@ -44,7 +44,7 @@ export function initSound() {
   const btn = document.getElementById('sound');
   if (!btn) return null;
   const MUSIC = 'assets/audio/nhac-nen.m4a';
-  const VOL = { music: 0.55, water: 0.5, bell: 0.5, wind: 0.22, birds: 0.35, insects: 0.16, frogs: 0.3, mo: 0.4 };   // mức gốc từng lớp (trước khi nhân âm lượng người chơi)
+  const VOL = { music: 0.55, water: 0.5, bell: 0.5, wind: 0.22, insects: 0.16, frogs: 0.3, mo: 0.4 };   // mức gốc từng lớp (trước khi nhân âm lượng người chơi)
   const night = !DAY;
   const S = loadSettings(localStorage);                              // { on, music, sfx }
   let want = wantsSound(S), playing = false, userVol = { music: S.music, sfx: S.sfx };
@@ -115,10 +115,6 @@ export function initSound() {
       });
     });
   };
-  const chirp = () => {                                             // chim: 2–4 nốt cao, trượt tần số
-    const base = 2200 + Math.random() * 1600, n = 2 + Math.floor(Math.random() * 3);
-    for (let i = 0; i < n; i++) tone(base * (1 + 0.12 * i), 0.09, { gain: 0.5, to: base * (1.25 + 0.12 * i), at: i * 0.13 });
-  };
   const frog = () => {                                              // ếch: "ộp ộp" thấp, 2–3 tiếng
     const n = 2 + Math.floor(Math.random() * 2), f = 140 + Math.random() * 60;
     for (let i = 0; i < n; i++) tone(f, 0.16, { type: 'sawtooth', gain: 0.4, to: f * 0.7, at: i * 0.24, lp: 520 });
@@ -136,7 +132,7 @@ export function initSound() {
   };
   const startRandoms = () => {
     schedule('bell', ringBell, 'bell', true); schedule('mo', knock, 'mo', true);
-    if (night) schedule('frogs', frog, 'frogs', true); else schedule('birds', chirp, 'birds', true);
+    if (night) schedule('frogs', frog, 'frogs', true);   // KHÔNG có tiếng chim (ptg yêu cầu bỏ)
   };
   const stopRandoms = () => Object.keys(timers).forEach((k) => clearTimeout(timers[k]));
 

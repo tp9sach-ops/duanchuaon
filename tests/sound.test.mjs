@@ -43,12 +43,12 @@ test('sau cử chỉ người chơi (resume được) thì phát', async () => {
   assert.equal(r.playing, true);
 });
 
-test('môi trường: thác to ở chân thác, im khi ở xa; chim chỉ ban ngày; côn trùng và ếch chỉ ban đêm', () => {
+test('môi trường: thác to ở chân thác, im khi ở xa; không có chim; côn trùng và ếch chỉ ban đêm', () => {
   const nearW = ambientMix({ p: { x: 112, z: 104 }, night: false }), far = ambientMix({ p: { x: 0, z: -30 }, night: false });
   assert.ok(nearW.water > 0.95); assert.equal(far.water, 0);
-  assert.ok(nearW.birds > 0 && nearW.insects === 0 && nearW.frogs === 0);
+  assert.ok(nearW.insects === 0 && nearW.frogs === 0); assert.equal('birds' in nearW, false, 'không còn tiếng chim');
   const n = ambientMix({ p: { x: 112, z: 100 }, night: true });
-  assert.equal(n.birds, 0); assert.ok(n.insects > 0 && n.frogs > 0.5);
+  assert.ok(n.insects > 0 && n.frogs > 0.5);
 });
 test('mõ nghe rõ gần chánh điện và nhỏ khi ở xa; chuông không tắt hẳn; mọi giá trị trong 0..1', () => {
   const hall = ambientMix({ p: { x: 0, z: -30 }, night: false }), away = ambientMix({ p: { x: 100, z: 120 }, night: false });
@@ -56,11 +56,11 @@ test('mõ nghe rõ gần chánh điện và nhỏ khi ở xa; chuông không t�
   for (const m of [hall, away, ambientMix({ p: null, night: true })]) for (const v of Object.values(m)) assert.ok(v >= 0 && v <= 1, String(v));
 });
 test('không có vị trí: dùng mức vừa phải, không lỗi', () => {
-  const m = ambientMix({ p: null, night: false }); assert.ok(m.wind > 0 && m.birds > 0);
+  const m = ambientMix({ p: null, night: false }); assert.ok(m.wind > 0);
   assert.doesNotThrow(() => ambientMix(undefined)); assert.doesNotThrow(() => ambientMix({ p: { x: NaN, z: 1 } }));
 });
 test('khoảng chờ tiếng ngẫu nhiên: dương, đông (gain lớn) kêu dày hơn và không lặp dồn dập', () => {
-  const lo = nextDelay('birds', 0, () => 0), hi = nextDelay('birds', 1, () => 0);
-  assert.ok(hi < lo); assert.ok(hi >= 2.5 * 0.6);
+  const lo = nextDelay('frogs', 0, () => 0), hi = nextDelay('frogs', 1, () => 0);
+  assert.ok(hi < lo); assert.ok(hi >= 1.5 * 0.6);
   assert.ok(nextDelay('mo', 1, () => 0) >= 30); assert.ok(clamp(5, 0, 1) === 1);
 });

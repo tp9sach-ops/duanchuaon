@@ -36,14 +36,13 @@ const dist = (p, a) => Math.hypot(p.x - a.x, p.z - a.z);
 // Mưa/sấm sẽ thêm khi có hệ thống thời tiết (Phiên 1 – phần mưa): chỗ cắm là env.rain (0..3), hiện chưa dùng.
 export function ambientMix(env) {
   const p = env && env.p && isFinite(env.p.x) && isFinite(env.p.z) ? env.p : null, night = !!(env && env.night);
-  if (!p) return { water: 0.3, bell: 0.7, wind: 0.3, birds: night ? 0 : 0.35, insects: night ? 0.3 : 0, frogs: night ? 0.25 : 0, mo: 0.2 };   // không biết vị trí (không có cảnh 3D)
+  if (!p) return { water: 0.3, bell: 0.7, wind: 0.3, insects: night ? 0.3 : 0, frogs: night ? 0.25 : 0, mo: 0.2 };   // không biết vị trí (không có cảnh 3D)
   const outside = clamp((p.z - 40) / 40, 0, 1);                       // càng ra xa cổng chùa (làng, rừng, thác) càng "hoang dã"
   const nearWater = clamp(1 - (dist(p, SPOTS.water) - 6) / 60, 0, 1); // gần thác/hồ
   return {
     water: Math.pow(clamp(1 - (dist(p, SPOTS.water) - 6) / 84, 0, 1), 2),
     bell: Math.max(0.08, Math.pow(clamp(1 - (dist(p, SPOTS.bell) - 10) / 140, 0, 1), 1.5)),
     wind: 0.25 + 0.5 * outside,
-    birds: night ? 0 : 0.25 + 0.75 * outside,
     insects: night ? 0.3 + 0.7 * outside : 0,
     frogs: night ? 0.15 + 0.85 * nearWater : 0,
     mo: Math.pow(clamp(1 - (dist(p, SPOTS.hall) - 8) / 40, 0, 1), 1.5),   // tiếng mõ chỉ nghe rõ gần chánh điện
@@ -52,7 +51,7 @@ export function ambientMix(env) {
 
 // Khoảng chờ (giây) tới lần kêu kế tiếp của một lớp âm thanh ngẫu nhiên; rng() trong [0,1). Càng "đông" (gain lớn) càng kêu dày.
 export function nextDelay(kind, gain, rng = Math.random) {
-  const base = { birds: [2.5, 8], frogs: [1.5, 5], mo: [60, 120], bell: [40, 80] }[kind] || [5, 10];
+  const base = { frogs: [1.5, 5], mo: [60, 120], bell: [40, 80] }[kind] || [5, 10];
   const crowd = 1 / (0.5 + clamp(gain, 0, 1));                          // gain 1 -> x0,67; gain 0 -> x2
   return (base[0] + rng() * (base[1] - base[0])) * crowd;
 }
