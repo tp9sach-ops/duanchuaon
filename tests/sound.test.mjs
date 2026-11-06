@@ -81,3 +81,26 @@ test('thunderParams: sấm gần to hơn, dài hơn và có tiếng nổ; sấm 
   assert.ok(near.gain > far.gain && near.dur > far.dur && near.cutoff > far.cutoff && near.crack === true && far.crack === false);
   for (const v of [-1, 0, 0.5, 1, 9, NaN, undefined]) { const t = thunderParams(v); assert.ok(t.gain > 0 && t.gain <= 1 && t.dur > 1 && t.cutoff > 100, String(v)); }
 });
+
+// Phiên 31: âm thanh theo mùa và môi trường
+import { SEASON_MIX, SPOTS } from '../js/ui/soundLogic.js';
+const at = (x, z, extra = {}) => ambientMix({ p: { x, z }, night: false, rain: 0, wind: 0, ...extra });
+test('ve chỉ có mùa hạ ban ngày; không có ban đêm, mưa lớn tắt dần', () => {
+  assert.ok(at(0, 60, { season: 'ha' }).cicada > 0); assert.equal(at(0, 60, { season: 'xuan' }).cicada, 0); assert.equal(at(0, 60, { season: 'dong' }).cicada, 0);
+  assert.equal(at(0, 60, { season: 'ha', night: true }).cicada, 0); assert.ok(at(0, 60, { season: 'ha', rain: 1 }).cicada === 0);
+  assert.equal(at(0, 60).cicada, 0);
+});
+test('trong rừng thông ve to hơn và gió xào xạc hơn so với sân chùa', () => {
+  const f = at(SPOTS.forest.x, SPOTS.forest.z, { season: 'ha' }), t = at(0, -8, { season: 'ha' });
+  assert.ok(f.cicada > t.cicada); assert.ok(f.wind > t.wind);
+});
+test('mùa đông: côn trùng gần như tắt, ếch im, gió mạnh hơn mùa xuân; mùa xuân ếch nhiều hơn mùa thu (ban đêm)', () => {
+  const d = at(0, 70, { season: 'dong', night: true }), x = at(0, 70, { season: 'xuan', night: true }), th = at(0, 70, { season: 'thu', night: true });
+  assert.ok(d.insects < x.insects * 0.3); assert.equal(d.frogs, 0); assert.ok(at(0, 70, { season: 'dong' }).wind > at(0, 70, { season: 'xuan' }).wind); assert.ok(x.frogs > th.frogs);
+});
+test('mùa lạ/không có = hành vi cũ; mọi lớp luôn trong 0..1, kể cả khi không biết vị trí', () => {
+  for (const season of [undefined, 'xx', 'xuan', 'ha', 'thu', 'dong']) for (const night of [false, true]) for (const p of [null, { x: 0, z: 60 }, SPOTS.forest, SPOTS.water]) {
+    const m = ambientMix({ p, night, rain: 0.3, wind: 1, season }); for (const k of Object.keys(m)) assert.ok(m[k] >= 0 && m[k] <= 1, `${season}/${night}/${k}=${m[k]}`);
+  }
+  assert.equal(at(0, 60, { night: true }).insects, at(0, 60, { night: true, season: 'thu' }).insects); assert.ok(SEASON_MIX.ha.cicada === 1);
+});
