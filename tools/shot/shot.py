@@ -19,7 +19,7 @@ try:
         else: r.abort()
     pg.route('**/*',route)
     pg.add_init_script("try{localStorage.setItem('lgt.name','Giang');localStorage.setItem('lgt.color','"+os.environ.get('COLOR','nau')+"')}catch(e){}")
-    pg.goto('http://localhost:8093/index.html?debug=1&shadow='+os.environ.get('SH','1024')+'&x=1'); pg.wait_for_timeout(wait)
+    pg.goto('http://localhost:8093/index.html?debug=1&shadow='+os.environ.get('SH','1024')+'&x=1'+os.environ.get('Q','')); pg.wait_for_timeout(wait)
     if js_after:
         r=pg.evaluate(js_after); print('eval:',r); pg.wait_for_timeout(int(os.environ.get('WAIT2',2500)))
     pg.screenshot(path=out,timeout=180000); print('\n'.join([l for l in logs if 'supabase' not in l and 'ERR_FAILED' not in l and 'script.google' not in l and 'fonts.g' not in l][:25])); b.close()
