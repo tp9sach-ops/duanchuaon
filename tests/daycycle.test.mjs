@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { dayState, sunDir, moonDir, lightDir, phaseName, clockText, lerpHex, wrapHour, realHour, parseHourParam, DAY_SECONDS, HOURS_PER_SECOND, START_HOUR } from '../js/world/daycycle.js';
+import { dayState, sunDir, moonDir, lightDir, phaseName, clockText, lerpHex, wrapHour, realHour, parseHourParam, sharedHour, usesSharedClock, DAY_SECONDS, HOURS_PER_SECOND, START_HOUR } from '../js/world/daycycle.js';
 
 const near = (a, b, e = 1e-9) => Math.abs(a - b) <= e;
 
@@ -66,4 +66,21 @@ test('đồng hồ và tham số ?gio=', () => {
   const t = parseHourParam('?gio=thuc'); assert.equal(t.fixed, false); assert.ok(t.hour >= 0 && t.hour < 24);
   assert.equal(realHour(new Date(2026, 0, 1, 6, 30, 0)), 6.5);
   assert.equal(DAY_SECONDS * HOURS_PER_SECOND, 24); assert.equal(lerpHex(0x102030, 0x304050, 0), 0x102030); assert.equal(lerpHex(0x000000, 0xffffff, 0.5), 0x808080);
+});
+
+test('giờ game dùng chung: 24 phút thật = 24 giờ game, mọi người chơi cùng một giờ', () => {
+  assert.equal(sharedHour(0), 0); assert.equal(sharedHour(60000), 1); assert.equal(sharedHour(12 * 60000), 12); assert.equal(sharedHour(30000), 0.5);
+  assert.ok(near(sharedHour(24 * 60000 - 1), 24 - 1 / 60000, 1e-6) && sharedHour(24 * 60000) === 0, 'đủ 24 phút thì quay về 0h');
+  const t0 = Date.UTC(2026, 10, 6, 4, 21, 17, 123);
+  assert.equal(sharedHour(t0), sharedHour(t0 + 24 * 60000 * 7), 'lặp đúng chu kỳ 24 phút');
+  assert.equal(sharedHour(t0), sharedHour(t0), 'hai máy cùng thời điểm thật → cùng giờ game');
+  assert.ok(near(((sharedHour(t0 + 90000) - sharedHour(t0)) + 24) % 24, 1.5, 1e-9), '90 giây thật = 1,5 giờ game');
+  for (let ms = 0; ms < 3 * 24 * 60000; ms += 997) { const h = sharedHour(ms); assert.ok(h >= 0 && h < 24 && Number.isFinite(h)); }
+  const h = sharedHour(); assert.ok(h >= 0 && h < 24);
+});
+
+test('usesSharedClock: mặc định dùng giờ chung; ?gio= số hoặc thuc là chế độ thử riêng', () => {
+  assert.equal(usesSharedClock(''), true); assert.equal(usesSharedClock('?perf=2'), true); assert.equal(usesSharedClock('?gio='), true);
+  assert.equal(usesSharedClock('?gio=abc'), true); assert.equal(usesSharedClock('?gio=30'), true);
+  assert.equal(usesSharedClock('?gio=19.5'), false); assert.equal(usesSharedClock('?gio=0'), false); assert.equal(usesSharedClock('?gio=thuc'), false);
 });
