@@ -111,6 +111,8 @@ export const WALKERS = [
   { id: 'd5', color: 'trang', hair: 'bui', path: [[16, 104], [90, 104]], speed: 1.0 },
   { id: 'd6', color: 'nau', hair: 'troc', path: [[-16, 89], [-92, 89]], speed: 0.95 },
   { id: 'd7', color: 'vang', hair: 'bui', scale: 0.7, path: [[-4, 90], [-4, 56]], speed: 1.3 },
+  { id: 'd8', color: 'do', hair: 'bui', scale: 0.7, path: [[5, 64], [5, 88]], speed: 1.1 },
+  { id: 'd9', color: 'lam', hair: 'troc', scale: 0.65, path: [[-8, 100], [-8, 70]], speed: 1.2 },
 ];
 
 let done = false;
