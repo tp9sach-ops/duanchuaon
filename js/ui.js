@@ -37,7 +37,7 @@ export function initNav() {
 // - Gọi sớm từ main.js ngay khi trang khởi động: THỬ phát nhạc thật (autoplay). Chỉ coi là "đang phát" khi AudioContext chạy và nhạc thực sự phát.
 // - Nếu trình duyệt chặn: hiện lời mời rõ ràng ở giữa-dưới màn hình, phát nhạc ngay ở lần chạm/nhấn phím đầu tiên. Không bao giờ báo "đang phát" khi chưa phát.
 // - Mặc định BẬT; ai đã tự tắt thì giữ tắt. Hai thanh âm lượng riêng: Nhạc nền và Hiệu ứng (gió, chim, thác, chuông, mõ...), nhớ lại cho lần sau.
-// - Tiếng thay đổi theo vị trí người chơi (window.LGT.getPos) và ngày/đêm (?dem=1 = ban đêm).
+// - Tiếng thay đổi theo vị trí người chơi (window.LGT.getPos) và ngày/đêm (LGT.night từ chu kỳ ngày đêm; ?dem=1 = đêm cố định).
 let soundCtl = null;
 export function initSound() {
   if (soundCtl) return soundCtl;                                     // gọi nhiều lần cũng chỉ dựng một lần
@@ -45,7 +45,7 @@ export function initSound() {
   if (!btn) return null;
   const MUSIC = 'assets/audio/nhac-nen.m4a';
   const VOL = { music: 0.55, water: 0.5, bell: 0.5, wind: 0.22, insects: 0.16, frogs: 0.3, mo: 0.4 };   // mức gốc từng lớp (trước khi nhân âm lượng người chơi)
-  const night = !DAY;
+  const isNight = () => !DAY || !!(window.LGT && window.LGT.night > 0.55);   // đêm cố định (?dem=1) hoặc chu kỳ ngày đêm đã tối (LGT.night do scene/index.js cập nhật)
   const S = loadSettings(localStorage);                              // { on, music, sfx }
   let want = wantsSound(S), playing = false, userVol = { music: S.music, sfx: S.sfx };
   let ctx = null, master = null, musicG = null, sfxG = null, el = null, g = {}, mixTimer = 0, busy = false;
@@ -132,7 +132,7 @@ export function initSound() {
   };
   const startRandoms = () => {
     schedule('bell', ringBell, 'bell', true); schedule('mo', knock, 'mo', true);
-    if (night) schedule('frogs', frog, 'frogs', true);   // KHÔNG có tiếng chim (ptg yêu cầu bỏ)
+    schedule('frogs', frog, 'frogs', true);   // ếch chỉ kêu khi mix.frogs > 0 (đêm); KHÔNG có tiếng chim (ptg yêu cầu bỏ)
   };
   const stopRandoms = () => Object.keys(timers).forEach((k) => clearTimeout(timers[k]));
 
@@ -140,7 +140,7 @@ export function initSound() {
   const updateMix = () => {
     if (!ctx || !playing) return;
     const p = window.LGT && typeof window.LGT.getPos === 'function' ? window.LGT.getPos() : null;
-    const m = ambientMix({ p, night }); g.mix = m;
+    const m = ambientMix({ p, night: isNight() }); g.mix = m;
     const t = ctx.currentTime;
     ['water', 'bell', 'wind', 'insects'].forEach((k) => g[k].gain.setTargetAtTime(VOL[k] * m[k], t, 0.3));
     g.out.gain.setTargetAtTime(1, t, 0.3);                           // chim, ếch, mõ đi thẳng vào g.out, độ lớn đã nằm trong tần suất kêu
@@ -153,7 +153,7 @@ export function initSound() {
     sfxG = ctx.createGain(); sfxG.gain.value = userVol.sfx; sfxG.connect(master);
     ['water', 'bell', 'wind', 'insects'].forEach((k) => { g[k] = ctx.createGain(); g[k].gain.value = 0; g[k].connect(sfxG); });
     g.out = ctx.createGain(); g.out.gain.value = 0.35; g.out.connect(sfxG);   // chim/ếch/mõ
-    waterfall(ctx, g.water); wind(ctx, g.wind); if (night) crickets(ctx, g.insects);
+    waterfall(ctx, g.water); wind(ctx, g.wind); crickets(ctx, g.insects);   // côn trùng luôn dựng, độ lớn theo mix.insects (0 ban ngày)
     el = new Audio(MUSIC); el.loop = true; el.preload = 'auto'; el.crossOrigin = 'anonymous';
     ctx.createMediaElementSource(el).connect(musicG);
     mixTimer = setInterval(updateMix, 250);
