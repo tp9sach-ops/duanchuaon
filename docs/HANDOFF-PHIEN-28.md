@@ -12,6 +12,15 @@ Trời mưa thì dân làng và NPC ngoài trời mở dù; mưa lớn thì dân
 - **tests/shelter.test.mjs (MỚI, 14 test):** ngưỡng, chỗ trú không bị chặn và đi tới được từ cổng, mọi điểm trên đường của 7 dân làng đều có chỗ trú, ưu tiên cửa hàng cho trẻ em, độ trễ phản ứng, đổi ý giữa đường, mô phỏng 10 phút mưa đổi liên tục cho cả 7 người (không ai bước vào vật cản). Thêm vào package.json. sw.js VERSION = dgt-v22.
 - Test bắt được 1 lỗi thật trong lúc làm: đường vào Điện Máy sượt qua nhân viên đứng cửa; đã sửa bằng lề 0,25 m trong `clearLine`.
 
+## Phiên 28b: sửa bóng răng cưa / sọc ngang (ptg báo "lag, giật" kèm 2 ảnh)
+Ảnh 1: sọc ngang trên nền gạch (shadow acne khi nắng thấp). Ảnh 2: mảng nắng/bóng cổng có mép răng cưa bậc thang (bóng bò từng texel khi người chơi đi). CHƯA đo được FPS thật (không có trình duyệt); sửa theo nguyên nhân thấy trong code.
+- **Nguyên nhân 1:** `index.js` đặt tâm vùng đổ bóng đúng vị trí người chơi mỗi khung, nên bản đồ bóng trượt mịn qua lưới texel, mép bóng nhấp nháy. Sửa: `snapToTexel` (js/world/shadowSnap.js) làm tròn tâm tới lưới texel trong mặt phẳng của đèn; bóng chỉ nhích từng bậc.
+- **Nguyên nhân 2:** `lightDir` chặn y ≥ 0,28 (~16°) nên nắng sáng/chiều thấp, bias cũ (-0,0006 / normalBias 0,05) không đủ → sọc. Sửa: `shadowBias(L.y)` tăng bias và normalBias (tối đa 0,2 m) khi nắng thấp; gọi trong `applyDay`.
+- **Tinh chỉnh:** `SHADOW_R` 46 → 40 (texel mịn hơn ~13%), near/far của camera bóng 20/300 → 30/260 (đèn cách mục tiêu ~125 m) để độ sâu mịn hơn.
+- **Test:** tests/shadowSnap.test.mjs (5 test), thêm vào package.json. sw.js VERSION = dgt-v23. Tổng `npm test` xem báo cáo cuối phiên.
+- **Nếu vẫn giật:** thử `?shadow=1024` (giảm bản đồ bóng), `?perf=3` (ép bậc hiệu năng), rồi báo thiết bị + giờ game để đo; nghi ngờ tiếp theo là số vật đổ bóng (cây low-poly, rừng InstancedMesh) và PCFSoftShadowMap.
+- **Rủi ro:** normalBias lớn khi nắng thấp có thể làm bóng hơi rời chân vật (tối đa ~5 texel); cần nhìn bằng mắt ở giờ sáng sớm và chiều.
+
 ## Kiểm thử
 `npm test` toàn bộ chạy trên bản clone (xem số cuối báo cáo phiên). Chưa mở trình duyệt thật nên CHƯA nhìn bằng mắt: dù có nằm đúng trên đầu không, tán có đè nhãn tên không, trẻ em vào cửa hàng có tự nhiên không.
 
