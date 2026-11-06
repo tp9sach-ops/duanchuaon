@@ -31,7 +31,7 @@ import { groundY, blocked } from '../world/layout.js';
 import { createWeather, parseWeatherParam, changeMessage } from '../world/weather.js';
 import { mulberry32 } from '../util.js';
 import { seasonState, parseSeasonParam, seasonColor, isLeafGreen } from '../world/season.js';
-import { dayState, lerpHex, lightDir, moonDir, parseHourParam, wrapHour, clockText, HOURS_PER_SECOND } from '../world/daycycle.js';
+import { dayState, lerpHex, lightDir, moonDir, parseHourParam, wrapHour, clockText, HOURS_PER_SECOND, sharedHour, usesSharedClock } from '../world/daycycle.js';
 
 /* Biến toàn cục MOOD (-1..1): điểm số sẽ điều khiển màu đèn, độ sáng trăng, tông hậu kỳ.
    -1 = lạnh/xanh, 0 = trung tính, +1 = vàng ấm. Dùng: window.LGT.setMood(0.6) hoặc ?mood=0.6
@@ -164,7 +164,9 @@ export function createScene(canvas, { onProgress, onPick, onArrive } = {}) {
 
   // --- chu kỳ ngày đêm (ban ngày mặc định; ?dem=1 vẫn là đêm cố định như cũ; ?gio=19.5 cố định giờ, ?gio=thuc theo giờ máy)
   const hp = parseHourParam(location.search);
-  LGT.hour = hp.hour; LGT.night = DAY ? 0 : 1; LGT.clock = clockText(LGT.hour); LGT.phase = '';
+  const sharedClock = usesSharedClock(location.search); LGT.sharedClock = sharedClock; LGT.clockOffsetMs = LGT.clockOffsetMs || 0;   // Phiên 26: giờ game dùng chung (24 phút thật = 24 giờ game), clockOffsetMs để chỉnh lệch đồng hồ máy sau này
+  const gameNow = () => sharedHour(Date.now() + LGT.clockOffsetMs);
+  LGT.hour = sharedClock ? gameNow() : hp.hour; LGT.night = DAY ? 0 : 1; LGT.clock = clockText(LGT.hour); LGT.phase = '';
   const glowMats = new Set(); scene.traverse((o) => { if (o.material && o.material.userData && o.material.userData.nightGlow) glowMats.add(o.material); });
   const cA = new THREE.Color(), cB = new THREE.Color();
 
@@ -192,7 +194,7 @@ export function createScene(canvas, { onProgress, onPick, onArrive } = {}) {
   petals.mul = SEA.petals.mul; petals.speed = SEA.petals.speed; petals.setCount(PETAL_BASE);
   petals.obj.material.color.setHex(SEA.petals.color); petals.obj.material.size = SEA.petals.size; petals.obj.material.opacity = SEA.petals.opacity;
   function applyDay(dt) {
-    if (!hp.fixed) LGT.hour = wrapHour(LGT.hour + dt * HOURS_PER_SECOND);
+    if (sharedClock) LGT.hour = gameNow(); else if (!hp.fixed) LGT.hour = wrapHour(LGT.hour + dt * HOURS_PER_SECOND);   // giờ chung đọc lại từ đồng hồ thật mỗi khung: không trôi, đổi tab quay lại vẫn đúng giờ
     const evs = weather.update(dt), E = weather.fx, fl = (reduce ? 0.3 : 1) * weather.flash;   // fl: độ lóe chớp (người bật "giảm chuyển động" chỉ thấy lóe nhẹ, tránh nhấp nháy mạnh)
     for (const e of evs) window.dispatchEvent(new CustomEvent('lgt:thunder', { detail: e }));
     if (weather.level !== wxLevel) { const msg = changeMessage(wxLevel, weather.level); wxLevel = weather.level; if (msg && LGT.toast) LGT.toast(msg, 4200); }
