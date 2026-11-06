@@ -84,8 +84,8 @@ function hallSolid(x, z, y) {
 }
 /** Điểm (x, z, y) có là VẬT ĐẶC chắn tầm nhìn camera không (Phiên 31): vật cản tròn/chữ nhật + khối chính điện. Không tính ranh giới, ao, hồ (camera bay được trên mặt nước). */
 export function solidAt(x, z, y = 1.6) {
-  for (const c of CIRCLES) if (Math.hypot(x - c.x, z - c.z) < c.r) return true;
-  for (const q of RECTS) if (inRect(x, z, q)) return true;
+  for (const c of CIRCLES) if (Math.hypot(x - c.x, z - c.z) < c.r && (c.h === undefined || y < c.h)) return true;   // c.h = chiều cao vật thấp (chậu, ghế…): camera bay qua phía trên
+  for (const q of RECTS) if (inRect(x, z, q) && (q.h === undefined || y < q.h)) return true;
   return hallSolid(x, z, y);
 }
 

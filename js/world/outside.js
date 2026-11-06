@@ -147,8 +147,8 @@ export function registerOutside() {
   addWalk(STORE_DIDONG.san); addRect(STORE_DIDONG.than); Object.values(STORE_DIDONG.props).forEach((c) => addCircle({ x: c.x, z: c.z, r: c.r }));
   for (const st of [STORE_DIENMAY, STORE_KIMHOAN]) { addWalk(st.san); addRect(st.than); Object.values(st.props).forEach((c) => addCircle({ x: c.x, z: c.z, r: c.r })); }
   // Phiên 33: hàng rào phố (rect mảnh), chậu hoa và đồ chợ (vật cản tròn)
-  STREET_FENCES.forEach((f) => addRect({ x0: f.x - 0.3, x1: f.x + 0.3, z0: f.z0, z1: f.z1 }));
-  [...PLANTERS, ...MARKET_DECOR.cages, ...MARKET_DECOR.chairs, ...MARKET_DECOR.blocks].forEach((c) => addCircle({ x: c.x, z: c.z, r: c.r }));
+  STREET_FENCES.forEach((f) => addRect({ x0: f.x - 0.3, x1: f.x + 0.3, z0: f.z0, z1: f.z1, h: 0.8 }));   // h: chỉ phần tường đá thấp chắn camera
+  [[PLANTERS, 0.9], [MARKET_DECOR.cages, 0.9], [MARKET_DECOR.chairs, 1.1], [MARKET_DECOR.blocks, 0.6]].forEach(([list, h]) => list.forEach((c) => addCircle({ x: c.x, z: c.z, r: c.r, h })));
   addWalk(STORE_TACHHOA.san); addRect(STORE_TACHHOA.than); Object.values(STORE_TACHHOA.props).forEach((c) => addCircle({ x: c.x, z: c.z, r: c.r }));
 }
 registerOutside();
