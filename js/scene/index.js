@@ -156,7 +156,7 @@ export function createScene(canvas, { onProgress, onPick, onArrive } = {}) {
     camera.fov = w / h < 0.8 ? 68 : 52; camera.updateProjectionMatrix();
     document.documentElement.style.setProperty('--vw', w + 'px');
   }
-  addEventListener('resize', resize);
+  addEventListener('resize', resize); addEventListener('orientationchange', () => setTimeout(resize, 120)); addEventListener('lgt:viewport', resize);   // Phiên 31: xoay/gập Z Fold/thanh công cụ Safari co giãn
 
   const qMood = new URLSearchParams(location.search).get('mood');
   if (qMood !== null) LGT.setMood(qMood);
