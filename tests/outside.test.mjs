@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { OUT_WALKS, PLACES, WALKERS, STALLS, VILLAGE_GATE, STREET_LAMPS, THAC, STORE_9SACH, STORE_TACHHOA, placesAt, placeById } from '../js/world/outside.js';
+import { OUT_WALKS, PLACES, WALKERS, STALLS, VILLAGE_GATE, STREET_LAMPS, THAC, STORE_9SACH, STORE_TACHHOA, STORE_DIDONG, placesAt, placeById } from '../js/world/outside.js';
 import { readFileSync } from 'node:fs';
 import { VILLAGERS, ACTS } from '../js/world/npc.js';
 import { blocked, canStep, SPAWN } from '../js/world/layout.js';
@@ -82,4 +82,19 @@ test('Tách Hoa: sân trước đi tới được, thân nhà và xe hồng ch�
   let free = 0; for (let z = san.z0; z <= san.z1; z += 0.25) { let ok = true; for (let x = 13; x <= than.x0 - 0.3; x += 0.25) if (blocked(x, z)) { ok = false; break; } if (ok) free += 0.25; }
   assert.ok(free >= 3, 'lối vào rộng ' + free + ' m');
   assert.ok(findPath(0, 90, 17, 89)?.length, 'tìm đường tới Tách Hoa');
+});
+
+test('Di Động Sen Vàng: bên trái đường, sân trước đi tới được, thân nhà và đồ trước cửa chặn, lối vào ≥ 3 m, xa hai cửa hàng kia, tên riêng của dự án', () => {
+  const { san, than, props, nv } = STORE_DIDONG;
+  assert.ok(STORE_DIDONG.z - STORE_9SACH.z >= 20 && STORE_DIDONG.z - STORE_TACHHOA.z >= 15, 'không đặt cạnh hai cửa hàng kia');
+  const code = readFileSync(new URL('../js/scene/didong.js', import.meta.url), 'utf8') + readFileSync(new URL('../js/world/outside.js', import.meta.url), 'utf8') + readFileSync(new URL('../js/world/npc.js', import.meta.url), 'utf8');
+  assert.ok(!/thegioididong|Thế Giới Di Động|TGDD/i.test(code), 'không dùng tên nhãn hiệu thật');
+  for (const [x, z] of [[san.x1 - 0.5, STORE_DIDONG.z], [-14.5, 111], [-17, 113]]) { assert.equal(blocked(x, z), false, `(${x},${z}) đi được`); assert.ok(has(x, z), `(${x},${z}) tới được`); }
+  for (const [x, z] of [[than.x1 - 1, STORE_DIDONG.z], [-22, 110]]) assert.equal(blocked(x, z), true, `thân nhà (${x},${z}) chặn`);
+  for (const c of Object.values(props)) { assert.equal(blocked(c.x, c.z), true, 'đồ trước cửa chặn'); assert.ok(c.x > san.x0 && c.x < san.x1 && c.z > san.z0 && c.z < san.z1, 'đồ nằm trong sân'); }
+  assert.equal(blocked(nv.x, nv.z), true, 'nhân viên có va chạm'); assert.ok(nv.x > san.x0 && nv.x < san.x1 && nv.z > san.z0 && nv.z < san.z1);
+  let free = 0; for (let z = san.z0; z <= san.z1; z += 0.25) { let ok = true; for (let x = san.x1; x >= than.x1 + 0.3; x -= 0.25) if (blocked(x, z)) { ok = false; break; } if (ok) free += 0.25; }
+  assert.ok(free >= 3, 'lối vào rộng ' + free + ' m');
+  assert.ok(findPath(0, 112, -15.5, 112.5)?.length, 'tìm đường từ giữa đường làng tới trước tiệm');
+  assert.ok(placesAt({ x: -15.5, z: 112 }).includes('didongsenvang'));
 });

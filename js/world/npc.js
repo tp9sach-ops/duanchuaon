@@ -81,6 +81,15 @@ export const VILLAGERS = [
       'Sương sớm trong rừng lạnh. Mặc ấm vào nhé cháu.',
       'Gốc cổ thụ kia đã mấy trăm tuổi, đừng khắc tên lên thân cây.',
     ] },
+  { id: 'nvdidong', ten: 'Nhân viên Di Động Sen Vàng', color: 'vang', hair: 'bui', x: -14.6, z: 109.9, ry: Math.PI / 2, stand: { x: -12.2, z: 109.9 },
+    lines: [
+      'Chào bạn! Tiệm Sen Vàng mới khai trương, mời bạn ghé xem.',
+      'Điện thoại dùng bền là nhờ giữ gìn. Ốp lưng tốt đỡ hao hơn máy mới.',
+      'Tiệm có kệ đủ màu, nhưng điện thoại hay nhất vẫn là cất đi khi ngồi thiền.',
+      'Mua gì cũng cân nhắc nhu cầu thật, đừng chạy theo mẫu mới mỗi năm.',
+      'Làng mình sóng yếu ở gần thác, muốn gọi điện thì ra đường làng nhé.',
+      'Cảm ơn bạn đã ghé tiệm. Chúc bạn một ngày an lạc!',
+    ] },
   { id: 'haithuoc', ten: 'Cô Mai hái thuốc', color: 'trang', hair: 'bui', x: 93, z: 115, ry: Math.PI, stand: { x: 93, z: 112 },
     lines: [
       'Cô hái lá thuốc nam bên suối, ngày nào cũng vài rổ.',

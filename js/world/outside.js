@@ -51,6 +51,18 @@ export const STORE_TACHHOA = {
   props: { xe: { x: 15.9, z: 93.7, r: 0.9 } },
 };
 
+/** Tiệm điện thoại "Di Động Sen Vàng" (nhà phố mặt tiền bên TRÁI đường làng, quay mặt về phía +x ra đường; cách xa hai cửa hàng bên phải, không đứng cạnh nhau).
+ *  Tên và hình hiệu là của riêng dự án (không dùng nhãn hiệu thật). Mặt tiền tại x = front; thân nhà kéo về -x (sâu `sau` m); `z` là tâm bề ngang `rong`. Chưa có địa chỉ (KHÔNG tự bịa).
+ *  props (tọa độ thế giới {x,z,r}): du = hai chiếc dù trước cửa, bongbay1/2 = hai cột bóng bay, hoa = giỏ hoa chúc mừng, xe = hai xe máy đỗ. nv = nhân viên NPC đứng trước cửa (xem js/world/npc.js). */
+export const STORE_DIDONG = {
+  id: 'didongsenvang', ten: 'Di Động Sen Vàng',
+  front: -19, z: 112, rong: 10, sau: 7,
+  san: { x0: -19, x1: -13, z0: 107, z1: 117 },
+  than: { x0: -26, x1: -18.4, z0: 107, z1: 117 },
+  props: { du: { x: -16.2, z: 108.4, r: 1.4 }, bongbay1: { x: -17.6, z: 110, r: 0.35 }, bongbay2: { x: -17.6, z: 114, r: 0.35 }, hoa: { x: -17.8, z: 116, r: 0.5 }, xe: { x: -15, z: 115.8, r: 1.0 } },
+  nv: { x: -14.6, z: 109.9 },
+};
+
 /** Điểm mà người chơi đặt chân tới thì tính "đã ghé" (nhiệm vụ). {id, ten, x, z, r} — dùng chung cho trong và ngoài chùa. */
 export const PLACES = [
   { id: 'sanchua', ten: 'Sân chùa', x: 0, z: 6, r: 14 }, { id: 'chanhdien', ten: 'Chánh điện', x: 0, z: -30, r: 14 },
@@ -59,6 +71,7 @@ export const PLACES = [
   { id: 'hoca', ten: 'Hồ cá', x: 52, z: 10, r: 8 }, { id: 'quanam', ten: 'Quan Âm đài', x: 0, z: -59, r: 7 },
   { id: 'lang', ten: 'Đường làng', x: 0, z: 88, r: 14 }, { id: 'cho', ten: 'Chợ làng', x: 0, z: 128, r: 14 },
   { id: 'rung', ten: 'Rừng thông', x: -98, z: 89, r: 9 }, { id: 'thacnuoc', ten: 'Thác nước', x: 95, z: 104, r: 7 },
+  { id: 'didongsenvang', ten: 'Di Động Sen Vàng', x: -15.5, z: 112, r: 6 },
 ];
 export const placeById = (id) => PLACES.find((p) => p.id === id) || null;
 /** Nơi (id) mà vị trí p = {x,z} đang ở trong; mảng có thể rỗng hoặc nhiều nơi chồng nhau. */
@@ -85,6 +98,7 @@ export function registerOutside() {
   addRect(DINH_NGHI); addRect(MIEU);
   // Cửa hàng 9 Sạch: sân trước đi được; thân nhà và đồ trước cửa là vật cản
   addWalk(STORE_9SACH.san); addRect(STORE_9SACH.than); Object.values(STORE_9SACH.props).forEach((c) => addCircle({ x: c.x, z: c.z, r: c.r }));
+  addWalk(STORE_DIDONG.san); addRect(STORE_DIDONG.than); Object.values(STORE_DIDONG.props).forEach((c) => addCircle({ x: c.x, z: c.z, r: c.r }));
   addWalk(STORE_TACHHOA.san); addRect(STORE_TACHHOA.than); Object.values(STORE_TACHHOA.props).forEach((c) => addCircle({ x: c.x, z: c.z, r: c.r }));
 }
 registerOutside();
