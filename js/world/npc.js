@@ -35,6 +35,14 @@ const TEMPLE_NPCS = [
       'Đừng cào cho thật thẳng; đường lượn cũng đẹp.',
       'Gió qua tre nghe như tiếng kinh, bạn thấy không?',
     ] },
+  { id: 'chutieu', ten: 'Chú tiểu Minh', color: 'nau', hair: 'troc', scale: 0.85, x: -4.5, z: 44.5, ry: 0, stand: { x: -4.5, z: 47.5 },
+    lines: [
+      'Hà! Con tập võ mỗi sáng cho khỏe người, tâm cũng tỉnh theo.',
+      'Hành giả cứ thong thả. Tu tập là việc đường dài, không cần vội.',
+      'Thầy Trụ trì ở trong chánh điện, đi thẳng qua Tam quan là tới.',
+      'Cây bồ đề cổ phía Tây chánh điện đã lâu chưa đâm chồi mới.',
+      'Con nghe nói tám cảnh giới khinh công đã thất truyền từ lâu lắm.',
+    ] },
 ];
 
 /** Dân làng ngoài chùa (Phiên 17). Cùng cách hoạt động với NPC trong chùa. scale < 1 = trẻ em. */

@@ -186,6 +186,7 @@ Việc ptg làm song song (không chặn các phiên trên): bật Pages (Settin
 - **31:** đom đóm tự nhiên theo 6 vùng (js/world/fireflies.js); trẻ cầm lồng đèn d7–d9 (js/world/lantern.js, scene/npc.js); âm thanh theo mùa/môi trường + tiếng ve mùa hạ (js/ui/soundLogic.js SEASON_MIX, ui.js); responsive mọi điện thoại gồm Z Fold, iPhone, thanh công cụ dưới của Safari/Chrome (js/ui/viewportLogic.js, viewport.js, css/responsive.css, nạp SAU CÙNG); camera không xuyên tường (worldLogic.clipCamDist + layout.solidAt); thêm tests/clocklabel.test.mjs (trước đó package.json gọi mà file thiếu).
 - Test: `npm test` 452/452 (Node 22) cuối Phiên 31. Service worker VERSION dgt-v27. GitHub tích hợp chỉ ĐỌC: ptg tải file lên tay.
 - Chưa kiểm bằng mắt/thiết bị thật: toàn bộ giao diện Phiên 31 (responsive, lồng đèn, đom đóm, tiếng ve, camera). Xem docs/PHIEN31.md.
+- **32 (bước 1/4 của Phiên 3 master prompt):** logic cốt truyện chương 1 (js/world/story.js: meet→abbot→water1→meditate→water2→done, hội thoại, hồi chiêu tưới, giờ thiền 180 giây, mở Khinh thân bậc 1) + NPC Chú tiểu Minh ở cổng chùa (js/world/npc.js, id `chutieu`) + tests/story.test.mjs (10 test). **CHƯA nối giao diện/3D** (hội thoại, bình tưới, nút tưới, bộ đếm thiền, cây lớn lên) — xem docs/PHIEN32.md để làm Bước 2–4. Test thực tế: `npm test` 447/447 (trước phiên: 437/437; số 452 ghi ở Phiên 31 là sai lệch). sw.js dgt-v28.
 
 ## 8. PROMPT KHỞI ĐỘNG PHIÊN MỚI (dán nguyên văn)
 
