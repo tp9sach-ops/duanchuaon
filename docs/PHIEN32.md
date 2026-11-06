@@ -48,3 +48,28 @@ Bước 3 (bình tưới + nút Tưới cây + cây lớn lên) và Bước 4 (t
 
 ## Giới hạn / chưa kiểm
 Chưa mở trình duyệt; chưa thấy chú tiểu bằng mắt (kích thước 0,85, vị trí gần cổng có thể che đường/đèn đường — `bodyBlocked` đã kiểm bằng test đi tới được nhưng chưa nhìn); lời thoại do dự án soạn (cần ptg đọc, đặc biệt tên "tiểu Minh" là TÊN TỰ ĐẶT); điểm thưởng tạm; dữ liệu cốt truyện chỉ ở máy người chơi.
+
+---
+
+# Phiên 32 — BƯỚC ÂM THANH THIÊN NHIÊN THEO VỊ TRÍ (phần mới, thêm sau Bước 1–2 ở trên)
+
+**Nền:** repo `tp9sach-ops/loinhuan.github.io` `main` @ `925d023` ("Phiên 32 Bước 2: hộp thoại cốt truyện + thẻ mục tiêu"). ptg dán lại nhật ký Bước 3 (tư thế tưới + bình nước + nút "Đi tới cây / Tưới cây" + cây bồ đề lớn lên) nhưng **mã Bước 3 KHÔNG có trên `main`** (grep `pour`/`water` trong `js/world/*.js` chỉ ra `story.js`): sandbox đó đã mất, chưa đẩy. Phiên này KHÔNG làm lại Bước 3 (không có đủ mã trong tay); làm yêu cầu mới của ptg: âm thanh.
+
+## Yêu cầu của ptg (nguyên ý)
+Thay tiếng ếch, nhái, chim, dế… (đang tổng hợp bằng Web Audio) bằng 3 file ptg gửi; âm thanh NHỎ HƠN nhạc; chia theo KHU: tiếng phát ra từ đâu thì gần nghe to, xa nghe nhỏ, KHÔNG đều nhau khắp nơi.
+
+## Đã làm
+- `assets/audio/ech-nhai.mp3` (58 s), `chim-ngay.mp3` (58 s), `de-dem.mp3` (37 s): mono 32 kHz 56 kbps, tổng ~1 MB. Tạo bằng `tools/make-nature-audio.py <thư mục 3 mp3 gốc>` (lọc thông cao, chỉnh RMS −23 dBFS, crossfade đầu–đuôi để lặp liền). Gốc: ếch = cả file; chim = đoạn 20–80 s của file 218 s; dế = file "birds and crickets" (có lẫn vài tiếng chim, lọc cao 250 Hz vì 37% năng lượng gốc là tiếng ù dưới 150 Hz).
+- `js/ui/spatialLogic.js` (mới, THUẦN, có test): bảng `EMITTERS` (22 nguồn: ếch ở ao sen ×2, hồ cá, hồ thác; chim ở 3 cây bồ đề, 2 bụi tre, 2 hàng cây, vườn thiền, vườn tháp, rừng thông ×2, gốc đa, bãi thác; dế ở bãi cỏ trước Tam quan ×2, trà thất, hồ cá, vườn thiền, vườn tháp, vỉa hè đường làng ×2, rừng, đường thác), `rolloff` (≤ref to nhất, ~1/khoảng cách, về 0 ở max), `panOf` (trái/phải theo yaw camera), `lowpassHz` (xa thì đục), `kindGates` (chim = ngày, dế + ếch = đêm, chuyển từ từ lúc hoàng hôn/rạng đông, theo mùa, mưa làm chim im/dế thưa/ếch vẫn kêu, trong chánh điện ×0,5), `emitterStates` (mỗi loại giữ tối đa 3–4 nguồn to nhất).
+- `js/ui.js`: bỏ `crickets`/`frog` tổng hợp và `VOL.insects/frogs`; thêm bộ máy `NAT` (tải + giải mã từng loại khi cần, lỗi tải thử lại sau 30 s; mỗi nguồn = file lặp bắt đầu ngẫu nhiên, tốc độ 0,96–1,04 → lọc cắt cao → StereoPanner → gain → `g.nature` → thanh "Hiệu ứng"); `updateMix` (4 lần/giây) gọi `natureUpdate(emitterStates(...))` với vị trí, yaw camera (`LGT.world.camera.yaw`), `LGT.night`, mùa, mưa, trong chánh điện; tắt âm thanh thì tắt hết nguồn. Ve (mùa hạ), gió, thác, mưa, sấm, chuông, mõ vẫn tổng hợp như cũ.
+- `NATURE_VOL` ếch 0,25 · chim 0,22 · dế 0,2 (nhạc nền 0,55). Đo trong Chromium (OfflineAudioContext): ếch sát bờ ao ≈ −37 dB so với nhạc ≈ −27 dB; ếch cách ao 10 m −46 dB, 20 m −53, 40 m −64, 54 m tắt.
+- `tests/spatial.test.mjs` (10 test), thêm vào `package.json` và `tests/smoke.mjs` (file bắt buộc). `npm test` 458/458 (Node 22). `sw.js` VERSION tăng 1. `THIRD_PARTY.md`: ghi nguồn 3 file, GIẤY PHÉP CHƯA XÁC NHẬN.
+- Kiểm Chromium: 3 file giải mã đúng (mono, đúng độ dài), bước nhảy ở chỗ nối vòng lặp nhỏ (≤ 0,04 so với bước lớn nhất 0,27–0,43), mức giảm theo khoảng cách và trái/phải đúng công thức.
+
+## CHƯA làm / rủi ro
+- **Chưa NGHE bằng tai** và chưa chạy trọn trang (chưa vào cảnh 3D để đi dạo nghe gần/xa). ptg cần nghe: độ lớn (`NATURE_VOL` trong spatialLogic.js), chỗ nối vòng lặp, chim lẫn trong file dế vào ban đêm có lạ không.
+- Vị trí 22 nguồn là ƯỚC LƯỢNG theo tọa độ cây/ao/vườn trong layout/landscape/outside/placements; chưa đối chiếu từng cây trong cảnh. Dời chỗ = sửa `EMITTERS`.
+- `ambientMix` vẫn trả `insects` và `frogs` (cũ, có test) nhưng ui.js không còn dùng; có thể xóa cùng test ở phiên sau.
+- Bộ nhớ: 3 buffer giải mã ≈ 27 MB (chỉ giải mã loại đang cần); chưa đo trên iPhone cũ.
+- Chưa dừng AudioContext khi tab ẩn (hành vi cũ: chỉ nhạc nền tạm dừng).
+- Bước 3 (tưới cây) còn phải LÀM LẠI từ mô tả: pose `water` trong `avatarLogic.js` (thêm `pour` vào P), bình tưới gắn tay phải trong `avatar.js` (`setProp('can')`, giọt nước), `pour(tx,tz,sec,onDone)` trong `world.js`, nút "Đi tới cây / Tưới cây", cây bồ đề lớn theo `story.tree`, KHÔNG thêm trạng thái mới vào danh sách mạng (để khỏi sửa luật Firebase). Đọc `js/world/story.js` (`STEPS`, `waterOk`...) và `tests/story.test.mjs` trước.
