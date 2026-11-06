@@ -2,6 +2,7 @@
 import { prefersReduced } from './util.js';
 import { DAY } from './scene/theme.js';
 import { V_MAX, V_STEP, clamp, loadSettings, saveSetting, wantsSound, tryAutoplay, ambientMix, nextDelay, thunderParams } from './ui/soundLogic.js';
+import { NATURE_FILES, NATURE_VOL, emitterStates } from './ui/spatialLogic.js';
 
 export function initReveal() {
   // Tách chữ từng từ cho tiêu đề có data-words
@@ -33,7 +34,7 @@ export function initNav() {
   addEventListener('keydown', (e) => { if (e.key === 'Escape') setMenu(false); });
 }
 
-// Âm thanh nền: nhạc thiền + chuông + mõ + gió + côn trùng và ếch (đêm) + thác nước. Logic tính toán nằm ở js/ui/soundLogic.js (có test).
+// Âm thanh nền: nhạc thiền + chuông + mõ + gió + ve (hạ) + thác nước + mưa/sấm (tổng hợp), và ếch nhái / chim / dế bằng FILE THẬT phát THEO VỊ TRÍ (Phiên 32: js/ui/spatialLogic.js). Logic tính toán nằm ở js/ui/soundLogic.js (có test).
 // - Gọi sớm từ main.js ngay khi trang khởi động: THỬ phát nhạc thật (autoplay). Chỉ coi là "đang phát" khi AudioContext chạy và nhạc thực sự phát.
 // - Nếu trình duyệt chặn: hiện lời mời rõ ràng ở giữa-dưới màn hình, phát nhạc ngay ở lần chạm/nhấn phím đầu tiên. Không bao giờ báo "đang phát" khi chưa phát.
 // - Mặc định BẬT; ai đã tự tắt thì giữ tắt. Hai thanh âm lượng riêng: Nhạc nền và Hiệu ứng (gió, chim, thác, chuông, mõ...), nhớ lại cho lần sau.
@@ -44,7 +45,7 @@ export function initSound() {
   const btn = document.getElementById('sound');
   if (!btn) return null;
   const MUSIC = 'assets/audio/nhac-nen.m4a';
-  const VOL = { music: 0.55, water: 0.5, bell: 0.5, wind: 0.22, insects: 0.16, cicada: 0.1, frogs: 0.3, mo: 0.4, rain: 0.5, thunder: 0.9 };   // mức gốc từng lớp (trước khi nhân âm lượng người chơi)
+  const VOL = { music: 0.55, water: 0.5, bell: 0.5, wind: 0.22, cicada: 0.1, mo: 0.4, rain: 0.5, thunder: 0.9 };   // mức gốc từng lớp (trước khi nhân âm lượng người chơi)
   const isNight = () => !DAY || !!(window.LGT && window.LGT.night > 0.55);   // đêm cố định (?dem=1) hoặc chu kỳ ngày đêm đã tối (LGT.night do scene/index.js cập nhật)
   const S = loadSettings(localStorage);                              // { on, music, sfx }
   let want = wantsSound(S), playing = false, userVol = { music: S.music, sfx: S.sfx };
@@ -108,14 +109,6 @@ export function initSound() {
     for (let i = 0; i < 3; i++) tone(48 + i * 9, P.dur * 0.8, { type: 'sine', gain: 0.12 * P.gain, at: 0.05 + i * 0.35, to: 30, lp: 120 });   // thân sấm rất trầm
   };
   addEventListener('lgt:thunder', (ev) => { try { thunder(ev && ev.detail ? ev.detail.vol : 0.5); } catch (_) { /* âm thanh lỗi không được làm hỏng cảnh */ } });
-  const crickets = (c, out) => {                                    // côn trùng đêm: tiếng cao ~4,3 kHz ngắt nhịp nhanh, hai "con" lệch nhịp
-    [[4300, 5.3], [3900, 6.7]].forEach(([f, rate]) => {
-      const o = c.createOscillator(), gate = c.createGain(), lfo = c.createOscillator(), depth = c.createGain();
-      o.type = 'sine'; o.frequency.value = f; gate.gain.value = 0.5;
-      lfo.type = 'square'; lfo.frequency.value = rate; depth.gain.value = 0.5; lfo.connect(depth); depth.connect(gate.gain);
-      o.connect(gate); gate.connect(out); o.start(); lfo.start();
-    });
-  };
   const cicadas = (c, out) => {                                     // ve mùa hạ (Phiên 31): tiếng rè ~5 kHz, nhịp rung nhanh, độ lớn dập dềnh chậm như bầy ve hòa nhau
     [[5200, 31, 0.13], [4700, 27, 0.17]].forEach(([f, rate, swell]) => {
       const o = c.createOscillator(), bp = c.createBiquadFilter(), am = c.createGain(), lfo = c.createOscillator(), ld = c.createGain(), sw = c.createOscillator(), sd = c.createGain();
@@ -145,10 +138,6 @@ export function initSound() {
       });
     });
   };
-  const frog = () => {                                              // ếch: "ộp ộp" thấp, 2–3 tiếng
-    const n = 2 + Math.floor(Math.random() * 2), f = 140 + Math.random() * 60;
-    for (let i = 0; i < n; i++) tone(f, 0.16, { type: 'sawtooth', gain: 0.4, to: f * 0.7, at: i * 0.24, lp: 520 });
-  };
   const knock = () => { for (let i = 0; i < 3; i++) { tone(520, 0.14, { type: 'triangle', gain: 0.5, to: 330, at: i * 0.55 }); tone(260, 0.18, { gain: 0.25, at: i * 0.55 }); } };   // mõ: ba tiếng
   const timers = {};
   const schedule = (kind, fn, gainKey, first) => {                  // mỗi lớp ngẫu nhiên tự hẹn giờ; chỉ kêu khi đang phát và lớp đó đủ lớn
@@ -161,10 +150,50 @@ export function initSound() {
     }, (first ? 2 + Math.random() * 3 : nextDelay(kind, mixed)) * 1000);
   };
   const startRandoms = () => {
-    schedule('bell', ringBell, 'bell', true); schedule('mo', knock, 'mo', true);
-    schedule('frogs', frog, 'frogs', true);   // ếch chỉ kêu khi mix.frogs > 0 (đêm); KHÔNG có tiếng chim (ptg yêu cầu bỏ)
+    schedule('bell', ringBell, 'bell', true); schedule('mo', knock, 'mo', true);   // ếch, chim, dế KHÔNG còn ở đây: là file thật phát theo vị trí (natureUpdate)
   };
   const stopRandoms = () => Object.keys(timers).forEach((k) => clearTimeout(timers[k]));
+
+  // --- ếch nhái / chim / dế: FILE THẬT, mỗi nơi (ao, tán cây, bãi cỏ...) là một nguồn riêng. Chỉ tải + giải mã loại nào đang cần (ban ngày chỉ tải chim, ban đêm ếch và dế).
+  // Mỗi nguồn: file lặp (bắt đầu ở chỗ ngẫu nhiên, tốc độ lệch nhẹ để các nguồn không trùng nhau) -> lọc cắt cao (xa thì đục) -> trái/phải -> độ lớn theo khoảng cách. Nguồn ra khỏi tầm thì tắt hẳn.
+  const NAT = { bufs: {}, loading: {}, failAt: {}, nodes: {} };
+  const loadNature = (kind) => {
+    if (NAT.bufs[kind] || NAT.loading[kind] || !ctx) return;
+    if (NAT.failAt[kind] && Date.now() - NAT.failAt[kind] < 30000) return;       // tải lỗi: thử lại sau 30 giây, không dồn dập
+    NAT.loading[kind] = fetch(NATURE_FILES[kind]).then((r) => { if (!r.ok) throw new Error('http ' + r.status); return r.arrayBuffer(); })
+      .then((ab) => new Promise((ok, no) => { const pr = ctx.decodeAudioData(ab, ok, no); if (pr && pr.catch) pr.catch(no); }))   // dạng callback cho Safari cũ
+      .then((b) => { NAT.bufs[kind] = b; })
+      .catch(() => { NAT.failAt[kind] = Date.now(); })
+      .finally(() => { NAT.loading[kind] = null; });
+  };
+  const startNature = (st, buf) => {
+    const src = ctx.createBufferSource(); src.buffer = buf; src.loop = true; src.playbackRate.value = 0.96 + Math.random() * 0.08;
+    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = st.cutoff; lp.Q.value = 0.5;
+    const pan = ctx.createStereoPanner ? ctx.createStereoPanner() : null; if (pan) pan.pan.value = st.pan;
+    const gain = ctx.createGain(); gain.gain.value = 0;                          // vào từ từ
+    src.connect(lp); let last = lp; if (pan) { lp.connect(pan); last = pan; } last.connect(gain); gain.connect(g.nature);
+    src.start(0, Math.random() * buf.duration);
+    return { src, lp, pan, gain };
+  };
+  const stopNature = (id) => {
+    const n = NAT.nodes[id]; if (!n) return; delete NAT.nodes[id];
+    try { n.gain.gain.setTargetAtTime(0, ctx.currentTime, 0.25); } catch (_) { /* bỏ qua */ }
+    setTimeout(() => { try { n.src.stop(); } catch (_) { /* đã dừng */ } try { n.src.disconnect(); n.gain.disconnect(); } catch (_) { /* bỏ qua */ } }, 1800);
+  };
+  const natureUpdate = (states) => {
+    if (!ctx || !playing) return;
+    const t = ctx.currentTime, alive = new Set();
+    for (const st of states) {
+      alive.add(st.id);
+      let n = NAT.nodes[st.id];
+      if (!n) { const buf = NAT.bufs[st.kind]; if (!buf) { loadNature(st.kind); continue; } n = NAT.nodes[st.id] = startNature(st, buf); }
+      n.gain.gain.setTargetAtTime(NATURE_VOL[st.kind] * st.gain, t, 0.4);
+      if (n.pan) n.pan.pan.setTargetAtTime(st.pan, t, 0.15);
+      n.lp.frequency.setTargetAtTime(st.cutoff, t, 0.3);
+    }
+    for (const id of Object.keys(NAT.nodes)) if (!alive.has(id)) stopNature(id);
+  };
+  const natureOff = () => Object.keys(NAT.nodes).forEach(stopNature);
 
   // Cập nhật độ lớn từng lớp theo vị trí/ngày đêm (4 lần/giây là đủ).
   const updateMix = () => {
@@ -174,8 +203,10 @@ export function initSound() {
     const sheltered = !!(p && p.z < -21.2 && p.z > -47 && Math.abs(p.x) < 19.5);   // trong chánh điện (HALL: x ±19,5; z -47…-21,2)
     const m = ambientMix({ p, night: isNight(), rain: fx ? fx.rain : 0, wind: fx ? fx.wind : 0, sheltered, season: window.LGT && window.LGT.season }); g.mix = m;
     const t = ctx.currentTime;
-    ['water', 'bell', 'wind', 'insects', 'cicada', 'rain'].forEach((k) => g[k].gain.setTargetAtTime(VOL[k] * m[k], t, k === 'rain' ? 1.2 : 0.3));   // mưa vào/ra từ từ theo cấp
-    g.out.gain.setTargetAtTime(1, t, 0.3);                           // chim, ếch, mõ đi thẳng vào g.out, độ lớn đã nằm trong tần suất kêu
+    ['water', 'bell', 'wind', 'cicada', 'rain'].forEach((k) => g[k].gain.setTargetAtTime(VOL[k] * m[k], t, k === 'rain' ? 1.2 : 0.3));   // mưa vào/ra từ từ theo cấp
+    g.out.gain.setTargetAtTime(1, t, 0.3);                           // chuông, mõ đi thẳng vào g.out, độ lớn đã nằm trong tần suất kêu
+    const cam = window.LGT && window.LGT.world ? window.LGT.world.camera : null;
+    natureUpdate(emitterStates({ p, yaw: cam ? cam.yaw : 0, dark: DAY ? (window.LGT ? window.LGT.night : 0) : 1, season: window.LGT && window.LGT.season, rain: fx ? fx.rain : 0, sheltered }));
   };
 
   const build = () => {
@@ -183,10 +214,11 @@ export function initSound() {
     master = ctx.createGain(); master.gain.value = 0; master.connect(ctx.destination);
     musicG = ctx.createGain(); musicG.gain.value = VOL.music * userVol.music; musicG.connect(master);
     sfxG = ctx.createGain(); sfxG.gain.value = userVol.sfx; sfxG.connect(master);
-    ['water', 'bell', 'wind', 'insects', 'cicada', 'rain'].forEach((k) => { g[k] = ctx.createGain(); g[k].gain.value = 0; g[k].connect(sfxG); });
+    ['water', 'bell', 'wind', 'cicada', 'rain'].forEach((k) => { g[k] = ctx.createGain(); g[k].gain.value = 0; g[k].connect(sfxG); });
     g.thunder = ctx.createGain(); g.thunder.gain.value = 1; g.thunder.connect(sfxG);
-    g.out = ctx.createGain(); g.out.gain.value = 0.35; g.out.connect(sfxG);   // chim/ếch/mõ
-    waterfall(ctx, g.water); wind(ctx, g.wind); crickets(ctx, g.insects); cicadas(ctx, g.cicada); rainSound(ctx, g.rain);   // côn trùng luôn dựng, độ lớn theo mix.insects (0 ban ngày)
+    g.out = ctx.createGain(); g.out.gain.value = 0.35; g.out.connect(sfxG);   // chuông/mõ
+    g.nature = ctx.createGain(); g.nature.gain.value = 1; g.nature.connect(sfxG);   // ếch/chim/dế (file thật, theo vị trí); chung thanh "Hiệu ứng", nhỏ hơn nhạc nền
+    waterfall(ctx, g.water); wind(ctx, g.wind); cicadas(ctx, g.cicada); rainSound(ctx, g.rain);
     el = new Audio(MUSIC); el.loop = true; el.preload = 'auto'; el.crossOrigin = 'anonymous';
     ctx.createMediaElementSource(el).connect(musicG);
     mixTimer = setInterval(updateMix, 250);
@@ -259,7 +291,7 @@ export function initSound() {
     } catch (_) { render(); return false; } finally { busy = false; }
   };
   const turnOff = () => {
-    want = false; playing = false; stopRandoms();
+    want = false; playing = false; stopRandoms(); natureOff();
     if (ctx) { master.gain.setTargetAtTime(0, ctx.currentTime, 0.4); setTimeout(() => { if (!playing && el) el.pause(); }, 1500); }
     render();
   };
