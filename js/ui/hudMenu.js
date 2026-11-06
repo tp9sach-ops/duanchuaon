@@ -5,6 +5,7 @@ import { initDen } from './den.js';
 import { initNpc } from './npc.js';
 import { initChat } from './chat.js';
 import { initQuest } from './quest.js';
+import { initStory } from './story.js';
 import { loadWallet, addSen } from '../engines/kinh.js';
 import { callApi, apiEnabled, getUserKey } from '../api.js';
 import { loadProfile } from './hudLogic.js';
@@ -92,6 +93,7 @@ export function initHudMenu(hud) {
   initNpc({ toast, addMerit });
   const chat = initChat(hud, { toast });
   const quest = initQuest(hud, { toast, addMerit, pillHost: root.querySelector('.hm-wallet') });   // nhiệm vụ + cấp độ (Phiên 17)
+  try { initStory(hud, { toast, addMerit }); } catch (e) { console.warn('[Diệu Giang Tự] Cốt truyện lỗi:', e && e.message); }   // hộp thoại + mục tiêu chương 1 (Phiên 32); lỗi thì NPC vẫn nói lời thường
 
   // ---- bản đồ chùa (lối đi tới chương: liên kết #id, stage.js tự bắt và cho nhân vật đi tới)
   const mapBox = $('hm-map');

@@ -1,7 +1,7 @@
 // Nhiệm vụ + cấp độ (Phiên 17): nút "Nhiệm vụ" ở thanh dưới mở bảng; thẻ "Cấp N" cạnh số hạt sen. Logic ở js/world/quests.js (có test).
 // Các nơi khác báo sự kiện bằng window.LGT.act(type, n | arg): nhang(n nén), bow, thien, kinh, niem, den, loc, npc(id), visit(id), chat.
 // Mọi chữ hiển thị đến từ dữ liệu cố định của dự án và qua textContent/esc, không chèn HTML lạ.
-import { loadProg, record, questStatus, levelOf, QUESTS } from '../world/quests.js';
+import { loadProg, record, questStatus, levelOf, levelReward, QUESTS } from '../world/quests.js';
 import { placesAt } from '../world/outside.js';
 
 const KEY = 'lgt.prog';
@@ -56,6 +56,14 @@ export function initQuest(hud, { toast = () => {}, addMerit = () => {}, pillHost
     if (r.levelUp) setTimeout(() => toast(`Chúc mừng! Bạn lên cấp ${r.levelUp.to} · ${levelOf(prog.xp).ten}${r.levelUp.sen ? ` · thưởng ${r.levelUp.sen} hạt sen` : ''}`, 6000), 400 + r.done.length * 1200);
     drawPill(); if (!box.hidden) drawBox();
   }
+  /** Cộng điểm công hạnh từ nguồn ngoài nhiệm vụ (cốt truyện, Phiên 32). Lên cấp thì thưởng hạt sen như nhiệm vụ. */
+  LGT.addXp = (n) => {
+    n = Math.max(0, Math.min(500, Math.floor(+n) || 0)); if (!n) return;
+    const before = levelOf(prog.xp).lv; prog = { ...prog, xp: prog.xp + n }; save();
+    const after = levelOf(prog.xp).lv;
+    if (after > before) { let bonus = 0; for (let l = before + 1; l <= after; l++) bonus += levelReward(l); if (bonus) addMerit(bonus); setTimeout(() => toast(`Chúc mừng! Bạn lên cấp ${after} · ${levelOf(prog.xp).ten}${bonus ? ` · thưởng ${bonus} hạt sen` : ''}`, 6000), 400); }
+    drawPill(); if (!box.hidden) drawBox();
+  };
   LGT.act = act; LGT.quests = { get prog() { return prog; }, count: QUESTS.length };
   // đặt chân tới một nơi (sân chùa, chánh điện, làng, thác, rừng...) thì tính "đã ghé"
   setInterval(() => {
