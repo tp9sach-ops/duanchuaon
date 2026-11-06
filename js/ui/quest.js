@@ -34,7 +34,7 @@ export function initQuest(hud, { toast = () => {}, addMerit = () => {}, pillHost
     const L = levelOf(prog.xp);
     lvBox.innerHTML = `<b>Cấp ${L.lv} · ${esc(L.ten)}</b><i class="qs-bar big"><i style="width:${L.pct}%"></i></i><span>${L.xp1 == null ? 'Cấp cao nhất' : `${L.xp} / ${L.xp1} điểm để lên cấp ${L.lv + 1}`}</span>`;
     const st = questStatus(prog), group = (loai, title) => {
-      const rows = st.filter((r) => r.q.loai === loai).map((r) => `<li class="${r.done ? 'done' : ''}"><div><b>${esc(r.q.ten)}</b><small>${esc(r.q.mo)}</small></div><div class="qs-r"><i class="qs-bar"><i style="width:${Math.round(r.cur / r.need * 100)}%"></i></i><span>${r.done ? '✓ xong' : `${r.cur}/${r.need}`}</span><em>+${r.q.xp} điểm · +${r.q.sen} sen</em></div></li>`).join('');
+      const rows = st.filter((r) => r.q.loai === loai).map((r) => `<li class="${r.done ? 'done' : ''}"><div><b>${esc(r.q.ten)}</b><small>${esc(r.q.mo)}</small></div><div class="qs-r"><i class="qs-bar"><i style="width:${Math.round(r.cur / r.need * 100)}%"></i></i><span>${r.done ? '✓ xong' : `${r.cur}/${r.need}`}</span><em>+${r.q.xp} điểm · +${r.q.sen} sen</em>${r.done ? '' : `<button type="button" class="qs-guide" data-q="${esc(r.q.id)}">Dẫn đường</button>`}</div></li>`).join('');
       return `<h4>${title}</h4><ul>${rows}</ul>`;
     };
     list.innerHTML = group('ngay', 'Hằng ngày (làm lại mỗi ngày)') + group('mot', 'Hành trình');
@@ -42,6 +42,7 @@ export function initQuest(hud, { toast = () => {}, addMerit = () => {}, pillHost
   const open = () => { drawBox(); box.hidden = false; box.querySelector('.qs-x').focus({ preventScroll: true }); };
   const close = () => { box.hidden = true; };
   box.querySelector('.qs-x').addEventListener('click', close);
+  list.addEventListener('click', (e) => { const b = e.target.closest('.qs-guide'); if (!b) return; close(); if (LGT.guide) LGT.guide.start(b.dataset.q); });   // Phiên 18: dẫn đường tới nhiệm vụ
   pill.addEventListener('click', () => (box.hidden ? open() : close()));
   box.addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.stopPropagation(); close(); } });
 
