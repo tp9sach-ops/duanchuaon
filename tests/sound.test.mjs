@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { loadSettings, saveSetting, wantsSound, tryAutoplay, ambientMix, nextDelay, clamp, V_MAX, V_DEF, KEYS } from '../js/ui/soundLogic.js';
+import { loadSettings, saveSetting, wantsSound, tryAutoplay, ambientMix, nextDelay, clamp, V_MAX, V_DEF, KEYS, thunderParams } from '../js/ui/soundLogic.js';
 
 const mem = (o = {}) => ({ getItem: (k) => (k in o ? o[k] : null), setItem: (k, v) => { o[k] = String(v); } });
 
@@ -63,4 +63,21 @@ test('khoảng chờ tiếng ngẫu nhiên: dương, đông (gain lớn) kêu d�
   const lo = nextDelay('frogs', 0, () => 0), hi = nextDelay('frogs', 1, () => 0);
   assert.ok(hi < lo); assert.ok(hi >= 1.5 * 0.6);
   assert.ok(nextDelay('mo', 1, () => 0) >= 30); assert.ok(clamp(5, 0, 1) === 1);
+});
+
+test('mưa (Phiên 25): trời quang thì tiếng mưa = 0; mưa càng lớn càng to; gió mạnh lên; trong chánh điện nhỏ lại; côn trùng thưa, chuông/mõ nhỏ bớt', () => {
+  const at = { x: 0, z: 60 }, dry = ambientMix({ p: at, night: true, rain: 0, wind: 0 });
+  assert.equal(dry.rain, 0);
+  const r = [0.2, 0.5, 1].map((rain) => ambientMix({ p: at, night: true, rain, wind: rain }));
+  assert.ok(r[0].rain > 0.1 && r[0].rain < r[1].rain && r[1].rain < r[2].rain && r[2].rain <= 1, 'mưa to dần: ' + r.map((x) => x.rain));
+  assert.ok(r[2].wind > dry.wind, 'gió mạnh hơn khi giông'); assert.ok(r[2].insects < dry.insects * 0.4, 'côn trùng thưa khi mưa lớn'); assert.ok(r[2].bell < dry.bell);
+  const roof = ambientMix({ p: { x: 0, z: -30 }, night: false, rain: 1, wind: 1, sheltered: true }), open = ambientMix({ p: { x: 0, z: -30 }, night: false, rain: 1, wind: 1 });
+  assert.ok(roof.rain < open.rain * 0.5 && roof.wind < open.wind, 'có mái: mưa và gió nhỏ lại');
+  for (const m of [...r, roof, open, ambientMix({ p: null, night: true, rain: 1, wind: 1 })]) for (const v of Object.values(m)) assert.ok(v >= 0 && v <= 1, String(v));
+  assert.equal(ambientMix({ p: at, night: false }).rain, 0, 'không truyền mưa thì như cũ'); assert.doesNotThrow(() => ambientMix({ p: at, rain: NaN, wind: 'x' }));
+});
+test('thunderParams: sấm gần to hơn, dài hơn và có tiếng nổ; sấm xa nhỏ, trầm; giá trị luôn hợp lệ', () => {
+  const near = thunderParams(1), far = thunderParams(0.25);
+  assert.ok(near.gain > far.gain && near.dur > far.dur && near.cutoff > far.cutoff && near.crack === true && far.crack === false);
+  for (const v of [-1, 0, 0.5, 1, 9, NaN, undefined]) { const t = thunderParams(v); assert.ok(t.gain > 0 && t.gain <= 1 && t.dur > 1 && t.cutoff > 100, String(v)); }
 });

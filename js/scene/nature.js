@@ -57,11 +57,12 @@ export function buildGround() {
   const bt = DAY ? pavingTexture() : brickTexture(); bt.repeat.set(DAY ? 22 : 16, DAY ? 22 : 16);
   const court = new THREE.Mesh(new THREE.PlaneGeometry(130, 130),
     new THREE.MeshStandardMaterial({ map: bt, roughness: 0.8, metalness: 0 }));
+  court.material.userData.wet = true;   // mưa làm sân ướt (sẫm + bóng hơn), xem scene/index.js
   court.rotation.x = -Math.PI / 2; court.receiveShadow = true; g.add(court);
   // Lối đi lát đá xanh từ Tam quan vòng qua ao sen lên chính điện
   // (đoạn qua ao sen là cầu đá, dựng trong buildPond)
   const st = DAY ? dayPathTexture() : slabTexture(); st.repeat.set(1, DAY ? 14 : 12);
-  const slabMat = new THREE.MeshStandardMaterial({ map: st, roughness: 0.6, metalness: 0.1, color: 0xffffff });
+  const slabMat = new THREE.MeshStandardMaterial({ map: st, roughness: 0.6, metalness: 0.1, color: 0xffffff }); slabMat.userData.wet = true;
   [[24.4, 66], [-13, 3.6]].forEach(([z0, z1]) => {
     const seg = new THREE.Mesh(new THREE.PlaneGeometry(5, z1 - z0), slabMat);
     seg.rotation.x = -Math.PI / 2; seg.position.set(0, 0.03, (z0 + z1) / 2); seg.receiveShadow = true; g.add(seg);
@@ -79,16 +80,27 @@ export function buildPond(center = new THREE.Vector3(0, 0, 14), radius = 10, flo
   const water = new THREE.Mesh(
     new THREE.CircleGeometry(radius, 56),
     new THREE.ShaderMaterial({
-      uniforms: { uTime: { value: 0 }, uTint: { value: new THREE.Color(0xd9b25f) } },
+      uniforms: { uTime: { value: 0 }, uTint: { value: new THREE.Color(0xd9b25f) }, uRain: { value: 0 } },
       vertexShader: 'varying vec2 vP; void main(){ vP = position.xy; gl_Position = projectionMatrix*modelViewMatrix*vec4(position,1.0); }',
-      fragmentShader: `varying vec2 vP; uniform float uTime; uniform vec3 uTint;
+      fragmentShader: `varying vec2 vP; uniform float uTime; uniform vec3 uTint; uniform float uRain;
         void main(){
           float r = length(vP) / ${radius.toFixed(1)};
           float w = sin(vP.x*1.6 + uTime*.7) * sin(vP.y*1.9 - uTime*.55);
           float rip = smoothstep(.55,1.,w) * .10;
           vec3 base = mix(vec3(.06,.14,.20), vec3(.12,.24,.32), 1.-r);
           float glint = pow(max(0.,1.-abs(vP.x*.07 + vP.y*.01 - .0)), 8.) * smoothstep(1.,.2,r) * (.35 + .25*sin(uTime*1.3 + vP.y*2.));
-          gl_FragColor = vec4(base + rip*vec3(.4,.5,.6) + glint*uTint*.55, 1.);
+          // mưa rơi xuống ao (Phiên 25): mỗi ô lưới có một vòng gợn nở rộng rồi tắt, số ô "có hạt" tăng theo uRain
+          float rr = 0.;
+          if (uRain > 0.01) {
+            for (int k = 0; k < 2; k++) {
+              vec2 g = vP * (k == 0 ? 0.85 : 1.35) + float(k) * 7.3; vec2 id = floor(g); vec2 f = fract(g) - .5;
+              float h = fract(sin(dot(id, vec2(12.9898, 78.233))) * 43758.5453);
+              float ph = fract(uTime * (.8 + h * .5) + h * 5.);
+              vec2 c = (vec2(fract(h * 7.3), fract(h * 3.1)) - .5) * .5;
+              rr += (1. - smoothstep(0., .07, abs(length(f - c) - ph * .55))) * (1. - ph) * step(h, uRain);
+            }
+          }
+          gl_FragColor = vec4(base + rip*vec3(.4,.5,.6) + glint*uTint*.55*(1.-uRain) + rr*vec3(.55,.65,.75)*.8, 1.);
         }`,
     })
   );
@@ -130,6 +142,7 @@ export function buildPond(center = new THREE.Vector3(0, 0, 14), radius = 10, flo
   }
   return {
     group,
+    setRain(v) { water.material.uniforms.uRain.value = v; },
     update(t) {
       water.material.uniforms.uTime.value = t;
       floaters.forEach((f) => { f.o.position.y = 0.08 + Math.sin(t * 0.8 + f.ph) * f.amp; });

@@ -33,20 +33,31 @@ export const SPOTS = { water: { x: 112, z: 104 }, bell: { x: 28, z: -4 }, hall: 
 const dist = (p, a) => Math.hypot(p.x - a.x, p.z - a.z);
 
 // Độ lớn (0..1) từng lớp âm thanh theo môi trường. env: { p: {x,z}|null (vị trí người chơi), night: bool }.
-// Mưa/sấm sẽ thêm khi có hệ thống thời tiết (Phiên 1 – phần mưa): chỗ cắm là env.rain (0..3), hiện chưa dùng.
+// Thời tiết (Phiên 25): env.rain = cường độ mưa 0..1 (effects().rain), env.wind = gió 0..1, env.sheltered = đang trong chánh điện (có mái, tiếng mưa nhỏ lại).
+// Mưa: lớp `rain` (tiếng mưa rơi); gió mạnh lên; côn trùng thưa đi, ếch vẫn kêu; chuông/mõ nhỏ bớt vì tiếng mưa lấn.
 export function ambientMix(env) {
   const p = env && env.p && isFinite(env.p.x) && isFinite(env.p.z) ? env.p : null, night = !!(env && env.night);
-  if (!p) return { water: 0.3, bell: 0.7, wind: 0.3, insects: night ? 0.3 : 0, frogs: night ? 0.25 : 0, mo: 0.2 };   // không biết vị trí (không có cảnh 3D)
+  const rain = clamp(env && isFinite(env.rain) ? env.rain : 0, 0, 1), wx = clamp(env && isFinite(env.wind) ? env.wind : 0, 0, 1), roof = env && env.sheltered ? 0.4 : 1;
+  const rainG = rain > 0.01 ? clamp(0.12 + 0.88 * rain, 0, 1) * roof : 0;      // mưa nhỏ vẫn nghe được; mưa lớn ầm ào
+  const duck = 1 - 0.35 * rain;                                                // mưa lấn: chuông, mõ nhỏ bớt
+  if (!p) return { water: 0.3, bell: 0.7 * duck, wind: clamp(0.3 + 0.6 * wx, 0, 1), insects: night ? 0.3 * (1 - 0.8 * rain) : 0, frogs: night ? 0.25 : 0, mo: 0.2 * duck, rain: rainG };   // không biết vị trí (không có cảnh 3D)
   const outside = clamp((p.z - 40) / 40, 0, 1);                       // càng ra xa cổng chùa (làng, rừng, thác) càng "hoang dã"
   const nearWater = clamp(1 - (dist(p, SPOTS.water) - 6) / 60, 0, 1); // gần thác/hồ
   return {
     water: Math.pow(clamp(1 - (dist(p, SPOTS.water) - 6) / 84, 0, 1), 2),
-    bell: Math.max(0.08, Math.pow(clamp(1 - (dist(p, SPOTS.bell) - 10) / 140, 0, 1), 1.5)),
-    wind: 0.25 + 0.5 * outside,
-    insects: night ? 0.3 + 0.7 * outside : 0,
+    bell: Math.max(0.08, Math.pow(clamp(1 - (dist(p, SPOTS.bell) - 10) / 140, 0, 1), 1.5)) * duck,
+    wind: clamp((0.25 + 0.5 * outside) * (1 + 0.8 * wx) + 0.2 * wx, 0, 1) * (env && env.sheltered ? 0.6 : 1),
+    insects: night ? (0.3 + 0.7 * outside) * (1 - 0.8 * rain) : 0,
     frogs: night ? 0.15 + 0.85 * nearWater : 0,
-    mo: Math.pow(clamp(1 - (dist(p, SPOTS.hall) - 8) / 40, 0, 1), 1.5),   // tiếng mõ chỉ nghe rõ gần chánh điện
+    mo: Math.pow(clamp(1 - (dist(p, SPOTS.hall) - 8) / 40, 0, 1), 1.5) * duck,   // tiếng mõ chỉ nghe rõ gần chánh điện
+    rain: rainG,
   };
+}
+
+// Tiếng sấm (Phiên 25): vol 0..1 từ weather (xa/gần). Trả thông số để ui.js dựng: độ lớn, độ dài tiếng ầm, tần số cắt của bộ lọc (sấm xa trầm hơn, ngắn đục hơn).
+export function thunderParams(vol) {
+  const v = clamp(isFinite(vol) ? vol : 0.5, 0, 1);
+  return { gain: 0.25 + 0.75 * v, dur: 2.2 + 3.2 * v, cutoff: 260 + 900 * v, crack: v > 0.7 };   // sấm gần (v cao): có tiếng nổ "rắc" đầu và ầm dài
 }
 
 // Khoảng chờ (giây) tới lần kêu kế tiếp của một lớp âm thanh ngẫu nhiên; rng() trong [0,1). Càng "đông" (gain lớn) càng kêu dày.

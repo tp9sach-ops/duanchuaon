@@ -15,7 +15,7 @@ import { loadTemple } from './model.js';
 import { buildStars, buildSky, buildMountains, buildGround, buildPond, buildBodhi, buildBamboo, buildRocks, buildLowPolyTrees } from './nature.js';
 import { DAY } from './theme.js';
 import { TREES, farTrees } from '../world/placements.js';
-import { buildFireflies, buildPetals, buildSmoke } from './particles.js';
+import { buildFireflies, buildPetals, buildSmoke, buildRain } from './particles.js';
 import { createRail } from './rail.js';
 import { createHotspots } from './hotspots.js';
 import { createWorld } from '../world/world.js';
@@ -26,7 +26,10 @@ import { buildLandscape } from './landscape.js';
 import { buildOutside } from './outside.js';
 import { createGovernor, levelPlan, startLevel, loadSaved, save as savePerf } from './perfLogic.js';
 import { buildGlbTrees } from './glbprops.js';
-import { inHall } from '../world/landscape.js';
+import { inHall, PLAZA } from '../world/landscape.js';
+import { groundY, blocked } from '../world/layout.js';
+import { createWeather, parseWeatherParam, changeMessage } from '../world/weather.js';
+import { mulberry32 } from '../util.js';
 import { seasonState, parseSeasonParam, seasonColor, isLeafGreen } from '../world/season.js';
 import { dayState, lerpHex, lightDir, moonDir, parseHourParam, wrapHour, clockText, HOURS_PER_SECOND } from '../world/daycycle.js';
 
@@ -101,6 +104,17 @@ export function createScene(canvas, { onProgress, onPick, onArrive } = {}) {
   const PETAL_BASE = coarse ? 50 : 120, petals = buildPetals(dot, Math.round(PETAL_BASE * 1.6));   // dư chỗ cho mùa xuân (nhiều hoa)
   const smoke = buildSmoke(dot, new THREE.Vector3(0, 3.2, -8), coarse ? 40 : 70);
   scene.add(fireflies.obj, petals.obj, smoke.obj); fireflies.obj.visible = !DAY;
+  const rain = buildRain(coarse ? 700 : 1500); scene.add(rain.obj);   // mưa 3D (Phiên 25)
+  // Vũng nước (Phiên 25): hiện khi mặt đất đã ướt; màu lấy theo bầu trời nên chớp lóe cũng phản chiếu lên vũng. Đây là phản chiếu GIẢ (không có bản đồ môi trường).
+  const puddleMat = new THREE.MeshBasicMaterial({ color: 0xcfe8f5, transparent: true, opacity: 0, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 });
+  const puddles = new THREE.Group(); puddles.visible = false;
+  { const r = mulberry32(25), geo = new THREE.CircleGeometry(1, 20), areas = [[PLAZA.x0 + 2, PLAZA.x1 - 2, PLAZA.z0 + 2, PLAZA.z1 - 2, 14], [-9, 9, 70, 128, 8]];
+    for (const [x0, x1, z0, z1, n] of areas) for (let i = 0, tries = 0; i < n && tries < n * 40; tries++) {
+      const x = x0 + r() * (x1 - x0), z = z0 + r() * (z1 - z0), rx = 0.7 + r() * 1.5, rz = rx * (0.6 + r() * 0.5);
+      if (groundY(x, z) !== 0 || [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([a, b]) => blocked(x + a * rx, z + b * rz)) || blocked(x, z)) continue;   // chỉ đặt trên nền bằng, không đè vật cản
+      const m = new THREE.Mesh(geo, puddleMat); m.rotation.x = -Math.PI / 2; m.rotation.z = r() * Math.PI; m.scale.set(rx, rz, 1); m.position.set(x, 0.035, z); puddles.add(m); i++;
+    } }
+  scene.add(puddles);
 
   // --- hậu kỳ: bloom (tắt trên mobile yếu / khi PERF hạ cấp)
   const composer = new EffectComposer(renderer);
@@ -127,6 +141,7 @@ export function createScene(canvas, { onProgress, onPick, onArrive } = {}) {
     if (plan.shadowSize !== appliedShadowSize) { appliedShadowSize = plan.shadowSize; moonLight.shadow.mapSize.set(plan.shadowSize, plan.shadowSize); if (moonLight.shadow.map) { moonLight.shadow.map.dispose(); moonLight.shadow.map = null; } }
     moonLight.castShadow = plan.shadows;
     outside.group.traverse((o) => { if (o.isInstancedMesh) { o.visible = plan.forest; o.castShadow = plan.forest && plan.forestShadow; } });   // trong khu ngoài chùa chỉ rừng dùng InstancedMesh (outside.js, hàm mk)
+    rainCap = plan.particles === 'low' ? 0.4 : level >= 3 ? 0.7 : 1;
     if (plan.particles === 'low') { fireflies.setCount(40); petals.setCount(30); }
     resize();
   };
@@ -155,29 +170,55 @@ export function createScene(canvas, { onProgress, onPick, onArrive } = {}) {
 
   // --- bốn mùa (mặc định theo tháng thật; ?mua=xuan|ha|thu|dong): đổi màu lá + cỏ MỘT LẦN khi dựng, hạt rơi, sương, ánh ấm
   const SEA = seasonState(parseSeasonParam(location.search)); LGT.season = SEA.name;
+  // Thời tiết (Phiên 25): gió làm lá lay (đỉnh tán lay nhiều hơn, mạnh theo cấp mưa), mặt đất ướt thì sẫm và bóng hơn
+  const windU = { value: 0 }, timeU = { value: 0 }, wetMats = [];
+  const swayPatch = (shader) => {
+    shader.uniforms.uWind = windU; shader.uniforms.uT = timeU;
+    shader.vertexShader = 'uniform float uWind; uniform float uT;\n' + shader.vertexShader.replace('#include <begin_vertex>', `#include <begin_vertex>
+      { float ph = position.x * 0.7 + position.z * 0.9; float k = (0.012 + uWind * 0.05) * max(position.y, 0.0);
+        transformed.x += sin(uT * (1.4 + uWind * 1.6) + ph) * k; transformed.z += cos(uT * (1.1 + uWind * 1.3) + ph * 1.3) * k * 0.7; }`);
+  };
   { const seen = new Set(); let li = 0;
     scene.traverse((o) => {
       const m = o.material; if (!m || Array.isArray(m) || seen.has(m) || !m.color || m.isMeshBasicMaterial || m.isPointsMaterial || m.isSpriteMaterial) return; seen.add(m);
       const base = m.color.getHex();
       if (m.userData.season === 'grass') m.color.setHex(seasonColor(SEA, 'grass', base, 0, !!m.map));
-      else if (!m.map && !m.userData.nightGlow && isLeafGreen(base)) m.color.setHex(seasonColor(SEA, 'leaf', base, li++));
+      else if (!m.map && !m.userData.nightGlow && isLeafGreen(base)) { m.color.setHex(seasonColor(SEA, 'leaf', base, li++)); m.onBeforeCompile = swayPatch; }
+      if (m.userData.season === 'grass' || m.userData.wet) wetMats.push({ m, color: m.color.clone(), rough: m.roughness });
     }); }
+  const WX = parseWeatherParam(location.search);
+  const weather = createWeather({ season: SEA.name, level: DAY ? (WX.fixed ? WX.level : null) : 0 });   // ?dem=1 (đêm cố định cũ) không có thời tiết
+  LGT.weather = weather; let wxLevel = weather.level, wetApplied = -1, rainCap = 1;
   petals.mul = SEA.petals.mul; petals.speed = SEA.petals.speed; petals.setCount(PETAL_BASE);
   petals.obj.material.color.setHex(SEA.petals.color); petals.obj.material.size = SEA.petals.size; petals.obj.material.opacity = SEA.petals.opacity;
   function applyDay(dt) {
     if (!hp.fixed) LGT.hour = wrapHour(LGT.hour + dt * HOURS_PER_SECOND);
+    const evs = weather.update(dt), E = weather.fx, fl = (reduce ? 0.3 : 1) * weather.flash;   // fl: độ lóe chớp (người bật "giảm chuyển động" chỉ thấy lóe nhẹ, tránh nhấp nháy mạnh)
+    for (const e of evs) window.dispatchEvent(new CustomEvent('lgt:thunder', { detail: e }));
+    if (weather.level !== wxLevel) { const msg = changeMessage(wxLevel, weather.level); wxLevel = weather.level; if (msg && LGT.toast) LGT.toast(msg, 4200); }
     const S = dayState(LGT.hour, SEA.warmBias), L = lightDir(LGT.hour), M = moonDir(LGT.hour);
     LGT.night = S.night; LGT.clock = clockText(LGT.hour); LGT.phase = S.phase;
-    const bgc = lerpHex(S.bg, SEA.haze, SEA.hazeK * (1 - S.night));   // sương/ánh mùa phủ ban ngày
-    scene.background.setHex(bgc); scene.fog.color.setHex(bgc); scene.fog.density = S.fogDensity * (1 + (SEA.fogMul - 1) * (1 - S.night));
-    sky.material.color.setHex(lerpHex(S.skyTint, SEA.haze, SEA.hazeK * 0.6 * (1 - S.night)));
-    moonLight.color.setHex(S.sun.color); moonLight.intensity = S.sun.i; sunOffset.set(L.x * 125, L.y * 125, L.z * 125);
-    hemi.color.setHex(S.hemi.sky); hemi.groundColor.setHex(S.hemi.ground); hemi.intensity = S.hemi.i;
-    ambient.color.setHex(S.amb.color); ambient.intensity = S.amb.i;
+    let bgc = lerpHex(S.bg, SEA.haze, SEA.hazeK * (1 - S.night));   // sương/ánh mùa phủ ban ngày
+    bgc = lerpHex(bgc, lerpHex(0x8f9aa6, 0x0d1220, S.night), E.grey);   // trời mưa xám đi
+    if (fl > 0) bgc = lerpHex(bgc, 0xeef2ff, Math.min(0.75, fl * 0.7));   // chớp: cả bầu trời lóe
+    scene.background.setHex(bgc); scene.fog.color.setHex(bgc); scene.fog.density = S.fogDensity * (1 + (SEA.fogMul - 1) * (1 - S.night)) * (1 + E.fog);
+    sky.material.color.setHex(lerpHex(lerpHex(S.skyTint, SEA.haze, SEA.hazeK * 0.6 * (1 - S.night)), lerpHex(0x9aa5b1, 0x151b2a, S.night), E.grey * 0.9));
+    moonLight.color.setHex(S.sun.color); moonLight.intensity = S.sun.i * (1 - 0.75 * E.dim); sunOffset.set(L.x * 125, L.y * 125, L.z * 125);   // mây dày: nắng yếu, bóng đổ nhạt
+    hemi.color.setHex(S.hemi.sky); hemi.groundColor.setHex(S.hemi.ground); hemi.intensity = S.hemi.i * (1 - 0.42 * E.dim) + fl * 3.2;
+    ambient.color.setHex(S.amb.color); ambient.intensity = S.amb.i * (1 - 0.3 * E.dim) + fl * 1.4;
     warm1.intensity = S.warm1; warm2.intensity = S.warm2;
-    renderer.toneMappingExposure = S.exposure; bloom.strength = S.bloom;
-    stars.material.opacity = S.stars; moonMat.opacity = S.moon; moon.position.set(M.x * 430, M.y * 430, M.z * 430);
-    fireflies.obj.visible = S.night > 0.6;
+    renderer.toneMappingExposure = S.exposure; bloom.strength = S.bloom + fl * 0.5;
+    stars.material.opacity = S.stars * (1 - E.cloud); moonMat.opacity = S.moon * (1 - 0.9 * E.cloud); moon.position.set(M.x * 430, M.y * 430, M.z * 430);   // mây che trăng sao
+    fireflies.obj.visible = S.night > 0.6 && E.rain < 0.08;   // đom đóm không bay khi mưa
+    // gió + mưa + mặt đất ướt + gợn ao + vũng nước
+    windU.value = E.wind; petals.wind = E.wind;
+    const rp = world ? world.pos : camera.position, sheltered = !!world && inHall(rp.x, rp.z);   // trong chánh điện có mái: không thấy mưa rơi quanh người
+    rain.setLevel(sheltered ? 0 : E.drops, rainCap * (reduce ? 0.5 : 1)); rain.setColor(lerpHex(0xe6eef8, 0x6a7b94, S.night), 0.5 + 0.2 * (1 - S.night));
+    rain.update(dt, rp.x, rp.z, 0, E.wind, E.streak);
+    pond.setRain(E.rain > 0.02 ? Math.min(1, E.rain * 1.7) : 0);
+    const wet = weather.wet;
+    puddles.visible = wet > 0.15; puddleMat.opacity = 0.45 * Math.min(1, (wet - 0.15) / 0.6); puddleMat.color.setHex(lerpHex(bgc, 0xffffff, 0.12));
+    if (Math.abs(wet - wetApplied) > 0.01) { wetApplied = wet; for (const w of wetMats) { w.m.color.copy(w.color).multiplyScalar(1 - 0.32 * wet); if (w.rough != null) w.m.roughness = w.rough * (1 - 0.55 * wet); } }
     for (const m of glowMats) { const g = m.userData.nightGlow; m.emissiveIntensity = g.day + (g.night - g.day) * S.lamps; if (g.nightColor != null) m.emissive.copy(cA.setHex(g.dayColor)).lerp(cB.setHex(g.nightColor), S.lamps); }
   }
 
@@ -214,7 +255,7 @@ export function createScene(canvas, { onProgress, onPick, onArrive } = {}) {
     if (Math.abs(viewX) > 0.5) camera.setViewOffset(w, h, viewX, 0, w, h); else if (camera.view && camera.view.enabled) camera.clearViewOffset();
 
     if (world) { const wp = world.pos; moonLight.target.position.set(wp.x, 0, wp.z); moonLight.position.set(wp.x + sunOffset.x, sunOffset.y, wp.z + sunOffset.z); }   // sunOffset do applyDay cập nhật theo giờ   // vùng đổ bóng đi theo người chơi
-    hoaSen.update(t); land.update(t); outside.update(t); if (world) npcs.update(dt, world.pos);
+    timeU.value = t; hoaSen.update(t); land.update(t); outside.update(t); if (world) npcs.update(dt, world.pos);
     sky.rotation.y = t * 0.004;
     if (!reduce) {
       if (!DAY || fireflies.obj.visible) fireflies.update(t); petals.update(t, dt); smoke.update(t, dt);
