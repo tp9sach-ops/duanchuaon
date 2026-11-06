@@ -42,17 +42,17 @@ export function buildPetals(dot, count) {
     a.setXYZ(i, seed[i][0], seed[i][1], seed[i][2]);
   }
   return {
-    obj: p,
+    obj: p, mul: 1, speed: 1,   // mul/speed: theo mùa (scene/index.js)
     update(t, dt) {
       for (let i = 0; i < seed.length; i++) {
         const s = seed[i];
-        s[1] -= s[4] * dt * 0.9;
+        s[1] -= s[4] * dt * 0.9 * this.speed;
         if (s[1] < 0) s[1] = 26;
         a.setXYZ(i, s[0] + Math.sin(t * 0.5 + s[3]) * 3, s[1], s[2] + Math.cos(t * 0.4 + s[3]) * 2);
       }
       a.needsUpdate = true;
     },
-    setCount(n) { p.geometry.setDrawRange(0, n); },
+    setCount(n) { p.geometry.setDrawRange(0, Math.min(count, Math.round(n * this.mul))); },
   };
 }
 

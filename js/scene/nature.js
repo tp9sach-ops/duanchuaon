@@ -10,10 +10,19 @@ export function buildSky() {
     new THREE.MeshBasicMaterial({ map: DAY ? daySkyTexture() : skyTexture(), side: THREE.BackSide, fog: false, depthWrite: false })
   );
   const moonMat = new THREE.SpriteMaterial({ map: moonTexture(), fog: false, depthWrite: false, transparent: true });
-  const moon = new THREE.Sprite(moonMat); moon.visible = !DAY;
+  const moon = new THREE.Sprite(moonMat); moon.visible = true; if (DAY) moonMat.opacity = 0;   // ban ngày: trăng hiện dần khi trời tối (chu kỳ ngày đêm, scene/index.js)
   moon.position.set(110, 105, -400);
   moon.scale.set(150, 150, 1);
   return { sky, moon, moonMat };
+}
+
+/** Sao: điểm trên nửa vòm trời, độ hiện điều khiển bằng material.opacity (chu kỳ ngày đêm). */
+export function buildStars(count = 700) {
+  const rnd = mulberry32(2026), pos = new Float32Array(count * 3);
+  for (let i = 0; i < count; i++) { const a = rnd() * TAU, y = 0.12 + rnd() * 0.88, r = Math.sqrt(1 - y * y) * 480; pos[i * 3] = Math.cos(a) * r; pos[i * 3 + 1] = y * 480; pos[i * 3 + 2] = Math.sin(a) * r; }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  const m = new THREE.PointsMaterial({ color: 0xfff6dc, size: 2.2, sizeAttenuation: false, transparent: true, opacity: 0, fog: false, depthWrite: false });
+  const pts = new THREE.Points(g, m); pts.frustumCulled = false; pts.renderOrder = -1; return pts;
 }
 
 // Núi: ba lớp bóng, lớp xa nhạt và xanh hơn (phối cảnh khí quyển)
@@ -59,7 +68,7 @@ export function buildGround() {
   });
   // Nền đất tối kéo dài đến chân núi
   const far = new THREE.Mesh(new THREE.PlaneGeometry(900, 900), new THREE.MeshStandardMaterial({ color: DAY ? 0x7fb35a : 0x14201f, roughness: 1 }));
-  far.rotation.x = -Math.PI / 2; far.position.y = -0.06; g.add(far);
+  far.material.userData.season = 'grass'; far.rotation.x = -Math.PI / 2; far.position.y = -0.06; g.add(far);
   return g;
 }
 

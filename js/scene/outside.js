@@ -60,7 +60,7 @@ function house(g, x, z, facing, rnd) {
   const w = 8 + rnd() * 2, d = 7 + rnd() * 3, h = 5 + rnd() * 3.5, col = HOUSE_COLORS[(rnd() * HOUSE_COLORS.length) | 0], grp = new THREE.Group();
   box(d, h, w, std(col), 0, h / 2, 0, grp);
   const tile = std(0x9c4a32), roof = gable(d + 1.4, 2.4, w + 1.2, tile); roof.position.set(0, h, 0); grp.add(roof);
-  const door = std(0x6b3a22), win = new THREE.MeshStandardMaterial({ color: 0x7fb4c9, roughness: 0.3, emissive: 0x1a3040 });
+  const door = std(0x6b3a22), win = new THREE.MeshStandardMaterial({ color: 0x7fb4c9, roughness: 0.3, emissive: 0x1a3040 }); win.userData.nightGlow = { day: 1, night: 2.4, dayColor: 0x1a3040, nightColor: 0xffc060 };   // cửa sổ nhà: ánh vàng ấm ban đêm (scene/index.js đổi theo giờ)
   box(0.12, h * 0.5, 1.8, door, d / 2 + 0.02, h * 0.25, -w * 0.2, grp);
   for (const dz of [w * 0.22, w * 0.38]) box(0.1, 1.2, 1.1, win, d / 2 + 0.03, h * 0.62, dz, grp);
   if (h > 6.2) box(0.1, 1.2, 1.4, win, d / 2 + 0.03, h * 0.62, -w * 0.2, grp);
@@ -86,7 +86,7 @@ function buildHouses(g) {
 }
 
 function lamps(g) {
-  const pole = new THREE.CylinderGeometry(0.08, 0.1, 4.6, 6), headG = new THREE.SphereGeometry(0.26, 10, 8), pm = std(0x3a3a3c), hm = new THREE.MeshStandardMaterial({ color: 0xffe0a0, emissive: 0xffc060, emissiveIntensity: 0.9 });
+  const pole = new THREE.CylinderGeometry(0.08, 0.1, 4.6, 6), headG = new THREE.SphereGeometry(0.26, 10, 8), pm = std(0x3a3a3c), hm = new THREE.MeshStandardMaterial({ color: 0xffe0a0, emissive: 0xffc060, emissiveIntensity: 0.9 }); hm.userData.nightGlow = { day: 0.12, night: 2.2 };   // đèn đường: mờ ban ngày, sáng ban đêm
   for (const l of STREET_LAMPS) { const p = new THREE.Mesh(pole, pm); p.position.set(l.x, 2.3, l.z); g.add(p); const h = new THREE.Mesh(headG, hm); h.position.set(l.x, 4.75, l.z); g.add(h); }
 }
 

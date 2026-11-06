@@ -31,7 +31,7 @@ function buildGrass() {
   const geo = new THREE.ShapeGeometry(s, 24); geo.rotateX(-Math.PI / 2);
   const uv = geo.attributes.uv, pos = geo.attributes.position;
   for (let i = 0; i < uv.count; i++) uv.setXY(i, pos.getX(i) / 7, pos.getZ(i) / 7);   // mỗi ô cỏ 7 m
-  const m = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ map: grassTexture(), roughness: 1, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 }));
+  const m = new THREE.Mesh(geo, (() => { const gm = new THREE.MeshStandardMaterial({ map: grassTexture(), roughness: 1, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 }); gm.userData.season = 'grass'; return gm; })());
   m.position.y = 0.012; m.receiveShadow = true; return m;
 }
 
