@@ -87,6 +87,25 @@ export const STORE_KIMHOAN = {
   nv: { x: 16.4, z: 129.6 },
 };
 
+/** Hàng rào phố (Phiên 33): tường đá thấp + song sắt xanh đậm + trụ đá, đứng ở mép ngoài vỉa hè (|x| = FENCE_X), chỉ ở những đoạn trống giữa sân cửa hàng, đường mòn và chợ. */
+export const FENCE_X = 13.5;
+const SIDE_GAPS = { 1: [[75.5, 85.5], [87, 95], [99, 109], [116, 146]], '-1': [[64, 76], [84, 94], [107, 117], [116, 146]] };   // sân cửa hàng + đường mòn + chợ (z0, z1) mỗi phía
+/** Các đoạn z còn trống ở mép đường phía `side` (+1 phải, -1 trái): trừ sân cửa hàng, đường mòn, chợ (chừa 0,6 m), bỏ đoạn ngắn hơn 2,5 m. */
+export function streetEdgeFree(side) {
+  let segs = [[62, 150]];
+  for (const [a, b] of SIDE_GAPS[side]) segs = segs.flatMap(([s0, s1]) => (b + 0.6 <= s0 || a - 0.6 >= s1) ? [[s0, s1]] : [[s0, Math.min(s1, a - 0.6)], [Math.max(s0, b + 0.6), s1]].filter(([p, q]) => q > p));
+  return segs.filter(([a, b]) => b - a >= 2.5);
+}
+export const STREET_FENCES = [-1, 1].flatMap((side) => streetEdgeFree(side).map(([z0, z1]) => ({ x: side * FENCE_X, z0, z1 })));
+/** Chậu hoa vàng đặt sát mép vỉa hè, giữa các cột đèn. {x,z,r} */
+export const PLANTERS = [[-13, 79], [-13, 81.4], [-13, 98], [-13, 101], [-13, 104.4], [13, 68], [13, 72], [13, 96.4], [13, 111.4], [13, 114]].map(([x, z]) => ({ x, z, r: 0.45 }));
+/** Đồ chợ làng: lồng gà tre, ghế gỗ, khối đá ngồi. {x,z,r,ry} (ry = góc xoay) */
+export const MARKET_DECOR = {
+  cages: [{ x: -25, z: 132, r: 0.65, ry: 0.3 }, { x: -23.2, z: 133.4, r: 0.65, ry: 1.1 }, { x: 30.6, z: 131.5, r: 0.65, ry: 0.7 }],
+  chairs: [{ x: -20.5, z: 131, r: 0.35, ry: 2.6 }, { x: 31.5, z: 134.6, r: 0.35, ry: 0.5 }, { x: -17.5, z: 135.5, r: 0.35, ry: -0.8 }, { x: -29, z: 128, r: 0.35, ry: 1.9 }],
+  blocks: [{ x: 9.3, z: 135.2, r: 0.5, ry: -0.3 }, { x: -10.5, z: 133.5, r: 0.5, ry: 0.4 }, { x: 29, z: 128.6, r: 0.5, ry: 0.9 }],
+};
+
 /** Điểm mà người chơi đặt chân tới thì tính "đã ghé" (nhiệm vụ). {id, ten, x, z, r} — dùng chung cho trong và ngoài chùa. */
 export const PLACES = [
   { id: 'sanchua', ten: 'Sân chùa', x: 0, z: 6, r: 14 }, { id: 'chanhdien', ten: 'Chánh điện', x: 0, z: -30, r: 14 },
@@ -127,6 +146,9 @@ export function registerOutside() {
   addWalk(STORE_9SACH.san); addRect(STORE_9SACH.than); Object.values(STORE_9SACH.props).forEach((c) => addCircle({ x: c.x, z: c.z, r: c.r }));
   addWalk(STORE_DIDONG.san); addRect(STORE_DIDONG.than); Object.values(STORE_DIDONG.props).forEach((c) => addCircle({ x: c.x, z: c.z, r: c.r }));
   for (const st of [STORE_DIENMAY, STORE_KIMHOAN]) { addWalk(st.san); addRect(st.than); Object.values(st.props).forEach((c) => addCircle({ x: c.x, z: c.z, r: c.r })); }
+  // Phiên 33: hàng rào phố (rect mảnh), chậu hoa và đồ chợ (vật cản tròn)
+  STREET_FENCES.forEach((f) => addRect({ x0: f.x - 0.3, x1: f.x + 0.3, z0: f.z0, z1: f.z1 }));
+  [...PLANTERS, ...MARKET_DECOR.cages, ...MARKET_DECOR.chairs, ...MARKET_DECOR.blocks].forEach((c) => addCircle({ x: c.x, z: c.z, r: c.r }));
   addWalk(STORE_TACHHOA.san); addRect(STORE_TACHHOA.than); Object.values(STORE_TACHHOA.props).forEach((c) => addCircle({ x: c.x, z: c.z, r: c.r }));
 }
 registerOutside();
