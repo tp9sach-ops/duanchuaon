@@ -1,0 +1,22 @@
+/* Thẻ dẫn đường nhiệm vụ (Phiên 18) + nút nhấp nháy chỉ chỗ cần bấm. */
+.gd-card{position:absolute;left:50%;top:max(64px,calc(env(safe-area-inset-top) + 58px));transform:translateX(-50%);width:min(340px,calc(100vw - 24px));padding:10px 12px 10px;border-radius:14px;background:rgba(14,10,7,.9);border:1px solid rgba(217,178,95,.55);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:0 12px 40px rgba(0,0,0,.45);color:#e8eaf2;pointer-events:auto;z-index:4;font:400 13px/1.4 var(--sans,inherit)}
+.gd-card[hidden]{display:none!important}
+.gd-card header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px}
+.gd-t{font:600 15px/1.25 var(--serif,Georgia,serif);color:#f1dba0}
+.gd-x{flex:none;width:28px;height:28px;border-radius:50%;border:1px solid rgba(217,178,95,.45);background:transparent;color:#f1dba0;font-size:17px;line-height:1;cursor:pointer}
+.gd-prog{margin:0 0 4px;font-size:12px;color:#8fd6bf}
+.gd-steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px}
+.gd-steps li{display:flex;gap:8px;align-items:flex-start;padding:5px 8px;border-radius:9px;background:rgba(255,255,255,.04)}
+.gd-steps i{flex:none;width:14px;font-style:normal;color:#d9b25f}
+.gd-steps .gd-now{background:rgba(217,178,95,.16);color:#fff}
+.gd-steps .gd-done{opacity:.55}.gd-steps .gd-done i{color:#8fd6bf}
+.gd-steps .gd-todo{opacity:.75}
+.gd-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px;font-size:12px;color:#aeb3c2}
+.gd-go{padding:6px 14px;border-radius:100px;border:1px solid #d9b25f;background:#d9b25f;color:#2a1a08;font:600 12px/1 var(--sans,inherit);cursor:pointer}
+.gd-go[hidden]{display:none}
+.gd-hl{position:relative;z-index:5;animation:gd-pulse 1.1s ease-in-out infinite;border-color:#f1dba0!important;box-shadow:0 0 0 0 rgba(241,219,160,.85)}
+@keyframes gd-pulse{0%{box-shadow:0 0 0 0 rgba(241,219,160,.85)}70%{box-shadow:0 0 0 12px rgba(241,219,160,0)}100%{box-shadow:0 0 0 0 rgba(241,219,160,0)}}
+.panel-open .gd-card{opacity:0;pointer-events:none}
+.qs-guide{margin-top:2px;padding:4px 10px;border-radius:100px;border:1px solid #d9b25f;background:transparent;color:#f1dba0;font:600 11px/1 var(--sans,inherit);cursor:pointer;pointer-events:auto}
+.qs-guide:hover,.qs-guide:focus-visible{background:#d9b25f;color:#2a1a08;outline:none}
+@media (prefers-reduced-motion:reduce){.gd-hl{animation:none;box-shadow:0 0 0 3px rgba(241,219,160,.8)}}
