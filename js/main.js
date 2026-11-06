@@ -17,11 +17,13 @@ import { initHud } from './ui/hud.js';
 import { initRoom } from './net/room.js';
 import { isNpcSpot } from './world/spots.js';
 import { initWind } from './scene/wind.js';
+import { initViewport } from './ui/viewport.js';
 
 const pct = document.getElementById('pre-pct'), fill = document.getElementById('pre-fill'), pre = document.getElementById('pre');
 const setProgress = (v) => { const p = Math.round(v * 100); pct.textContent = p; fill.style.right = (100 - p) + '%'; };
 const hidePre = () => { pre.classList.add('done'); document.body.classList.remove('is-locked'); };
 document.body.classList.add('is-locked');
+try { initViewport(); } catch (e) { console.warn('[Diệu Giang Tự] Khung nhìn lỗi:', e && e.message); }   // Phiên 31: đo khung nhìn thật cho điện thoại/Z Fold/thanh công cụ dưới
 // Âm thanh: thử phát nhạc nền NGAY từ lúc trang khởi động (trước cả khi cảnh 3D nạp xong). Bị chặn thì hiện lời mời bật âm thanh, phát ở lần chạm đầu tiên.
 try { initSound(); } catch (e) { console.warn('[Diệu Giang Tự] Âm thanh lỗi:', e && e.message); }
 
