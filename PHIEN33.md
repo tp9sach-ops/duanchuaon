@@ -12,6 +12,11 @@
 - `tests/decor.test.mjs` (5 test, đã thêm vào `package.json`): hàng rào không chắn sân/đường mòn/chợ; đồ trang trí không đè quầy, cột đèn, gốc đa, giếng, thân/sân cửa hàng, lối dân đi lại; dải vỉa hè |x| 6,5–11 vẫn đi suốt.
 - `sw.js` VERSION `dgt-v31`.
 
+## Bổ sung (lượt "tiếp tục")
+- `js/world/layout.js` `solidAt`: vật tròn/chữ nhật nhận thêm `h` (chiều cao) tùy chọn; không có `h` = cao vô hạn như cũ. Chậu hoa/lồng gà/ghế/khối đá/tường rào đăng ký với `h` thấp nên camera bay qua phía trên, không bị kéo lại như tường. `blocked()` (di chuyển) không đổi.
+- `tests/camclip.test.mjs` (file `package.json` gọi từ Phiên 31 nhưng chưa có trên repo): 2 test. Tổng 465/465.
+- Mục "camera xuyên tường" ĐÃ có từ Phiên 31 (`clipCamDist`) — bỏ khỏi việc kế; còn cần kiểm bằng mắt trên thiết bị thật.
+
 ## Bài học (đã gặp)
 - Đặt đồ gần đường của dân làng có thể làm `tests/shelter.test.mjs` đỏ (đường thẳng tới chỗ trú bị chặn): chạy cả hai test sau mỗi lần dời vị trí.
 - Test cũ không kiểm đồ trang trí có lọt vào thân cửa hàng không → đã thêm.
@@ -19,8 +24,8 @@
 ## CHƯA làm
 - Ban đêm ĐÃ kiểm (gio=21): dây đèn, đèn lồng, hàng rào hiển thị ổn. Chưa chụp ngày mưa; chưa đo FPS điện thoại (thêm InstancedMesh song sắt ~ vài trăm, nhẹ).
 - Chưa có vạch trắng cong đánh dấu khu chợ như ảnh mẫu (đó là giao diện chiếm khu của game mẫu, không phải yêu cầu rõ).
-- Lưu ý: "trẻ cầm lồng đèn" ĐÃ có trong repo (js/world/lantern.js, scene/npc.js, trẻ d7–d9 trong WALKERS) — bỏ khỏi danh sách việc kế. Còn lại: âm thanh theo mùa, camera xuyên tường, gộp HANDOFF.md/PROMPT.md Phiên 26–33 (xem PHIEN31.md mục "Việc kế").
+- Lưu ý: "trẻ cầm lồng đèn" ĐÃ có trong repo (js/world/lantern.js, scene/npc.js, trẻ d7–d9 trong WALKERS) — bỏ khỏi danh sách việc kế. Còn lại: âm thanh theo mùa, gộp HANDOFF.md/PROMPT.md Phiên 26–33 (xem PHIEN31.md mục "Việc kế").
 - GitHub: không đẩy được (tích hợp chỉ đọc) → tải file lên tay theo đúng đường dẫn, trùng tên ghi đè; hoặc `git apply phien33.patch`.
 
 ## File thay đổi
-js/scene/textures.js, js/scene/outside.js, js/scene/{didong,dienmay,kimhoan,store9sach,tachhoa}.js, js/world/outside.js, tests/decor.test.mjs, package.json, sw.js, PHIEN33.md
+js/scene/textures.js, js/scene/outside.js, js/scene/{didong,dienmay,kimhoan,store9sach,tachhoa}.js, js/world/outside.js, js/world/layout.js, tests/decor.test.mjs, tests/camclip.test.mjs, package.json, sw.js, PHIEN33.md
