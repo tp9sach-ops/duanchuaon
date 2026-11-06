@@ -1,6 +1,6 @@
 // Màn vào cửa (nhập tên, chọn áo, chọn kiểu đầu) + HUD trái-trên (chip người chơi, tên chùa, Vào chánh điện/Ra sân, đang online) + nút +/−.
 // Bố cục theo ảnh mẫu (PROMPT.md mục 9.4); chỉ bắt chước bố cục, mọi hình/chữ do mình tự làm. Logic ở hudLogic.js (có test).
-import { cleanProfile, loadProfile, saveProfile, initialOf, robeCss, insideHall, COURTYARD_POINT, HALL_POINT, PLAYER_COLORS } from './hudLogic.js';
+import { cleanProfile, loadProfile, saveProfile, initialOf, robeCss, insideHall, COURTYARD_POINT, HALL_POINT, PLAYER_COLORS, clockLabel } from './hudLogic.js';
 import { HAIR_STYLES } from '../world/avatarLogic.js';
 import { initHudMenu } from './hudMenu.js';
 
@@ -25,6 +25,7 @@ export function initHud() {
       <button type="button" class="hud-btn gold" id="btn-hall"><span class="ic" aria-hidden="true">⛩</span><span id="btn-hall-tx">Vào chánh điện</span></button>
       <button type="button" class="hud-btn soon" id="btn-work" disabled aria-disabled="true" title="Sắp có"><span class="ic" aria-hidden="true">✦</span>Công quả <em>sắp có</em></button>
       <div class="online"><i></i><span id="online-tx">1 đang online</span></div>
+      <div class="game-clock" id="game-clock" role="timer" aria-live="off" title="Giờ trong game (24 phút thật = 1 ngày)"><span aria-hidden="true">☀</span><b id="clock-tx"></b></div>
     </div>
     <div class="hud-zoom"><button type="button" id="zin" aria-label="Phóng to">+</button><button type="button" id="zout" aria-label="Thu nhỏ">−</button></div>`;
   document.body.appendChild(hud);
@@ -36,6 +37,9 @@ export function initHud() {
     const av = q('me-av'); av.textContent = initialOf(profile.name); av.style.background = robeCss(profile.color); av.style.color = profile.color === '9sach' ? '#0e6b22' : '';   // chữ xanh đậm trên nền vàng của đồng phục
     q('me-name').textContent = profile.name;
   }
+  const clockEl = q('clock-tx'), clockIc = q('game-clock').firstChild; let lastClock = '';
+  const paintClock = () => { const t = clockLabel(LGT.clock, LGT.phase, LGT.weather && LGT.weather.name); if (t !== lastClock) { lastClock = t; clockEl.textContent = t; clockIc.textContent = LGT.night > 0.5 ? '☾' : '☀'; } };
+  paintClock(); setInterval(paintClock, 1000);   // Phiên 30: đồng hồ giờ game (LGT.clock/phase do scene/index.js cập nhật mỗi khung)
   q('zin').addEventListener('click', () => W.zoom(-420)); q('zout').addEventListener('click', () => W.zoom(420));
   q('btn-hall').addEventListener('click', () => {
     if (LGT.panelOpen) return;

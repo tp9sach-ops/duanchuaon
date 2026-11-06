@@ -30,3 +30,6 @@ export const COURTYARD_POINT = { x: 3.2, z: -1 };
 /** Chỗ đứng ngay sau cửa chánh điện (trước lưới bồ đoàn): nút "Vào chánh điện" đi tới đây, KHÔNG mở bảng. */
 export const HALL_POINT = { x: 0, z: -20.4 };   // giữa lối vào (hàng cột trước chừa trống |x| < 2) ngay trên thềm, tránh va cột
 export const PLAYER_COLORS = AVATAR_COLORS;
+
+/** Nhãn đồng hồ HUD (Phiên 30): "09:30 · Ban ngày · Quang đãng". Thiếu phần nào thì bỏ phần đó. */
+export function clockLabel(clock, phase, weatherName) { return [clock, phase, weatherName].filter((x) => typeof x === 'string' && x.trim()).join(' · '); }
