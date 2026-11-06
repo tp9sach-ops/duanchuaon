@@ -363,6 +363,13 @@ Lưu ý: dòng cuối "Chỉ trả lời 'đã hiểu'" là phần của prompt 
 - **Phiên 6 (2026-10-31):** ptg gửi HANDOFF + zip phiên 5, nhờ làm tiếp và đưa lên GitHub (trùng tên thì ghi đè, file không đổi giữ nguyên). Đã: giải nén zip, đối chiếu repo, chép đè, `npm test` 76 đạt, đẩy; rồi làm Giai đoạn 6 (xem mục 2), test 87 đạt, chụp ảnh kiểm, đẩy.
 - **Phiên 5 (2026-10-31):** ptg: (1) đổi tên → Diệu Giang Tự (đã đổi toàn mã, test quét tên cũ "Linh Giang/Linh Quang/Kage"); (2) đền Việt Nam, cây cỏ giống code mẫu → đền 3D vốn đã là chùa Việt, thêm lớp tiền cảnh cây cỏ; (3) làm tiếp → Giai đoạn 5 phần Bát tự + Vận trình; (4) tự đẩy GitHub, trùng tên thì ghi đè. Kết quả đẩy GitHub xem mục 2.
 
+
+### Phiên 26–31 (gộp ở Phiên 31 — chi tiết trong docs/HANDOFF-PHIEN-26/27/28.md, docs/PHIEN29.md, PHIEN30.md, PHIEN31.md)
+- **26:** giờ game dùng chung (24 phút thật = 24 giờ game) + cầu nối Firebase↔Apps Script (js/net/bridge.js). **27:** thời tiết dùng chung. **28:** NPC che dù/tìm chỗ trú mưa (js/world/shelter.js), sửa bóng răng cưa. **29:** va chạm theo thân người (bodyBlocked). **30:** đèn lồng + biển cửa hàng sáng theo giờ, chip đồng hồ HUD.
+- **31:** đom đóm tự nhiên theo 6 vùng (js/world/fireflies.js); trẻ cầm lồng đèn d7–d9 (js/world/lantern.js, scene/npc.js); âm thanh theo mùa/môi trường + tiếng ve mùa hạ (js/ui/soundLogic.js SEASON_MIX, ui.js); responsive mọi điện thoại gồm Z Fold, iPhone, thanh công cụ dưới của Safari/Chrome (js/ui/viewportLogic.js, viewport.js, css/responsive.css, nạp SAU CÙNG); camera không xuyên tường (worldLogic.clipCamDist + layout.solidAt); thêm tests/clocklabel.test.mjs (trước đó package.json gọi mà file thiếu).
+- Test: `npm test` 452/452 (Node 22) cuối Phiên 31. Service worker VERSION dgt-v27. GitHub tích hợp chỉ ĐỌC: ptg tải file lên tay.
+- Chưa kiểm bằng mắt/thiết bị thật: toàn bộ giao diện Phiên 31 (responsive, lồng đèn, đom đóm, tiếng ve, camera). Xem docs/PHIEN31.md.
+
 ## 8. Việc tiếp theo (theo thứ tự)
 
 **A. ptg cần làm/đối chiếu (Giai đoạn 2):**

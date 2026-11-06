@@ -180,6 +180,13 @@ Việc ptg làm song song (không chặn các phiên trên): bật Pages (Settin
 - 2026-11-06 (Phiên 24): ptg báo "tiếp tục" → làm bốn mùa (`js/world/season.js`, `?mua=`, mặc định theo tháng thật). Mục kế (chờ "tiếp tục"): mưa + sấm + thời tiết ngẫu nhiên. Bàn giao ở HANDOFF mục 7.
 - 2026-11-06 (Phiên 25): ptg bảo xem lại repo kỹ, phân tích, hiểu rõ rồi "làm tiếp tục" (kèm lại master prompt) → làm MƯA + SẤM CHỚP + THỜI TIẾT NGẪU NHIÊN (`js/world/weather.js`, `?troi=0..3`). Mục kế (chờ "tiếp tục"): NPC dù/áo mưa + trú mưa, rồi đèn lồng + đồng hồ HUD, đom đóm/trẻ cầm lồng đèn. Bàn giao ở HANDOFF mục 7.
 
+
+- **Phiên 26–31 (ghi ở Phiên 31):** (gộp ở Phiên 31 — chi tiết trong docs/HANDOFF-PHIEN-26/27/28.md, docs/PHIEN29.md, PHIEN30.md, PHIEN31.md)
+  - **26:** giờ game dùng chung (24 phút thật = 24 giờ game) + cầu nối Firebase↔Apps Script (js/net/bridge.js). **27:** thời tiết dùng chung. **28:** NPC che dù/tìm chỗ trú mưa (js/world/shelter.js), sửa bóng răng cưa. **29:** va chạm theo thân người (bodyBlocked). **30:** đèn lồng + biển cửa hàng sáng theo giờ, chip đồng hồ HUD.
+- **31:** đom đóm tự nhiên theo 6 vùng (js/world/fireflies.js); trẻ cầm lồng đèn d7–d9 (js/world/lantern.js, scene/npc.js); âm thanh theo mùa/môi trường + tiếng ve mùa hạ (js/ui/soundLogic.js SEASON_MIX, ui.js); responsive mọi điện thoại gồm Z Fold, iPhone, thanh công cụ dưới của Safari/Chrome (js/ui/viewportLogic.js, viewport.js, css/responsive.css, nạp SAU CÙNG); camera không xuyên tường (worldLogic.clipCamDist + layout.solidAt); thêm tests/clocklabel.test.mjs (trước đó package.json gọi mà file thiếu).
+- Test: `npm test` 452/452 (Node 22) cuối Phiên 31. Service worker VERSION dgt-v27. GitHub tích hợp chỉ ĐỌC: ptg tải file lên tay.
+- Chưa kiểm bằng mắt/thiết bị thật: toàn bộ giao diện Phiên 31 (responsive, lồng đèn, đom đóm, tiếng ve, camera). Xem docs/PHIEN31.md.
+
 ## 8. PROMPT KHỞI ĐỘNG PHIÊN MỚI (dán nguyên văn)
 
 ```
