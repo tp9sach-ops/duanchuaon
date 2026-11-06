@@ -8,6 +8,7 @@ import { createRoomClient, createLocalTransport } from './roomClient.js';
 import { CONFIG } from '../config.js';
 import { createTransportManager } from './transportManager.js';
 import { createFirebaseTransport, loadFirebaseSdk } from './firebaseTransport.js';
+import { withGasBridge } from './bridge.js';
 
 const newId = () => (globalThis.crypto && crypto.randomUUID ? crypto.randomUUID() : 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10));
 
@@ -20,7 +21,11 @@ export function initRoom() {
   const rooms = Array.isArray(CONFIG.rooms) && CONFIG.rooms.length ? CONFIG.rooms : [{ type: 'gas', name: 'Apps Script' }];
   const makeTransport = (entry) => {
     if (!entry) return null;
-    if (entry.type === 'firebase') return createFirebaseTransport({ config: entry.firebaseConfig, name: entry.name || 'Firebase', loadSdk: () => loadFirebaseSdk(CONFIG.firebaseSdkVersion) });
+    if (entry.type === 'firebase') {
+      const fb = createFirebaseTransport({ config: entry.firebaseConfig, name: entry.name || 'Firebase', loadSdk: () => loadFirebaseSdk(CONFIG.firebaseSdkVersion) });
+      // Cầu nối (Phiên 26): người ở Firebase và người ở Apps Script dự phòng vẫn thấy nhau. Tắt bằng gasBridgeMs: 0 trong config.js.
+      return apiEnabled() && CONFIG.gasBridgeMs !== 0 ? withGasBridge(fb, { gasCall: (req) => { const { action, ...rest } = req; return callApi(action, rest); }, everyMs: CONFIG.gasBridgeMs || 4000 }) : fb;
+    }
     if (apiEnabled()) return { kind: 'gas', name: entry.name || 'Apps Script', call: (req) => { const { action, ...rest } = req; return callApi(action, rest); } };
     const local = createLocalTransport();                         // chưa có apiUrl: các tab cùng trình duyệt thấy nhau
     return local ? { kind: 'local', name: 'Cục bộ', call: local, close: local.close } : null;
