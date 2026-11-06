@@ -5,7 +5,7 @@
 // Cùng quy ước với js/scene/tachhoa.js: hệ tọa độ cục bộ +x ra đường, nhóm quay π, thế giới (x, z) = (front − lx, z0 − lz).
 import * as THREE from 'three';
 import { mulberry32 } from '../util.js';
-import { pavingTexture } from './textures.js';
+import { villageTileTexture } from './textures.js';
 import { STORE_KIMHOAN as S } from '../world/outside.js';
 
 const SERIF = (wt, px) => `${wt} ${px}px "Cormorant Garamond", "Be Vietnam Pro", Georgia, serif`;
@@ -73,7 +73,7 @@ const toLocal = (p) => ({ x: S.front - p.x, z: S.z - p.z });
 
 function buildFacade(g) {
   const W = S.rong, D = S.sau, white = std(0xf1f0ec), stone = std(0xffffff, { map: stoneTex(), roughness: 0.9 });
-  const pv = pavingTexture().clone(); pv.needsUpdate = true; pv.repeat.set(1.1, 1.8);
+  const pv = villageTileTexture().clone(); pv.needsUpdate = true; pv.repeat.set(1.1, 1.8);
   const yard = new THREE.Mesh(new THREE.PlaneGeometry(6, W), new THREE.MeshStandardMaterial({ map: pv, roughness: 0.8, color: 0xcfcfcf })); yard.rotation.x = -Math.PI / 2; yard.position.set(3, 0.05, 0); yard.receiveShadow = true; g.add(yard);
   const floor = new THREE.Mesh(new THREE.PlaneGeometry(D, W), std(0xd9cbb4, { roughness: 0.4 })); floor.rotation.x = -Math.PI / 2; floor.position.set(-D / 2, 0.06, 0); floor.receiveShadow = true; g.add(floor);
   // khối trên: tường trắng (y 4.3 → 10.6); tầng trệt: trụ + tường hai bên ốp đá xám

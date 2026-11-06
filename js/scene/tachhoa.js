@@ -4,7 +4,7 @@
 // Cùng quy ước với js/scene/store9sach.js: hệ tọa độ cục bộ +x ra đường, nhóm quay π, thế giới (x, z) = (front − lx, z0 − lz); người đứng ngoài nhìn vào: TRÁI = lz dương, PHẢI = lz âm.
 import * as THREE from 'three';
 import { mulberry32 } from '../util.js';
-import { pavingTexture } from './textures.js';
+import { villageTileTexture } from './textures.js';
 import { STORE_TACHHOA as S } from '../world/outside.js';
 
 const FONT = (wt, px, it = '') => `${it} ${wt} ${px}px "Be Vietnam Pro", "Noto Sans", system-ui, sans-serif`.trim();
@@ -70,7 +70,7 @@ const toLocal = (p) => ({ x: S.front - p.x, z: S.z - p.z });
 
 function buildFacade(g) {
   const W = S.rong, D = S.sau, white = std(0xf4f3ee), lit = glow(0xfafaf6, 0.4), blue = std(0x0b4fc4, { roughness: 0.35 });
-  const pv = pavingTexture().clone(); pv.needsUpdate = true; pv.repeat.set(1.1, 1.6);
+  const pv = villageTileTexture().clone(); pv.needsUpdate = true; pv.repeat.set(1.1, 1.6);
   const yard = new THREE.Mesh(new THREE.PlaneGeometry(6, W), new THREE.MeshStandardMaterial({ map: pv, roughness: 0.8, color: 0xd8d8d8 })); yard.rotation.x = -Math.PI / 2; yard.position.set(3, 0.05, 0); yard.receiveShadow = true; g.add(yard);
   const floor = new THREE.Mesh(new THREE.PlaneGeometry(D, W), std(0xd2b896)); floor.rotation.x = -Math.PI / 2; floor.position.set(-D / 2, 0.06, 0); floor.receiveShadow = true; g.add(floor);
   // thân: tầng trệt tường trắng có ô cửa mở (rộng 5,2 m, cao 2,5 m), tầng trên kín

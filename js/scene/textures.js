@@ -208,6 +208,22 @@ export function pavingTexture() {
   const t = tex(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 8; return t;
 }
 
+// Gạch lát phố làng: đỏ cam ngả hồng (salmon) xếp so le như ảnh mẫu (Phiên 33)
+export function villageTileTexture() {
+  const W = 512, H = 512, c = cvs(W, H), x = c.getContext('2d'), rnd = mulberry32(63);
+  x.fillStyle = '#d3a595'; x.fillRect(0, 0, W, H);
+  const rows = 12, bh = H / rows, bw = W / 5;
+  for (let j = 0; j < rows; j++) for (let i = -1; i < 6; i++) {
+    const off = (j % 2) * bw / 2, t = 0.9 + rnd() * 0.2, r = 200 * t, g = 124 * t, b = 104 * t;   // đỏ cam ngả hồng (salmon)
+    x.fillStyle = `rgb(${r | 0},${g | 0},${b | 0})`; x.fillRect(i * bw + off + 2, j * bh + 2, bw - 4, bh - 4);
+    const gr = x.createLinearGradient(0, j * bh, 0, (j + 1) * bh);
+    gr.addColorStop(0, 'rgba(255,255,255,.14)'); gr.addColorStop(0.5, 'rgba(255,255,255,0)'); gr.addColorStop(1, 'rgba(80,40,30,.14)');
+    x.fillStyle = gr; x.fillRect(i * bw + off + 2, j * bh + 2, bw - 4, bh - 4);
+  }
+  for (let i = 0; i < 120; i++) { x.fillStyle = `rgba(110,60,45,${0.04 + rnd() * 0.06})`; x.beginPath(); x.arc(rnd() * W, rnd() * H, 1 + rnd() * 3, 0, TAU); x.fill(); }
+  const t = tex(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 8; return t;
+}
+
 // Lối đi giữa sân ban ngày: phiến đá dài sáng màu, khe mảnh
 export function dayPathTexture() {
   const W = 256, H = 512, c = cvs(W, H), x = c.getContext('2d'), rnd = mulberry32(88);

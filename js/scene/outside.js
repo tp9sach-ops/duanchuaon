@@ -2,8 +2,8 @@
 // ruộng, núi xa. Dựng từ dữ liệu của js/world/outside.js (cùng nguồn với va chạm). Trả { group, update(t) }. Cho đổ bóng bằng shade() ở scene/index.js.
 import * as THREE from 'three';
 import { mulberry32 } from '../util.js';
-import { pavingTexture } from './textures.js';
-import { OUT_WALKS, THAC, DA_LANG, GIENG, DINH_NGHI, MIEU, CO_THU, STALLS, STREET_LAMPS, OUT_ROCKS, VILLAGE_GATE, STORE_9SACH, STORE_TACHHOA, STORE_DIDONG, STORE_DIENMAY, STORE_KIMHOAN } from '../world/outside.js';
+import { villageTileTexture } from './textures.js';
+import { OUT_WALKS, THAC, DA_LANG, GIENG, DINH_NGHI, MIEU, CO_THU, STALLS, STREET_LAMPS, OUT_ROCKS, VILLAGE_GATE, STORE_9SACH, STORE_TACHHOA, STORE_DIDONG, STORE_DIENMAY, STORE_KIMHOAN, STREET_FENCES, PLANTERS, MARKET_DECOR } from '../world/outside.js';
 import { buildStore9Sach } from './store9sach.js';
 import { buildTachHoa } from './tachhoa.js';
 import { buildPhoneShop } from './didong.js';
@@ -36,13 +36,13 @@ function buildGround(g) {
 function buildStreet(g) {
   const r = roadTex(); r.repeat.set(1, 90 / 4);
   plane(12, 90, new THREE.MeshStandardMaterial({ map: r, roughness: 0.9 }), 0, 0.03, 105, g);
-  const walk = pavingTexture().clone(); walk.needsUpdate = true; walk.repeat.set(2, 90 / 5.9);
+  const walk = villageTileTexture().clone(); walk.needsUpdate = true; walk.repeat.set(2, 90 / 5.9);
   for (const sx of [-1, 1]) {
     plane(8, 90, new THREE.MeshStandardMaterial({ map: walk, roughness: 0.8 }), sx * 10, 0.045, 105, g);
     box(0.3, 0.14, 90, std(0x9a9a98), sx * 6.15, 0.07, 105, g);
   }
   const cho = walk.clone(); cho.needsUpdate = true; cho.repeat.set(68 / 5.9, 30 / 5.9);
-  plane(68, 30, new THREE.MeshStandardMaterial({ map: cho, roughness: 0.8, color: 0xe8dcc8 }), 0, 0.05, 131, g);
+  plane(68, 30, new THREE.MeshStandardMaterial({ map: cho, roughness: 0.8 }), 0, 0.05, 131, g);
 }
 
 function buildVillageGate(g) {
@@ -54,16 +54,23 @@ function buildVillageGate(g) {
   const roof = gable(2.6, 0.9, 10, tile); roof.rotation.y = Math.PI / 2; roof.position.set(0, 6.25, z); g.add(roof);
 }
 
+const SHUT = std(0x1f6f73), SILL = std(0xe8d9b4), PLINTH = std(0xc9b48a), VINE = flat(0x3f8a3a), BLOOM = [std(0xd9477a), std(0xf2a6c0), std(0xe8503a)];
+/** Cửa sổ có hai cánh cửa chớp xanh ngọc và bậu cửa (mặt nhà hướng +x của nhóm). */
+function shutters(grp, d, y, dz) { for (const s of [-1, 1]) box(0.12, 1.3, 0.3, SHUT, d / 2 + 0.07, y, dz + s * 0.72, grp); box(0.16, 0.1, 1.8, SILL, d / 2 + 0.07, y - 0.72, dz, grp); }
+/** Giàn hoa leo (hoa giấy) ở góc nhà. */
+function vine(grp, x, z, h, rnd) { cyl(0.1, 0.13, h, VINE, x, h / 2, z, grp, 5); for (let k = 0; k < 9; k++) { const m = new THREE.Mesh(new THREE.SphereGeometry(0.2 + rnd() * 0.1, 6, 5), k % 3 ? VINE : BLOOM[k % 3 === 0 ? (k / 3) | 0 : 0]); m.position.set(x + (rnd() - 0.5) * 0.5, 0.9 + k * (h - 1.2) / 8, z + (rnd() - 0.5) * 0.4); grp.add(m); } }
 const HOUSE_COLORS = [0xf2e6c4, 0xf4d9a0, 0xe9b9a0, 0xb8d4cf, 0xe6c9d4, 0xd9e3b8];
 /** Nhà phố mái ngói: (x,z) tâm, quay mặt về phía `facing` (+1 = mặt hướng +x, -1 = hướng -x). */
 function house(g, x, z, facing, rnd) {
   const w = 8 + rnd() * 2, d = 7 + rnd() * 3, h = 5 + rnd() * 3.5, col = HOUSE_COLORS[(rnd() * HOUSE_COLORS.length) | 0], grp = new THREE.Group();
   box(d, h, w, std(col), 0, h / 2, 0, grp);
-  const tile = std(0x9c4a32), roof = gable(d + 1.4, 2.4, w + 1.2, tile); roof.position.set(0, h, 0); grp.add(roof);
+  const tile = std(0xb5502f), roof = gable(d + 1.4, 2.4, w + 1.2, tile); roof.position.set(0, h, 0); grp.add(roof);
   const door = std(0x6b3a22), win = new THREE.MeshStandardMaterial({ color: 0x7fb4c9, roughness: 0.3, emissive: 0x1a3040 }); win.userData.nightGlow = { day: 1, night: 2.4, dayColor: 0x1a3040, nightColor: 0xffc060 };   // cửa sổ nhà: ánh vàng ấm ban đêm (scene/index.js đổi theo giờ)
   box(0.12, h * 0.5, 1.8, door, d / 2 + 0.02, h * 0.25, -w * 0.2, grp);
-  for (const dz of [w * 0.22, w * 0.38]) box(0.1, 1.2, 1.1, win, d / 2 + 0.03, h * 0.62, dz, grp);
-  if (h > 6.2) box(0.1, 1.2, 1.4, win, d / 2 + 0.03, h * 0.62, -w * 0.2, grp);
+  box(d + 0.3, 0.9, w + 0.3, PLINTH, 0, 0.45, 0, grp);   // bệ chân đá
+  for (const dz of [w * 0.12, w * 0.36]) { box(0.1, 1.2, 1.1, win, d / 2 + 0.03, h * 0.62, dz, grp); shutters(grp, d, h * 0.62, dz); }
+  if (h > 6.2) { box(0.1, 1.2, 1.1, win, d / 2 + 0.03, h * 0.62, -w * 0.2, grp); shutters(grp, d, h * 0.62, -w * 0.2); }
+  vine(grp, d / 2 + 0.2, -w / 2 + 0.3, h * 0.85, rnd);
   box(1.3, 0.14, w * 0.9, std(0xc0453a), d / 2 + 0.6, h * 0.46, 0, grp);   // mái hiên
   grp.position.set(x, 0, z); grp.rotation.y = facing > 0 ? Math.PI / 2 : -Math.PI / 2; g.add(grp);
 }
@@ -74,7 +81,7 @@ function buildHouses(g) {
     if (sx > 0 && z > 94 && z < 113) continue;     // chừa đường mòn thác
     const hz = z + (rnd() - 0.5) * 1.2;
     // Hai ô nhà phố bên phải (z≈80,5 và z≈91) nhường chỗ cho Cửa hàng 9 Sạch và Tách Hoa (bên phải), tiệm Di Động Sen Vàng (bên trái, z≈112); vẫn gọi house() vào nhóm bỏ đi để dãy số ngẫu nhiên (màu, cỡ) của các nhà khác giữ nguyên
-    const slot = (sx > 0 && (Math.abs(z - STORE_9SACH.z) < 0.1 || Math.abs(z - STORE_TACHHOA.z) < 0.1)) || (sx < 0 && (Math.abs(z - STORE_DIDONG.z) < 0.1 || Math.abs(z - STORE_DIENMAY.z) < 0.1)) || (sx > 0 && Math.abs(z - 133) < 0.1 && STORE_KIMHOAN.z > 128);
+    const slot = (sx > 0 && (Math.abs(z - STORE_9SACH.z) < 0.1 || Math.abs(z - STORE_TACHHOA.z) < 0.1)) || (sx < 0 && (Math.abs(z - STORE_DIDONG.z) < 0.1 || Math.abs(z - STORE_DIENMAY.z) < 0.1)) || (sx > 0 && Math.abs(z - 133) < 0.1 && STORE_KIMHOAN.z > 128) || (z > 116 && z < 146);   // Phiên 33: chợ là quảng trường mở (không nhà phố đè quầy và đồ chợ)
     house(slot ? new THREE.Group() : g, sx * 19.5, hz, -sx, rnd);
   }
   // nhà trong ruộng phía sau hàng phố
@@ -83,6 +90,65 @@ function buildHouses(g) {
   const paddy = canvasTex(64, 64, (c, w, h) => { c.fillStyle = '#8bc34a'; c.fillRect(0, 0, w, h); for (let i = 0; i < 16; i++) { c.fillStyle = i % 2 ? '#7cb342' : '#9ccc65'; c.fillRect(i * 4, 0, 2, h); } }, [6, 6]);
   const pm = new THREE.MeshStandardMaterial({ map: paddy, roughness: 1 });
   for (const [x0, x1, z0, z1] of [[24, 70, 62, 94], [-70, -24, 62, 80], [-60, -26, 100, 114]]) plane(x1 - x0, z1 - z0, pm, (x0 + x1) / 2, 0.02, (z0 + z1) / 2, g);
+}
+
+/** Hàng rào phố: tường đá thấp, song sắt xanh đậm, trụ đá có mũ và núm tròn. */
+function buildFences(g) {
+  const stone = std(0xd2bb90), cap = std(0xe2d0aa), pil = std(0xcdb486), iron = std(0x17352e, { roughness: 0.7 });
+  const barG = new THREE.CylinderGeometry(0.028, 0.028, 0.95, 5), knobG = new THREE.SphereGeometry(0.17, 8, 6), bars = [];
+  for (const f of STREET_FENCES) {
+    const len = f.z1 - f.z0, cz = (f.z0 + f.z1) / 2, n = Math.max(1, Math.round(len / 3)), step = len / n;
+    box(0.5, 0.7, len, stone, f.x, 0.35, cz, g); box(0.62, 0.1, len + 0.1, cap, f.x, 0.75, cz, g);
+    box(0.05, 0.06, len, iron, f.x, 1.7, cz, g); box(0.05, 0.05, len, iron, f.x, 0.95, cz, g);
+    for (let k = 0; k <= n; k++) { const pz = f.z0 + k * step; box(0.6, 1.9, 0.6, pil, f.x, 0.95, pz, g); box(0.8, 0.14, 0.8, cap, f.x, 1.97, pz, g); const kn = new THREE.Mesh(knobG, cap); kn.position.set(f.x, 2.2, pz); g.add(kn); }
+    const m = Math.max(2, Math.round(step / 0.24)); for (let k = 0; k < n; k++) for (let i = 1; i < m; i++) bars.push(f.z0 + k * step + i * step / m, f.x);
+  }
+  const im = new THREE.InstancedMesh(barG, iron, Math.max(1, bars.length / 2)), dm = new THREE.Object3D();
+  for (let i = 0; i < bars.length; i += 2) { dm.position.set(bars[i + 1], 1.3, bars[i]); dm.updateMatrix(); im.setMatrixAt(i / 2, dm.matrix); }
+  im.castShadow = true; g.add(im);
+}
+
+/** Chậu hoa vàng, lồng gà tre, ghế gỗ, khối đá ngồi (khớp PLANTERS / MARKET_DECOR trong world/outside.js). */
+function buildDecor(g) {
+  const rnd = mulberry32(33), pot = std(0xc0693d), soil = std(0x4a3320), leaf = flat(0x3f8a3a), petal = [std(0xf2c21b), std(0xf6d54a), std(0xf0a1bd)];
+  for (const p of PLANTERS) {
+    const grp = new THREE.Group(); cyl(0.38, 0.27, 0.45, pot, 0, 0.225, 0, grp, 10); cyl(0.36, 0.36, 0.04, soil, 0, 0.46, 0, grp, 10);
+    const bush = new THREE.Mesh(new THREE.IcosahedronGeometry(0.38, 0), leaf); bush.position.y = 0.72; grp.add(bush);
+    for (let k = 0; k < 9; k++) { const a = rnd() * 6.28, r = 0.15 + rnd() * 0.22, m = new THREE.Mesh(new THREE.SphereGeometry(0.075, 6, 5), petal[k % 3]); m.position.set(Math.cos(a) * r, 0.72 + rnd() * 0.3, Math.sin(a) * r); grp.add(m); }
+    grp.position.set(p.x, 0, p.z); g.add(grp);
+  }
+  const bamboo = std(0xc9a24a), hen = std(0xf3e6c8), comb = std(0xd23b2a), beak = std(0xe8962a);
+  for (const c of MARKET_DECOR.cages) {
+    const grp = new THREE.Group();
+    for (let i = 0; i < 12; i++) { const piv = new THREE.Group(), rib = cyl(0.02, 0.02, 0.84, bamboo, 0.51, 0.4, 0, piv, 4); rib.rotation.z = 0.27; piv.rotation.y = -i / 12 * 6.28; grp.add(piv); }
+    for (const [y, r] of [[0.06, 0.63], [0.42, 0.51], [0.78, 0.4]]) { const t = new THREE.Mesh(new THREE.TorusGeometry(r, 0.025, 4, 18), bamboo); t.rotation.x = Math.PI / 2; t.position.y = y; grp.add(t); }
+    const body = new THREE.Mesh(new THREE.SphereGeometry(0.3, 8, 6), hen); body.scale.set(1, 0.85, 1.15); body.position.y = 0.32; grp.add(body);
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.14, 8, 6), hen); head.position.set(0, 0.62, 0.22); grp.add(head);
+    box(0.04, 0.1, 0.14, comb, 0, 0.76, 0.22, grp); const bk = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.1, 4), beak); bk.rotation.x = Math.PI / 2; bk.position.set(0, 0.6, 0.38); grp.add(bk);
+    grp.position.set(c.x, 0, c.z); grp.rotation.y = c.ry; g.add(grp);
+  }
+  const wood = std(0xd9a74a);
+  for (const c of MARKET_DECOR.chairs) {
+    const grp = new THREE.Group(); box(0.46, 0.05, 0.46, wood, 0, 0.45, 0, grp); box(0.46, 0.5, 0.05, wood, 0, 0.72, -0.2, grp);
+    for (const sx of [-0.19, 0.19]) for (const sz of [-0.19, 0.19]) box(0.05, 0.45, 0.05, wood, sx, 0.22, sz, grp);
+    grp.position.set(c.x, 0, c.z); grp.rotation.y = c.ry; g.add(grp);
+  }
+  const blk = std(0xd8cdb8), band = std(0x8a6a3a);
+  for (const c of MARKET_DECOR.blocks) { const grp = new THREE.Group(); box(1, 0.58, 1, blk, 0, 0.29, 0, grp); box(1.02, 0.07, 1.02, band, 0, 0.42, 0, grp); grp.position.set(c.x, 0, c.z); grp.rotation.y = c.ry; g.add(grp); }
+}
+
+/** Dây đèn nhỏ nhiều màu và đèn lồng đỏ căng ngang đường giữa từng cặp cột đèn. */
+function buildFestoons(g) {
+  const cols = [0xff5a5a, 0xffd24a, 0x6ee06e, 0x6ab6ff, 0xff9ad0], bulbG = new THREE.SphereGeometry(0.1, 6, 5), cord = new THREE.LineBasicMaterial({ color: 0x2a2a2a });
+  const bulbs = new THREE.InstancedMesh(bulbG, new THREE.MeshBasicMaterial({ color: 0xffffff }), STREET_LAMPS.length / 2 * 13), dm = new THREE.Object3D(), c = new THREE.Color(); let n = 0;
+  const lantern = new THREE.MeshStandardMaterial({ color: 0xd23b2a, emissive: 0xff3a20, emissiveIntensity: 0.7, roughness: 0.6 });
+  for (const z of [...new Set(STREET_LAMPS.map((l) => l.z))]) {
+    const pts = []; for (let i = 0; i <= 24; i++) { const u = i / 24, x = -12 + 24 * u; pts.push(new THREE.Vector3(x, 4.7 - Math.sin(u * Math.PI) * 0.9, z)); }
+    g.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), cord));
+    for (let i = 1; i < 24; i += 2) { const p = pts[i]; dm.position.set(p.x, p.y - 0.12, p.z); dm.updateMatrix(); bulbs.setMatrixAt(n, dm.matrix); bulbs.setColorAt(n, c.setHex(cols[n % cols.length])); n++; }
+    const lt = new THREE.Mesh(new THREE.SphereGeometry(0.34, 10, 8), lantern); lt.scale.y = 1.25; lt.position.set(0, 3.45, z); g.add(lt);
+  }
+  bulbs.count = n; bulbs.instanceColor.needsUpdate = true; g.add(bulbs);
 }
 
 function lamps(g) {
@@ -201,7 +267,7 @@ function buildForestGlade(g) {
 
 export function buildOutside() {
   const group = new THREE.Group();
-  buildGround(group); buildStreet(group); buildVillageGate(group); buildHouses(group); lamps(group); buildMarket(group); buildForest(group); mountains(group);
+  buildGround(group); buildStreet(group); buildVillageGate(group); buildHouses(group); lamps(group); buildFences(group); buildDecor(group); buildFestoons(group); buildMarket(group); buildForest(group); mountains(group);
   const wf = buildWaterfall(group); buildForestGlade(group);
   group.add(buildStore9Sach()); group.add(buildTachHoa()); group.add(buildPhoneShop()); group.add(buildElectronicsStore()); group.add(buildJewelryStore());   // Cửa hàng 9 Sạch (nhà phố mặt đường làng, bên phải)
   // đường mòn đất (Đông, Tây) và hai bãi
