@@ -59,6 +59,15 @@ export function clockText(h) {
   h = wrapHour(h); let hh = Math.floor(h), mm = Math.floor((h - hh) * 60); if (mm >= 60) { mm = 0; hh = (hh + 1) % 24; }
   return String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0');
 }
+/** Giờ game DÙNG CHUNG (Phiên 26): suy ra thẳng từ đồng hồ thật (mili-giây Unix, UTC) nên mọi người chơi ở mọi nơi thấy CÙNG một giờ.
+ *  Cứ 24 phút thật = một vòng 24 giờ game; 0h game rơi đúng vào mỗi bội số của 24 phút kể từ mốc Unix 1/1/1970 (1 giờ game = 60 giây thật). */
+export function sharedHour(nowMs = Date.now()) { return wrapHour(((nowMs / 1000) % DAY_SECONDS) * HOURS_PER_SECOND); }
+/** Có dùng giờ chung không? Có khi KHÔNG có ?gio= (hoặc giá trị sai); ?gio=H (cố định) và ?gio=thuc (giờ máy) là chế độ thử riêng. */
+export function usesSharedClock(search) {
+  const v = new URLSearchParams(search || '').get('gio');
+  if (v === null || v === '') return true; if (v === 'thuc') return false;
+  const x = Number(v.replace(',', '.')); return !(isFinite(x) && x >= 0 && x <= 24);
+}
 /** Giờ máy (0..24, có phần lẻ). */
 export function realHour(d = new Date()) { return d.getHours() + d.getMinutes() / 60 + d.getSeconds() / 3600; }
 /** Đọc ?gio= : số 0..24 → giờ cố định (không chạy); "thuc" → giờ máy, chạy tiếp; không có → START_HOUR. Trả { hour, fixed }. */
