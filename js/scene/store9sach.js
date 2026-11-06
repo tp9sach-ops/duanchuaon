@@ -117,7 +117,7 @@ const pictureTex = () => liveTex(256, 192, (g, w, h) => {
 
 // ---- Vật liệu + khối cơ bản
 const std = (c, o = {}) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.85, ...o });
-const glow = (c, k = 0.5) => std(c, { emissive: c, emissiveIntensity: k });
+const glow = (c, k = 0.5) => { const m = std(c, { emissive: c, emissiveIntensity: k }); m.userData.nightGlow = { day: k, night: k * 2.4 + 0.4 }; return m; };   // Phiên 30: biển/đèn cửa hàng sáng hơn về đêm
 const basic = (map, o = {}) => new THREE.MeshBasicMaterial({ map, toneMapped: false, ...o });
 const glass = (c = 0x9fd0e8) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.1, metalness: 0.1, transparent: true, opacity: 0.35, depthWrite: false });
 function box(w, h, d, m, x, y, z, parent) { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); parent.add(o); return o; }

@@ -57,7 +57,7 @@ const standTex = () => liveTex(260, 520, (g, w, h) => {
 const umbTex = () => liveTex(512, 96, (g, w, h) => { g.fillStyle = '#26356b'; g.fillRect(0, 0, w, h); text(g, 'KIM HOÀN NGỌC LAN · KÍNH CHÀO QUÝ KHÁCH', w / 2, h / 2, SANS(700, 26), '#e6e6ee', 500); });
 
 const std = (c, o = {}) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.8, ...o });
-const glow = (c, k = 0.5) => std(c, { emissive: c, emissiveIntensity: k });
+const glow = (c, k = 0.5) => { const m = std(c, { emissive: c, emissiveIntensity: k }); m.userData.nightGlow = { day: k, night: k * 2.4 + 0.4 }; return m; };   // Phiên 30: biển/đèn cửa hàng sáng hơn về đêm
 const basic = (map, o = {}) => new THREE.MeshBasicMaterial({ map, toneMapped: false, ...o });
 const glass = (c = 0xcfe8ff, op = 0.22) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.1, transparent: true, opacity: op, depthWrite: false });
 function box(w, h, d, m, x, y, z, parent) { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); parent.add(o); return o; }

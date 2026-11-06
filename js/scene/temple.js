@@ -15,6 +15,7 @@ export function makeMaterials() {
   M.bronze = new THREE.MeshStandardMaterial({ color: 0xb08a3e, roughness: 0.4, metalness: 0.6 });
   M.paper = new THREE.MeshBasicMaterial({ color: 0xffc977 });                      // ô cửa sáng đèn
   M.lantern = new THREE.MeshStandardMaterial({ color: 0xc8322b, emissive: 0xff3a1f, emissiveIntensity: 1.6, roughness: 0.6 });
+  M.lantern.userData.nightGlow = { day: 0.55, night: 2.2 };   // Phiên 30: đèn lồng sáng dần theo giờ (index.js đọc nightGlow, cùng cơ chế đèn đường/cửa sổ)
   return M;
 }
 

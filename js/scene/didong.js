@@ -52,7 +52,7 @@ const bannerTex = () => liveTex(1800, 160, (g, w, h) => {
 const phoneTex = (a, b) => liveTex(96, 160, (g, w, h) => { g.fillStyle = '#1a1c20'; g.fillRect(0, 0, w, h); const gr = g.createLinearGradient(0, 0, w, h); gr.addColorStop(0, a); gr.addColorStop(1, b); g.fillStyle = gr; g.fillRect(6, 10, w - 12, h - 22); g.fillStyle = '#1a1c20'; g.fillRect(w / 2 - 12, 12, 24, 5); });
 
 const std = (c, o = {}) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.8, ...o });
-const glow = (c, k = 0.5) => std(c, { emissive: c, emissiveIntensity: k });
+const glow = (c, k = 0.5) => { const m = std(c, { emissive: c, emissiveIntensity: k }); m.userData.nightGlow = { day: k, night: k * 2.4 + 0.4 }; return m; };   // Phiên 30: biển/đèn cửa hàng sáng hơn về đêm
 const basic = (map, o = {}) => new THREE.MeshBasicMaterial({ map, toneMapped: false, ...o });
 const glass = (c = 0xcfe8ff, op = 0.3) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.1, transparent: true, opacity: op, depthWrite: false });
 function box(w, h, d, m, x, y, z, parent) { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); parent.add(o); return o; }

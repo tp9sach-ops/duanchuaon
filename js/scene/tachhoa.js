@@ -59,7 +59,7 @@ const norenTex = () => liveTex(256, 360, (g, w, h) => { g.fillStyle = LBLUE; g.f
 const cupFaceTex = (bg) => liveTex(128, 128, (g, w, h) => { g.fillStyle = bg; g.fillRect(0, 0, w, h); g.fillStyle = '#fff6e6'; g.beginPath(); g.moveTo(34, 26); g.lineTo(94, 26); g.lineTo(82, 108); g.lineTo(46, 108); g.fill(); g.fillStyle = '#7a4a2a'; g.fillRect(38, 40, 52, 30); g.fillStyle = 'rgba(0,0,0,.18)'; g.fillRect(0, 0, w, 10); });
 
 const std = (c, o = {}) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.8, ...o });
-const glow = (c, k = 0.5) => std(c, { emissive: c, emissiveIntensity: k });
+const glow = (c, k = 0.5) => { const m = std(c, { emissive: c, emissiveIntensity: k }); m.userData.nightGlow = { day: k, night: k * 2.4 + 0.4 }; return m; };   // Phiên 30: biển/đèn cửa hàng sáng hơn về đêm
 const basic = (map, o = {}) => new THREE.MeshBasicMaterial({ map, toneMapped: false, ...o });
 const glass = (c = 0xcfe8ff, op = 0.35) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.1, transparent: true, opacity: op, depthWrite: false });
 function box(w, h, d, m, x, y, z, parent) { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); parent.add(o); return o; }
