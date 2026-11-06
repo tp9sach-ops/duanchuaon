@@ -30,6 +30,7 @@ import { inHall, PLAZA } from '../world/landscape.js';
 import { groundY, blocked } from '../world/layout.js';
 import { createWeather, parseWeatherParam, changeMessage } from '../world/weather.js';
 import { mulberry32 } from '../util.js';
+import { snapToTexel, shadowBias, SHADOW_R } from '../world/shadowSnap.js';
 import { seasonState, parseSeasonParam, seasonColor, isLeafGreen } from '../world/season.js';
 import { dayState, lerpHex, lightDir, moonDir, parseHourParam, wrapHour, clockText, HOURS_PER_SECOND, sharedHour, usesSharedClock } from '../world/daycycle.js';
 
@@ -64,7 +65,8 @@ export function createScene(canvas, { onProgress, onPick, onArrive } = {}) {
   const ambient = DAY ? new THREE.AmbientLight(0xffffff, 0.5) : new THREE.AmbientLight(0xb4c2ea, 0.9);
   const sunOffset = moonLight.position.clone();
   moonLight.castShadow = true;
-  { const sh = moonLight.shadow, R = 46; const ms = +new URLSearchParams(location.search).get('shadow') || (coarse ? 1024 : 2048); sh.mapSize.set(ms, ms); Object.assign(sh.camera, { left: -R, right: R, top: R, bottom: -R, near: 20, far: 300 }); sh.bias = -0.0006; sh.normalBias = 0.05; sh.radius = 2.5; sh.camera.updateProjectionMatrix(); }
+  // Phiên 28b: R lấy từ shadowSnap.js; đèn cách mục tiêu ~125 m nên near/far thu hẹp để độ sâu mịn hơn
+  { const sh = moonLight.shadow, R = SHADOW_R; /* R chung với shadowSnap.js */ const ms = +new URLSearchParams(location.search).get('shadow') || (coarse ? 1024 : 2048); sh.mapSize.set(ms, ms); Object.assign(sh.camera, { left: -R, right: R, top: R, bottom: -R, near: 30, far: 260 }); sh.bias = -0.0006; sh.normalBias = 0.05; sh.radius = 2.5; sh.camera.updateProjectionMatrix(); }
   scene.add(hemi, ambient, moonLight, moonLight.target, warm1, warm2);
   /** Cho mọi khối đặc của `obj` đổ và nhận bóng (khối sáng tự phát / trong suốt bỏ qua). */
   const shade = (obj, receive = true) => { obj.traverse((o) => { if (o.isMesh && !o.material.isMeshBasicMaterial && !o.material.transparent) { o.castShadow = true; o.receiveShadow = receive; } }); return obj; };
@@ -205,7 +207,7 @@ export function createScene(canvas, { onProgress, onPick, onArrive } = {}) {
     if (fl > 0) bgc = lerpHex(bgc, 0xeef2ff, Math.min(0.75, fl * 0.7));   // chớp: cả bầu trời lóe
     scene.background.setHex(bgc); scene.fog.color.setHex(bgc); scene.fog.density = S.fogDensity * (1 + (SEA.fogMul - 1) * (1 - S.night)) * (1 + E.fog);
     sky.material.color.setHex(lerpHex(lerpHex(S.skyTint, SEA.haze, SEA.hazeK * 0.6 * (1 - S.night)), lerpHex(0x9aa5b1, 0x151b2a, S.night), E.grey * 0.9));
-    moonLight.color.setHex(S.sun.color); moonLight.intensity = S.sun.i * (1 - 0.75 * E.dim); sunOffset.set(L.x * 125, L.y * 125, L.z * 125);   // mây dày: nắng yếu, bóng đổ nhạt
+    moonLight.color.setHex(S.sun.color); moonLight.intensity = S.sun.i * (1 - 0.75 * E.dim); sunOffset.set(L.x * 125, L.y * 125, L.z * 125);   { const b = shadowBias(L.y); moonLight.shadow.bias = b.bias; moonLight.shadow.normalBias = b.normalBias; }   // nắng thấp: tăng độ lệch bóng để hết sọc ngang   // mây dày: nắng yếu, bóng đổ nhạt
     hemi.color.setHex(S.hemi.sky); hemi.groundColor.setHex(S.hemi.ground); hemi.intensity = S.hemi.i * (1 - 0.42 * E.dim) + fl * 3.2;
     ambient.color.setHex(S.amb.color); ambient.intensity = S.amb.i * (1 - 0.3 * E.dim) + fl * 1.4;
     warm1.intensity = S.warm1; warm2.intensity = S.warm2;
@@ -256,7 +258,7 @@ export function createScene(canvas, { onProgress, onPick, onArrive } = {}) {
     viewX = reduce ? want : damp(viewX, want, 4, dt);
     if (Math.abs(viewX) > 0.5) camera.setViewOffset(w, h, viewX, 0, w, h); else if (camera.view && camera.view.enabled) camera.clearViewOffset();
 
-    if (world) { const wp = world.pos; moonLight.target.position.set(wp.x, 0, wp.z); moonLight.position.set(wp.x + sunOffset.x, sunOffset.y, wp.z + sunOffset.z); }   // sunOffset do applyDay cập nhật theo giờ   // vùng đổ bóng đi theo người chơi
+    if (world) { const wp = world.pos, sp = snapToTexel(wp.x, wp.z, sunOffset, (2 * SHADOW_R) / appliedShadowSize); moonLight.target.position.set(sp.x, sp.y, sp.z); moonLight.position.set(sp.x + sunOffset.x, sp.y + sunOffset.y, sp.z + sunOffset.z); }   // Phiên 28b: nhích vùng bóng theo từng texel (hết răng cưa bò khi đi)   // sunOffset do applyDay cập nhật theo giờ   // vùng đổ bóng đi theo người chơi
     timeU.value = t; hoaSen.update(t); land.update(t); outside.update(t); if (world) npcs.update(dt, world.pos);
     sky.rotation.y = t * 0.004;
     if (!reduce) {
