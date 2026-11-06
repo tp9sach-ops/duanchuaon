@@ -15,6 +15,7 @@ import { loadTemple } from './model.js';
 import { buildStars, buildSky, buildMountains, buildGround, buildPond, buildBodhi, buildBamboo, buildRocks, buildLowPolyTrees } from './nature.js';
 import { DAY } from './theme.js';
 import { TREES, farTrees } from '../world/placements.js';
+import { fireflyLevel } from '../world/fireflies.js';
 import { buildFireflies, buildPetals, buildSmoke, buildRain } from './particles.js';
 import { createRail } from './rail.js';
 import { createHotspots } from './hotspots.js';
@@ -213,7 +214,7 @@ export function createScene(canvas, { onProgress, onPick, onArrive } = {}) {
     warm1.intensity = S.warm1; warm2.intensity = S.warm2;
     renderer.toneMappingExposure = S.exposure; bloom.strength = S.bloom + fl * 0.5;
     stars.material.opacity = S.stars * (1 - E.cloud); moonMat.opacity = S.moon * (1 - 0.9 * E.cloud); moon.position.set(M.x * 430, M.y * 430, M.z * 430);   // mây che trăng sao
-    fireflies.obj.visible = S.night > 0.6 && E.rain < 0.08;   // đom đóm không bay khi mưa
+    fireflies.setLevel(fireflyLevel(S.night, E.rain)); fireflies.obj.visible = fireflyLevel(S.night, E.rain) > 0.01;   // đom đóm không bay khi mưa
     // gió + mưa + mặt đất ướt + gợn ao + vũng nước
     windU.value = E.wind; petals.wind = E.wind;
     const rp = world ? world.pos : camera.position, sheltered = !!world && inHall(rp.x, rp.z);   // trong chánh điện có mái: không thấy mưa rơi quanh người
@@ -262,7 +263,7 @@ export function createScene(canvas, { onProgress, onPick, onArrive } = {}) {
     timeU.value = t; hoaSen.update(t); land.update(t); outside.update(t); if (world) npcs.update(dt, world.pos);
     sky.rotation.y = t * 0.004;
     if (!reduce) {
-      if (!DAY || fireflies.obj.visible) fireflies.update(t); petals.update(t, dt); smoke.update(t, dt);
+      if (!DAY || fireflies.obj.visible) fireflies.update(t, dt); petals.update(t, dt); smoke.update(t, dt);
       pond.update(t); chanh.update(t, camera);
       tower.bell.rotation.z = Math.sin(t * 0.6) * 0.012;
       censer.embers.forEach((e, i) => { e.material.color.setRGB(1, 0.25 + 0.2 * Math.sin(t * 3 + i), 0.12); });

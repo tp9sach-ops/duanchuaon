@@ -1,6 +1,7 @@
 // Hạt khí quyển: đom đóm vàng, cánh hoa rơi, khói nhang.
 import * as THREE from 'three';
 import { mulberry32, TAU } from '../util.js';
+import { createSwarm } from '../world/fireflies.js';
 
 function makePoints(n, size, color, map, opacity) {
   const geo = new THREE.BufferGeometry();
@@ -12,22 +13,22 @@ function makePoints(n, size, color, map, opacity) {
 }
 
 export function buildFireflies(dot, count) {
-  const p = makePoints(count, 0.55, 0xffd77a, dot, 0.9);
-  const rnd = mulberry32(12), a = p.geometry.attributes.position, seed = [];
-  for (let i = 0; i < count; i++) {
-    const bx = (rnd() - 0.5) * 90, by = 0.8 + rnd() * 9, bz = -30 + rnd() * 90;
-    a.setXYZ(i, bx, by, bz); seed.push([bx, by, bz, rnd() * TAU, 0.3 + rnd() * 0.6]);
-  }
+  // Phiên 31: đom đóm theo vùng (ao sen, sân chùa, vườn thiền, ao cá, bãi thông, hồ thác), bay mượt, mỗi con nhấp nháy riêng.
+  const p = makePoints(count, 0.45, 0xffe08a, dot, 0.95);
+  const swarm = createSwarm(count, 12), a = p.geometry.attributes.position;
+  const col = new Float32Array(count * 3); p.geometry.setAttribute('color', new THREE.BufferAttribute(col, 3)); p.material.vertexColors = true;
+  let level = 1;
   return {
     obj: p,
-    update(t) {
-      for (let i = 0; i < seed.length; i++) {
-        const s = seed[i];
-        a.setXYZ(i, s[0] + Math.sin(t * s[4] + s[3]) * 2.2, s[1] + Math.sin(t * s[4] * 1.3 + s[3] * 2) * 0.9, s[2] + Math.cos(t * s[4] * 0.8 + s[3]) * 2.2);
+    update(t, dt = 0.016) {
+      swarm.step(dt);
+      for (let i = 0; i < swarm.flies.length; i++) {
+        const f = swarm.flies[i], b = swarm.blink(i, t) * level;
+        a.setXYZ(i, f.x, f.y, f.zz); col[i * 3] = b; col[i * 3 + 1] = b * 0.9; col[i * 3 + 2] = b * 0.55;
       }
-      a.needsUpdate = true;
-      p.material.opacity = 0.65 + Math.sin(t * 1.7) * 0.25;
+      a.needsUpdate = true; p.geometry.attributes.color.needsUpdate = true;
     },
+    setLevel(v) { level = v; },   // 0..1: trời tối dần thì sáng dần
     setCount(n) { p.geometry.setDrawRange(0, n); },
   };
 }
