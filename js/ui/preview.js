@@ -33,8 +33,10 @@ export function createPreview(getScene) {
   const el = document.createElement('div'); el.className = 'fn-pv';
   const canvas = document.createElement('canvas'); canvas.width = 480; canvas.height = 270; canvas.className = 'fn-pv-c';
   const cap = document.createElement('div'); cap.className = 'fn-pv-cap';
-  el.append(canvas, cap);
-  let renderer = null, stage = null, failed = false, running = false, raf = 0, last = 0, ry = 0.6, want = null;
+  const hint = document.createElement('div'); hint.className = 'fn-pv-hint'; hint.textContent = 'Kéo chuột (hoặc ngón tay) để xoay món';
+  canvas.tabIndex = 0; canvas.setAttribute('aria-label', 'Hình món nội thất. Kéo để xoay, hoặc dùng phím mũi tên trái phải.');
+  el.append(canvas, cap, hint);
+  let renderer = null, stage = null, failed = false, running = false, raf = 0, last = 0, ry = 0.6, want = null, dragging = false, dragX = 0, pause = 0;   // pause = mốc thời gian (ms) sau đó mới tự xoay lại
   const ensure = () => {
     if (failed) return false; if (renderer) return true;
     try {
@@ -44,7 +46,7 @@ export function createPreview(getScene) {
   };
   function loop(t) {
     raf = 0; if (!running) return;
-    const dt = last ? Math.min(0.1, (t - last) / 1000) : 0; last = t; ry += dt * 0.7;
+    const dt = last ? Math.min(0.1, (t - last) / 1000) : 0; last = t; if (!dragging && t >= pause) ry += dt * 0.7;
     if (want && stage) stage.render(ry);
     raf = requestAnimationFrame(loop);
   }
@@ -54,6 +56,13 @@ export function createPreview(getScene) {
     if (ensure() && !stage.setItem(f)) { want = null; }
     if (want && stage && !running) stage.render(ry);
   }
+  // kéo chuột/ngón tay để xoay (Phiên 42, việc 6); thả ra khoảng 2,5 giây thì tự xoay chậm lại; phím ←/→ cũng xoay được
+  const spin = (d) => { ry += d; pause = performance.now() + 2500; if (want && stage && !running) stage.render(ry); };
+  canvas.addEventListener('pointerdown', (e) => { if (e.button > 0) return; dragging = true; dragX = e.clientX; canvas.classList.add('drag'); try { canvas.setPointerCapture(e.pointerId); } catch (_) { /* bỏ qua */ } e.preventDefault(); });
+  canvas.addEventListener('pointermove', (e) => { if (!dragging) return; const dx = e.clientX - dragX; dragX = e.clientX; ry += dx * 0.012; if (want && stage && !running) stage.render(ry); });
+  const endDrag = () => { if (!dragging) return; dragging = false; canvas.classList.remove('drag'); pause = performance.now() + 2500; };
+  canvas.addEventListener('pointerup', endDrag); canvas.addEventListener('pointercancel', endDrag); canvas.addEventListener('lostpointercapture', endDrag);
+  canvas.addEventListener('keydown', (e) => { if (e.key === 'ArrowLeft') { e.preventDefault(); spin(-0.25); } else if (e.key === 'ArrowRight') { e.preventDefault(); spin(0.25); } });
   function start() { if (!ensure() || running) return; running = true; last = 0; raf = requestAnimationFrame(loop); }
   function stop() { running = false; if (raf) cancelAnimationFrame(raf); raf = 0; }
 
