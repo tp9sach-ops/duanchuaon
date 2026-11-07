@@ -11,6 +11,7 @@ import { initMerit } from './merit.js';
 import { initLand } from './land.js';
 import { initHouse } from './house.js';
 import { initFurni } from './furni.js';
+import { initFishing } from './fishing.js';
 import { initEdit } from './editmode.js';
 import { initSkill } from './skill.js';
 import { initMinimap } from './minimap.js';
@@ -41,6 +42,7 @@ const P = {
   bell: '<path d="M6 17v-6a6 6 0 0 1 12 0v6l2 2H4l2-2zM10 21h4"/>',
   gift: '<path d="M4 10h16v4H4zM5 14h14v7H5zM12 10v11"/><path d="M12 10C9 10 8 6 10.5 6 12.5 6 12 10 12 10zM12 10c3 0 4-4 1.5-4C11.5 6 12 10 12 10z"/>',
   mail: '<path d="M4 6h16v12H4zM4 7l8 6 8-6"/>',
+  fish: '<path d="M3 12c3-5 8-6 12-3l4-3v12l-4-3c-4 3-9 2-12-3z"/><circle cx="8" cy="11" r=".9"/>',
   heart: '<path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.5-7 10-7 10z"/>',
   share: '<path d="M12 15V4M8 8l4-4 4 4M5 12v8h14v-8"/>',
   help: '<circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1.1 1-1.1 1.8M12 17v.01"/>',
@@ -115,6 +117,7 @@ export function initHudMenu(hud) {
   try { initMerit(hud, { toast, addMerit, getSen: () => wallet.sen, spendSen: spendMerit, pillHost: root.querySelector('.hm-wallet') }); } catch (e) { console.warn('[Diệu Giang Tự] Lá bồ đề lỗi:', e && e.message); }   // đổi hạt sen lấy lá bồ đề (Phiên 35)
   try { initLand(hud, { toast }); } catch (e) { console.warn('[Diệu Giang Tự] Đất ở lỗi:', e && e.message); }   // đất ở + xóm (Phiên 36)
   try { initFurni(hud, { toast }); } catch (e) { console.warn('[Diệu Giang Tự] Nội thất lỗi:', e && e.message); }   // cửa hàng nội thất + túi đồ (Phiên 41, bước 4)
+  try { initFishing(hud, { toast }); } catch (e) { console.warn('[Diệu Giang Tự] Câu cá lỗi:', e && e.message); }   // câu cá bằng quả cầu gieo duyên + ao cá + phóng sinh (Phiên 45)
   try { initEdit(hud, { toast }); } catch (e) { console.warn('[Diệu Giang Tự] Chỉnh sửa nhà lỗi:', e && e.message); }   // chế độ chỉnh sửa nhà: kéo/xoay đồ bằng chuột (Phiên 43)
   try { initHouse(hud, { toast }); } catch (e) { console.warn('[Diệu Giang Tự] Vào nhà lỗi:', e && e.message); }   // nút Vào nhà / Ra ngoài (Phiên 38, 3d-2c)
   try { initStory(hud, { toast, addMerit }); } catch (e) { console.warn('[Diệu Giang Tự] Cốt truyện lỗi:', e && e.message); }   // hộp thoại + mục tiêu chương 1 (Phiên 32); lỗi thì NPC vẫn nói lời thường
@@ -157,6 +160,7 @@ export function initHudMenu(hud) {
     if (r.kind === 'quest') return quest.toggle();
     if (r.kind === 'bag') return LGT.furni ? LGT.furni.openBag() : toast('Túi đồ chưa sẵn sàng.', 2500);
     if (r.kind === 'shop') return LGT.furni ? LGT.furni.openShop() : toast('Cửa hàng chưa sẵn sàng.', 2500);
+    if (r.kind === 'fish') return LGT.fishing ? LGT.fishing.open('cast') : toast('Câu cá chưa sẵn sàng.', 2500);
     if (r.kind === 'le') return den.openLe();
     if (r.kind === 'den') return den.openDen();
     if (r.kind === 'goto') {

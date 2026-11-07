@@ -32,7 +32,7 @@ export const TOP_ICONS = [
   { id: 'thongbao', label: 'Thông báo', icon: 'bell',  status: 'soon' },
   { id: 'qua',      label: 'Quà',       icon: 'gift',  status: 'soon' },
   { id: 'thu',      label: 'Thư',       icon: 'mail',  status: 'soon' },
-  { id: 'tim',      label: 'Yêu thích', icon: 'heart', status: 'soon' },
+  { id: 'cauca',    label: 'Câu cá',    icon: 'fish',  status: 'ready', action: 'fish' },
   { id: 'chiase',   label: 'Chia sẻ',   icon: 'share', status: 'ready', action: 'share' },
   { id: 'trogiup',  label: 'Trợ giúp',  icon: 'help',  status: 'ready', action: 'help' },
 ];
@@ -61,7 +61,7 @@ export function pressResult(item) {
   if (!item) return { kind: 'none' };
   if (!isReady(item)) return { kind: 'soon', text: soonText(item) };
   if (item.action === 'goto') return { kind: 'goto', id: item.target };
-  if (['map', 'share', 'help', 'bow', 'meditate', 'le', 'den', 'chat', 'quest', 'beads', 'chant', 'bag', 'shop'].includes(item.action)) return { kind: item.action };
+  if (['map', 'share', 'help', 'bow', 'meditate', 'le', 'den', 'chat', 'quest', 'beads', 'chant', 'bag', 'shop', 'fish'].includes(item.action)) return { kind: item.action };
   return { kind: 'soon', text: soonText(item) };
 }
 
