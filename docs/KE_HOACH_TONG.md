@@ -28,7 +28,7 @@ Cách dùng: làm mục [ ] đầu tiên, xong báo ptg, CHỜ "tiếp tục". L
 ## Giai đoạn 4 — Cốt truyện và nhiệm vụ
 [ ] 4.1 Chương 2 cốt truyện — HỎI ptg ý chính.
 [ ] 4.2 Nhiệm vụ "thử Khinh thân bậc 1" (cần nhận biết nhảy; `js/ui/skill.js`, `js/world/skills.js`).
-[ ] 4.3 Nhiệm vụ nội thất (mua/đặt món đầu tiên) vào QUESTS + CHAIN.
+[x] 4.3 ĐÃ LÀM Ở PHIÊN 51 (xem docs/PHIEN51.md): nhiệm vụ `m-noithat` “Đặt món nội thất đầu tiên” (sự kiện `noithat` phát từ `js/ui/furni.js` khi đặt thêm món; có dẫn đường Cửa hàng → Túi đồ; vào CHAIN sau `m-nangnha`). CHƯA thử trên trình duyệt thật.
 
 ## Giai đoạn 5 — Game thế giới mở (Master Prompt)
 [x] 5.1 Nhạc nền thử phát khi tải trang + lời mời + thanh âm lượng + ghi nhớ: ĐÃ CÓ (`js/ui/soundLogic.js`, `initSound` ở main.js; Phiên 31).
