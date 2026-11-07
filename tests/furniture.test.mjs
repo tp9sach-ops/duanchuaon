@@ -1,7 +1,7 @@
 // Nội thất (Phiên 41, bước 1): danh mục 50 món, mua bằng lá bồ đề, đặt/cất, luật va chạm và lối vào cửa.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { FURNITURE, furnitureById, MAX_PLACED, emptyFurni, loadFurni, freeCount, buyItem, footprint, toFurniture, canPlace, placeItem, pickUp } from '../js/world/furniture.js';
+import { FURNITURE, furnitureById, MAX_PLACED, emptyFurni, loadFurni, freeCount, buyItem, footprint, toFurniture, canPlace, placeItem, pickUp, autoPlace, moveItem, rotateItem } from '../js/world/furniture.js';
 import { emptyLeaf } from '../js/world/merit.js';
 import { roomFor } from '../js/world/interior.js';
 
@@ -62,4 +62,27 @@ test('loadFurni: rác → rỗng; bỏ món lạ; không đặt quá số đã m
   const s = loadFurni({ owned: { 'ghe-go': 1, la: 3 }, placed: [{ uid: 1, id: 'ghe-go', x: 0, z: 0, rot: 9 }, { uid: 2, id: 'ghe-go', x: 1, z: 0 }, { uid: 3, id: 'la', x: 0, z: 0 }] });
   assert.deepEqual(s.owned, { 'ghe-go': 1 }); assert.equal(s.placed.length, 1); assert.equal(s.placed[0].rot, 3); assert.ok(s.seq >= 1);
   assert.deepEqual(loadFurni(JSON.stringify(s)), s);
+});
+
+test('tự đặt: tìm chỗ trống hợp lệ, không chặn cửa, hết chỗ/đầy thì báo', () => {
+  let st = emptyFurni(); for (const id of ['giuong-go', 'ban-an', 'tu-quan-ao', 'sofa-lon']) st = buyItem(rich(), st, id).st;
+  for (const id of ['giuong-go', 'ban-an', 'tu-quan-ao', 'sofa-lon']) { const r = autoPlace(st, 0, id); assert.ok(r.ok, id + ' ' + r.reason); st = r.st; }
+  assert.equal(st.placed.length, 4);
+  for (const p of st.placed) assert.ok(canPlace(0, st.placed, p.id, p.x, p.z, p.rot, p.uid).ok, 'vị trí tự đặt phải hợp lệ');
+  assert.equal(autoPlace(st, 0, 'ban-tho').reason, 'none');
+  let full = emptyFurni(); full = { ...full, owned: { 'ghe-dau': 99 } };
+  for (let i = 0; i < MAX_PLACED[0]; i++) { const r = autoPlace(full, 0, 'ghe-dau'); assert.ok(r.ok); full = r.st; }
+  assert.equal(autoPlace(full, 0, 'ghe-dau').reason, 'full');
+  let big = { ...emptyFurni(), owned: { 'sofa-dai': 9 } }, n = 0;
+  for (let i = 0; i < 9; i++) { const r = autoPlace(big, 0, 'sofa-dai'); if (!r.ok) { assert.equal(r.reason, 'nospace'); break; } big = r.st; n++; }
+  assert.ok(n >= 1 && n < 9, 'phòng nhỏ không chứa hết sofa dài');
+});
+
+test('dời và xoay món đã đặt', () => {
+  let st = { ...emptyFurni(), owned: { 'giuong-go': 1, 'tu-quan-ao': 1 } };
+  st = placeItem(st, 0, 'giuong-go', -1, -1).st; const u = st.placed[0].uid;
+  const m = moveItem(st, 0, u, 0.25, 0); assert.ok(m.ok); assert.equal(m.st.placed[0].x, -0.75); assert.equal(st.placed[0].x, -1);
+  assert.equal(moveItem(st, 0, u, 99, 0).reason, 'out'); assert.equal(moveItem(st, 0, 999, 0, 0).reason, 'missing');
+  const r = rotateItem(st, 0, u); assert.ok(r.ok); assert.equal(r.st.placed[0].rot, 1);
+  assert.equal(rotateItem(st, 0, 999).reason, 'missing');
 });
