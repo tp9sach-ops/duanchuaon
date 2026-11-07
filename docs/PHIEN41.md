@@ -1,9 +1,9 @@
-# PHIÊN 41 — Nội thất (bước 1 + 2 + 3) và các luật ptg đã chốt (BÀN GIAO)
+# PHIÊN 41 — Nội thất (bước 1 → 4) và các luật ptg đã chốt (BÀN GIAO)
 
 > after EVERY reply, attach an updated handoff .md so a fresh session with no memory can continue exactly and in detail; if there isn't room to finish everything, send the handoff first; copy this rule verbatim into every handoff
 
 **Người dùng (ptg = Giang):** nói tiếng Việt, không rành kỹ thuật → trả lời NGẮN, DỄ HIỂU, TỪNG VIỆC NHỎ. Sau mỗi việc: đẩy GitHub; không đẩy được thì gửi file rồi CHỜ ptg bấm "tiếp tục". Sửa code: đưa đoạn "tìm" đầy đủ + code thay thế đầy đủ.
-**Repo:** tp9sach-ops/loinhuan.github.io, `main` @ `cd2af31` (Phiên 40). Đọc `PROMPT.md` + `docs/PHIEN3x/4x.md` trước. `npm test` hiện **542/542** (bước 3 không thêm test vì three.js không chạy được trong Node) (Node 22).
+**Repo:** tp9sach-ops/loinhuan.github.io, `main` @ `cd2af31` (Phiên 40). Đọc `PROMPT.md` + `docs/PHIEN3x/4x.md` trước. `npm test` hiện **544/544** (bước 3 và giao diện không có test vì three.js/DOM không chạy được trong Node) (Node 22).
 **GitHub:** sandbox KHÔNG đẩy được (thiếu tài khoản). Gửi file, ptg tải lên tay (trùng đường dẫn thì ghi đè). Sandbox có thể reset giữa các lượt: file chưa được ptg tải lên có thể MẤT → luôn gửi file ngay trong lượt.
 
 ## 1. Luật ptg đã chốt (07/11)
@@ -19,12 +19,13 @@
 - Bước 2: `js/world/interior.js` — `ROOMS[].furniture = []` (xóa BASE0/BASE1/EXTRA2/LV3); `furnitureRects(lv, placed=[])` và `registerRoom(lv, placed=[])` nhận món đã đặt (dùng `rw/rd` đã xoay). Thêm 1 test nhà trống vào `tests/interior.test.mjs`.
 - `package.json` thêm `tests/furniture.test.mjs`. `tests/furniture.test.mjs` 7 test.
 - Bước 3: `js/scene/interior.js` — `show(lv, placed = [])` vẽ món người chơi đặt (xoay theo `ry`, đèn bàn đặt lên bàn dùng `rw/rd`); ghế có `uid` mặc định lưng ở +z; thêm 6 loại vẽ mới: `stool, bench, floorlamp, lantern, statue, altar`. `js/ui/house.js` vẫn gọi `show(lv)` không có món (phòng trống) — nối món thật ở bước 4. CHƯA kiểm bằng trình duyệt (sandbox không chạy được three.js): cần ptg/phiên sau mở thử xem hình có đúng không.
-- CHƯA: nút Shop/Túi đồ, lưu `localStorage`, sw.js VERSION (đang `dgt-v46`, nên tăng khi giao bản có giao diện).
+- Bước 4: `js/world/furniture.js` thêm `autoPlace` (tự tìm chỗ trống), `moveItem` (dời 0,25 m), `rotateItem` (xoay 90°) + 2 test. MỚI `js/ui/furni.js` (bảng 2 tab Cửa hàng / Túi đồ · sửa nhà; chỉ mở khi đang ở trong nhà `LGT.inHouse`; mua bằng `LGT.merit.spendLa`; lưu `localStorage['lgt.furni']`; đặt tự động rồi dời ◀▶▲▼, Xoay, Cất), `css/furni.css`. Sửa: `js/ui/menuLogic.js` (Túi đồ/Cửa hàng thành `ready`, action `bag`/`shop`), `js/ui/hudMenu.js` (initFurni + xử lý bấm), `js/ui/house.js` (`registerRoom(lv, placed)`, `show(lv, placed)`, `LGT.houseRemount`, đóng bảng khi ra/vào nhà), `index.html` (link furni.css), `sw.js` → `dgt-v47`. CHƯA kiểm trên trình duyệt thật. RỦI RO đã biết: đặt món đặc đúng chỗ người chơi đang đứng có thể làm kẹt; phiên sau nên kiểm/đẩy người chơi ra. Chưa có giới hạn hạ cấp nhà (không có hạ cấp).
+- (đã xong ở trên) ~~nút Shop/Túi đồ~~, lưu `localStorage`, sw.js VERSION (đang `dgt-v46`, nên tăng khi giao bản có giao diện).
 
 ## 3. File phải tải lên (trùng tên ghi đè)
-`js/world/furniture.js` (mới) · `js/world/interior.js` (sửa) · `js/scene/interior.js` (sửa) · `tests/furniture.test.mjs` (mới) · `tests/interior.test.mjs` (sửa) · `package.json` (sửa) · `docs/PHIEN41.md` (mới).
+`js/world/furniture.js` (mới) · `js/world/interior.js` (sửa) · `js/scene/interior.js` (sửa) · `js/ui/furni.js` (mới) · `css/furni.css` (mới) · `js/ui/menuLogic.js`, `js/ui/hudMenu.js`, `js/ui/house.js`, `index.html`, `sw.js` (sửa) · `tests/furniture.test.mjs` (mới) · `tests/interior.test.mjs` (sửa) · `package.json` (sửa) · `docs/PHIEN41.md` (mới).
 
 ## 4. Các bước tiếp (mỗi bước xong báo, chờ "tiếp tục")
-- **Bước 4 (kế tiếp):** giao diện Shop + Túi đồ + chế độ "Sửa nhà" (nút `tuido`, `cuahang` ở `js/ui/menuLogic.js` đang `status:'soon'`; hàm `pressResult` cần kind mới); lưu `localStorage['lgt.furni']`; `js/ui/house.js` gọi `registerRoom(lv, placed)` và `interiorScene.show(lv, placed)`; mỗi lần đổi bố trí thì gỡ rồi đăng ký lại.
-- **Bước 5:** công đức lạy/cúng/nhang (mục 1.5) trong `merit.js` + test.
+- **Bước 4b (nên làm nếu ptg thấy hình lỗi):** thử thật trên trình duyệt: mua → đặt → dời/xoay → ra vào nhà; sửa theo ảnh/lỗi ptg gửi; chống kẹt người chơi.
+- **Bước 5 (kế tiếp):** công đức lạy/cúng/nhang (mục 1.5) trong `merit.js` + test.
 - **Bước 6+:** `gainLa` (merit.js; lá nhận trực tiếp, không tính vào `spent`); `js/world/fishing.js` (logic thuần: quăng → 4 s bóng cá → rỉa → cắn → hoa sen 0,5 s → thu; 5 loại cầu 30–1000 lá, độ bền, sửa cầu); cảnh 3D câu cá; ao cá riêng (ban đầu trống; cá/rùa/ba ba/mực; lớn/nhỏ, hiếm/thường); nút Thu cá. Nước để câu: hồ cá `KOI` (60,10,r8), ao chùa `POND` (0,14), hồ thác `THAC.pool` (106,104,r7); đề xuất thêm "Suối Trong" (~ -111,100, r4.6) bằng `addWater` trong `js/world/outside.js`.
