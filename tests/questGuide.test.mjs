@@ -128,3 +128,14 @@ test('chuỗi cốt truyện chạy bằng các bước dẫn đường: tưới
   assert.equal(planGuide('s-water1', emptyProg(), P0, { now: T0, story: s }).done, true);
   assert.equal(planGuide('s-meditate', emptyProg(), P0, { now: T0, story: s }).done, false);
 });
+
+test('Phiên 47: nhiệm vụ câu cá dẫn ra mặt nước rồi chỉ nút “Câu cá”; chỗ đứng ở hồ cá đứng sát nước được', async () => {
+  const { nearWater } = await import('../js/world/fishing.js');
+  assert.ok(nearWater(PLACE_STAND.hoca.x, PLACE_STAND.hoca.z), 'chỗ đứng hồ cá phải sát nước câu được');
+  for (const id of ['m-cau', 'm-phongsinh', 'n-phongsinh']) {
+    const far = planGuide(id, emptyProg(), P0, { now: T0 });
+    assert.equal(far.idx, 0); assert.equal(far.target.kind, 'walk'); assert.ok(free(far.target.x, far.target.z) && reachable(far.target), id);
+    const near = planGuide(id, emptyProg(), { x: PLACE_STAND.hoca.x, z: PLACE_STAND.hoca.z }, { now: T0, idx: 0 });
+    assert.equal(near.idx, 1); assert.equal(near.tap, 'cauca'); assert.equal(near.target, null);
+  }
+});

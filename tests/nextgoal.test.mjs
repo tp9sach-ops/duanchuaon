@@ -61,3 +61,18 @@ test('sang ngày mới: việc hằng ngày làm lại, mục tiêu quay về đ
 test('dữ liệu lạ không làm hỏng: thiếu prog / story vẫn trả mục tiêu', () => {
   assert.ok(nextGoal().title); assert.ok(nextGoal({ story: doneStory() }).title);
 });
+
+test('Phiên 47: việc câu cá — chưa có cầu thì chỉ cách có cầu; có cầu thì dẫn thẳng tới việc câu cá', async () => {
+  const { ORBS } = await import('../js/world/fishing.js');
+  let prog = emptyProg(); for (const q of QUESTS) if (!['m-cau', 'm-phongsinh', 'n-phongsinh'].includes(q.id)) prog = mark(prog, q.id);
+  const st = { story: doneStory(), prog, sen: 0, la: 0, own: { xom: 1, plot: 1, lv: 0 }, now: NOW };
+  const a = nextGoal(st);   // chưa lá, chưa cầu: đi kiếm lá, nói rõ giá cầu rẻ nhất
+  assert.equal(a.kind, 'journey'); assert.equal(a.id, 'm-cau:kiem'); assert.ok(a.text.includes(String(ORBS[0].gia)));
+  const b = nextGoal({ ...st, la: ORBS[0].gia });   // đủ lá: chỉ cách mua cầu, dẫn đường theo việc câu cá
+  assert.equal(b.id, 'm-cau'); assert.equal(b.guide, 'm-cau'); assert.match(b.text, /Quả cầu/);
+  const c = nextGoal({ ...st, orbs: 1 });   // đã có cầu: dẫn thẳng
+  assert.equal(c.id, 'm-cau'); assert.equal(c.guide, 'm-cau'); assert.equal(c.text, QUESTS.find((q) => q.id === 'm-cau').mo);
+  prog = mark(mark(prog, 'm-cau'), 'm-phongsinh');
+  const d = nextGoal({ ...st, prog, orbs: 1 });   // còn việc hằng ngày phóng sinh
+  assert.equal(d.kind, 'daily'); assert.equal(d.id, 'n-phongsinh');
+});

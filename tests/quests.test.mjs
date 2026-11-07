@@ -82,3 +82,12 @@ test('questStatus: hằng ngày trước một lần; ngày mới thì hằng ng
   assert.equal(b.find((x) => x.q.id === 'n-lay').cur, 0); assert.ok(b.find((x) => x.q.id === 'm-lang').done);
   assert.equal(dayKey(T0), '2026-11-05');
 });
+
+test('Phiên 47: câu được cá và phóng sinh ghi nhận đúng nhiệm vụ, phóng sinh làm cả việc hằng ngày', () => {
+  const T = new Date(2026, 10, 7, 9, 0).getTime();
+  assert.ok(EVENT_TYPES.includes('cau') && EVENT_TYPES.includes('phongsinh'));
+  const a = record(emptyProg(), { type: 'cau' }, T); assert.deepEqual(a.done.map((q) => q.id), ['m-cau']);
+  const b = record(a.prog, { type: 'phongsinh' }, T); assert.deepEqual(b.done.map((q) => q.id).sort(), ['m-phongsinh', 'n-phongsinh']);
+  const c = record(b.prog, { type: 'phongsinh' }, T); assert.equal(c.done.length, 0);
+  const next = record(c.prog, { type: 'phongsinh' }, T + 24 * 3600 * 1000); assert.deepEqual(next.done.map((q) => q.id), ['n-phongsinh']);   // sang ngày: làm lại việc hằng ngày, hành trình không lặp
+});

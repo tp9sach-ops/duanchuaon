@@ -6,10 +6,10 @@ import { EXTRA_POIS } from '../js/world/minimap.js';
 import { PLACES } from '../js/world/outside.js';
 import { LAND_LA, SEN_PER_LA } from '../js/world/merit.js';
 import { BOTTOM_MENU } from '../js/ui/menuLogic.js';
-import { ACTIONS } from '../js/ui/menuLogic.js';
+import { ACTIONS, TOP_ICONS } from '../js/ui/menuLogic.js';
 
 const placeIds = new Set([...PLACES.map((p) => p.id), ...EXTRA_POIS.map((p) => p.id)]);
-const tapIds = new Set([...BOTTOM_MENU, ...ACTIONS].map((i) => i.id));
+const tapIds = new Set([...BOTTOM_MENU, ...ACTIONS, ...TOP_ICONS].map((i) => i.id));   // Phiên 47: nút “Câu cá” nằm ở cụm tròn phải-trên
 const checkGo = (g, where) => {
   if (!g) return;
   if (g.npc) assert.ok(NPCS.some((n) => n.id === g.npc), where + ' npc ' + g.npc);
