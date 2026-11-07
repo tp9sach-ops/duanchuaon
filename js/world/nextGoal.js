@@ -6,9 +6,10 @@ import { QUESTS, questById, questStatus } from './quests.js';
 import { advise } from './tutorial.js';
 import { SEN_PER_LA } from './merit.js';
 import { ORBS } from './fishing.js';
+import { FURNITURE } from './furniture.js';
 
 /** Thứ tự làm sau cốt truyện: việc hằng ngày nhẹ trước (mỗi sáng bắt đầu từ đây), rồi hành trình từ gần tới xa, việc cần lá bồ đề để sau. Nhiệm vụ nào không có trong đây vẫn được làm cuối cùng. */
-export const CHAIN = ['n-nhang', 'n-lay', 'm-den', 'm-loc', 'm-lang', 'm-npc', 'n-kinh', 'm-niem', 'm-doila', 'm-muadat', 'm-thac', 'm-rung', 'm-dao', 'm-nangnha', 'm-cau', 'm-phongsinh', 'm-nhang', 'm-kinh', 'n-thien', 'n-npc', 'n-phongsinh'];
+export const CHAIN = ['n-nhang', 'n-lay', 'm-den', 'm-loc', 'm-lang', 'm-npc', 'n-kinh', 'm-niem', 'm-doila', 'm-muadat', 'm-thac', 'm-rung', 'm-dao', 'm-nangnha', 'm-noithat', 'm-cau', 'm-phongsinh', 'm-nhang', 'm-kinh', 'n-thien', 'n-npc', 'n-phongsinh'];
 /** Việc hằng ngày dùng để kiếm hạt sen khi chưa đủ để đổi lá / mua đất. */
 const EARN = ['n-thien', 'n-nhang', 'n-lay', 'n-kinh'];
 const NEEDS_RES = new Set(['m-doila', 'm-muadat', 'm-nangnha']);
@@ -42,12 +43,17 @@ export function nextGoal(state = {}) {
   for (const r of queue) {
     const q = r.q, kind = q.loai === 'ngay' ? 'daily' : 'journey', left = pending.length - 1;
     if (q.id === 'm-nangnha' && !own) continue;     // chưa có nhà thì chưa nâng được; sẽ tới lượt sau khi mua đất
+    if (q.id === 'm-noithat' && !own) continue;     // chưa có nhà thì chưa có chỗ đặt đồ
     if (q.id === 'm-muadat' && own) continue;       // đã có đất (nhiệm vụ sẽ được ghi nhận khi mua)
     const g = { ...base, id: q.id, kind, label: LABEL[kind], title: q.ten, text: q.mo, cur: r.cur, need: r.need, unit: '', guide: q.id, left };
     if (FISH_QUESTS.has(q.id) && !orbs) {   // chưa có quả cầu nào: nói rõ cách có cầu (câu cá cần cầu; ao cá riêng cũng cần từng câu được cá)
       const cheap = ORBS[0];
       if (la >= cheap.gia) { g.text = `Mở nút “Câu cá” → tab “Quả cầu”, mua ${cheap.ten} (${cheap.gia} lá bồ đề), rồi ra mép nước thả cầu.`; g.guide = q.id; }
       else { g.id = q.id + ':kiem'; g.title = `Kiếm lá bồ đề mua quả cầu đầu tiên`; g.text = `Quả cầu rẻ nhất (${cheap.ten}) giá ${cheap.gia} lá bồ đề, bạn có ${la}. Kiếm hạt sen rồi đổi lá ở Thầy Tri khách (${SEN_PER_LA} hạt = 1 lá).`; g.guide = earnId; g.go = { npc: 'trikhach' }; if (!earnId) g.guide = null; }
+    }
+    if (q.id === 'm-noithat') {   // Phiên 51: món rẻ nhất cần ít lá bồ đề; chưa đủ thì dẫn đi kiếm hạt sen trước
+      const cheap = Math.min(...FURNITURE.map((f) => f.gia));
+      if (la < cheap && earnId) { g.id = q.id + ':kiem'; g.title = 'Kiếm lá bồ đề mua món nội thất đầu tiên'; g.text = `Món rẻ nhất giá ${cheap} lá bồ đề, bạn có ${la}. Kiếm hạt sen rồi đổi lá nhé.`; g.guide = earnId; }
     }
     if (NEEDS_RES.has(q.id)) {   // việc cần lá bồ đề: nói rõ còn thiếu gì, chưa đủ thì dẫn đi kiếm hạt sen trước
       const a = advise({ sen, la, own });
