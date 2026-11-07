@@ -16,6 +16,8 @@ const ICON = { den: '🏮', nhang: '✦', loc: '❀' };
 
 /** hud: phần tử HUD; opts: { toast, addMerit }. Trả { openLe(), openDen(), close() }. */
 export function initDen(hud, { toast = () => {}, addMerit = () => {} } = {}) {
+  // Phiên 41: nhang/đèn nguyện có trần 10 lần thưởng mỗi ngày (LGT.merit.reward); chưa có LGT.merit thì cộng thẳng như cũ
+  const giveMerit = (kind, n) => { const M = window.LGT && window.LGT.merit; if (M && M.reward) return M.reward(kind, n, true); if (n) addMerit(n); return n; };
   const LGT = window.LGT || {};
   let lamps = loadLamps(read(K_DEN)), log = loadLog(read(K_LOG)), nhang = readJson(K_NHANG, {}), tab = 'chua', shared = null, sharedState = 'idle', view = null;
   const profileName = () => read('lgt.name') || 'Khách';
@@ -52,8 +54,8 @@ export function initDen(hud, { toast = () => {}, addMerit = () => {} } = {}) {
   root.querySelector('.dn-row').addEventListener('click', (e) => {
     const b = e.target.closest('[data-n]'); if (!b) return;
     const n = +b.dataset.n; nhang = thapNhang(nhang, n); write(K_NHANG, nhang); bellSound(); drawLe();
-    const m = nhangMerit(n); if (m) addMerit(m); window.LGT && window.LGT.act && window.LGT.act('nhang', n);
-    pushLog('nhang', `Thắp ${n} nén nhang`); toast(`Đã thắp ${n} nén nhang${m ? ` · +${m} hạt sen` : ''}.`, 3500);
+    const m0 = nhangMerit(n), m = giveMerit('nhang', m0); window.LGT && window.LGT.act && window.LGT.act('nhang', n);
+    pushLog('nhang', `Thắp ${n} nén nhang`); toast(`Đã thắp ${n} nén nhang${m ? ` · +${m} hạt sen` : (m0 ? ' · hôm nay đã nhận đủ công đức từ nhang' : '')}.`, 3500);
   });
   $('dn-to-den').addEventListener('click', () => show('den'));
 
@@ -88,8 +90,8 @@ export function initDen(hud, { toast = () => {}, addMerit = () => {} } = {}) {
     e.preventDefault(); const msg = $('dn-msg'), r = makeLamp($('dn-in').value, profileName());
     if (!r.ok) { msg.textContent = { empty: 'Hãy viết điều bạn nguyện.', no_links: 'Không đưa đường dẫn hoặc email vào điều nguyện.', no_numbers: 'Không đưa số điện thoại hoặc dãy số dài vào điều nguyện.' }[r.error] || ''; return; }
     msg.textContent = ''; lamps = addLamp(lamps, r.lamp); write(K_DEN, lamps); $('dn-in').value = '';
-    tab = 'chua'; drawTabs(); drawList(); bellSound(); addMerit(DEN_MERIT.lamp); pushLog('den', 'Thả một ngọn đèn nguyện'); window.LGT && window.LGT.act && window.LGT.act('den');
-    toast(`Đèn nguyện đã được thả · +${DEN_MERIT.lamp} hạt sen.`, 3500);
+    tab = 'chua'; drawTabs(); drawList(); bellSound(); const mL = giveMerit('cung', DEN_MERIT.lamp); pushLog('den', 'Thả một ngọn đèn nguyện'); window.LGT && window.LGT.act && window.LGT.act('den');
+    toast(`Đèn nguyện đã được thả${mL ? ` · +${mL} hạt sen` : ' · hôm nay đã nhận đủ công đức từ cúng đèn'}.`, 3500);
     const sh = $('dn-share');
     if (sh && sh.checked) callApi('addPrayer', { userKey: getUserKey(), noiDung: r.lamp.text, congKhai: true }).then((x) => {
       msg.textContent = x.ok ? 'Đã đăng lên tường chung.' : (x.error === 'rate_limited' ? 'Hôm nay bạn đã đăng đủ 5 điều nguyện lên tường chung.' : 'Chưa đăng được lên tường chung, nhưng đèn đã lưu trong trình duyệt của bạn.');
