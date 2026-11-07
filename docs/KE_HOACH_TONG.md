@@ -16,7 +16,7 @@ Cách dùng: làm mục [ ] đầu tiên, xong báo ptg, CHỜ "tiếp tục". L
 
 ## Giai đoạn 2 — Dọn lỗi nhỏ
 [x] 2.1 ĐÃ SỬA Ở PHIÊN 47: `js/world/minimap.js` hồ cá `x: 56` → `x: 60` (= `KOI.x`).
-[ ] 2.2 Test lỗi thoáng qua (Phiên 43 gặp 1 lần). Phiên 46 chạy 1 lần: 575/575 đạt; chưa chạy nhiều lần.
+[x] 2.2 Test lỗi thoáng qua (Phiên 43 gặp 1 lần). Phiên 49–50 chạy thêm 3 lần liên tiếp: 585/585 đạt cả 3, không thấy lỗi thoáng qua (Node 22; Node 20 chưa chạy). Nếu gặp lại thì ghi tên test đỏ.
 [ ] 2.3 (ptg làm tay) xóa file lạc: (3 file `js/fishing.js`, `js/hudMenu.js`, `js/menuLogic.js` đã được Phiên 48 xóa) `phien26.patch`, `PHIEN31.md`, `PHIEN33.md`, `landscape.js` (gốc), `docs/PHIEN42_BAN_GIAO (2).md`, `docs/PHIEN42_BAN_GIAO (3).md`. `HANDOFF.md` gốc đã cũ (chỉ giữ để tra). Đã hết file lạc `js/fishing.js`, `js/hudMenu.js`, `js/menuLogic.js` (Phiên 46 chuyển đúng chỗ).
 
 ## Giai đoạn 3 — Nhà và nội thất
