@@ -41,3 +41,39 @@ export function createJump() {
     reset() { y = 0; vy = 0; air = false; },
   };
 }
+
+// ---- Phiên 52: mở khóa khinh thân bậc 2–8 (luyện bằng cấp độ + hạt sen). Mọi con số là QUY ƯỚC TẠM, chờ ptg duyệt.
+/** Điều kiện lên bậc 2..8: cấp độ người chơi tối thiểu + số hạt sen phải trả. Bậc 1 mở bằng cốt truyện nên không có ở đây. */
+export const KHINH_YEU_CAU = [null, null,
+  { cap: 2, sen: 10 }, { cap: 3, sen: 25 }, { cap: 4, sen: 50 }, { cap: 5, sen: 90 }, { cap: 6, sen: 150 }, { cap: 8, sen: 250 }, { cap: 10, sen: 400 }];
+/** Tên cảnh giới (bậc 1..8) để hiển thị. */
+export const KHINH_TEN = ['', 'Nhất Diệp', 'Nhị Nhạn', 'Tam Vân', 'Tứ Phong', 'Ngũ Lăng', 'Lục Hạc', 'Thất Tinh', 'Bát Thiên'];
+/** Trần độ cao nhảy (m) khi đang trong nhà, để không nhảy xuyên trần. */
+export const INDOOR_MAX = 1.6;
+/** Độ cao nhảy thật: trong nhà bị chặn ở INDOOR_MAX. */
+export const jumpHeightAt = (lv, indoor = false) => { const h = jumpHeight(lv); return indoor ? Math.min(h, INDOOR_MAX) : h; };
+
+/** Đọc bậc đã luyện (chuỗi JSON hoặc đối tượng {v,bac}); hỏng → 0. */
+export function loadKhinh(raw) {
+  let o = raw; if (typeof raw === 'string') { try { o = JSON.parse(raw); } catch (_) { o = null; } }
+  const v = o && typeof o === 'object' ? Math.floor(+o.bac) : 0;
+  return Number.isFinite(v) ? Math.max(0, Math.min(MAX_BAC, v)) : 0;
+}
+/** Bậc thực dùng: phải xong cốt truyện (bậc 1) mới tính phần đã luyện; lấy số lớn hơn. */
+export function khinhBac(story, luyen = 0) {
+  const base = khinhLevel(story);
+  return base > 0 ? Math.max(base, loadKhinh({ bac: luyen })) : 0;
+}
+/**
+ * Có luyện lên bậc kế được không? in: { bac (hiện có), capNguoi, sen }.
+ * Trả { ok, reason: ''|'chua-mo'|'toi-da'|'cap'|'sen', next, cap, sen } (cap/sen = điều kiện của bậc kế).
+ */
+export function trainPlan({ bac = 0, capNguoi = 1, sen = 0 } = {}) {
+  const b = Math.max(0, Math.min(MAX_BAC, Math.floor(+bac) || 0));
+  if (b < 1) return { ok: false, reason: 'chua-mo', next: 1, cap: 0, sen: 0 };
+  if (b >= MAX_BAC) return { ok: false, reason: 'toi-da', next: MAX_BAC, cap: 0, sen: 0 };
+  const next = b + 1, y = KHINH_YEU_CAU[next];
+  if ((+capNguoi || 0) < y.cap) return { ok: false, reason: 'cap', next, cap: y.cap, sen: y.sen };
+  if ((+sen || 0) < y.sen) return { ok: false, reason: 'sen', next, cap: y.cap, sen: y.sen };
+  return { ok: true, reason: '', next, cap: y.cap, sen: y.sen };
+}
