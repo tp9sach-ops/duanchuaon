@@ -55,6 +55,7 @@ export function initHouse(hud, { toast = () => {} } = {}) {
       if (lv !== shownLv && LGT.interiorScene) { mountRoom(lv); const e = entryPoint(lv); LGT.world.teleport(e.x, e.z, e.ry); }
     }
     mode = houseAction(L, p);
+    if (LGT.interiorScene && LGT.interiorScene.setDoorOpen) LGT.interiorScene.setDoorOpen(mode === 'exit');   // đi tới cửa thì cửa mở, nút "Ra ngoài" hiện
     btn.hidden = !mode; btn.textContent = mode === 'exit' ? 'Ra ngoài' : 'Vào nhà';
     btn.setAttribute('aria-label', mode === 'exit' ? 'Ra ngoài sân' : 'Vào nhà của bạn');
   }

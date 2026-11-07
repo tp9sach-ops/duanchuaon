@@ -32,7 +32,7 @@ export function initTutorial(hud, { toast = () => {} } = {}) {
     if (!g) return;
     if (g.tap) { close(); return flash(g.tap); }
     const W = LGT.world; if (!W) return toast('Chưa vào chùa nên chưa dẫn đường được.', 3000);
-    if (LGT.inHouse) return toast('Bạn đang ở trong nhà. Hãy bấm “Ra ngoài” trước.', 3500);
+    if (LGT.inHouse) return toast('Bạn đang ở trong nhà. Hãy đi tới cánh cửa rồi bấm “Ra ngoài”.', 3500);
     if (g.npc) { close(); return W.goTo('npc-' + g.npc) ? toast('Mình dẫn bạn đi nhé.', 2500) : toast('Chưa tìm thấy người này.', 2500); }
     if (g.place) {
       const m = buildMarkers({}).find((q) => q.id === g.place); if (!m) return;

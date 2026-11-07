@@ -117,7 +117,7 @@ export function initMinimap(hud, { toast = () => {}, onList = null, onHelp = nul
   }
   function goTo(m) {
     const W = LGT.world; if (!W) return toast('Chưa vào chùa nên chưa dẫn đường được.', 3000);
-    if (LGT.inHouse) return toast('Bạn đang ở trong nhà. Hãy bấm “Ra ngoài” trước rồi chọn nơi cần tới.', 3800);
+    if (LGT.inHouse) return toast('Bạn đang ở trong nhà. Hãy đi tới cánh cửa, bấm “Ra ngoài” rồi chọn nơi cần tới.', 3800);
     closeBig();
     if (m.goto && W.goTo && W.goTo(m.goto)) { setGoal(m); return toast(`Đang đi tới ${m.ten}…`, 2800); }
     W.walkTo(m.stand.x, m.stand.z); setGoal(m); toast(`Đang đi tới ${m.ten}…`, 2800);
