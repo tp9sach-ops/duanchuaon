@@ -64,3 +64,4 @@ test('hoa sen: tải lại trang không cày lộc (hồi chiêu lưu); điểm 
   const l2 = createLoc({ t: T0, count: 8 }); assert.deepEqual(l2.spot(), LOC_SPOTS[0]);
   assert.deepEqual(loadLoc('hỏng'), { t: 0, count: 0 }); assert.deepEqual(loadLoc({ t: -5, count: 'x' }), { t: 0, count: 0 }); assert.deepEqual(loadLoc(JSON.stringify({ t: 5, count: 2 })), { t: 5, count: 2 });
 });
+test('công đức tạm: lạy Phật = 1 hạt sen mỗi lần (Phiên 49)', () => { assert.equal(DEN_MERIT.lay, 1); });
