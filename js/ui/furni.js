@@ -25,7 +25,7 @@ export function initFurni(hud, { toast = () => {} } = {}) {
   const info = el('p', 'fn-info'), list = el('div', 'fn-list'); box.append(head, tabs, info, pv.el, list); hud.appendChild(box);
 
   function changed() { save(); draw(); if (LGT.houseRemount) LGT.houseRemount(); }
-  const apply = (r) => { if (!r.ok) { toast(WHY[r.reason] || 'Không làm được.', 2800); return false; } st = r.st; changed(); return true; };
+  const apply = (r) => { if (!r.ok) { toast(WHY[r.reason] || 'Không làm được.', 2800); return false; } const before = st.placed.length; st = r.st; changed(); if (st.placed.length > before && LGT.act) LGT.act('noithat'); return true; };   // Phiên 51: đặt thêm một món → nhiệm vụ “Đặt món nội thất đầu tiên”
   function buy(id) {
     const f = furnitureById(id), l = LGT.merit && LGT.merit.leaf; if (!f || !l) return;
     const r = buyItem(l, st, id); if (!r.ok) { toast(WHY[r.reason] || 'Không mua được.', 2800); return; }
