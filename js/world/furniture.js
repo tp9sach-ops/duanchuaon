@@ -141,3 +141,35 @@ export function placeItem(st, lv, id, x, z, rot = 0) {
 }
 /** Cất món đã đặt về túi (không mất). */
 export const pickUp = (st, uid) => (st.placed.some((p) => p.uid === uid) ? { ok: true, st: { ...st, placed: st.placed.filter((p) => p.uid !== uid) } } : { ok: false, st });
+
+/** Tự tìm chỗ trống để đặt món `id` (thử không xoay rồi xoay 90°, quét từ tường sau ra cửa, bước 0,25 m). Trả { ok, reason: ''|'unknown'|'none'|'full'|'nospace', st }. */
+export function autoPlace(st, lv, id) {
+  const f = furnitureById(id); if (!f) return { ok: false, reason: 'unknown', st };
+  if (freeCount(st, id) < 1) return { ok: false, reason: 'none', st };
+  if (st.placed.length >= MAX_PLACED[Math.max(0, Math.min(3, lv | 0))]) return { ok: false, reason: 'full', st };
+  const room = roomFor(lv);
+  for (const rot of [0, 1]) {
+    const { rw, rd } = footprint(f, rot);
+    for (let z = -room.d / 2 + rd / 2 + 0.05; z <= room.d / 2 - rd / 2; z += 0.25) for (let x = -room.w / 2 + rw / 2 + 0.05; x <= room.w / 2 - rw / 2; x += 0.25) {
+      const px = Math.round(x * 100) / 100, pz = Math.round(z * 100) / 100;
+      if (canPlace(lv, st.placed, id, px, pz, rot).ok) return placeItem(st, lv, id, px, pz, rot);
+    }
+  }
+  return { ok: false, reason: 'nospace', st };
+}
+/** Dời món đã đặt `uid` thêm (dx, dz) mét. Trả { ok, reason (như canPlace hoặc 'missing'), st }. */
+export function moveItem(st, lv, uid, dx, dz) {
+  const p = st.placed.find((q) => q.uid === uid); if (!p) return { ok: false, reason: 'missing', st };
+  const x = Math.round((p.x + dx) * 100) / 100, z = Math.round((p.z + dz) * 100) / 100, c = canPlace(lv, st.placed, p.id, x, z, p.rot, uid);
+  if (!c.ok) return { ok: false, reason: c.reason, st };
+  return { ok: true, reason: '', st: { ...st, placed: st.placed.map((q) => (q.uid === uid ? { ...q, x, z } : q)) } };
+}
+/** Xoay món đã đặt thêm 90° (thử tối đa 3 hướng cho tới khi đặt được tại chỗ cũ). */
+export function rotateItem(st, lv, uid) {
+  const p = st.placed.find((q) => q.uid === uid); if (!p) return { ok: false, reason: 'missing', st };
+  for (let k = 1; k <= 3; k++) {
+    const rot = (p.rot + k) % 4;
+    if (canPlace(lv, st.placed, p.id, p.x, p.z, rot, uid).ok) return { ok: true, reason: '', st: { ...st, placed: st.placed.map((q) => (q.uid === uid ? { ...q, rot } : q)) } };
+  }
+  return { ok: false, reason: 'blocked', st };
+}
