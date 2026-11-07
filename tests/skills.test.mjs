@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { khinhLevel, jumpHeight, airTime, canJump, createJump, KHINH_THAN_CAO, MAX_BAC, GRAVITY } from '../js/world/skills.js';
+import { khinhLevel, jumpHeight, airTime, canJump, createJump, KHINH_THAN_CAO, MAX_BAC, GRAVITY, KHINH_YEU_CAU, KHINH_TEN, INDOOR_MAX, jumpHeightAt, loadKhinh, khinhBac, trainPlan } from '../js/world/skills.js';
 import { emptyStory, loadStory, apply } from '../js/world/story.js';
 
 test('khinhLevel: chưa xong cốt truyện = 0, dữ liệu lạ = 0', () => {
@@ -40,4 +40,34 @@ test('khung hình chậm / dt lạ không làm kẹt hay bay mất', () => {
   for (const dt of [0.2, 0.2, 0.2, NaN, -1, 5, 5]) j.step(dt);
   assert.ok(Number.isFinite(j.y) && j.y >= 0); for (let i = 0; i < 20; i++) j.step(0.25); assert.equal(j.air, false); assert.equal(j.y, 0);
   assert.equal(GRAVITY > 0, true);
+});
+
+test('Phiên 52: bảng yêu cầu bậc 2–8 tăng dần, đủ tên cảnh giới', () => {
+  assert.equal(KHINH_YEU_CAU.length, MAX_BAC + 1); assert.equal(KHINH_TEN.length, MAX_BAC + 1);
+  for (let b = 2; b <= MAX_BAC; b++) { assert.ok(KHINH_YEU_CAU[b].sen > 0); assert.ok(KHINH_TEN[b]); if (b > 2) { assert.ok(KHINH_YEU_CAU[b].sen > KHINH_YEU_CAU[b - 1].sen); assert.ok(KHINH_YEU_CAU[b].cap >= KHINH_YEU_CAU[b - 1].cap); } }
+  assert.ok(KHINH_YEU_CAU[MAX_BAC].cap <= 10, 'cấp tối đa của game là 10');
+});
+test('trainPlan: chưa mở / thiếu cấp / thiếu sen / đủ / tối đa', () => {
+  assert.equal(trainPlan({ bac: 0, capNguoi: 10, sen: 999 }).reason, 'chua-mo');
+  assert.equal(trainPlan({ bac: 1, capNguoi: 1, sen: 999 }).reason, 'cap');
+  assert.equal(trainPlan({ bac: 1, capNguoi: 2, sen: 9 }).reason, 'sen');
+  const ok = trainPlan({ bac: 1, capNguoi: 2, sen: 10 }); assert.equal(ok.ok, true); assert.equal(ok.next, 2); assert.equal(ok.sen, 10);
+  assert.equal(trainPlan({ bac: MAX_BAC, capNguoi: 10, sen: 9999 }).reason, 'toi-da');
+  assert.equal(trainPlan({}).ok, false);
+});
+test('luyện đủ 7 lần từ bậc 1 lên bậc 8, mỗi lần đúng điều kiện', () => {
+  let bac = 1, sen = 10000, cap = 10;
+  for (let i = 2; i <= MAX_BAC; i++) { const p = trainPlan({ bac, capNguoi: cap, sen }); assert.equal(p.ok, true); assert.equal(p.next, i); sen -= p.sen; bac = p.next; }
+  assert.equal(bac, MAX_BAC); assert.equal(trainPlan({ bac, capNguoi: cap, sen }).reason, 'toi-da');
+});
+test('loadKhinh / khinhBac: dữ liệu lạ → 0; chưa xong cốt truyện thì bỏ qua phần đã luyện', () => {
+  for (const bad of [null, 'xx', '{', {}, { bac: 'a' }, { bac: -4 }, []]) assert.equal(loadKhinh(bad), 0);
+  assert.equal(loadKhinh('{"bac":5}'), 5); assert.equal(loadKhinh({ bac: 99 }), MAX_BAC);
+  assert.equal(khinhBac(emptyStory(), 6), 0);
+  const done = { skills: { khinhthan: 1 } };
+  assert.equal(khinhBac(done, 0), 1); assert.equal(khinhBac(done, 6), 6); assert.equal(khinhBac(done, 0.5), 1);
+});
+test('trong nhà bị chặn độ cao; ngoài trời giữ nguyên', () => {
+  assert.equal(jumpHeightAt(8, false), jumpHeight(8)); assert.equal(jumpHeightAt(8, true), INDOOR_MAX);
+  assert.equal(jumpHeightAt(1, true), jumpHeight(1)); assert.equal(jumpHeightAt(0, true), 0);
 });
