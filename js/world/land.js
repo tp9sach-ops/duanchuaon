@@ -1,4 +1,4 @@
-// Khu dân cư "xóm" và đất ở (Phiên 36, bước 2 hệ thống xây nhà). DỮ LIỆU + LOGIC THUẦN (không DOM/three.js), có test: tests/land.test.mjs.
+// Khu dân cư "xóm" và đất ở (Phiên 36, bước 2 hệ thống xây nhà; Phiên 37 thêm 4 cấp nhà + nâng cấp). DỮ LIỆU + LOGIC THUẦN (không DOM/three.js), có test: tests/land.test.mjs.
 // Luật ptg chốt 07/11: 100 lá bồ đề mua một lô đất, mua xong được TẶNG nhà trống thô sơ; mỗi xóm tối đa 10 nhà, nhà thứ 11 sang xóm mới;
 // muốn XEM xóm khác phải gặp bác khu phố để đổi xóm xem (không đổi xóm của mình).
 // Chưa có máy chủ: "sổ xóm" (registry) hiện chỉ có nhà của chính người chơi (lưu cục bộ). Cùng hàm này nhận sổ do máy chủ gửi về ở bước 6, nên
@@ -22,9 +22,23 @@ export const plotById = (id) => PLOTS.find((p) => p.id === (id | 0)) || null;
 /** Bác khu phố đứng ở đầu đường xuống xóm. */
 export const KHUPHO = { id: 'bacphuong', x: 3.6, z: 153, stand: { x: 0.8, z: 153 } };
 
-/** Nhà của lô: kích thước thân nhà (chữ nhật chặn) theo cấp nhà; cấp 0 = nhà trống thô sơ được tặng. Các cấp khác làm ở bước 3. */
-export const HOUSE_LEVELS = [{ lv: 0, ten: 'Nhà trống thô sơ', hw: 3, hd: 2.6 }];
-export const houseRect = (plot, lv = 0) => { const h = HOUSE_LEVELS[lv] || HOUSE_LEVELS[0], back = plot.z - plot.face * (LOT_D / 2 - h.hd - 0.8); return { x0: plot.x - h.hw, x1: plot.x + h.hw, z0: back - h.hd, z1: back + h.hd }; };
+/**
+ * 4 cấp nhà (Phiên 37, bước 3). hw/hd = nửa rộng/nửa sâu thân nhà (chữ nhật chặn); gia = GIÁ NIÊM YẾT (lá bồ đề) tính từ nhà trống.
+ * Cấp 0 được tặng khi mua đất. Nâng cấp trả CHÊNH LỆCH giá niêm yết (lên 1 từ 0 = 150; 1→2 = 250; 0→3 = 900), được nhảy cấp.
+ * Giá theo bảng đề xuất TẠM trong docs/PHIEN34.md (người chăm chỉ ≈ 5 lá/ngày), chờ ptg duyệt.
+ */
+export const HOUSE_LEVELS = [
+  { lv: 0, ten: 'Nhà trống thô sơ', hw: 3, hd: 2.6, gia: 0 },
+  { lv: 1, ten: 'Nhà lầu', hw: 3.6, hd: 3, gia: 150 },
+  { lv: 2, ten: 'Nhà hoa viên', hw: 3.6, hd: 3, gia: 400 },
+  { lv: 3, ten: 'Villa hồ bơi', hw: 4.4, hd: 3.2, gia: 900 },
+];
+export const MAX_LV = HOUSE_LEVELS.length - 1;
+/** Thông tin cấp nhà; cấp sai (NaN, âm, quá lớn) được kẹp vào 0..MAX_LV. */
+export const houseLevel = (lv) => HOUSE_LEVELS[Math.max(0, Math.min(MAX_LV, Math.floor(+lv) || 0))];
+/** Lá bồ đề phải trả để nâng từ cấp `from` lên cấp `to` (chênh lệch giá niêm yết, không âm). */
+export const upgradeCost = (from, to) => Math.max(0, houseLevel(to).gia - houseLevel(from).gia);
+export const houseRect = (plot, lv = 0) => { const h = houseLevel(lv), back = plot.z - plot.face * (LOT_D / 2 - h.hd - 0.8); return { x0: plot.x - h.hw, x1: plot.x + h.hw, z0: back - h.hd, z1: back + h.hd }; };
 
 // ---------- sổ xóm: { [xom]: { [plotId]: { owner, name?, lv } } } ----------
 const isObj = (o) => o && typeof o === 'object' && !Array.isArray(o);
@@ -44,7 +58,7 @@ export function loadLand(raw) {
   let o = raw; if (typeof raw === 'string') { try { o = JSON.parse(raw); } catch (_) { o = null; } }
   const s = emptyLand(); if (!isObj(o)) return s;
   const ow = o.own;
-  if (isObj(ow) && Number.isInteger(ow.xom) && ow.xom >= 1 && ow.xom <= 1e4 && plotById(ow.plot)) s.own = { xom: ow.xom, plot: ow.plot | 0, lv: Math.max(0, Math.min(HOUSE_LEVELS.length - 1, Math.floor(+ow.lv) || 0)) };
+  if (isObj(ow) && Number.isInteger(ow.xom) && ow.xom >= 1 && ow.xom <= 1e4 && plotById(ow.plot)) s.own = { xom: ow.xom, plot: ow.plot | 0, lv: houseLevel(ow.lv).lv };
   s.view = Number.isInteger(o.view) && o.view >= 1 && o.view <= 1e4 ? o.view : 0;
   if (s.own && !s.view) s.view = s.own.xom;
   return s;
@@ -65,6 +79,26 @@ export function buyLand(land, la, reg, plotId, owner = 'ban') {
   if (reg && reg[xom] && reg[xom][pid]) return fail('taken');
   const nreg = { ...(reg || {}), [xom]: { ...((reg && reg[xom]) || {}), [pid]: { owner, lv: 0 } } };
   return { ok: true, reason: '', cost: LAND_LA, xom, land: { ...land, own: { xom, plot: pid, lv: 0 }, view: xom }, reg: nreg };
+}
+
+/**
+ * Nâng cấp nhà của mình (Phiên 37). `to` bỏ trống = cấp kế tiếp; có thể nhảy cấp. Trả chênh lệch giá niêm yết.
+ * Trả { ok, reason: ''|'noland'|'maxed'|'invalid'|'poor', cost, land (mới), reg (mới) }. Không sửa đầu vào. Trừ lá do nơi gọi làm khi ok.
+ * `cost` luôn là số lá cần cho lượt nâng đó (kể cả khi thiếu lá) để giao diện hiện giá; 0 nếu không có đất / đã tối đa / cấp không hợp lệ.
+ */
+export function upgradeHouse(land, la, reg, to) {
+  const fail = (reason, cost = 0) => ({ ok: false, reason, cost, land, reg });
+  const own = land && land.own;
+  if (!own) return fail('noland');
+  const cur = houseLevel(own.lv).lv;
+  if (cur >= MAX_LV) return fail('maxed');
+  const target = to === undefined ? cur + 1 : Number(to);
+  if (!Number.isInteger(target) || target <= cur || target > MAX_LV) return fail('invalid');
+  const cost = upgradeCost(cur, target);
+  if (!(Number.isFinite(+la) && +la >= cost)) return fail('poor', cost);
+  const rec = reg && reg[own.xom] && reg[own.xom][own.plot];
+  const nreg = { ...(reg || {}), [own.xom]: { ...((reg && reg[own.xom]) || {}), [own.plot]: { ...(rec || { owner: 'ban' }), lv: target } } };
+  return { ok: true, reason: '', cost, land: { ...land, own: { ...own, lv: target } }, reg: nreg };
 }
 
 /** Các xóm được phép xem: từ 1 tới xóm lớn nhất có người (ít nhất xóm của mình, hoặc xóm 1). */
