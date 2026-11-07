@@ -5,20 +5,20 @@ import { FURNITURE, furnitureById, MAX_PLACED, emptyFurni, loadFurni, freeCount,
 import { emptyLeaf } from '../js/world/merit.js';
 import { roomFor } from '../js/world/interior.js';
 
-const rich = (n = 500) => { let l = emptyLeaf(); l = { ...l, la: n, spent: n * 10 }; return l; };
+const rich = (n = 100000) => { let l = emptyLeaf(); l = { ...l, la: n, spent: n * 10 }; return l; };
 
 test('danh mục đúng 50 món, id không trùng, kích thước/giá hợp lý, vừa mọi phòng', () => {
   assert.equal(FURNITURE.length, 50);
   assert.equal(new Set(FURNITURE.map((f) => f.id)).size, 50);
-  for (const f of FURNITURE) { assert.ok(f.ten && f.kind && f.w > 0 && f.d > 0 && f.h > 0 && Number.isInteger(f.gia) && f.gia >= 1, f.id); assert.ok(f.w <= roomFor(0).w - 1 && f.d <= roomFor(0).d - 1, `${f.id} quá to cho phòng nhỏ nhất`); }
+  for (const f of FURNITURE) { assert.ok(f.ten && f.kind && f.w > 0 && f.d > 0 && f.h > 0 && Number.isInteger(f.gia) && f.gia >= 50 && f.gia <= 100000, f.id); assert.ok(f.w <= roomFor(0).w - 1 && f.d <= roomFor(0).d - 1, `${f.id} quá to cho phòng nhỏ nhất`); }
 });
 
 test('mua món: trừ đúng lá, thiếu lá thì không mua, không sửa đầu vào', () => {
-  const l0 = rich(10), s0 = emptyFurni(), r = buyItem(l0, s0, 'giuong-go');
-  assert.ok(r.ok); assert.equal(r.leaf.la, 4); assert.equal(r.st.owned['giuong-go'], 1); assert.equal(l0.la, 10); assert.deepEqual(s0.owned, {});
-  assert.equal(buyItem(rich(5), s0, 'giuong-go').reason, 'poor');
+  const g = furnitureById('giuong-go').gia, l0 = rich(g + 6), s0 = emptyFurni(), r = buyItem(l0, s0, 'giuong-go');
+  assert.ok(r.ok); assert.equal(r.leaf.la, 6); assert.equal(r.st.owned['giuong-go'], 1); assert.equal(l0.la, g + 6); assert.deepEqual(s0.owned, {});
+  assert.equal(buyItem(rich(g - 1), s0, 'giuong-go').reason, 'poor');
   assert.equal(buyItem(l0, s0, 'khong-co').reason, 'unknown');
-  const t = buyItem(rich(100), s0, 'ban-tra'); assert.equal(t.leaf.la, 97);
+  const t = buyItem(rich(100000), s0, 'ban-tra'); assert.equal(t.leaf.la, 100000 - furnitureById('ban-tra').gia);
 });
 
 test('đặt và cất: phải có trong túi; cất không mất món', () => {

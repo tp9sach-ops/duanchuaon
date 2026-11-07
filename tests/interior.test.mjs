@@ -112,3 +112,13 @@ test('netPos: ngoài sân giữ nguyên; trong phòng gửi vị trí trước c
   assert.deepEqual(netPos(null, entryPoint(0)), { x: 0, z: 0, r: null }, 'chưa có đất mà ở trong phòng: về gốc, không gửi tọa độ phòng');
   assert.deepEqual(netPos(land, null), { x: 0, z: 0, r: null });
 });
+
+test('nhà trống: không có đồ sẵn; món người chơi đặt (xoay) chặn đúng chỗ và gỡ đăng ký thì hết', () => {
+  for (const r of ROOMS) assert.equal(r.furniture.length, 0);
+  assert.equal(furnitureRects(0).length, 0);
+  const placed = [{ uid: 1, id: 'x', x: 1, z: -1, w: 1.6, d: 0.4, rw: 0.4, rd: 1.6, h: 1, solid: true }, { uid: 2, id: 'y', x: 0, z: 0, w: 2, d: 2, h: 0.02, solid: false }];
+  const rs = furnitureRects(0, placed); assert.equal(rs.length, 1);
+  assert.ok(Math.abs((rs[0].x1 - rs[0].x0) - 0.4) < 1e-9 && Math.abs((rs[0].z1 - rs[0].z0) - 1.6) < 1e-9, 'dùng kích thước đã xoay');
+  const nr = RECTS.length, off = registerRoom(0, placed);
+  assert.equal(RECTS.length, nr + 1); off(); assert.equal(RECTS.length, nr);
+});
