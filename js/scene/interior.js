@@ -157,8 +157,12 @@ export function buildInterior() {
     }
     cur = r.lv; shown = true; group.visible = true; light();
   }
+  /** Phiên 42: dựng riêng MỘT món (nhóm 3D, gốc = tâm món trên sàn) để cửa hàng cho xem trước; dùng đúng hàm vẽ như trong nhà. f = một mục FURNITURE. */
+  function buildItem(f) { const g = new THREE.Group(); (furn[f.kind] || fallback)(f, g, [f]); return g; }
+  /** Giải phóng hình riêng của nhóm do buildItem tạo (hình hộp/trụ/cầu dùng chung thì giữ lại). */
+  function disposeItem(g) { g.traverse((o) => { if (o.isMesh && o.geometry && (o.userData.own || (o.geometry !== BOX && o.geometry !== CYL && o.geometry !== BALL))) o.geometry.dispose(); }); }
   function hide() { shown = false; doorLeaf = null; group.visible = false; light(); }
   /** n = 0 (ngày) … 1 (đêm): kính cửa sổ tối dần, đèn trong nhà sáng hơn. */
   function update(n = 0) { if (Math.abs(n - night) < 0.01) return; night = n; winMat.color.setHex(0xbfe3ff).lerp(new THREE.Color(0x1a2b48), night); if (shown) light(); }
-  return { group, show, hide, update, setDoorOpen, get level() { return cur; }, get shown() { return shown; } };
+  return { group, show, hide, update, setDoorOpen, buildItem, disposeItem, get level() { return cur; }, get shown() { return shown; } };
 }
