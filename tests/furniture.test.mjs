@@ -87,3 +87,24 @@ test('dời và xoay món đã đặt', () => {
   const r = rotateItem(st, 0, u); assert.ok(r.ok); assert.equal(r.st.placed[0].rot, 1);
   assert.equal(rotateItem(st, 0, 999).reason, 'missing');
 });
+
+// ---- Phiên 43: chế độ chỉnh sửa (kéo / xoay)
+import { snap, clampPose, setPose } from '../js/world/furniture.js';
+test('snap: làm tròn về lưới 5 cm', () => {
+  assert.equal(snap(1.234), 1.25); assert.equal(snap(-0.02), -0); assert.equal(snap(0.33), 0.35);
+});
+test('clampPose: kéo sát tường thì dính vào tường, không văng ra ngoài', () => {
+  const f = furnitureById('giuong-don'), room = roomFor(0), c = clampPose(0, 'giuong-don', 99, -99, 0);
+  assert.ok(c.x + f.w / 2 <= room.w / 2 && c.z - f.d / 2 >= -room.d / 2);
+  assert.ok(c.x + f.w / 2 > room.w / 2 - 0.1);
+});
+test('setPose: dời + xoay một bước; chỗ bị đè thì từ chối và giữ nguyên', () => {
+  const leaf = { la: 999999 }; let st = emptyFurni();
+  for (const id of ['ban-an', 'sofa-nho']) { const b = buyItem(leaf, st, id); st = b.st; }
+  let r = placeItem(st, 0, 'ban-an', 0, -2, 0); assert.ok(r.ok); st = r.st;
+  r = placeItem(st, 0, 'sofa-nho', -3, -2, 0); assert.ok(r.ok); st = r.st;
+  const [a, b] = st.placed;
+  const ok = setPose(st, 0, b.uid, -3, 1, 1); assert.ok(ok.ok); assert.equal(ok.st.placed[1].rot, 1); assert.equal(ok.st.placed[1].z, 1);
+  const bad = setPose(st, 0, b.uid, 0, -2, 0); assert.equal(bad.ok, false); assert.equal(bad.reason, 'overlap'); assert.equal(bad.st, st);
+  assert.equal(setPose(st, 0, 999, 0, 0, 0).reason, 'missing');
+});
