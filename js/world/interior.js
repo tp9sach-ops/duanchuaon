@@ -9,35 +9,14 @@ export const INTERIOR = { x: 400, z: 400 };
 /** Bán kính (m) quanh cửa nhà mà nút "Vào nhà" hiện. Phủ cả điểm đứng ngoài đường của lô (plot.front cách cửa ≤ 7,2 m). */
 export const DOOR_R = 8;
 
-// item: { id, kind, x, z, w, d, h, solid, color, y? }  (x,z = tâm; solid = chặn đi bộ, h = chiều cao để camera bay qua phía trên)
-const it = (id, kind, x, z, w, d, h, color, solid = true) => ({ id, kind, x, z, w, d, h, color, solid });
-const BASE0 = [
-  it('mat', 'rug', -1.0, 0.2, 1.8, 2.2, 0.02, 0xc9a86a, false), it('bed', 'bed', -2.0, -1.4, 1.6, 2.0, 0.55, 0x9a7a4a),
-  it('table', 'table', 1.6, -1.6, 1.2, 0.8, 0.45, 0x8a5f36), it('lamp', 'lamp', 1.6, -1.6, 0.2, 0.2, 0.2, 0xffd27a, false),
-  it('crate', 'crate', 2.3, -0.4, 0.7, 0.7, 0.6, 0x7d5f3d), it('shelf', 'shelf', 0.2, -2.2, 1.4, 0.4, 1.6, 0x6f4a2a),
-];
-const BASE1 = [
-  it('rug', 'rug', 1.6, -0.9, 3.0, 2.4, 0.02, 0xb04a4a, false), it('wardrobe', 'wardrobe', -2.5, -2.5, 1.4, 0.6, 2.0, 0x7a5230),
-  it('bed', 'bed', -2.4, -0.95, 1.8, 2.1, 0.6, 0xe9e2d0), it('tvunit', 'tvunit', 1.8, -2.55, 1.8, 0.5, 0.9, 0x4a3a2a),
-  it('sofa', 'sofa', 1.6, -0.5, 2.2, 0.9, 0.85, 0x4a6a8a), it('coffee', 'table', 1.6, -1.5, 1.0, 0.6, 0.4, 0x8a5f36),
-  it('dining', 'table', 2.3, 1.4, 1.4, 0.9, 0.75, 0x9a6a3a), it('chair1', 'chair', 2.3, 0.7, 0.45, 0.45, 0.8, 0x7a5230, false), it('chair2', 'chair', 2.3, 2.1, 0.45, 0.45, 0.8, 0x7a5230, false),
-  it('stairs', 'stairs', -2.9, 1.5, 1.0, 2.2, 2.4, 0xcdb590), it('plant', 'plant', -1.2, 2.3, 0.5, 0.5, 1.1, 0x3f8a3a),
-];
-const EXTRA2 = [it('books', 'shelf', 0.0, -2.6, 1.6, 0.4, 2.0, 0x6f4a2a), it('tank', 'tank', -1.3, -2.6, 0.6, 0.4, 1.0, 0x38b6d8), it('plant2', 'plant', 3.0, 2.45, 0.5, 0.5, 1.1, 0x3f8a3a)];
-const LV3 = [
-  it('rug', 'rug', 1.4, -0.8, 3.6, 2.6, 0.02, 0x3a5a7a, false), it('wardrobe', 'wardrobe', -3.0, -2.7, 1.6, 0.6, 2.1, 0x7a5230),
-  it('bed', 'bed', -3.2, -1.2, 2.0, 2.2, 0.65, 0xf2ecdc), it('tvunit', 'tvunit', 1.9, -2.75, 2.2, 0.5, 0.9, 0x2a2a2e),
-  it('sofa', 'sofa', 1.4, -0.4, 2.6, 0.95, 0.85, 0x6a5a8a), it('coffee', 'table', 1.4, -1.5, 1.1, 0.7, 0.4, 0x3a3f47),
-  it('books', 'shelf', -0.2, -2.75, 1.2, 0.4, 2.0, 0x6f4a2a), it('tank', 'tank', 4.0, -1.6, 0.5, 1.6, 1.3, 0x38b6d8),
-  it('dining', 'table', 2.8, 1.5, 2.0, 1.0, 0.75, 0x9a6a3a), it('chair1', 'chair', 2.8, 0.75, 0.45, 0.45, 0.8, 0x7a5230, false), it('chair2', 'chair', 2.8, 2.25, 0.45, 0.45, 0.8, 0x7a5230, false),
-  it('stairs', 'stairs', -3.8, 1.7, 1.0, 2.4, 2.6, 0xcdb590), it('plant', 'plant', -1.6, 2.6, 0.5, 0.5, 1.1, 0x3f8a3a), it('plant2', 'plant', 4.0, 2.6, 0.5, 0.5, 1.1, 0x3f8a3a),
-];
-/** 4 phòng theo cấp nhà. w = rộng (x), d = sâu (z), h = trần. Cửa ở giữa tường +z. */
+// Phiên 41: nhà BAN ĐẦU TRỐNG (ptg chốt 07/11). Nội thất do người chơi mua và đặt (js/world/furniture.js), rồi truyền vào registerRoom/furnitureRects và cảnh 3D.
+// Một món đã đặt (kết quả của furniture.toFurniture): { uid, id, kind, x, z, w, d, rw, rd (đã xoay, dùng cho va chạm), h, color, solid, ry }.
+/** 4 phòng theo cấp nhà. w = rộng (x), d = sâu (z), h = trần. Cửa ở giữa tường +z. `furniture` (đồ có sẵn) luôn rỗng. */
 export const ROOMS = [
-  { lv: 0, w: 5.6, d: 4.8, h: 2.5, furniture: BASE0 },
-  { lv: 1, w: 6.8, d: 5.6, h: 3.0, furniture: BASE1 },
-  { lv: 2, w: 6.8, d: 5.6, h: 3.0, furniture: [...BASE1, ...EXTRA2] },
-  { lv: 3, w: 8.6, d: 6.0, h: 3.4, furniture: LV3 },
+  { lv: 0, w: 5.6, d: 4.8, h: 2.5, furniture: [] },
+  { lv: 1, w: 6.8, d: 5.6, h: 3.0, furniture: [] },
+  { lv: 2, w: 6.8, d: 5.6, h: 3.0, furniture: [] },
+  { lv: 3, w: 8.6, d: 6.0, h: 3.4, furniture: [] },
 ];
 /** Phòng của cấp nhà `lv` (kẹp 0..3 như houseLevel). */
 export const roomFor = (lv) => ROOMS[houseLevel(lv).lv];
@@ -51,13 +30,14 @@ export function doorInside(lv) { const r = roomFor(lv); return W(0, r.d / 2); }
 export function atDoor(p, lv) { const d = doorInside(lv); return Math.abs(p.x - d.x) <= 1 && d.z - p.z <= 1; }
 /** Điểm (x,z) thuộc khu phòng riêng (mọi cấp), để các hệ thống khác (mưa, chuông...) biết người chơi đang ở trong nhà. */
 export const isInterior = (x, z) => Math.abs(x - INTERIOR.x) <= 12 && Math.abs(z - INTERIOR.z) <= 12;
-/** Vật cản (chữ nhật thế giới, có h) của đồ nội thất `solid` của phòng cấp lv. */
-export const furnitureRects = (lv) => roomFor(lv).furniture.filter((f) => f.solid).map((f) => ({ x0: INTERIOR.x + f.x - f.w / 2, x1: INTERIOR.x + f.x + f.w / 2, z0: INTERIOR.z + f.z - f.d / 2, z1: INTERIOR.z + f.z + f.d / 2, h: f.h }));
+/** Vật cản (chữ nhật thế giới, có h) của đồ nội thất `solid`. `placed` = món người chơi đã đặt (furniture.toFurniture); bỏ trống = phòng trống. Món xoay dùng rw/rd. */
+export const furnitureRects = (lv, placed = []) => [...roomFor(lv).furniture, ...placed].filter((f) => f.solid).map((f) => { const w = f.rw || f.w, d = f.rd || f.d; return { x0: INTERIOR.x + f.x - w / 2, x1: INTERIOR.x + f.x + w / 2, z0: INTERIOR.z + f.z - d / 2, z1: INTERIOR.z + f.z + d / 2, h: f.h }; });
 /**
- * Đăng ký phòng cấp lv vào layout.js (vùng đi bộ + vật cản nội thất). Trả hàm gỡ đăng ký (khôi phục đúng như trước). Mỗi lần chỉ nên đăng ký MỘT phòng.
+ * Đăng ký phòng cấp lv vào layout.js (vùng đi bộ + vật cản của các món đã đặt). Trả hàm gỡ đăng ký (khôi phục đúng như trước). Mỗi lần chỉ nên đăng ký MỘT phòng.
+ * Đổi bố trí nội thất thì gỡ rồi đăng ký lại.
  */
-export function registerRoom(lv) {
-  const walk = roomRect(lv), rects = furnitureRects(lv);
+export function registerRoom(lv, placed = []) {
+  const walk = roomRect(lv), rects = furnitureRects(lv, placed);
   addWalk(walk); for (const r of rects) addRect(r);
   return () => { const i = WALKS.indexOf(walk); if (i >= 0) WALKS.splice(i, 1); for (const r of rects) { const j = RECTS.indexOf(r); if (j >= 0) RECTS.splice(j, 1); } };
 }
