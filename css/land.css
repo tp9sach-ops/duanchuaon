@@ -16,5 +16,6 @@
 .ld-b.buy{border-color:#8fd6bf;background:rgba(143,214,191,.25)}
 .ld-b:disabled{opacity:.4;cursor:default}
 .ld-b:focus-visible,.ld-lot:focus-visible,.ld-x:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.ld-act{display:flex;flex-wrap:wrap;gap:8px}
 .ld-hint{font:400 13px/1.4 var(--sans,inherit);color:#bdb39a}
 .ld-note{margin:10px 0 0;font:400 11px/1.4 var(--sans,inherit);color:#9aa0b0}
