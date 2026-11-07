@@ -38,6 +38,15 @@ export const MAX_LV = HOUSE_LEVELS.length - 1;
 export const houseLevel = (lv) => HOUSE_LEVELS[Math.max(0, Math.min(MAX_LV, Math.floor(+lv) || 0))];
 /** Lá bồ đề phải trả để nâng từ cấp `from` lên cấp `to` (chênh lệch giá niêm yết, không âm). */
 export const upgradeCost = (from, to) => Math.max(0, houseLevel(to).gia - houseLevel(from).gia);
+/**
+ * Hồ bơi của villa (cấp 3) trước nhà: chữ nhật chặn đi bộ (kèm vành 0,25 m). Cấp < 3 không có hồ → null.
+ * PHẢI khớp js/scene/land.js `villa()`: rộng 1,7·hw, bắt đầu cách mặt nhà 0,8 m, sâu 3 m. Tâm nhà lấy từ houseRect.
+ */
+export function poolRect(plot, lv = 0) {
+  const h = houseLevel(lv); if (h.lv < 3) return null;
+  const r = houseRect(plot, h.lv), c = (r.z0 + r.z1) / 2, a = c + plot.face * (h.hd + 0.8), b = c + plot.face * (h.hd + 3.8), pw = h.hw * 1.7, m = 0.25;
+  return { x0: plot.x - pw / 2 - m, x1: plot.x + pw / 2 + m, z0: Math.min(a, b) - m, z1: Math.max(a, b) + m };
+}
 export const houseRect = (plot, lv = 0) => { const h = houseLevel(lv), back = plot.z - plot.face * (LOT_D / 2 - h.hd - 0.8); return { x0: plot.x - h.hw, x1: plot.x + h.hw, z0: back - h.hd, z1: back + h.hd }; };
 
 // ---------- sổ xóm: { [xom]: { [plotId]: { owner, name?, lv } } } ----------
