@@ -1,7 +1,7 @@
 // Cốt truyện chương 1 (Phiên 32, Bước 2): hộp thoại nhiều trang với chú tiểu / trụ trì + thẻ mục tiêu hiện tại.
 // Logic ở js/world/story.js (có test). Lưu tiến độ ở localStorage 'lgt.story' (chỉ trên máy người chơi).
-// Mọi chữ hiển thị đi qua textContent, không chèn HTML. Bước 3 (tưới cây) và Bước 4 (thiền) sẽ gọi LGT.story.apply(...).
-import { loadStory, apply, dialogueFor, objective } from '../world/story.js';
+// Mọi chữ hiển thị đi qua textContent, không chèn HTML. Phiên 34: nút "Dẫn đường" + "Tưới cây" dưới thẻ mục tiêu, đếm giờ thiền 3 phút, bước cốt truyện hiện trong bảng Nhiệm vụ.
+import { loadStory, apply, dialogueFor, objective, canWater, nearTree, WATER_SPOT, STORY_QUESTS } from '../world/story.js';
 import { npcById } from '../world/npc.js';
 
 const KEY = 'lgt.story';
@@ -15,15 +15,43 @@ export function initStory(hud, { toast = () => {}, addMerit = () => {} } = {}) {
 
   // ---- thẻ mục tiêu hiện tại
   const obj = el('button', 'st-obj'); obj.type = 'button'; obj.setAttribute('aria-live', 'polite');
-  const objT = el('b'), objS = el('span'), objP = el('i'); obj.append(objT, objS, objP); hud.appendChild(obj);
+  const objT = el('b'), objS = el('span'), objP = el('i'); obj.append(objT, objS, objP);
+  const wrap = el('div', 'st-wrap'), act = el('div', 'st-act');
+  const goBtn = el('button', 'st-btn st-go', 'Dẫn đường'), waterBtn = el('button', 'st-btn st-water', 'Tưới cây'); goBtn.type = 'button'; waterBtn.type = 'button';
+  waterBtn.dataset.id = 'tuoicay'; waterBtn.hidden = true; act.append(goBtn, waterBtn); wrap.append(obj, act); hud.appendChild(wrap);
   let expanded = false;
   function drawObj() {
-    const o = objective(story); obj.hidden = !o; if (!o) return;
+    const o = objective(story); obj.hidden = !o; wrap.hidden = !o; drawAct(); if (LGT.quests && LGT.quests.redraw) LGT.quests.redraw(); if (!o) return;
     objT.textContent = o.title;
     objS.textContent = expanded ? o.text : '';
     objP.textContent = o.need ? (o.unit === 'giây' ? `${fmt(o.cur)} / ${fmt(o.need)}` : `${o.cur}/${o.need} ${o.unit}`) : '';
     objP.hidden = !o.need; obj.classList.toggle('open', expanded);
   }
+  // ---- nút Dẫn đường + Tưới cây (Phiên 34)
+  const WATER_MS = 1600; let watering = false;
+  const nearNow = () => { const w = LGT.world; return !!(w && w.pos && nearTree(w.pos)); };
+  function drawAct() {
+    const w = story.step === 'water1' || story.step === 'water2';
+    waterBtn.hidden = !w; if (w) waterBtn.textContent = watering ? 'Đang tưới…' : nearNow() ? 'Tưới cây' : 'Đi tới cây';
+  }
+  goBtn.addEventListener('click', () => {
+    const q = STORY_QUESTS.find((x) => x.step === story.step); if (!q) return;
+    if (LGT.guide) LGT.guide.start(q.id); else toast('Chưa dẫn đường được lúc này.', 2500);
+  });
+  waterBtn.addEventListener('click', () => {
+    if (watering || LGT.panelOpen) return;
+    if (!nearNow()) { if (LGT.world) LGT.world.walkTo(WATER_SPOT.x, WATER_SPOT.z); toast('Đi tới cây bồ đề cổ, rồi bấm “Tưới cây”.', 3000); return; }
+    const c = canWater(story, true, Date.now());
+    if (!c.ok) { if (c.reason === 'cooldown') toast('Đợi một chút rồi tưới tiếp nhé.', 2000); return; }
+    watering = true; drawAct(); toast('Bạn nhẹ tay tưới nước vào gốc cây…', 1500);
+    setTimeout(() => { watering = false; if (nearNow()) commit({ type: 'water', near: true }); else toast('Bạn đã rời xa cây, nước chưa tới gốc.', 2500); drawAct(); }, WATER_MS);
+  });
+  // đếm giờ thiền: chỉ khi đang ngồi thiền ở bồ đoàn và tab đang mở; mỗi nhịp cộng thời gian thật (logic tự chặn trần 2 giây/lần)
+  let lastTick = Date.now();
+  setInterval(() => {
+    const now = Date.now(), dt = (now - lastTick) / 1000; lastTick = now; drawAct();
+    const W = LGT.world; if (story.step === 'meditate' && W && W.mode === 'meditate' && !document.hidden && dt > 0) commit({ type: 'meditate', dt });
+  }, 500);
   const fmt = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
   obj.addEventListener('click', () => { expanded = !expanded; drawObj(); });
 

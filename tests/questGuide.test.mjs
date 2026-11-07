@@ -84,3 +84,47 @@ test('đi ra làng: bước sau không tự nhảy khi chưa tới; tới ngã b
   const b = planGuide('m-thac', emptyProg(), { x: 0, z: 104 }, { now: T0, idx: 0 });
   assert.equal(b.idx, 2); assert.equal(Math.round(b.target.x), 95);
 });
+
+// ---- Phiên 34: các bước cốt truyện nằm trong bảng nhiệm vụ và dẫn đường được
+import { STORY_QUESTS, storyRows, emptyStory, loadStory, apply as storyApply, WATER_SPOT, nearTree, WATER2_N } from '../js/world/story.js';
+
+test('cốt truyện: 5 bước hiện thành hàng nhiệm vụ, đúng trạng thái xong / đang làm / chưa tới', () => {
+  const ids = STORY_QUESTS.map((q) => q.id); assert.equal(new Set(ids).size, 5);
+  assert.ok(ids.every((id) => !QUESTS.some((q) => q.id === id)), 'id không trùng nhiệm vụ cũ');
+  let r = storyRows(emptyStory()); assert.deepEqual(r.map((x) => [x.done, x.locked]), [[false, false], [false, true], [false, true], [false, true], [false, true]]);
+  const s = loadStory({ step: 'water2', waters: 2 }); r = storyRows(s);
+  assert.deepEqual(r.map((x) => x.done), [true, true, true, true, false]); assert.equal(r[4].cur, 2); assert.equal(r[4].need, WATER2_N);
+  assert.ok(storyRows(loadStory({ step: 'done' })).every((x) => x.done));
+  for (const x of storyRows(emptyStory())) assert.ok(x.q.ten && x.q.mo && x.q.xp >= 0);
+});
+
+test('dẫn đường tưới cây bồ đề: đi tới cây rồi chỉ nút "Tưới cây"; đích đi tới được', () => {
+  const s = loadStory({ step: 'water1' });
+  const a = planGuide('s-water1', emptyProg(), P0, { now: T0, story: s });
+  assert.equal(a.done, false); assert.equal(a.idx, 0); assert.equal(a.target.kind, 'walk'); assert.equal(a.tap, null);
+  assert.deepEqual([a.target.x, a.target.z], [WATER_SPOT.x, WATER_SPOT.z]);
+  assert.ok(free(WATER_SPOT.x, WATER_SPOT.z), 'chỗ đứng tưới bị chặn'); assert.ok(reachable(WATER_SPOT), 'không có đường tới chỗ tưới');
+  assert.ok(nearTree(WATER_SPOT), 'chỗ đứng phải nằm trong tầm tưới');
+  const b = planGuide('s-water1', emptyProg(), WATER_SPOT, { now: T0, story: s, idx: 0 });
+  assert.equal(b.idx, 1); assert.equal(b.tap, 'tuoicay'); assert.equal(b.target, null);
+  const c = planGuide('s-water2', emptyProg(), WATER_SPOT, { now: T0, story: loadStory({ step: 'water2' }) }); assert.equal(c.tap, 'tuoicay');
+});
+
+test('dẫn đường cốt truyện: gặp chú tiểu, trụ trì, thiền; bước đã xong / chưa tới', () => {
+  const m = planGuide('s-meet', emptyProg(), P0, { now: T0, story: emptyStory() }); assert.equal(m.target.spot, 'npc-chutieu');
+  const ab = planGuide('s-abbot', emptyProg(), P0, { now: T0, story: loadStory({ step: 'abbot' }) }); assert.equal(ab.target.spot, 'npc-truru');
+  const th = planGuide('s-meditate', emptyProg(), HALL_POINT, { now: T0, story: loadStory({ step: 'meditate' }), idx: 1 }); assert.equal(th.tap, 'thien');
+  assert.equal(planGuide('s-meet', emptyProg(), P0, { now: T0, story: loadStory({ step: 'abbot' }) }).done, true);
+  const lk = planGuide('s-water2', emptyProg(), P0, { now: T0, story: emptyStory() });
+  assert.equal(lk.done, false); assert.equal(lk.target, null); assert.match(lk.steps[0].text, /Gặp chú tiểu/);
+  assert.equal(planGuide('s-meet', emptyProg(), P0, { now: T0 }).done, false, 'thiếu story: coi như mới bắt đầu');
+});
+
+test('chuỗi cốt truyện chạy bằng các bước dẫn đường: tưới đủ vòng không kẹt', () => {
+  let s = emptyStory(); let t = T0; const step = (ev) => { const r = storyApply(s, ev, t); s = r.story; return r; };
+  step({ type: 'talk', id: 'chutieu' }); step({ type: 'talk', id: 'truru' });
+  assert.equal(planGuide('s-water1', emptyProg(), P0, { now: T0, story: s }).done, false);
+  t += 5000; step({ type: 'water', near: true, now: t });
+  assert.equal(planGuide('s-water1', emptyProg(), P0, { now: T0, story: s }).done, true);
+  assert.equal(planGuide('s-meditate', emptyProg(), P0, { now: T0, story: s }).done, false);
+});

@@ -3,6 +3,7 @@
 // Mọi chữ hiển thị đến từ dữ liệu cố định của dự án và qua textContent/esc, không chèn HTML lạ.
 import { loadProg, record, questStatus, levelOf, levelReward, QUESTS } from '../world/quests.js';
 import { placesAt } from '../world/outside.js';
+import { storyRows } from '../world/story.js';
 
 const KEY = 'lgt.prog';
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -30,6 +31,15 @@ export function initQuest(hud, { toast = () => {}, addMerit = () => {}, pillHost
   box.innerHTML = '<header><h3>Nhiệm vụ</h3><button type="button" class="qs-x" aria-label="Đóng">×</button></header><div class="qs-lvbox"></div><div class="qs-list"></div><p class="qs-note">Hoàn thành nhiệm vụ để nhận điểm công hạnh, hạt sen và lên cấp. Số điểm là giá trị tạm của bản thử.</p>';
   hud.appendChild(box);
   const lvBox = box.querySelector('.qs-lvbox'), list = box.querySelector('.qs-list');
+  /** Nhóm "Cốt truyện" (Phiên 34): các bước chương 1 từ js/world/story.js; bước chưa tới thì mờ, bước đang làm có nút Dẫn đường. */
+  function storyGroup() {
+    const st = window.LGT && window.LGT.story && window.LGT.story.state; if (!st) return '';
+    const rows = storyRows(st).map((r) => {
+      const prog = r.done ? '✓ xong' : r.locked ? 'chưa tới' : r.q.unit === 'giây' ? `${Math.floor(r.cur / 60)}:${String(r.cur % 60).padStart(2, '0')} / ${Math.floor(r.need / 60)}:00` : `${r.cur}/${r.need}`;
+      return `<li class="${r.done ? 'done' : ''}${r.locked ? ' locked' : ''}"><div><b>${esc(r.q.ten)}</b><small>${esc(r.q.mo)}</small></div><div class="qs-r"><i class="qs-bar"><i style="width:${Math.round(r.cur / r.need * 100)}%"></i></i><span>${prog}</span><em>+${r.q.xp} điểm${r.q.sen ? ` · +${r.q.sen} sen` : ''}</em>${r.done ? '' : `<button type="button" class="qs-guide" data-q="${esc(r.q.id)}">Dẫn đường</button>`}</div></li>`;
+    }).join('');
+    return `<h4>Cốt truyện · Chăm sóc cây bồ đề</h4><ul>${rows}</ul>`;
+  }
   function drawBox() {
     const L = levelOf(prog.xp);
     lvBox.innerHTML = `<b>Cấp ${L.lv} · ${esc(L.ten)}</b><i class="qs-bar big"><i style="width:${L.pct}%"></i></i><span>${L.xp1 == null ? 'Cấp cao nhất' : `${L.xp} / ${L.xp1} điểm để lên cấp ${L.lv + 1}`}</span>`;
@@ -37,7 +47,7 @@ export function initQuest(hud, { toast = () => {}, addMerit = () => {}, pillHost
       const rows = st.filter((r) => r.q.loai === loai).map((r) => `<li class="${r.done ? 'done' : ''}"><div><b>${esc(r.q.ten)}</b><small>${esc(r.q.mo)}</small></div><div class="qs-r"><i class="qs-bar"><i style="width:${Math.round(r.cur / r.need * 100)}%"></i></i><span>${r.done ? '✓ xong' : `${r.cur}/${r.need}`}</span><em>+${r.q.xp} điểm · +${r.q.sen} sen</em>${r.done ? '' : `<button type="button" class="qs-guide" data-q="${esc(r.q.id)}">Dẫn đường</button>`}</div></li>`).join('');
       return `<h4>${title}</h4><ul>${rows}</ul>`;
     };
-    list.innerHTML = group('ngay', 'Hằng ngày (làm lại mỗi ngày)') + group('mot', 'Hành trình');
+    list.innerHTML = storyGroup() + group('ngay', 'Hằng ngày (làm lại mỗi ngày)') + group('mot', 'Hành trình');
   }
   const open = () => { drawBox(); box.hidden = false; box.querySelector('.qs-x').focus({ preventScroll: true }); };
   const close = () => { box.hidden = true; };
@@ -65,7 +75,7 @@ export function initQuest(hud, { toast = () => {}, addMerit = () => {}, pillHost
     if (after > before) { let bonus = 0; for (let l = before + 1; l <= after; l++) bonus += levelReward(l); if (bonus) addMerit(bonus); setTimeout(() => toast(`Chúc mừng! Bạn lên cấp ${after} · ${levelOf(prog.xp).ten}${bonus ? ` · thưởng ${bonus} hạt sen` : ''}`, 6000), 400); }
     drawPill(); if (!box.hidden) drawBox();
   };
-  LGT.act = act; LGT.quests = { get prog() { return prog; }, count: QUESTS.length };
+  LGT.act = act; LGT.quests = { get prog() { return prog; }, count: QUESTS.length, redraw() { if (!box.hidden) drawBox(); } };
   // đặt chân tới một nơi (sân chùa, chánh điện, làng, thác, rừng...) thì tính "đã ghé"
   setInterval(() => {
     drawPill();   // thẻ nhân vật có thể được dựng sau lần gọi đầu

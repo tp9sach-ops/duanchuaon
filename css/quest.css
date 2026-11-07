@@ -17,3 +17,4 @@
 .qs-r{display:flex;flex-direction:column;align-items:flex-end;gap:3px;min-width:96px;font-size:12px;color:#d6d9e4}.qs-r em{font-style:normal;color:#d9b25f;font-size:11px}
 .qs-note{margin:10px 0 0;font:400 11px/1.4 var(--sans,inherit);color:#9aa0b0}
 @media (max-width:899px){.qs-box{top:max(64px,calc(env(safe-area-inset-top) + 56px))}.qs-pill .qs-bar{width:30px}}
+.qs-list li.locked{opacity:.4}

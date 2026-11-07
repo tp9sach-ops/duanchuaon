@@ -53,6 +53,27 @@ export function objective(s) {
   }
 }
 
+/**
+ * Các bước cốt truyện dưới dạng "nhiệm vụ" để hiện trong bảng Nhiệm vụ (nhóm Cốt truyện) và để dẫn đường (js/world/questGuide.js).
+ * id 's-...' không trùng với QUESTS. reward = phần thưởng của bước đó (khớp REWARD bên dưới, giá trị tạm).
+ */
+export const STORY_QUESTS = [
+  { id: 's-meet', step: 'meet', ten: 'Gặp chú tiểu Minh', mo: 'Chú tiểu đang tập võ ở ngoài cổng chùa. Bấm vào chú để trò chuyện.', need: 1, unit: '', reward: REWARD.talkMeet },
+  { id: 's-abbot', step: 'abbot', ten: 'Gặp thầy Trụ trì', mo: 'Vào chánh điện thưa chuyện với thầy Trụ trì để nhận bình nước.', need: 1, unit: '', reward: REWARD.talkAbbot },
+  { id: 's-water1', step: 'water1', ten: 'Tưới cây bồ đề cổ', mo: 'Mang bình nước tới cây bồ đề cổ phía Tây chánh điện, bấm “Tưới cây”.', need: 1, unit: 'lần', reward: REWARD.water1 },
+  { id: 's-meditate', step: 'meditate', ten: 'Ngồi thiền ba phút', mo: 'Vào chánh điện, bấm “Thiền” và ngồi yên đủ 3 phút.', need: MEDITATE_SECONDS, unit: 'giây', reward: REWARD.meditate },
+  { id: 's-water2', step: 'water2', ten: 'Tưới cây cho vững gốc', mo: 'Tưới cây bồ đề thêm 3 lần để cây xanh trở lại, mở Khinh thân bậc 1.', need: WATER2_N, unit: 'lần', reward: REWARD.done },
+];
+export const isStoryQuest = (id) => STORY_QUESTS.some((q) => q.id === id);
+/** Hàng hiển thị cho bảng nhiệm vụ: { q:{id,ten,mo,xp,sen,step,unit}, cur, need, done, locked }. done = bước đã qua; locked = chưa tới bước đó. */
+export function storyRows(s) {
+  const at = STEPS.indexOf(s.step);
+  return STORY_QUESTS.map((q, i) => {
+    const done = at > i, locked = at < i, cur = done ? q.need : locked ? 0 : q.step === 'meditate' ? Math.floor(s.med) : q.step === 'water2' ? s.waters : 0;
+    return { q: { id: q.id, ten: q.ten, mo: q.mo, xp: q.reward.xp, sen: q.reward.sen, step: q.step, unit: q.unit }, cur, need: q.need, done, locked };
+  });
+}
+
 /** Có tưới được lúc này không: { ok, reason }. near = người chơi đang đứng trong tầm tưới. */
 export function canWater(s, near, now = Date.now()) {
   if (s.step !== 'water1' && s.step !== 'water2') return { ok: false, reason: 'idle' };

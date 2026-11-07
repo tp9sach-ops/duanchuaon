@@ -6,6 +6,7 @@ import { NPCS } from './npc.js';
 import { PLACES } from './outside.js';
 import { LOC_RADIUS } from './loc.js';
 import { insideHall, HALL_POINT } from '../ui/hudLogic.js';
+import { isStoryQuest, storyRows, emptyStory, WATER_SPOT } from './story.js';
 
 /** Chỗ đứng đi tới được (đã kiểm bằng test) cho từng nơi trong PLACES. */
 export const PLACE_STAND = {
@@ -35,6 +36,20 @@ const STATIC_STEPS = {
   'm-thac': () => [WAY_LANG, go(0, 104, 3, 'Đi dọc đường làng tới ngã ba, chỗ có đường mòn rẽ sang phải.'), go(PLACE_STAND.thacnuoc.x, PLACE_STAND.thacnuoc.z, 4, 'Rẽ phải, theo đường mòn tới thác nước.')],
   'm-rung': () => [WAY_LANG, go(0, 89, 3, 'Đi dọc đường làng tới ngã ba, chỗ có đường mòn rẽ sang trái.'), go(PLACE_STAND.rung.x, PLACE_STAND.rung.z, 4, 'Rẽ trái, theo đường mòn vào rừng thông.')],
 };
+
+/** Bước dẫn đường của các bước cốt truyện chương 1 (id 's-...', xem story.js). Nút 'tuoicay' do js/ui/story.js tạo. */
+function storySteps(id) {
+  const npc = (nid, text) => ({ text, npc: NPCS.find((n) => n.id === nid) });
+  const treeGo = go(WATER_SPOT.x, WATER_SPOT.z, 1.8, 'Đi tới cây bồ đề cổ ở phía Tây chánh điện (đứng phía Đông gốc cây).');
+  const water = tap('tuoicay', 'Bấm nút “Tưới cây” (hiện bên dưới thẻ mục tiêu), chờ nước rót xong.', false);
+  switch (id) {
+    case 's-meet': return [npc('chutieu', 'Đến gặp chú tiểu Minh ở ngoài cổng chùa (bấm vào chú, hoặc để mình dẫn tới).')];
+    case 's-abbot': return [npc('truru', 'Vào chánh điện gặp thầy Trụ trì (bấm vào thầy, hoặc để mình dẫn tới).')];
+    case 's-water1': case 's-water2': return [treeGo, water];
+    case 's-meditate': return [HALL_GO, tap('thien', 'Bấm “Thiền”, nhân vật tự ngồi vào bồ đoàn. Ngồi yên đủ 3 phút, thanh tiến độ ở thẻ mục tiêu.')];
+    default: return [];
+  }
+}
 
 /** Nhiệm vụ cần nhắm đích theo tình huống (người khác, nơi chưa ghé, hoa sen vàng). */
 const DYNAMIC = new Set(['n-npc', 'm-npc', 'm-dao', 'm-loc']);
@@ -71,11 +86,28 @@ function dynamicSteps(q, prog, pos, ctx) {
  *  target: { kind:'walk', x, z, r, label } | { kind:'npc', spot:'npc-<id>', x, z, r, label } | null.
  */
 export function planGuide(questId, prog, pos, ctx = {}) {
+  if (isStoryQuest(questId)) return storyGuide(questId, pos, ctx);
   const row = questStatus(prog, ctx.now || Date.now()).find((r) => r.q.id === questId); if (!row) return null;
   const q = row.q, base = { id: q.id, ten: q.ten, cur: row.cur, need: row.need };
   if (row.done) return { ...base, done: true, idx: 0, steps: [], target: null, tap: null, key: q.id + ':done', dist: null, wait: 0 };
   const raw = DYNAMIC.has(q.id) ? dynamicSteps(q, prog, pos, ctx) : (STATIC_STEPS[q.id] ? STATIC_STEPS[q.id]() : []);
   if (!raw.length) return { ...base, done: false, idx: 0, steps: [{ text: q.mo, state: 'now' }], target: null, tap: null, key: q.id + ':plain', dist: null, wait: 0 };
+  return buildPlan(base, q.id, raw, pos, ctx);
+}
+
+/** Dẫn đường cho bước cốt truyện. ctx.story = trạng thái cốt truyện (loadStory); thiếu thì coi như mới bắt đầu. */
+function storyGuide(id, pos, ctx) {
+  const row = storyRows(ctx.story || emptyStory()).find((r) => r.q.id === id), q = row.q, base = { id: q.id, ten: q.ten, cur: row.cur, need: row.need };
+  if (row.done) return { ...base, done: true, idx: 0, steps: [], target: null, tap: null, key: q.id + ':done', dist: null, wait: 0 };
+  if (row.locked) {
+    const prev = storyRows(ctx.story || emptyStory()).find((r) => !r.done);
+    return { ...base, done: false, idx: 0, steps: [{ text: `Chưa tới bước này. Hãy làm xong “${prev.q.ten}” trước.`, state: 'now' }], target: null, tap: null, key: q.id + ':locked', dist: null, wait: 0 };
+  }
+  return buildPlan(base, q.id, storySteps(id), pos, ctx);
+}
+
+/** Từ danh sách bước thô tạo kế hoạch: bước đang làm, đích, nút cần bấm. */
+function buildPlan(base, qid, raw, pos, ctx) {
   const last = raw.length - 1; let idx = Math.max(0, Math.min(last, ctx.idx | 0));
   const reached = (s) => s.go && (s.go.hall ? insideHall(pos) : D(pos, s.go) <= s.go.r);
   for (let j = last - 1; j >= idx; j--) if (reached(raw[j])) { idx = j + 1; break; }   // đã tới (hoặc đi lướt qua) mốc nào thì sang bước sau mốc đó
@@ -84,6 +116,6 @@ export function planGuide(questId, prog, pos, ctx = {}) {
   const cur = raw[idx]; let target = null;
   if (cur.go) target = { kind: 'walk', x: cur.go.x, z: cur.go.z, r: cur.go.r, label: cur.text };
   else if (cur.npc) target = { kind: 'npc', spot: 'npc-' + cur.npc.id, x: cur.npc.stand.x, z: cur.npc.stand.z, r: 2.2, label: cur.npc.ten };
-  const key = `${q.id}:${idx}:${target ? target.kind + ':' + (target.spot || `${target.x},${target.z}`) : 'none'}`;
+  const key = `${qid}:${idx}:${target ? target.kind + ':' + (target.spot || `${target.x},${target.z}`) : 'none'}`;
   return { ...base, done: false, idx, steps, target, tap: cur.tap || null, key, dist: target ? D(pos, target) : null, wait: cur.wait || 0 };
 }
