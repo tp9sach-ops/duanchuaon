@@ -221,3 +221,24 @@ export function pondSummary(st) {
   for (const f of st.pond) { const sp = speciesById(f.sp); if (!sp) continue; r[sp.loai] += 1; if (sp.hiem) r.hiem += 1; if (f.lon) r.lon += 1; }
   return r;
 }
+
+/** Lời nhắc theo giai đoạn của phiên câu (giao diện chữ, Phiên 45). */
+export function phaseText(phase, waterName = 'mặt nước') {
+  if (phase === 'wait') return `Đã thả cầu xuống ${waterName}. Chờ một chút…`;
+  if (phase === 'shadow') return 'Có bóng cá lướt qua dưới nước…';
+  if (phase === 'nibble') return 'Cá đang rỉa cầu. Chưa bấm vội!';
+  if (phase === 'lotus') return 'Hoa sen nở rồi — BẤM NGAY!';
+  return '';
+}
+/** Kết quả một lượt câu → câu báo. */
+export function outcomeText(outcome, fish) {
+  if (outcome === 'got') return `Bạn câu được ${fishLabel(fish)}!`;
+  if (outcome === 'early') return 'Bấm sớm quá, cá giật mình bỏ đi. Lần sau chờ hoa sen nở nhé.';
+  if (outcome === 'late') return 'Hoa sen đã khép, cá đã đi mất. Lần sau bấm nhanh hơn nhé.';
+  return '';
+}
+/** Mô tả ngắn một quả cầu cho cửa hàng: "bền 20 lần · may ×1 · hoa sen 0,5 giây". */
+export function orbBrief(orb) {
+  const n = (x) => String(x).replace('.', ',');
+  return `bền ${orb.ben} lần · may ×${n(orb.may)} · hoa sen ${n(orb.cua)} giây`;
+}
