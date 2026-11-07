@@ -12,7 +12,7 @@ Cách dùng: làm mục [ ] đầu tiên, xong báo ptg, CHỜ "tiếp tục". L
 [x] 1.2 (3c) ĐÃ LÀM Ở PHIÊN 48 (xem docs/PHIEN48.md; CHƯA nhìn trên trình duyệt thật). Cảnh 3D câu cá `js/scene/fishing.js` (cầu bay, vòng sóng, bóng cá giây 4, phao nhún, hoa sen đúng cửa sổ `orb.cua`); đọc `LGT.fishing.session`; nối `js/scene/index.js`; tôn trọng reduced-motion + PERF. CHƯA có file.
 [x] 1.3 (3d dạng chữ) Thu cá / Phóng sinh / Ao cá: nằm trong `js/ui/fishing.js`. (Hình 3D của ao cá riêng: chưa, không bắt buộc.)
 [x] 1.4 (3e) ĐÃ LÀM Ở PHIÊN 47 (xem docs/PHIEN47.md). Nhiệm vụ + hướng dẫn: `'cau'`, `'phongsinh'` vào `EVENT_TYPES` (quests.js), QUESTS `m-cau`/`m-phongsinh`/`n-phongsinh`, CHAIN (nextGoal.js), gọi `LGT.act('cau')`/`LGT.act('phongsinh')` trong ui/fishing.js, sửa `js/world/tutorial.js` dòng ~44 "Phóng sinh — sắp có" thành thật, cập nhật test đếm cứng. Hiện KHÔNG có chỗ nào gọi act câu cá/phóng sinh.
-[ ] 1.5 Nối Lạy Phật → `LGT.merit.reward('lay', n)` (hudMenu.js chỉ gọi `LGT.act('bow')`; chưa có reward 'lay').
+[x] 1.5 ĐÃ LÀM Ở PHIÊN 49 (xem docs/PHIEN49.md): bấm Lạy Phật trong chánh điện → `LGT.merit.reward('lay', DEN_MERIT.lay)` (1 hạt sen/lần, trần 10 lần/ngày; số 1 là GIÁ TRỊ TẠM, ptg chưa chốt). CHƯA nhìn trên trình duyệt thật.
 
 ## Giai đoạn 2 — Dọn lỗi nhỏ
 [x] 2.1 ĐÃ SỬA Ở PHIÊN 47: `js/world/minimap.js` hồ cá `x: 56` → `x: 60` (= `KOI.x`).
