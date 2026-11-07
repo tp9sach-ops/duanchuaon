@@ -1,0 +1,27 @@
+/* Câu cá bằng quả cầu gieo duyên (Phiên 45) — bám phong cách css/furni.css */
+.fs-box{position:absolute;left:50%;top:max(80px,calc(env(safe-area-inset-top) + 72px));transform:translateX(-50%);width:min(420px,calc(100vw - 24px));max-height:calc(100vh - 120px);display:flex;flex-direction:column;padding:12px 14px;border:1px solid rgba(241,219,160,.4);border-radius:16px;background:rgba(10,12,24,.92);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:#e8eaf2;z-index:12;pointer-events:auto}
+.fs-box[hidden]{display:none!important}
+.fs-box header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.fs-box h3{margin:0;font:600 18px/1.2 var(--serif,Georgia,serif);color:#fff}
+.fs-x{width:30px;height:30px;border-radius:50%;border:1px solid rgba(241,219,160,.5);background:transparent;color:#f1dba0;font-size:18px;line-height:1;cursor:pointer}
+.fs-tabs{display:flex;gap:6px;margin-bottom:6px}
+.fs-tab{flex:1;min-height:38px;border-radius:100px;border:1px solid rgba(241,219,160,.5);background:transparent;color:#f1dba0;font:600 14px/1 var(--sans,inherit);cursor:pointer}
+.fs-tab.on{background:rgba(217,178,95,.28);color:#fff}
+.fs-info{margin:2px 0 8px;font:400 13px/1.4 var(--sans,inherit);color:#e8dcc0}
+.fs-list{overflow:auto;-webkit-overflow-scrolling:touch;padding-right:2px}
+.fs-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.08)}
+.fs-t{font:400 13px/1.35 var(--sans,inherit)}.fs-t b{color:#fff}.fs-t span{color:#bdb39a}
+.fs-ctl{display:flex;flex-wrap:wrap;gap:6px}
+.fs-b{min-height:40px;padding:8px 14px;border-radius:100px;border:1px solid #f1db9f;background:rgba(217,178,95,.2);color:#fff;font:600 13px/1 var(--sans,inherit);cursor:pointer;white-space:nowrap}
+.fs-b.buy{border-color:#8fd6bf;background:rgba(143,214,191,.25)}
+.fs-b.sm{min-width:44px;padding:8px 10px}
+.fs-b:disabled{opacity:.4;cursor:default}
+.fs-b:focus-visible,.fs-tab:focus-visible,.fs-x:focus-visible,.fs-fab:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.fs-status{margin:10px 0;font:600 15px/1.4 var(--sans,inherit);color:#f1dba0;text-align:center}
+.fs-status.ok{color:#8fd6bf}
+.fs-hint{margin:6px 0;font:400 12px/1.4 var(--sans,inherit);color:#9aa0b0}
+.fs-tap{display:block;width:100%;min-height:64px;font-size:20px;border-color:#f1db9f;background:rgba(217,178,95,.18);transition:background .08s,transform .08s}
+.fs-tap.hot{background:rgba(143,214,191,.55);border-color:#fff;transform:scale(1.03)}
+.fs-fab{position:absolute;left:50%;bottom:max(120px,calc(env(safe-area-inset-bottom) + 104px));transform:translateX(-50%);z-index:11;min-height:44px;padding:10px 20px;border-radius:100px;border:1px solid #8fd6bf;background:rgba(10,12,24,.8);color:#fff;font:600 14px/1 var(--sans,inherit);cursor:pointer;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.fs-fab[hidden]{display:none}
+@media (prefers-reduced-motion:reduce){.fs-tap{transition:none}.fs-tap.hot{transform:none}}
