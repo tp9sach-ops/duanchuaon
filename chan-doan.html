@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Chẩn đoán kết nối máy chủ — Diệu Giang Tự</title>
+<style>body{font:15px/1.5 system-ui,sans-serif;margin:0;padding:14px;background:#0b0c12;color:#eee}h1{font-size:18px;color:#d9b25f;margin:0 0 8px}
+pre{white-space:pre-wrap;word-break:break-word;background:#15161f;border:1px solid #333;border-radius:8px;padding:10px;font-size:13px}
+button{font:inherit;padding:10px 16px;border-radius:8px;border:0;background:#d9b25f;color:#222;margin:6px 6px 6px 0}.ok{color:#7fd6a0}.bad{color:#ff8d8d}</style></head>
+<body>
+<h1>Chẩn đoán kết nối máy chủ (Apps Script)</h1>
+<p>Chờ vài giây cho chạy xong, rồi chụp toàn bộ màn hình gửi lại. Không có mật khẩu nào được gửi đi.</p>
+<button id="again">Chạy lại</button><button id="copy">Sao chép kết quả</button>
+<pre id="out">Đang chạy…</pre>
+<script type="module">
+import { CONFIG } from './js/config.js';
+const out = document.getElementById('out'), url = CONFIG.apiUrl, lines = [];
+const say = (t, cls) => { lines.push(t); out.innerHTML = lines.map((l) => esc(l)).join('\n'); };
+const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+const withTimeout = (fn, ms = 20000) => { const c = new AbortController(), t = setTimeout(() => c.abort(), ms); return fn(c.signal).finally(() => clearTimeout(t)); };
+async function test(name, fn) {
+  const t0 = Date.now();
+  try { const r = await fn(); say(`✔ ${name}  (${Date.now() - t0}ms)\n    ${r}`); }
+  catch (e) { say(`✘ ${name}  (${Date.now() - t0}ms)\n    ${e && e.name}: ${e && e.message}`); }
+}
+const snip = (s) => JSON.stringify(String(s).slice(0, 160));
+async function run() {
+  lines.length = 0; out.textContent = 'Đang chạy…';
+  say('Trang: ' + location.href);
+  say('Origin: ' + location.origin + ' | trong khung nhúng: ' + (window.top !== window.self) + ' | online: ' + navigator.onLine);
+  say('apiUrl: ' + url.slice(0, 60) + '…' + url.slice(-12));
+  say('Trình duyệt: ' + navigator.userAgent.slice(0, 110));
+  say('—');
+  await test('1. GET đọc được (CORS)', () => withTimeout(async (signal) => { const r = await fetch(url, { signal }); return r.status + ' ' + r.headers.get('content-type') + ' ' + snip(await r.text()); }));
+  await test('2. POST ping (text/plain) đọc được — giống hệt game', () => withTimeout(async (signal) => { const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'ping' }), signal, redirect: 'follow' }); return r.status + ' ' + r.headers.get('content-type') + ' ' + snip(await r.text()); }));
+  await test('3. POST acctLogin thử (khóa giả) — phải ra bad_login', () => withTimeout(async (signal) => { const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'acctLogin', name: 'chan doan', key: '0'.repeat(64) }), signal, redirect: 'follow' }); return r.status + ' ' + snip(await r.text()); }));
+  await test('4. POST kiểu no-cors (chỉ gửi, không đọc)', () => withTimeout(async (signal) => { const r = await fetch(url, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'ping' }), signal }); return 'đã gửi, loại phản hồi: ' + r.type; }));
+  await test('5. POST bằng XMLHttpRequest', () => new Promise((res, rej) => { const x = new XMLHttpRequest(); x.open('POST', url); x.setRequestHeader('Content-Type', 'text/plain;charset=utf-8'); x.timeout = 20000; x.onload = () => res(x.status + ' ' + snip(x.responseText)); x.onerror = () => rej(new Error('XHR bị chặn (CORS/mạng)')); x.ontimeout = () => rej(new Error('quá thời gian')); x.send(JSON.stringify({ action: 'ping' })); }));
+  say('—\nXong. Gửi lại ảnh chụp màn hình này.');
+}
+document.getElementById('again').onclick = run;
+document.getElementById('copy').onclick = () => navigator.clipboard && navigator.clipboard.writeText(lines.join('\n'));
+run();
+</script></body></html>
