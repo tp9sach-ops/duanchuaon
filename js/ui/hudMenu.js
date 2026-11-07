@@ -11,6 +11,8 @@ import { initMerit } from './merit.js';
 import { initLand } from './land.js';
 import { initHouse } from './house.js';
 import { initSkill } from './skill.js';
+import { initMinimap } from './minimap.js';
+import { initTutorial } from './tutorial.js';
 import { lifetimeSen } from '../world/merit.js';
 import { loadWallet, addSen } from '../engines/kinh.js';
 import { callApi, apiEnabled, getUserKey } from '../api.js';
@@ -95,6 +97,7 @@ export function initHudMenu(hud) {
   };
   const addMerit = (n) => { wallet = addSen(wallet, n); try { localStorage.setItem('lgt.wallet', JSON.stringify(wallet)); } catch (_) { /* bỏ qua */ } const b = root.querySelector('#hm-sen'); if (b) b.textContent = formatCount(wallet.sen); clearTimeout(scoreTimer); scoreTimer = setTimeout(pushScore, 4000); };
   LGT.addMerit = addMerit;
+  LGT.getSen = () => wallet.sen;   // Phiên 39: sổ tay hướng dẫn đọc số hạt sen để gợi ý việc kế tiếp
   /** Trừ hạt sen khi tiêu (đổi lá bồ đề...). Trả false nếu không đủ. */
   const spendMerit = (n) => {
     n = Math.floor(+n); if (!(n > 0) || wallet.sen < n) return false;
@@ -111,6 +114,7 @@ export function initHudMenu(hud) {
   try { initLand(hud, { toast }); } catch (e) { console.warn('[Diệu Giang Tự] Đất ở lỗi:', e && e.message); }   // đất ở + xóm (Phiên 36)
   try { initHouse(hud, { toast }); } catch (e) { console.warn('[Diệu Giang Tự] Vào nhà lỗi:', e && e.message); }   // nút Vào nhà / Ra ngoài (Phiên 38, 3d-2c)
   try { initStory(hud, { toast, addMerit }); } catch (e) { console.warn('[Diệu Giang Tự] Cốt truyện lỗi:', e && e.message); }   // hộp thoại + mục tiêu chương 1 (Phiên 32); lỗi thì NPC vẫn nói lời thường
+  try { initTutorial(hud, { toast }); } catch (e) { console.warn('[Diệu Giang Tự] Sổ tay hướng dẫn lỗi:', e && e.message); }   // hướng dẫn chơi + gợi ý việc kế tiếp (Phiên 39)
   try { initSkill(hud, { toast }); } catch (e) { console.warn('[Diệu Giang Tự] Kỹ năng lỗi:', e && e.message); }   // Khinh thân: phím Space / nút Nhảy khi đã mở bậc 1 (Phiên 4)
 
   // ---- bản đồ chùa (lối đi tới chương: liên kết #id, stage.js tự bắt và cho nhân vật đi tới)
@@ -121,6 +125,7 @@ export function initHudMenu(hud) {
   mapBox.querySelector('.hm-x').addEventListener('click', closeMap);
   mapBox.addEventListener('click', (e) => { if (e.target.closest('a')) closeMap(); });
   addEventListener('keydown', (e) => { if (e.key === 'Escape' && !mapBox.hidden) closeMap(); });
+  try { initMinimap(hud, { toast, onList: openMap, onHelp: () => LGT.tutorial && LGT.tutorial.open() }); } catch (e) { console.warn('[Diệu Giang Tự] Bản đồ nhỏ lỗi:', e && e.message); }   // bản đồ nhỏ + bản đồ lớn (Phiên 39)
 
   // ---- hành động theo kết quả logic
   async function share() {
@@ -134,8 +139,8 @@ export function initHudMenu(hud) {
   function press(item) {
     const r = pressResult(item);
     if (r.kind === 'soon') return toast(r.text, 3200);
-    if (r.kind === 'map') return mapBox.hidden ? openMap() : closeMap();
-    if (r.kind === 'help') return toast(HELP_TEXT, 8000);
+    if (r.kind === 'map') { if (LGT.minimap) { closeMap(); return LGT.minimap.toggleBig(); } return mapBox.hidden ? openMap() : closeMap(); }   // Phiên 39: bản đồ lớn có chấm; danh sách điểm đến cũ mở từ nút trong bản đồ
+    if (r.kind === 'help') return LGT.tutorial ? LGT.tutorial.toggle() : toast(HELP_TEXT, 8000);   // Phiên 39: sổ tay hướng dẫn
     if (r.kind === 'share') return share();
     if (r.kind === 'bow' || r.kind === 'meditate') {
       if (LGT.panelOpen || !LGT.world) return;

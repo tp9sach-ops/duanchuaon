@@ -74,6 +74,7 @@ export function initLand(hud, { toast = () => {} } = {}) {
     if (!(LGT.merit && LGT.merit.spendLa(r.cost))) { toast('Chưa đủ lá bồ đề.', 2500); return; }
     land = r.land; save(); placeHouse(); draw();
     toast(`Chúc mừng! Bạn đã có đất ở Xóm ${r.xom}, Lô ${pick}. Nhà trống thô sơ được tặng.`, 6000);
+    if (LGT.act) LGT.act('muadat');   // nhiệm vụ “Có mảnh đất đầu tiên” (Phiên 39)
   }
   function upgrade(to) {   // Phiên 37 3c: trừ lá RỒI mới đổi cấp (thiếu lá thì không đổi gì)
     const r = upgradeHouse(land, leaves(), reg(), to);
@@ -81,6 +82,7 @@ export function initLand(hud, { toast = () => {} } = {}) {
     if (!(LGT.merit && LGT.merit.spendLa(r.cost))) { toast('Chưa đủ lá bồ đề.', 2500); return; }
     land = r.land; save(); placeHouse(); draw();
     toast(`Nhà của bạn đã lên ${houseLevel(to).ten}! (−${r.cost} lá bồ đề)`, 6000);
+    if (LGT.act) LGT.act('nangnha');   // nhiệm vụ “Nâng cấp nhà lần đầu” (Phiên 39)
   }
   prev.addEventListener('click', () => { const s = setView(land, (land.view || 1) - 1, reg()); if (s.ok) { land = s.land; save(); placeHouse(); draw(); } });
   next.addEventListener('click', () => { const s = setView(land, (land.view || 1) + 1, reg()); if (s.ok) { land = s.land; save(); placeHouse(); draw(); } });

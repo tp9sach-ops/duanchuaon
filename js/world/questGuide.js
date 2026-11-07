@@ -20,6 +20,7 @@ const D = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
 const go = (x, z, r, text, extra = {}) => ({ text, go: { x, z, r, ...extra } });
 const tap = (id, text, hall = true) => ({ text, tap: id, hall });
 const HALL_GO = go(HALL_POINT.x, HALL_POINT.z, 1.5, 'Đi vào chánh điện (bậc thềm phía sau Tam quan, thẳng lối giữa).', { hall: true });
+const npcStep = (nid, text) => ({ text, npc: NPCS.find((n) => n.id === nid) });
 const WAY_LANG = go(0, 62, 3, 'Đi qua Tam quan, theo đường đá ra phía làng.');
 
 /** Các bước cố định của từng nhiệm vụ. Bước `go` tự dẫn đi; bước `tap` chỉ nút cần bấm (nút sẽ nhấp nháy). Bước cuối luôn là việc cần làm. */
@@ -32,6 +33,9 @@ const STATIC_STEPS = {
   'n-thien': () => [HALL_GO, tap('thien', 'Bấm “Thiền”. Nhân vật tự ngồi vào bồ đoàn gần nhất.')],
   'm-niem': () => [HALL_GO, tap('trenghat', 'Bấm “Tràng hạt”, rồi bấm “Lần một hạt” cho đủ 108 hạt (một vòng).')],
   'm-den': () => [tap('den', 'Bấm biểu tượng ngọn đèn (cụm nút tròn góc phải-trên), viết điều nguyện, bấm “Thả đèn nguyện”.', false)],
+  'm-doila': () => [npcStep('trikhach', 'Gặp Thầy Tri khách ở trước Nhà Khách (bấm vào thầy, hoặc để mình dẫn tới): bảng “Đổi lá bồ đề” tự mở, bấm “Đổi 1 lá”.')],
+  'm-muadat': () => [WAY_LANG, npcStep('bacphuong', 'Ra làng, xuống đường phía Nam tới khu nhà ở, gặp Bác Tư khu phố (bấm vào bác). Chọn lô trống rồi bấm “Mua lô” (cần đủ lá bồ đề).')],
+  'm-nangnha': () => [WAY_LANG, npcStep('bacphuong', 'Gặp Bác Tư khu phố ở khu nhà ở và bấm nút “Nâng lên …” trong bảng đất ở (cần đủ lá bồ đề).')],
   'm-lang': () => [WAY_LANG, go(PLACE_STAND.lang.x, PLACE_STAND.lang.z, 4, 'Đi thẳng xuống đường làng cho tới khi thấy hai hàng nhà.')],
   'm-thac': () => [WAY_LANG, go(0, 104, 3, 'Đi dọc đường làng tới ngã ba, chỗ có đường mòn rẽ sang phải.'), go(PLACE_STAND.thacnuoc.x, PLACE_STAND.thacnuoc.z, 4, 'Rẽ phải, theo đường mòn tới thác nước.')],
   'm-rung': () => [WAY_LANG, go(0, 89, 3, 'Đi dọc đường làng tới ngã ba, chỗ có đường mòn rẽ sang trái.'), go(PLACE_STAND.rung.x, PLACE_STAND.rung.z, 4, 'Rẽ trái, theo đường mòn vào rừng thông.')],

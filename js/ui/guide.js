@@ -57,6 +57,6 @@ export function initGuide(hud, { toast = () => {} } = {}) {
   go.addEventListener('click', () => { if (plan && plan.target) walk(plan.target); });
   addEventListener('keydown', (e) => { if (e.key === 'Escape' && qid && !card.hidden && !LGT.panelOpen && document.activeElement === x) stop(); });
   setInterval(tick, 700);
-  LGT.guide = { start, stop, get active() { return qid; } };
+  LGT.guide = { start, stop, get active() { return qid; }, get target() { return qid && plan && plan.target ? plan.target : null; } };   // Phiên 39: bản đồ nhỏ vẽ dấu đích đang dẫn tới
   return LGT.guide;
 }

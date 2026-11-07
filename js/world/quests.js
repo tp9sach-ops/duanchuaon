@@ -3,8 +3,8 @@
 // Cách dùng: prog = loadProg(raw); r = record(prog, { type:'nhang', n:3 }, Date.now()); r.prog (lưu lại), r.done (nhiệm vụ vừa xong), r.levelUp.
 // Giao diện: js/ui/quest.js. Các nơi phát sự kiện gọi window.LGT.act(type, arg|n) (xem js/ui/quest.js).
 
-/** Các loại sự kiện hợp lệ. 'npc' và 'visit' có `arg` (id NPC / id điểm đến); 'nhang' có n = số nén. */
-export const EVENT_TYPES = ['nhang', 'bow', 'thien', 'kinh', 'niem', 'den', 'loc', 'npc', 'visit', 'chat'];
+/** Các loại sự kiện hợp lệ. 'npc' và 'visit' có `arg` (id NPC / id điểm đến); 'nhang' có n = số nén; 'doila' (đổi lá), 'muadat', 'nangnha' phát từ js/ui/merit.js và js/ui/land.js (Phiên 39). */
+export const EVENT_TYPES = ['nhang', 'bow', 'thien', 'kinh', 'niem', 'den', 'loc', 'npc', 'visit', 'chat', 'doila', 'muadat', 'nangnha'];
 
 /** Cấp độ: ngưỡng điểm tối thiểu để đạt cấp i+1 và danh hiệu. Cấp tối đa = số phần tử. */
 export const LEVELS = [
@@ -34,6 +34,9 @@ export const QUESTS = [
   { id: 'm-niem', loai: 'mot', ten: 'Lần đủ 108 hạt', mo: 'Bấm "Tràng hạt" và lần đủ một vòng.', dk: { key: 'niem', n: 1 }, xp: 30, sen: 3 },
   { id: 'm-nhang', loai: 'mot', ten: 'Hai mươi mốt nén hương', mo: 'Thắp tổng cộng 21 nén nhang.', dk: { key: 'nhang', n: 21 }, xp: 40, sen: 3 },
   { id: 'm-kinh', loai: 'mot', ten: 'Năm thời kinh', mo: 'Tụng trọn 5 lần kinh.', dk: { key: 'kinh', n: 5 }, xp: 50, sen: 4 },
+  { id: 'm-doila', loai: 'mot', ten: 'Đổi lá bồ đề đầu tiên', mo: 'Gặp Thầy Tri khách và đổi hạt sen lấy lá bồ đề (10 hạt = 1 lá).', dk: { key: 'doila', n: 1 }, xp: 30, sen: 2 },
+  { id: 'm-muadat', loai: 'mot', ten: 'Có mảnh đất đầu tiên', mo: 'Gom đủ lá bồ đề, gặp Bác Tư khu phố ở khu nhà ở và mua một lô đất (được tặng nhà trống).', dk: { key: 'muadat', n: 1 }, xp: 80, sen: 5 },
+  { id: 'm-nangnha', loai: 'mot', ten: 'Nâng cấp nhà lần đầu', mo: 'Nâng căn nhà trống lên nhà lầu hoặc cao hơn ở chỗ Bác Tư khu phố.', dk: { key: 'nangnha', n: 1 }, xp: 60, sen: 5 },
   { id: 'm-loc', loai: 'mot', ten: 'Nhận lộc hoa sen vàng', mo: 'Tìm hoa sen vàng trong chùa và nhận lộc.', dk: { key: 'loc', n: 1 }, xp: 20, sen: 2 },
 ];
 export const questById = (id) => QUESTS.find((q) => q.id === id) || null;

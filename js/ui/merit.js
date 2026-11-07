@@ -34,6 +34,7 @@ export function initMerit(hud, { toast = () => {}, addMerit = () => {}, getSen =
     if (!r.ok) { toast(r.reason === 'poor' ? `Chưa đủ hạt sen: cần ${r.cost} hạt.` : 'Số lá không hợp lệ.', 2800); return; }
     if (!spendSen(r.cost)) { toast('Chưa đủ hạt sen.', 2500); return; }
     leaf = r.leaf; save(); draw(); toast(`Đã đổi ${n} lá bồ đề (trừ ${r.cost} hạt sen).`, 3200);
+    if (LGT.act) LGT.act('doila');   // nhiệm vụ “Đổi lá bồ đề đầu tiên” (Phiên 39)
   }
   const open = () => { draw(); box.hidden = false; (b1.disabled ? x : b1).focus({ preventScroll: true }); };
   const close = () => { box.hidden = true; };
