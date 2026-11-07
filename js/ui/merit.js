@@ -44,9 +44,11 @@ export function initMerit(hud, { toast = () => {}, addMerit = () => {}, getSen =
   let last = Date.now();
   setInterval(() => {
     const now = Date.now(), dt = (now - last) / 1000; last = now;
-    const W = LGT.world; if (!W || W.mode !== 'meditate' || document.hidden) return;
-    const r = addMeditation(leaf, dt, now); leaf = r.leaf; save();
-    if (r.sen) { addMerit(r.sen); toast(`Ngồi thiền yên tĩnh: +${r.sen} hạt sen.`, 2800); }
+    const W = LGT.world; if (!W || W.mode !== 'meditate') return;   // Phiên 38: treo web / đổi tab vẫn tính giờ thiền
+    let sen = 0;                                                    // ở nền, nhịp hẹn giờ bị trình duyệt giãn ra → chia thành từng đoạn ≤2 giây (logic chặn trần 2 giây/lần), tổng tối đa 120 giây mỗi nhịp
+    for (let left = Math.min(Math.max(dt, 0), 120); left > 0; left -= 2) { const r = addMeditation(leaf, Math.min(left, 2), now); leaf = r.leaf; sen += r.sen; }
+    save();
+    if (sen) { addMerit(sen); toast(`Ngồi thiền yên tĩnh: +${sen} hạt sen.`, 2800); }
     if (!box.hidden) draw();
   }, 1000);
 

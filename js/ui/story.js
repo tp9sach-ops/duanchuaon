@@ -46,11 +46,12 @@ export function initStory(hud, { toast = () => {}, addMerit = () => {} } = {}) {
     watering = true; drawAct(); toast('Bạn nhẹ tay tưới nước vào gốc cây…', 1500);
     setTimeout(() => { watering = false; if (nearNow()) commit({ type: 'water', near: true }); else toast('Bạn đã rời xa cây, nước chưa tới gốc.', 2500); drawAct(); }, WATER_MS);
   });
-  // đếm giờ thiền: chỉ khi đang ngồi thiền ở bồ đoàn và tab đang mở; mỗi nhịp cộng thời gian thật (logic tự chặn trần 2 giây/lần)
+  // đếm giờ thiền: chỉ khi đang ngồi thiền ở bồ đoàn (tab ẩn vẫn đếm); mỗi nhịp cộng thời gian thật (logic tự chặn trần 2 giây/lần)
   let lastTick = Date.now();
   setInterval(() => {
     const now = Date.now(), dt = (now - lastTick) / 1000; lastTick = now; drawAct();
-    const W = LGT.world; if (story.step === 'meditate' && W && W.mode === 'meditate' && !document.hidden && dt > 0) commit({ type: 'meditate', dt });
+    const W = LGT.world;                                            // Phiên 38: treo web / đổi tab vẫn đếm giờ thiền (chia đoạn ≤2 giây, tổng tối đa 120 giây mỗi nhịp)
+    if (W && W.mode === 'meditate' && dt > 0) for (let left = Math.min(dt, 120); left > 0 && story.step === 'meditate'; left -= 2) commit({ type: 'meditate', dt: Math.min(left, 2) });
   }, 500);
   const fmt = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
   obj.addEventListener('click', () => { expanded = !expanded; drawObj(); });
