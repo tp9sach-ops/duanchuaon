@@ -274,6 +274,7 @@ export function initSound() {
     btn.dataset.state = playing ? 'playing' : want ? 'blocked' : 'off';
     btn.setAttribute('aria-label', playing ? 'Tắt âm thanh nền' : want ? 'Bật âm thanh nền (trình duyệt đang chặn, chạm để bật)' : 'Bật âm thanh nền');
     invite.hidden = !(want && !playing);
+    if ('mediaSession' in navigator) navigator.mediaSession.playbackState = playing ? 'playing' : 'paused';
   };
   const goPlaying = () => {
     playing = true; master.gain.setTargetAtTime(1, ctx.currentTime, 0.35);
@@ -314,10 +315,22 @@ export function initSound() {
   }
   if (want) EVS.forEach((n) => addEventListener(n, onGesture, true));
 
-  document.addEventListener('visibilitychange', () => {              // đổi tab / khóa màn hình: tạm dừng nhạc cho đỡ tốn pin
-    if (!el || !playing) return;
-    if (document.hidden) el.pause(); else el.play().catch(() => { playing = false; render(); });
-  });
+  // Chạy nền (Phiên 38): đổi tab / thu nhỏ / khóa màn hình thì nhạc VẪN PHÁT, không tạm dừng. Chỉ khi quay lại mà hệ điều hành đã tự ngưng thì đánh thức lại.
+  const wake = () => {
+    if (!playing || !ctx) return;
+    if (ctx.state !== 'running') ctx.resume().catch(() => { /* chờ lần chạm sau */ });
+    if (el && el.paused) el.play().catch(() => { /* chờ lần chạm sau */ });
+  };
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) wake(); });
+  addEventListener('pageshow', wake); addEventListener('focus', wake);
+  setInterval(() => { if (document.hidden) wake(); }, 4000);          // ở nền: nếu bị ngưng bất ngờ (iOS/Android) thì tự bật lại
+  if ('mediaSession' in navigator) {                                  // thẻ điều khiển nhạc ở màn hình khóa/thông báo: giúp điện thoại giữ nhạc chạy nền
+    try {
+      navigator.mediaSession.metadata = new MediaMetadata({ title: 'Nhạc nền chùa', artist: 'Diệu Giang Tự', album: 'Diệu Giang Tự' });
+      navigator.mediaSession.setActionHandler('play', () => { if (!playing) btn.click(); });
+      navigator.mediaSession.setActionHandler('pause', () => { if (playing) btn.click(); });
+    } catch (_) { /* trình duyệt cũ không hỗ trợ */ }
+  }
 
   render();
   soundCtl = { attempt, get playing() { return playing; }, get state() { return btn.dataset.state; } };
