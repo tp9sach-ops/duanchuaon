@@ -25,19 +25,21 @@ async function classifyFetchFailure() {
 /** opts.keepalive: cho phép yêu cầu hoàn tất cả khi trang đang đóng (dùng khi lưu tài khoản lúc rời trang; gói ≤ 64KB). */
 export async function callApi(action, payload = {}, opts = {}) {
   if (!apiEnabled()) return { ok: false, error: 'api_disabled' };
-  let lastErr = 'unknown';
+  let lastErr = 'unknown', lastDetail = '';
   for (let attempt = 0; attempt <= CONFIG.apiRetries; attempt++) {
     const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), timeoutFor(action));
-    let res;
+    let res, body = '';
     try {
+      body = JSON.stringify({ action, ...payload });
       res = await fetch(CONFIG.apiUrl, {
         method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action, ...payload }), signal: ctl.signal, redirect: 'follow', keepalive: !!opts.keepalive,
+        body, signal: ctl.signal, redirect: 'follow', keepalive: !!opts.keepalive,
       });
     } catch (e) {
       clearTimeout(timer);
       if (e && e.name === 'AbortError') { lastErr = 'timeout'; continue; }
       lastErr = await classifyFetchFailure();
+      try { lastDetail = [action, Math.round(body.length / 1024) + 'KB', location.origin, window.top === window.self ? 'top' : 'khung', e && e.message].join(' | '); } catch (_) { lastDetail = String(e && e.message); }   // chi tiết để chẩn đoán
       if (lastErr === 'blocked') break;                 // lỗi do cấu hình Apps Script: thử lại vô ích
       continue;
     }
@@ -49,7 +51,7 @@ export async function callApi(action, payload = {}, opts = {}) {
       lastErr = 'bad_response'; break;
     } catch (_) { lastErr = 'bad_response'; break; }     // trả về HTML (trang lỗi/đăng nhập của Google) chứ không phải JSON
   }
-  return { ok: false, error: lastErr }; // giao diện vẫn chạy, chỉ tắt phần cần API
+  return { ok: false, error: lastErr, detail: lastDetail }; // giao diện vẫn chạy, chỉ tắt phần cần API
 }
 
 // userKey = UUID tạo ở client, lưu localStorage (không bắt đăng nhập)
