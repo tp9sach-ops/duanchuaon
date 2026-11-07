@@ -11,13 +11,13 @@ Cách dùng: làm mục [ ] đầu tiên, xong báo ptg, CHỜ "tiếp tục". L
 [x] 1.1 (3b) Bảng Câu cá + mua/chọn/sửa cầu: `js/ui/fishing.js`, `css/fishing.css`, nút `cauca` ở cụm phải-trên. Phiên 45 viết; **Phiên 46 sửa lỗi tải nhầm thư mục** (xem docs/PHIEN46.md).
 [ ] 1.2 (3c) Cảnh 3D câu cá `js/scene/fishing.js` (cầu bay, vòng sóng, bóng cá giây 4, phao nhún, hoa sen đúng cửa sổ `orb.cua`); đọc `LGT.fishing.session`; nối `js/scene/index.js`; tôn trọng reduced-motion + PERF. CHƯA có file.
 [x] 1.3 (3d dạng chữ) Thu cá / Phóng sinh / Ao cá: nằm trong `js/ui/fishing.js`. (Hình 3D của ao cá riêng: chưa, không bắt buộc.)
-[ ] 1.4 (3e) Nhiệm vụ + hướng dẫn: `'cau'`, `'phongsinh'` vào `EVENT_TYPES` (quests.js), QUESTS `m-cau`/`m-phongsinh`/`n-phongsinh`, CHAIN (nextGoal.js), gọi `LGT.act('cau')`/`LGT.act('phongsinh')` trong ui/fishing.js, sửa `js/world/tutorial.js` dòng ~44 "Phóng sinh — sắp có" thành thật, cập nhật test đếm cứng. Hiện KHÔNG có chỗ nào gọi act câu cá/phóng sinh.
+[x] 1.4 (3e) ĐÃ LÀM Ở PHIÊN 47 (xem docs/PHIEN47.md). Nhiệm vụ + hướng dẫn: `'cau'`, `'phongsinh'` vào `EVENT_TYPES` (quests.js), QUESTS `m-cau`/`m-phongsinh`/`n-phongsinh`, CHAIN (nextGoal.js), gọi `LGT.act('cau')`/`LGT.act('phongsinh')` trong ui/fishing.js, sửa `js/world/tutorial.js` dòng ~44 "Phóng sinh — sắp có" thành thật, cập nhật test đếm cứng. Hiện KHÔNG có chỗ nào gọi act câu cá/phóng sinh.
 [ ] 1.5 Nối Lạy Phật → `LGT.merit.reward('lay', n)` (hudMenu.js chỉ gọi `LGT.act('bow')`; chưa có reward 'lay').
 
 ## Giai đoạn 2 — Dọn lỗi nhỏ
-[ ] 2.1 `js/world/minimap.js` dòng 70: hồ cá vẽ `x: 56`, đúng là `KOI.x = 60` (đã xác nhận còn lỗi).
+[x] 2.1 ĐÃ SỬA Ở PHIÊN 47: `js/world/minimap.js` hồ cá `x: 56` → `x: 60` (= `KOI.x`).
 [ ] 2.2 Test lỗi thoáng qua (Phiên 43 gặp 1 lần). Phiên 46 chạy 1 lần: 575/575 đạt; chưa chạy nhiều lần.
-[ ] 2.3 (ptg làm tay) xóa file lạc: `phien26.patch`, `PHIEN31.md`, `PHIEN33.md`, `landscape.js` (gốc), `docs/PHIEN42_BAN_GIAO (2).md`, `docs/PHIEN42_BAN_GIAO (3).md`. `HANDOFF.md` gốc đã cũ (chỉ giữ để tra). Đã hết file lạc `js/fishing.js`, `js/hudMenu.js`, `js/menuLogic.js` (Phiên 46 chuyển đúng chỗ).
+[ ] 2.3 (ptg làm tay) xóa file lạc: `js/fishing.js`, `js/hudMenu.js`, `js/menuLogic.js` (Phiên 47 đã đối chiếu: 3 file này TRÙNG KHÍT bản đúng trong `js/ui/`, xóa không mất gì), `phien26.patch`, `PHIEN31.md`, `PHIEN33.md`, `landscape.js` (gốc), `docs/PHIEN42_BAN_GIAO (2).md`, `docs/PHIEN42_BAN_GIAO (3).md`. `HANDOFF.md` gốc đã cũ (chỉ giữ để tra). Đã hết file lạc `js/fishing.js`, `js/hudMenu.js`, `js/menuLogic.js` (Phiên 46 chuyển đúng chỗ).
 
 ## Giai đoạn 3 — Nhà và nội thất
 [ ] 3.1 Thử Chromium: vào/ra 4 cấp nhà, nút #house-btn không che menu điện thoại, camera trong phòng. (ptg thử trên máy thật.)
