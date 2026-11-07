@@ -8,7 +8,7 @@ export const LAND_LA = 100;                // giá một lô đất (lá bồ đ
 export const MED_SECONDS_PER_SEN = 180;    // ngồi thiền: cứ 3 phút thật được 1 hạt sen
 export const DAILY_CAP = { thien: 10 };
 /** Phiên 41: hạt sen từ lạy Phật (lay), cúng/thả đèn nguyện (cung), thắp nhang (nhang): mỗi việc tối đa 10 lần được thưởng mỗi ngày (ptg chốt 07/11). */
-export const ACT_CAP = { lay: 10, cung: 10, nhang: 10 };    // trần hạt sen mỗi ngày theo nguồn (để cày có nhịp, không vô hạn)
+export const ACT_CAP = { lay: 10, cung: 10, nhang: 10, phongsinh: 10 };    // trần hạt sen mỗi ngày theo nguồn (để cày có nhịp, không vô hạn)
 const MAX_DT = 2;                          // mỗi lần cộng giờ thiền tối đa 2 giây (chống cộng dồn)
 const MAX_LA = 1e7;
 
@@ -71,7 +71,7 @@ export function addMeditation(leaf, dt, now = Date.now()) {
 }
 
 /**
- * Xin thưởng hạt sen cho một lần lạy/cúng/nhang (Phiên 41). kind: 'lay' | 'cung' | 'nhang'. Mỗi loại tối đa ACT_CAP lần mỗi ngày (sang ngày mới thì đếm lại).
+ * Xin thưởng hạt sen cho một lần lạy/cúng/nhang (Phiên 41). kind: 'lay' | 'cung' | 'nhang' | 'phongsinh' (Phiên 44: thả cá phóng sinh, trần 10 lần/ngày là mặc định đề xuất, ptg chưa chốt). Mỗi loại tối đa ACT_CAP lần mỗi ngày (sang ngày mới thì đếm lại).
  * Trả { ok, used (số lần đã dùng hôm nay, kể cả lần này), left (còn mấy lần), leaf (mới) }. Hết lượt hoặc loại lạ: ok=false, leaf giữ nguyên. Không sửa đầu vào.
  */
 export function claimAct(leaf, kind, now = Date.now()) {
