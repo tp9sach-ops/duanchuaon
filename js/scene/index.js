@@ -134,6 +134,7 @@ export function createScene(canvas, { onProgress, onPick, onArrive } = {}) {
   // Chế độ đi bộ (mặc định). Thêm ?rail=1 vào địa chỉ để quay lại chế độ camera bay cũ.
   const useRail = new URLSearchParams(location.search).get('rail') === '1';
   const world = useRail ? null : createWorld({ scene, camera, canvas, coarse, LGT, onArrive });
+  LGT.view = { camera, canvas };   // Phiên 43: chế độ chỉnh sửa trong nhà cần camera + canvas để chọn đồ bằng chuột
 
   // --- PERF governor (logic ở perfLogic.js, có test): bậc 0 = đầy đủ … 5 = nhẹ nhất; chỉ hạ, nhớ bậc đã hạ 7 ngày. ?perf=N (0–5) ép cố định.
   const store = (() => { try { return window.localStorage; } catch { return null; } })();

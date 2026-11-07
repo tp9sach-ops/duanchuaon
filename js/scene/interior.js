@@ -144,16 +144,43 @@ export function buildInterior() {
     for (const c of [...room.children]) { room.remove(c); c.traverse((o) => { if (o.isMesh && (o.userData.own || (o.geometry && o.geometry !== BOX && o.geometry !== CYL && o.geometry !== BALL))) o.geometry.dispose(); }); }
   }
 
+  // Phiên 43: chế độ chỉnh sửa — nhóm 3D của từng món người chơi đặt (theo uid) + khung viền chọn
+  const items = new Map();   // uid → { g, f }
+  const sel = new THREE.LineSegments(new THREE.EdgesGeometry(BOX), new THREE.LineBasicMaterial({ color: 0x8fd6bf, depthTest: false, transparent: true }));
+  sel.renderOrder = 20; sel.visible = false; group.add(sel);
+  const FLOOR = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), TMP = new THREE.Vector3();
+  const outline = (f, x, z, ok) => { sel.visible = true; sel.scale.set(f.rw || f.w, f.h + 0.06, f.rd || f.d); sel.position.set(x, (f.h + 0.06) / 2 - 0.01, z); sel.material.color.setHex(ok ? 0x8fd6bf : 0xff6a5a); };
+  /** Món người chơi đặt mà tia `ray` (THREE.Ray, tọa độ thế giới) trúng đầu tiên → uid, hoặc 0. */
+  function pickItem(raycaster) {
+    const gs = [...items.values()].map((o) => o.g); if (!gs.length || !shown) return 0;
+    const hit = raycaster.intersectObjects(gs, true)[0]; if (!hit) return 0;
+    for (let o = hit.object; o; o = o.parent) if (o.userData && o.userData.uid) return o.userData.uid;
+    return 0;
+  }
+  /** Điểm trên sàn (tọa độ cục bộ của phòng) mà tia trúng, hoặc null. */
+  function floorPoint(ray) { const h = ray.intersectPlane(FLOOR, TMP); return h ? { x: h.x - INTERIOR.x, z: h.z - INTERIOR.z } : null; }
+  /** Chọn món uid (hiện khung viền); 0 = bỏ chọn. */
+  function select(uid) { const o = items.get(uid); if (!o) { sel.visible = false; return false; } outline(o.f, o.g.position.x, o.g.position.z, true); return true; }
+  /** Tạm dời/xoay món uid tới (x,z,rot 0..3) để xem trước khi kéo (chưa lưu); ok=false → viền đỏ. */
+  function ghost(uid, x, z, rot, ok) {
+    const o = items.get(uid); if (!o) return;
+    o.g.position.x = x; o.g.position.z = z; o.g.rotation.y = (rot | 0) * Math.PI / 2;
+    const q = rot % 2 ? { rw: o.f.d, rd: o.f.w } : { rw: o.f.w, rd: o.f.d }; outline({ ...o.f, ...q }, x, z, ok);
+  }
+  /** Tọa độ cục bộ hiện tại của món uid (để tính độ lệch khi bắt đầu kéo). */
+  const itemPos = (uid) => { const o = items.get(uid); return o ? { x: o.g.position.x, z: o.g.position.z } : null; };
+
   let cur = -1, night = 0, shown = false;
   const light = () => { const on = shown ? 1 : 0; L1.intensity = on * (16 + 10 * night); L2.intensity = on * (7 + 7 * night); };
   /** Hiện phòng của cấp nhà `lv` (0..3) cùng các món người chơi đã đặt `placed` (furniture.toFurniture; mặc định phòng trống). Gọi lại khi nâng cấp nhà hoặc đổi bố trí để dựng lại. */
   function show(lv, placed = []) {
     const r = ROOMS[Math.max(0, Math.min(ROOMS.length - 1, lv | 0))], all = [...r.furniture, ...placed];
-    clear(); shell(r);
+    clear(); shell(r); items.clear(); sel.visible = false;
     for (const f of all) {
       const g = new THREE.Group(); let y = 0;
       if (f.kind === 'lamp') { const t = all.find((o) => o.kind === 'table' && Math.abs(o.x - f.x) <= (o.rw || o.w) / 2 && Math.abs(o.z - f.z) <= (o.rd || o.d) / 2); if (t) y = t.h; }
       g.position.set(f.x, y, f.z); g.rotation.y = f.ry || 0; (furn[f.kind] || fallback)(f, g, all); room.add(g);
+      if (f.uid) { g.userData.uid = f.uid; items.set(f.uid, { g, f }); }
     }
     cur = r.lv; shown = true; group.visible = true; light();
   }
@@ -161,8 +188,8 @@ export function buildInterior() {
   function buildItem(f) { const g = new THREE.Group(); (furn[f.kind] || fallback)(f, g, [f]); return g; }
   /** Giải phóng hình riêng của nhóm do buildItem tạo (hình hộp/trụ/cầu dùng chung thì giữ lại). */
   function disposeItem(g) { g.traverse((o) => { if (o.isMesh && o.geometry && (o.userData.own || (o.geometry !== BOX && o.geometry !== CYL && o.geometry !== BALL))) o.geometry.dispose(); }); }
-  function hide() { shown = false; doorLeaf = null; group.visible = false; light(); }
+  function hide() { shown = false; doorLeaf = null; sel.visible = false; items.clear(); group.visible = false; light(); }
   /** n = 0 (ngày) … 1 (đêm): kính cửa sổ tối dần, đèn trong nhà sáng hơn. */
   function update(n = 0) { if (Math.abs(n - night) < 0.01) return; night = n; winMat.color.setHex(0xbfe3ff).lerp(new THREE.Color(0x1a2b48), night); if (shown) light(); }
-  return { group, show, hide, update, setDoorOpen, buildItem, disposeItem, get level() { return cur; }, get shown() { return shown; } };
+  return { group, show, hide, update, setDoorOpen, buildItem, disposeItem, pickItem, floorPoint, select, ghost, itemPos, get level() { return cur; }, get shown() { return shown; } };
 }
