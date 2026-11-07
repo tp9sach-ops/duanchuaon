@@ -173,3 +173,20 @@ export function rotateItem(st, lv, uid) {
   }
   return { ok: false, reason: 'blocked', st };
 }
+
+// ---- Phiên 43: chế độ chỉnh sửa trong nhà (kéo bằng chuột / xoay bằng cuộn chuột)
+/** Làm tròn về lưới `step` mét (mặc định 5 cm) để món nằm gọn, không lệch lẻ. */
+export const snap = (v, step = 0.05) => Math.round(Math.round(v / step) * step * 100) / 100;
+/** Kẹp tâm món `id` (xoay rot) vào trong phòng cấp lv: kéo sát tường thì món dính vào tường thay vì báo lỗi. Trả { x, z } đã làm tròn lưới. */
+export function clampPose(lv, id, x, z, rot = 0) {
+  const f = furnitureById(id), room = roomFor(lv); if (!f) return { x: +x || 0, z: +z || 0 };
+  const { rw, rd } = footprint(f, rot), mx = room.w / 2 - WALL_GAP - rw / 2, mz = room.d / 2 - WALL_GAP - rd / 2;
+  return { x: snap(Math.max(-mx, Math.min(mx, +x || 0))), z: snap(Math.max(-mz, Math.min(mz, +z || 0))) };
+}
+/** Đặt món đã đặt `uid` về vị trí (x,z) và hướng rot trong một bước (dùng khi thả chuột). Trả { ok, reason (như canPlace hoặc 'missing'), st }; không đặt được thì st giữ nguyên. */
+export function setPose(st, lv, uid, x, z, rot) {
+  const p = st.placed.find((q) => q.uid === uid); if (!p) return { ok: false, reason: 'missing', st };
+  const r = int(rot, 0, 3), c0 = clampPose(lv, p.id, x, z, r), c = canPlace(lv, st.placed, p.id, c0.x, c0.z, r, uid);
+  if (!c.ok) return { ok: false, reason: c.reason, st };
+  return { ok: true, reason: '', st: { ...st, placed: st.placed.map((q) => (q.uid === uid ? { ...q, x: c0.x, z: c0.z, rot: r } : q)) } };
+}
