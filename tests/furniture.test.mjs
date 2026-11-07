@@ -73,9 +73,10 @@ test('tự đặt: tìm chỗ trống hợp lệ, không chặn cửa, hết ch�
   let full = emptyFurni(); full = { ...full, owned: { 'ghe-dau': 99 } };
   for (let i = 0; i < MAX_PLACED[0]; i++) { const r = autoPlace(full, 0, 'ghe-dau'); assert.ok(r.ok); full = r.st; }
   assert.equal(autoPlace(full, 0, 'ghe-dau').reason, 'full');
-  let big = { ...emptyFurni(), owned: { 'sofa-dai': 9 } }, n = 0;
-  for (let i = 0; i < 9; i++) { const r = autoPlace(big, 0, 'sofa-dai'); if (!r.ok) { assert.equal(r.reason, 'nospace'); break; } big = r.st; n++; }
-  assert.ok(n >= 1 && n < 9, 'phòng nhỏ không chứa hết sofa dài');
+  // Phiên 42: phòng rộng gấp 3 nên 9 sofa dài đặt vừa; kiểm: đặt liên tục thì cuối cùng phải báo hết chỗ ('nospace') hoặc đầy số món ('full'), không đặt vô hạn
+  let big = { ...emptyFurni(), owned: { 'sofa-dai': 99 } }, n = 0, last = '';
+  for (let i = 0; i < 99; i++) { const r = autoPlace(big, 0, 'sofa-dai'); if (!r.ok) { last = r.reason; break; } big = r.st; n++; }
+  assert.ok(n >= 1 && ['nospace', 'full'].includes(last), 'đặt mãi phải dừng vì hết chỗ hoặc đầy');
 });
 
 test('dời và xoay món đã đặt', () => {
