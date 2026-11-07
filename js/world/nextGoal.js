@@ -9,7 +9,7 @@ import { ORBS } from './fishing.js';
 import { FURNITURE } from './furniture.js';
 
 /** Thứ tự làm sau cốt truyện: việc hằng ngày nhẹ trước (mỗi sáng bắt đầu từ đây), rồi hành trình từ gần tới xa, việc cần lá bồ đề để sau. Nhiệm vụ nào không có trong đây vẫn được làm cuối cùng. */
-export const CHAIN = ['n-nhang', 'n-lay', 'm-den', 'm-loc', 'm-lang', 'm-npc', 'n-kinh', 'm-niem', 'm-doila', 'm-muadat', 'm-thac', 'm-rung', 'm-dao', 'm-nangnha', 'm-noithat', 'm-cau', 'm-phongsinh', 'm-nhang', 'm-kinh', 'n-thien', 'n-npc', 'n-phongsinh'];
+export const CHAIN = ['n-nhang', 'n-lay', 'm-den', 'm-loc', 'm-lang', 'm-khinhthan', 'm-npc', 'n-kinh', 'm-niem', 'm-doila', 'm-muadat', 'm-thac', 'm-rung', 'm-dao', 'm-nangnha', 'm-noithat', 'm-cau', 'm-phongsinh', 'm-nhang', 'm-kinh', 'n-thien', 'n-npc', 'n-phongsinh'];
 /** Việc hằng ngày dùng để kiếm hạt sen khi chưa đủ để đổi lá / mua đất. */
 const EARN = ['n-thien', 'n-nhang', 'n-lay', 'n-kinh'];
 const NEEDS_RES = new Set(['m-doila', 'm-muadat', 'm-nangnha']);

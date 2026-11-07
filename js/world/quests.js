@@ -4,7 +4,7 @@
 // Giao diện: js/ui/quest.js. Các nơi phát sự kiện gọi window.LGT.act(type, arg|n) (xem js/ui/quest.js).
 
 /** Các loại sự kiện hợp lệ. 'npc' và 'visit' có `arg` (id NPC / id điểm đến); 'nhang' có n = số nén; 'doila' (đổi lá), 'muadat', 'nangnha' phát từ js/ui/merit.js và js/ui/land.js (Phiên 39); 'cau' (câu được một con cá) và 'phongsinh' (thả một con về nước) phát từ js/ui/fishing.js (Phiên 47). */
-export const EVENT_TYPES = ['nhang', 'bow', 'thien', 'kinh', 'niem', 'den', 'loc', 'npc', 'visit', 'chat', 'doila', 'muadat', 'nangnha', 'cau', 'phongsinh', 'noithat'];
+export const EVENT_TYPES = ['nhang', 'bow', 'thien', 'kinh', 'niem', 'den', 'loc', 'npc', 'visit', 'chat', 'doila', 'muadat', 'nangnha', 'cau', 'phongsinh', 'noithat', 'khinhthan'];
 
 /** Cấp độ: ngưỡng điểm tối thiểu để đạt cấp i+1 và danh hiệu. Cấp tối đa = số phần tử. */
 export const LEVELS = [
@@ -38,6 +38,7 @@ export const QUESTS = [
   { id: 'm-muadat', loai: 'mot', ten: 'Có mảnh đất đầu tiên', mo: 'Gom đủ lá bồ đề, gặp Bác Tư khu phố ở khu nhà ở và mua một lô đất (được tặng nhà trống).', dk: { key: 'muadat', n: 1 }, xp: 80, sen: 5 },
   { id: 'm-nangnha', loai: 'mot', ten: 'Nâng cấp nhà lần đầu', mo: 'Nâng căn nhà trống lên nhà lầu hoặc cao hơn ở chỗ Bác Tư khu phố.', dk: { key: 'nangnha', n: 1 }, xp: 60, sen: 5 },
   { id: 'm-noithat', loai: 'mot', ten: 'Đặt món nội thất đầu tiên', mo: 'Mua một món ở “Cửa hàng” rồi mở “Túi đồ” bấm “Đặt” để bày vào nhà của bạn.', dk: { key: 'noithat', n: 1 }, xp: 50, sen: 4 },
+  { id: 'm-khinhthan', loai: 'mot', ten: 'Thử Khinh thân', mo: 'Dùng thân pháp bậc 1: bấm phím Space (máy tính) hoặc nút “Nhảy” bên phải (điện thoại) để bay lên 3 lần.', dk: { key: 'khinhthan', n: 3 }, xp: 30, sen: 2 },
   { id: 'm-cau', loai: 'mot', ten: 'Câu được con cá đầu tiên', mo: 'Mua một quả cầu (nút “Câu cá” → tab “Quả cầu”), đứng sát mép nước, thả cầu và bấm đúng lúc hoa sen nở.', dk: { key: 'cau', n: 1 }, xp: 30, sen: 2 },
   { id: 'm-phongsinh', loai: 'mot', ten: 'Phóng sinh lần đầu', mo: 'Câu được cá rồi bấm “Phóng sinh” để thả con vật về nước.', dk: { key: 'phongsinh', n: 1 }, xp: 40, sen: 3 },
   { id: 'n-phongsinh', loai: 'ngay', ten: 'Phóng sinh một con', mo: 'Thả một con cá, rùa hay mực về nước (câu được hoặc lấy từ ao cá riêng).', dk: { key: 'phongsinh', n: 1 }, xp: 15, sen: 1 },
