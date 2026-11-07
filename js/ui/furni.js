@@ -7,9 +7,9 @@ import { createPreview } from './preview.js';
 
 const KEY = 'lgt.furni';
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
-const WHY = { poor: 'Chưa đủ lá bồ đề.', unknown: 'Món này không có.', max: 'Bạn đã có quá nhiều món này.', none: 'Bạn không còn món này trong túi.', full: 'Nhà đã đủ số món tối đa, hãy cất bớt hoặc nâng nhà.', nospace: 'Không còn chỗ trống cho món này.', out: 'Không dời thêm được (chạm tường).', door: 'Không được chặn lối vào cửa.', overlap: 'Chỗ này đã có đồ.', blocked: 'Không xoay được vì vướng đồ khác.', missing: 'Không thấy món này.' };
+const WHY = { poor: 'Chưa đủ lá bồ đề.', unknown: 'Món này không có.', max: 'Bạn đã có quá nhiều món này.', none: 'Bạn không còn món này trong túi.', full: 'Nhà đã đủ số món tối đa, hãy cất bớt hoặc nâng nhà.', nospace: 'Không còn chỗ trống cho món này.', out: 'Không dời thêm được (chạm tường).', door: 'Không được chặn lối vào cửa.', overlap: 'Chỗ này đã có đồ.', blocked: 'Không xoay được vì vướng đồ khác.', missing: 'Không thấy món này.', person: 'Có người đứng ở chỗ đó, hãy bước sang chỗ khác.' };
 
-/** opts: { toast(text, ms) }. Đặt LGT.furni = { openShop, openBag, close, get placed (đã toFurniture), get state }. */
+/** opts: { toast(text, ms) }. Đặt LGT.furni = { apply: (fn) => apply(fn(st, lv())), get level() { return lv(); }, toastWhy: (r) => toast(WHY[r] || 'Không làm được.', 2800), openShop, openBag, close, get placed (đã toFurniture), get state }. */
 export function initFurni(hud, { toast = () => {} } = {}) {
   const LGT = window.LGT || (window.LGT = {});
   let st = loadFurni(null); try { st = loadFurni(localStorage.getItem(KEY)); } catch (_) { /* bỏ qua */ }
@@ -93,6 +93,6 @@ export function initFurni(hud, { toast = () => {} } = {}) {
   x.addEventListener('click', close);
   box.addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.stopPropagation(); close(); } });
 
-  LGT.furni = { openShop: () => open('shop'), openBag: () => open('bag'), close, get placed() { return st.placed.map(toFurniture).filter(Boolean); }, get state() { return st; } };
+  LGT.furni = { apply: (fn) => apply(fn(st, lv())), get level() { return lv(); }, toastWhy: (r) => toast(WHY[r] || 'Không làm được.', 2800), openShop: () => open('shop'), openBag: () => open('bag'), close, get placed() { return st.placed.map(toFurniture).filter(Boolean); }, get state() { return st; } };
   return LGT.furni;
 }

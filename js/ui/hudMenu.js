@@ -11,6 +11,7 @@ import { initMerit } from './merit.js';
 import { initLand } from './land.js';
 import { initHouse } from './house.js';
 import { initFurni } from './furni.js';
+import { initEdit } from './editmode.js';
 import { initSkill } from './skill.js';
 import { initMinimap } from './minimap.js';
 import { initTutorial } from './tutorial.js';
@@ -114,6 +115,7 @@ export function initHudMenu(hud) {
   try { initMerit(hud, { toast, addMerit, getSen: () => wallet.sen, spendSen: spendMerit, pillHost: root.querySelector('.hm-wallet') }); } catch (e) { console.warn('[Diệu Giang Tự] Lá bồ đề lỗi:', e && e.message); }   // đổi hạt sen lấy lá bồ đề (Phiên 35)
   try { initLand(hud, { toast }); } catch (e) { console.warn('[Diệu Giang Tự] Đất ở lỗi:', e && e.message); }   // đất ở + xóm (Phiên 36)
   try { initFurni(hud, { toast }); } catch (e) { console.warn('[Diệu Giang Tự] Nội thất lỗi:', e && e.message); }   // cửa hàng nội thất + túi đồ (Phiên 41, bước 4)
+  try { initEdit(hud, { toast }); } catch (e) { console.warn('[Diệu Giang Tự] Chỉnh sửa nhà lỗi:', e && e.message); }   // chế độ chỉnh sửa nhà: kéo/xoay đồ bằng chuột (Phiên 43)
   try { initHouse(hud, { toast }); } catch (e) { console.warn('[Diệu Giang Tự] Vào nhà lỗi:', e && e.message); }   // nút Vào nhà / Ra ngoài (Phiên 38, 3d-2c)
   try { initStory(hud, { toast, addMerit }); } catch (e) { console.warn('[Diệu Giang Tự] Cốt truyện lỗi:', e && e.message); }   // hộp thoại + mục tiêu chương 1 (Phiên 32); lỗi thì NPC vẫn nói lời thường
   try { initTutorial(hud, { toast }); } catch (e) { console.warn('[Diệu Giang Tự] Sổ tay hướng dẫn lỗi:', e && e.message); }   // hướng dẫn chơi + gợi ý việc kế tiếp (Phiên 39)
