@@ -96,7 +96,9 @@ test('houseAction: hiện đúng nút theo chỗ đứng', () => {
   assert.equal(houseAction(loadLand(null), pl.front), '', 'chưa có đất thì không hiện gì');
   assert.equal(houseAction(land, { x: 0, z: 100 }), '', 'xa cửa thì không hiện');
   assert.equal(houseAction(land, pl.front), 'enter');
-  assert.equal(houseAction(land, entryPoint(1)), 'exit', 'ở trong phòng thì chỉ còn nút ra');
+  assert.equal(houseAction(land, entryPoint(1)), '', 'Phiên 42: vừa vào, đứng cách cửa 1,1 m thì cửa đóng, chưa có nút ra');
+  assert.equal(houseAction(land, { x: INTERIOR.x, z: INTERIOR.z }), '', 'giữa phòng không có nút ra');
+  const dd = doorInside(1); assert.equal(houseAction(land, { x: dd.x, z: dd.z - 0.5 }), 'exit', 'đi tới cánh cửa thì hiện nút ra');
   assert.equal(houseAction(land, null), '');
 });
 
@@ -121,4 +123,13 @@ test('nhà trống: không có đồ sẵn; món người chơi đặt (xoay) ch
   assert.ok(Math.abs((rs[0].x1 - rs[0].x0) - 0.4) < 1e-9 && Math.abs((rs[0].z1 - rs[0].z0) - 1.6) < 1e-9, 'dùng kích thước đã xoay');
   const nr = RECTS.length, off = registerRoom(0, placed);
   assert.equal(RECTS.length, nr + 1); off(); assert.equal(RECTS.length, nr);
+});
+
+test('Phiên 42: chỗ đứng trước cánh cửa (hiện nút ra) đi tới được ở mọi cấp, và chỗ vừa vào thì chưa phải cửa', () => {
+  for (const L of lvs) {
+    const off = registerRoom(L), d = doorInside(L);
+    for (const o of [0.9, 0.5]) assert.ok(!bodyBlocked(d.x, d.z - o) && atDoor({ x: d.x, z: d.z - o }, L), `cấp ${L}: cách cửa ${o} m`);
+    assert.ok(!atDoor(entryPoint(L), L), 'chỗ vào cách cửa 1,1 m: cửa vẫn đóng');
+    off();
+  }
 });
