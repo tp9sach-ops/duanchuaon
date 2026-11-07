@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { SEN_PER_LA, LAND_LA, DAILY_CAP, MED_SECONDS_PER_SEN, emptyLeaf, loadLeaf, maxLa, exchange, lifetimeSen, addMeditation } from '../js/world/merit.js';
+import { SEN_PER_LA, LAND_LA, DAILY_CAP, MED_SECONDS_PER_SEN, emptyLeaf, loadLeaf, maxLa, exchange, lifetimeSen, addMeditation, claimAct, ACT_CAP } from '../js/world/merit.js';
 
 const T0 = new Date(2026, 10, 7, 9, 0).getTime();
 
@@ -56,4 +56,23 @@ test('tiêu lá: đủ thì trừ, thiếu/sai thì giữ nguyên; điểm xếp
   const r = spendLa(l, 100); assert.equal(r.ok, true); assert.equal(r.leaf.la, 0); assert.equal(r.leaf.spent, l.spent); assert.equal(l.la, 100, 'không sửa bản cũ');
   for (const n of [101, 0, -1, NaN, 'x', null]) { const f = spendLa(l, n); assert.equal(f.ok, false, String(n)); assert.equal(f.leaf, l); }
   assert.equal(loadLeaf(JSON.stringify(r.leaf)).la, 0);
+});
+
+test('lạy/cúng/nhang: mỗi loại tối đa 10 lần/ngày, sang ngày mới đếm lại, loại lạ bị từ chối', () => {
+  const d1 = new Date(2026, 10, 7, 9).getTime(), d2 = new Date(2026, 10, 8, 9).getTime();
+  let l = emptyLeaf();
+  for (let i = 1; i <= ACT_CAP.lay; i++) { const r = claimAct(l, 'lay', d1); assert.ok(r.ok); assert.equal(r.used, i); assert.equal(r.left, ACT_CAP.lay - i); l = r.leaf; }
+  const full = claimAct(l, 'lay', d1); assert.equal(full.ok, false); assert.equal(full.leaf, l);
+  assert.ok(claimAct(l, 'nhang', d1).ok && claimAct(l, 'cung', d1).ok, 'loại khác có lượt riêng');
+  const n = claimAct(l, 'lay', d2); assert.ok(n.ok); assert.equal(n.used, 1);
+  assert.equal(claimAct(l, 'abc', d1).ok, false); assert.equal(l.day.acts.lay, 10, 'không sửa đầu vào');
+  const back = loadLeaf(JSON.stringify(l)); assert.equal(back.day.acts.lay, 10);
+  assert.equal(loadLeaf({ day: { k: '2026-11-07', acts: { lay: 999, nhang: -3, x: 5 } } }).day.acts.lay, 10);
+});
+
+test('thiền cùng ngày giữ lượt lạy/cúng/nhang; sang ngày mới thì xóa', () => {
+  const d1 = new Date(2026, 10, 7, 9).getTime(), d2 = new Date(2026, 10, 8, 9).getTime();
+  const l = claimAct(emptyLeaf(), 'lay', d1).leaf;
+  assert.equal(addMeditation(l, 1, d1).leaf.day.acts.lay, 1);
+  assert.deepEqual(addMeditation(l, 1, d2).leaf.day.acts, {});
 });
