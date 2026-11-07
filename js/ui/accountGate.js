@@ -17,7 +17,7 @@ export function initAccountGate({ form, nameIn, client, hasLegacy, getDraft, onE
 
   const clearErr = () => { err.hidden = true; err.textContent = ''; temp.hidden = true; };
   function showErr(code, ctx = {}) {
-    err.textContent = errMsg(code, ctx); err.hidden = false;
+    err.textContent = errMsg(code, ctx) + (isNetworkError(code) ? ' (mã: ' + code + ')' : ''); err.hidden = false;   // hiện mã để quản trị biết đúng nguyên nhân
     const f = ctx.field === 'pw2' ? pw2In : ctx.field === 'name' ? nameIn : pwIn;
     if (code === 'exists' || code === 'bad_login') { pwIn.value = ''; pw2In.value = ''; }
     try { (code === 'exists' ? alt : f).focus({ preventScroll: true }); } catch (_) { /* bỏ qua */ }
