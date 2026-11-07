@@ -129,6 +129,8 @@ export const ACCT_MSG = {
   too_many: 'Bạn đã thử sai quá nhiều lần. Vui lòng chờ khoảng 15 phút rồi thử lại.',
   network: 'Chưa kết nối được máy chủ. Hãy kiểm tra mạng rồi thử lại.',
   timeout: 'Chưa kết nối được máy chủ. Hãy kiểm tra mạng rồi thử lại.',
+  blocked: 'Máy chủ lưu tài khoản chưa cho phép trang này truy cập (Apps Script chưa Authorize hoặc chưa deploy "Anyone"). Hãy báo quản trị; trong lúc đó có thể bấm “Chơi tạm”.',
+  bad_response: 'Máy chủ lưu tài khoản trả về dữ liệu lạ (thường do Apps Script chưa deploy bản mới hoặc đang lỗi). Hãy báo quản trị; trong lúc đó có thể bấm “Chơi tạm”.',
   api_disabled: 'Chưa cấu hình máy chủ lưu tài khoản.',
   no_crypto: 'Trình duyệt này chưa hỗ trợ mã hóa mật khẩu (cần mở trang bằng https).',
   too_big: 'Dữ liệu chơi quá lớn để lưu. Hãy báo cho quản trị.',
