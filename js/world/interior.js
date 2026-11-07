@@ -68,10 +68,10 @@ export function exitPlan(land) {
   return { x: pl.front.x, z: pl.front.z, ry: pl.face > 0 ? 0 : Math.PI };
 }
 
-/** Nút nổi nào nên hiện? 'exit' (đang ở trong phòng), 'enter' (đứng gần cửa nhà mình), '' (không hiện gì). land = trạng thái đất, p = vị trí người chơi. */
+/** Nút nổi nào nên hiện? 'exit' (đang ở trong phòng VÀ đã đi tới cánh cửa, Phiên 42: cửa tự đóng, đứng giữa phòng không có nút ra), 'enter' (đứng gần cửa nhà mình), '' (không hiện gì). land = trạng thái đất, p = vị trí người chơi. */
 export function houseAction(land, p) {
   if (!land || !land.own || !p) return '';
-  if (isInterior(p.x, p.z)) return 'exit';
+  if (isInterior(p.x, p.z)) return atDoor(p, houseLevel(land.own.lv).lv) ? 'exit' : '';
   return enterPlan(land, p).ok ? 'enter' : '';
 }
 
