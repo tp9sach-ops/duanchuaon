@@ -189,6 +189,7 @@ Việc ptg làm song song (không chặn các phiên trên): bật Pages (Settin
 - **32 (bước 1/4 của Phiên 3 master prompt):** logic cốt truyện chương 1 (js/world/story.js: meet→abbot→water1→meditate→water2→done, hội thoại, hồi chiêu tưới, giờ thiền 180 giây, mở Khinh thân bậc 1) + NPC Chú tiểu Minh ở cổng chùa (js/world/npc.js, id `chutieu`) + tests/story.test.mjs (10 test). **Bước 2 XONG** (js/ui/story.js: hộp thoại nhiều trang + thẻ mục tiêu, đã kiểm Chromium desktop+điện thoại; sw dgt-v29); **CHƯA làm** bình tưới, nút tưới, bộ đếm thiền, cây lớn lên (Bước 3–4) — xem docs/PHIEN32.md để làm Bước 2–4. Test thực tế: `npm test` 447/447 (trước phiên: 437/437; số 452 ghi ở Phiên 31 là sai lệch). sw.js dgt-v28.
 
 - 2026-11-07 (Phiên 34): ptg báo nhiệm vụ tưới cây bồ đề không có trong bảng và không dẫn đường → đã sửa. ptg yêu cầu hệ thống xây nhà: 100 công đức → lá bồ đề → mua đất → nhà thô sơ → 4 loại nhà (nhà lầu, hoa viên, hồ bơi/villa) → mua nội thất thật nhiều. GHI KẾ HOẠCH, chưa làm: `docs/PHIEN34.md`.
+- 2026-11-07 (ptg chốt luật xây nhà): hạt sen = công đức, **10 hạt sen = 1 lá bồ đề**; **100 lá = 1 lô đất, tặng nhà trống**; giá nhà khác do AI đề xuất (cần cày); cho khách tham quan + mở tiệc; **tối đa 10 nhà/xóm**, nhà thứ 11 sang xóm mới; muốn xem xóm khác phải gặp **NPC bác khu phố** đổi xóm. Chi tiết + bảng giá tạm: `docs/PHIEN34.md`.
 
 ## 8. PROMPT KHỞI ĐỘNG PHIÊN MỚI (dán nguyên văn)
 
