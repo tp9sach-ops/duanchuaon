@@ -101,6 +101,13 @@ export function buildInterior() {
   const fallback = (f, g) => box(g, f.w, f.h, f.d, std(f.color), 0, 0, 0);
 
   // ---- dựng khung phòng
+  let doorLeaf = null, doorAng = 0, doorTarget = 0, doorRaf = 0;
+  /** Mở/đóng cánh cửa trong phòng (có chuyển động mượt). Dựng lại phòng (show) thì cửa về trạng thái đóng. */
+  function setDoorOpen(open) {
+    doorTarget = open ? 1.35 : 0; if (doorRaf || !doorLeaf) return;
+    const step = () => { doorRaf = 0; if (!doorLeaf) return; const d = doorTarget - doorAng; if (Math.abs(d) < 0.02) doorAng = doorTarget; else { doorAng += d * 0.18; doorRaf = requestAnimationFrame(step); } doorLeaf.rotation.y = doorAng; };
+    doorRaf = requestAnimationFrame(step);
+  }
   function shell(r) {
     const { w, d, h } = r, hw = w / 2, hd = d / 2;
     plane(room, w, d, floorMat, 0, 0.005, 0, 0, -Math.PI / 2); floorTex.repeat.set(w / 2.4, d / 2.4);
@@ -115,7 +122,7 @@ export function buildInterior() {
     box(room, sw, 0.1, 0.03, sk, -(DOOR_W / 2 + sw / 2), 0, hd - 0.015); box(room, sw, 0.1, 0.03, sk, DOOR_W / 2 + sw / 2, 0, hd - 0.015);
     // khung cửa + cánh cửa gỗ mở vào phía trong, áp gần tường
     const fr = std(0x5a3d22); box(room, 0.07, DOOR_H, 0.1, fr, -DOOR_W / 2 - 0.035, 0, hd); box(room, 0.07, DOOR_H, 0.1, fr, DOOR_W / 2 + 0.035, 0, hd); box(room, DOOR_W + 0.14, 0.07, 0.1, fr, 0, DOOR_H, hd);
-    const leaf = new THREE.Group(); leaf.position.set(-DOOR_W / 2, 0, hd - 0.03); leaf.rotation.y = 1.35; room.add(leaf);
+    const leaf = new THREE.Group(); leaf.position.set(-DOOR_W / 2, 0, hd - 0.03); leaf.rotation.y = 0; room.add(leaf); doorLeaf = leaf; doorAng = 0; doorTarget = 0;   // Phiên 42: cửa ĐÓNG khi vào nhà (cánh chắn lỗ cửa); mở khi người chơi đi tới cửa (setDoorOpen)
     box(leaf, DOOR_W - 0.02, DOOR_H - 0.04, 0.05, std(0x8a5a30), (DOOR_W - 0.02) / 2, 0.02, 0); box(leaf, 0.03, 0.03, 0.09, std(0xd9b25f), DOOR_W - 0.12, 1.0, 0);
     // cửa sổ: sau (giữa) + trái (nếu phòng sâu đủ) — tấm sáng + khung
     const win = (c, cy, ww, wh, wall) => {   // c = vị trí dọc tường (x với tường sau, z với tường trái)
@@ -150,8 +157,8 @@ export function buildInterior() {
     }
     cur = r.lv; shown = true; group.visible = true; light();
   }
-  function hide() { shown = false; group.visible = false; light(); }
+  function hide() { shown = false; doorLeaf = null; group.visible = false; light(); }
   /** n = 0 (ngày) … 1 (đêm): kính cửa sổ tối dần, đèn trong nhà sáng hơn. */
   function update(n = 0) { if (Math.abs(n - night) < 0.01) return; night = n; winMat.color.setHex(0xbfe3ff).lerp(new THREE.Color(0x1a2b48), night); if (shown) light(); }
-  return { group, show, hide, update, get level() { return cur; }, get shown() { return shown; } };
+  return { group, show, hide, update, setDoorOpen, get level() { return cur; }, get shown() { return shown; } };
 }
