@@ -1,7 +1,7 @@
-// Đất ở và xóm (Phiên 36, bước 2): bảng của Bác Tư khu phố — xem các lô, mua đất bằng 100 lá bồ đề, nhận nhà trống thô sơ, đổi xóm xem.
+// Đất ở và xóm (Phiên 36, bước 2; Phiên 37 bước 3c thêm nâng cấp nhà): bảng của Bác Tư khu phố — xem các lô, mua đất bằng 100 lá bồ đề, nhận nhà trống thô sơ, nâng cấp nhà, đổi xóm xem.
 // Logic ở js/world/land.js (có test). Lưu `localStorage['lgt.land']`. Chưa có máy chủ nên sổ xóm chỉ có nhà của chính người chơi (xem docs/PHIEN36.md).
 // Mọi chữ hiển thị đi qua textContent, không chèn HTML.
-import { loadLand, localRegistry, buyLand, viewableXoms, setView, plotById, houseRect, PLOTS, XOM_SIZE, countXom } from '../world/land.js';
+import { loadLand, localRegistry, buyLand, upgradeHouse, upgradeCost, houseLevel, HOUSE_LEVELS, MAX_LV, viewableXoms, setView, plotById, houseRect, PLOTS, XOM_SIZE, countXom } from '../world/land.js';
 import { LAND_LA } from '../world/merit.js';
 import { RECTS, addRect } from '../world/layout.js';
 
@@ -21,7 +21,7 @@ export function initLand(hud, { toast = () => {} } = {}) {
   const prev = el('button', 'ld-b', '◀'), next = el('button', 'ld-b', '▶'), viewT = el('span', 'ld-vt'); prev.type = next.type = 'button';
   prev.setAttribute('aria-label', 'Xóm trước'); next.setAttribute('aria-label', 'Xóm sau'); view.append(prev, viewT, next);
   box.append(head, status, view, grid, act, note); hud.appendChild(box);
-  note.textContent = `Mỗi xóm tối đa ${XOM_SIZE} nhà; nhà thứ ${XOM_SIZE + 1} sẽ sang xóm mới. ${LAND_LA} lá bồ đề mua một lô và được tặng nhà trống thô sơ. Hiện bạn chỉ thấy nhà của mình; hàng xóm thật cần máy chủ (đang làm). Giá trị tạm của bản thử.`;
+  note.textContent = `Mỗi xóm tối đa ${XOM_SIZE} nhà; nhà thứ ${XOM_SIZE + 1} sẽ sang xóm mới. ${LAND_LA} lá bồ đề mua một lô và được tặng nhà trống thô sơ; sau đó nâng lên nhà lầu, nhà hoa viên, villa hồ bơi (trả chênh lệch giá). Hiện bạn chỉ thấy nhà của mình; hàng xóm thật cần máy chủ (đang làm). Giá trị tạm của bản thử.`;
 
   const reg = () => localRegistry(land);
   const leaves = () => (LGT.merit && LGT.merit.leaf ? LGT.merit.leaf.la : 0);
@@ -34,7 +34,7 @@ export function initLand(hud, { toast = () => {} } = {}) {
   function draw() {
     const r = reg(), v = land.view || 1, xs = viewableXoms(land, r);
     status.textContent = land.own
-      ? `Nhà của bạn: Xóm ${land.own.xom}, Lô ${land.own.plot} (nhà trống thô sơ). Bạn có ${leaves()} lá bồ đề.`
+      ? `Nhà của bạn: Xóm ${land.own.xom}, Lô ${land.own.plot} (${houseLevel(land.own.lv).ten}). Bạn có ${leaves()} lá bồ đề.`
       : `Bạn chưa có đất. Một lô giá ${LAND_LA} lá bồ đề, bạn có ${leaves()} lá.`;
     viewT.textContent = `Đang xem: Xóm ${v} (${countXom(r, v)}/${XOM_SIZE} nhà)`;
     prev.disabled = !xs.includes(v - 1); next.disabled = !xs.includes(v + 1);
@@ -52,6 +52,13 @@ export function initLand(hud, { toast = () => {} } = {}) {
       const go = el('button', 'ld-b', 'Dẫn tôi tới nhà'); go.type = 'button';
       go.addEventListener('click', () => { const pl = plotById(land.own.plot); if (LGT.world && pl) { LGT.world.walkTo(pl.front.x, pl.front.z); close(); } });
       act.appendChild(go);
+      const cur = houseLevel(land.own.lv).lv;
+      for (const L of HOUSE_LEVELS.filter((q) => q.lv > cur)) {   // mỗi cấp cao hơn một nút; được nhảy cấp, trả chênh lệch giá niêm yết
+        const cost = upgradeCost(cur, L.lv), ok = leaves() >= cost;
+        const ub = el('button', 'ld-b buy', ok ? `Nâng lên ${L.ten} (${cost} lá)` : `${L.ten}: cần ${cost} lá`); ub.type = 'button'; ub.disabled = !ok;
+        ub.addEventListener('click', () => upgrade(L.lv)); act.appendChild(ub);
+      }
+      if (cur >= MAX_LV) act.appendChild(el('span', 'ld-hint', 'Nhà của bạn đã ở cấp cao nhất.'));
     } else if (pick && !(r[v] && r[v][pick]) && v === Math.max(1, v)) {
       const ok = leaves() >= LAND_LA, b = el('button', 'ld-b buy', ok ? `Mua lô ${pick} (${LAND_LA} lá)` : `Chưa đủ lá (cần ${LAND_LA})`); b.type = 'button'; b.disabled = !ok;
       b.addEventListener('click', buy); act.appendChild(b);
@@ -63,6 +70,13 @@ export function initLand(hud, { toast = () => {} } = {}) {
     if (!(LGT.merit && LGT.merit.spendLa(r.cost))) { toast('Chưa đủ lá bồ đề.', 2500); return; }
     land = r.land; save(); placeHouse(); draw();
     toast(`Chúc mừng! Bạn đã có đất ở Xóm ${r.xom}, Lô ${pick}. Nhà trống thô sơ được tặng.`, 6000);
+  }
+  function upgrade(to) {   // Phiên 37 3c: trừ lá RỒI mới đổi cấp (thiếu lá thì không đổi gì)
+    const r = upgradeHouse(land, leaves(), reg(), to);
+    if (!r.ok) { toast(r.reason === 'poor' ? `Chưa đủ lá bồ đề (cần ${r.cost}).` : r.reason === 'maxed' ? 'Nhà đã ở cấp cao nhất.' : 'Không nâng cấp được.', 3000); return; }
+    if (!(LGT.merit && LGT.merit.spendLa(r.cost))) { toast('Chưa đủ lá bồ đề.', 2500); return; }
+    land = r.land; save(); placeHouse(); draw();
+    toast(`Nhà của bạn đã lên ${houseLevel(to).ten}! (−${r.cost} lá bồ đề)`, 6000);
   }
   prev.addEventListener('click', () => { const s = setView(land, (land.view || 1) - 1, reg()); if (s.ok) { land = s.land; save(); placeHouse(); draw(); } });
   next.addEventListener('click', () => { const s = setView(land, (land.view || 1) + 1, reg()); if (s.ok) { land = s.land; save(); placeHouse(); draw(); } });
