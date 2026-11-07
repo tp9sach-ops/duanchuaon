@@ -94,3 +94,14 @@ export function houseAction(land, p) {
   if (isInterior(p.x, p.z)) return 'exit';
   return enterPlan(land, p).ok ? 'enter' : '';
 }
+
+/**
+ * Vị trí để GỬI LÊN MẠNG (Phiên 40, sửa L4). Phòng trong nhà nằm ở INTERIOR (400,400), ngoài giới hạn ±200 của Firebase/Apps Script,
+ * nên khi người chơi đang ở trong phòng thì người khác thấy họ đứng ở chỗ trước cửa nhà (exitPlan). Ở ngoài thì giữ nguyên p.
+ * Trả {x, z, r} (r = hướng nhìn nếu bị thay), không sửa đầu vào.
+ */
+export function netPos(land, p) {
+  if (!p || !isInterior(p.x, p.z)) return { x: p ? p.x : 0, z: p ? p.z : 0, r: null };
+  const out = exitPlan(land);
+  return out ? { x: out.x, z: out.z, r: out.ry } : { x: 0, z: 0, r: null };
+}

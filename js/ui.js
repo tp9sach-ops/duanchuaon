@@ -200,7 +200,7 @@ export function initSound() {
     if (!ctx || !playing) return;
     const p = window.LGT && typeof window.LGT.getPos === 'function' ? window.LGT.getPos() : null;
     const wx = window.LGT && window.LGT.weather ? window.LGT.weather : null, fx = wx ? wx.fx : null;
-    const sheltered = !!(p && p.z < -21.2 && p.z > -47 && Math.abs(p.x) < 19.5);   // trong chánh điện (HALL: x ±19,5; z -47…-21,2)
+    const sheltered = !!(p && p.z < -21.2 && p.z > -47 && Math.abs(p.x) < 19.5) || !!(window.LGT && window.LGT.inHouse);   // trong chánh điện (HALL: x ±19,5; z -47…-21,2)
     const m = ambientMix({ p, night: isNight(), rain: fx ? fx.rain : 0, wind: fx ? fx.wind : 0, sheltered, season: window.LGT && window.LGT.season }); g.mix = m;
     const t = ctx.currentTime;
     ['water', 'bell', 'wind', 'cicada', 'rain'].forEach((k) => g[k].gain.setTargetAtTime(VOL[k] * m[k], t, k === 'rain' ? 1.2 : 0.3));   // mưa vào/ra từ từ theo cấp

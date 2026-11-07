@@ -1,7 +1,7 @@
 // Bên trong nhà (Phiên 38, 3d-2a): phòng riêng theo cấp, đồ nội thất, đăng ký va chạm, cửa vào/ra, kế hoạch vào nhà.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { INTERIOR, DOOR_R, ROOMS, roomFor, roomRect, entryPoint, doorInside, atDoor, isInterior, furnitureRects, registerRoom, doorPoint, nearDoor, enterPlan, exitPlan, houseAction } from '../js/world/interior.js';
+import { INTERIOR, DOOR_R, ROOMS, roomFor, roomRect, entryPoint, doorInside, atDoor, isInterior, furnitureRects, registerRoom, doorPoint, nearDoor, enterPlan, exitPlan, houseAction, netPos } from '../js/world/interior.js';
 import { PLOTS, HOUSE_LEVELS, houseRect, poolRect, LAND_WALKS, loadLand } from '../js/world/land.js';
 import { blocked, bodyBlocked, canStepBody, WALKS, RECTS, addRect, addWalk } from '../js/world/layout.js';
 
@@ -98,4 +98,17 @@ test('houseAction: hiện đúng nút theo chỗ đứng', () => {
   assert.equal(houseAction(land, pl.front), 'enter');
   assert.equal(houseAction(land, entryPoint(1)), 'exit', 'ở trong phòng thì chỉ còn nút ra');
   assert.equal(houseAction(land, null), '');
+});
+
+test('netPos: ngoài sân giữ nguyên; trong phòng gửi vị trí trước cửa nhà, luôn trong ±200 (sửa L4)', () => {
+  const pl = PLOTS[0], land = { own: { xom: 1, plot: pl.id, lv: 1 } };
+  const out = netPos(land, { x: 12.5, z: -3 });
+  assert.deepEqual(out, { x: 12.5, z: -3, r: null });
+  const inside = netPos(land, entryPoint(1));
+  assert.equal(inside.x, pl.front.x); assert.equal(inside.z, pl.front.z);
+  assert.ok(Math.abs(inside.x) <= 200 && Math.abs(inside.z) <= 200);
+  assert.equal(typeof inside.r, 'number');
+  for (const lv of lvs) { const q = netPos(land, entryPoint(lv)); assert.ok(Math.abs(q.x) <= 200 && Math.abs(q.z) <= 200); }
+  assert.deepEqual(netPos(null, entryPoint(0)), { x: 0, z: 0, r: null }, 'chưa có đất mà ở trong phòng: về gốc, không gửi tọa độ phòng');
+  assert.deepEqual(netPos(land, null), { x: 0, z: 0, r: null });
 });

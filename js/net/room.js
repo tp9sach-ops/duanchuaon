@@ -9,6 +9,7 @@ import { CONFIG } from '../config.js';
 import { createTransportManager } from './transportManager.js';
 import { createFirebaseTransport, loadFirebaseSdk } from './firebaseTransport.js';
 import { withGasBridge } from './bridge.js';
+import { netPos } from '../world/interior.js';
 
 const newId = () => (globalThis.crypto && crypto.randomUUID ? crypto.randomUUID() : 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10));
 
@@ -45,7 +46,8 @@ export function initRoom() {
       const b = document.body.classList;
       if (!b.contains('world-mode') || b.contains('entering')) return null;      // còn ở màn nhập tên
       const prof = loadProfile(localStorage), p = W.pos, av = W.avatar;
-      return { n: prof.name, c: prof.color, h: prof.hair, x: p.x, y: p.y, z: p.z, r: av.group.rotation.y, s: av.state };
+      const np = netPos(LGT.land && LGT.land.state, p);   // đang ở trong nhà: người khác thấy bạn đứng trước cửa nhà (phòng nằm ngoài giới hạn ±200 của máy chủ)
+      return { n: prof.name, c: prof.color, h: prof.hair, x: np.x, y: np.r == null ? p.y : 0, z: np.z, r: np.r == null ? av.group.rotation.y : np.r, s: np.r == null ? av.state : 'idle' };
     },
   });
 
