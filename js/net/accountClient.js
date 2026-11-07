@@ -36,7 +36,7 @@ export function createAccountClient({ call, storage, subtle, getUserKey = () => 
     const save = packSave(storage, { ...overrides, 'lgt.name': n.name });
     if (saveSize(save) > ACCT.SAVE_MAX) return fail('too_big');
     const r = await call('acctCreate', { aid: uuid(), name: n.name, key: k.key, save });
-    if (!r || !r.ok) return fail((r && r.error) || 'network', { name: n.name });
+    if (!r || !r.ok) return fail((r && r.error) || 'network', { name: n.name, detail: r && r.detail });
     state.expired = false;
     // máy chủ đã nhận đúng bản `save`: ghi vào máy rồi đánh dấu đã khớp
     applySave(storage, save);
@@ -50,7 +50,7 @@ export function createAccountClient({ call, storage, subtle, getUserKey = () => 
     const p = checkPassword(password); if (!p.ok) return fail(p.error);
     const k = await key(n.name, password); if (!k.ok) return k;
     const r = await call('acctLogin', { name: n.name, key: k.key });
-    if (!r || !r.ok) return fail((r && r.error) || 'network', { name: n.name });
+    if (!r || !r.ok) return fail((r && r.error) || 'network', { name: n.name, detail: r && r.detail });
     return { ok: true, res: r };
   }
   /** Nhận kết quả đăng nhập: thay dữ liệu game trên máy bằng bản lưu của tài khoản và nhớ phiên đăng nhập. Sau đó nên tải lại trang. */
