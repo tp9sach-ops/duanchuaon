@@ -221,7 +221,7 @@ export function createScene(canvas, { onProgress, onPick, onArrive } = {}) {
     fireflies.setLevel(fireflyLevel(S.night, E.rain)); fireflies.obj.visible = fireflyLevel(S.night, E.rain) > 0.01;   // đom đóm không bay khi mưa
     // gió + mưa + mặt đất ướt + gợn ao + vũng nước
     windU.value = E.wind; petals.wind = E.wind;
-    const rp = world ? world.pos : camera.position, sheltered = !!world && inHall(rp.x, rp.z);   // trong chánh điện có mái: không thấy mưa rơi quanh người
+    const rp = world ? world.pos : camera.position, sheltered = (!!world && inHall(rp.x, rp.z)) || !!LGT.inHouse;   // trong chánh điện có mái: không thấy mưa rơi quanh người
     rain.setLevel(sheltered ? 0 : E.drops, rainCap * (reduce ? 0.5 : 1)); rain.setColor(lerpHex(0xe6eef8, 0x6a7b94, S.night), 0.5 + 0.2 * (1 - S.night));
     rain.update(dt, rp.x, rp.z, 0, E.wind, E.streak);
     pond.setRain(E.rain > 0.02 ? Math.min(1, E.rain * 1.7) : 0);
