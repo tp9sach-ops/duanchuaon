@@ -170,3 +170,30 @@ test('menu: nút Câu cá có trong cụm phải-trên và mở bảng câu cá'
   assert.ok(it && M.isReady(it));
   assert.deepEqual(M.pressResult(it), { kind: 'fish' });
 });
+
+// ---- Phiên 56: phím bấm + rời mặt nước
+test('isTapKey: Cách/Enter đạt; phím lặp, có Ctrl/Alt, đang gõ chữ, phím khác thì không', () => {
+  assert.equal(F.isTapKey({ code: 'Space' }), true);
+  assert.equal(F.isTapKey({ code: 'Enter', key: 'Enter' }), true);
+  assert.equal(F.isTapKey({ key: ' ' }), true);
+  assert.equal(F.isTapKey({ code: 'Space', repeat: true }), false);
+  assert.equal(F.isTapKey({ code: 'Space', ctrlKey: true }), false);
+  assert.equal(F.isTapKey({ code: 'Space', target: { tagName: 'INPUT' } }), false);
+  assert.equal(F.isTapKey({ code: 'Space', target: { tagName: 'DIV', isContentEditable: true } }), false);
+  assert.equal(F.isTapKey({ code: 'KeyA', key: 'a' }), false);
+  assert.equal(F.isTapKey(null), false);
+});
+
+test('stillNearWater: gần mép (kể cả nới 1,5 m) còn câu; đi xa thì thu cầu; nước lạ → false', () => {
+  const w = F.FISH_WATERS[0];
+  assert.equal(F.stillNearWater(w.x + w.r + 1, w.z, w.id), true);
+  assert.equal(F.stillNearWater(w.x + w.r + 4.5, w.z, w.id), true);     // 3,2 + 1,5 = 4,7
+  assert.equal(F.stillNearWater(w.x + w.r + 5, w.z, w.id), false);
+  assert.equal(F.stillNearWater(0, 0, 'khong-co'), false);
+});
+
+test('js/ui/fishing.js nối phím bấm ở giai đoạn capture và kiểm rời mặt nước', () => {
+  const src = fsx.readFileSync(new URL('../js/ui/fishing.js', import.meta.url), 'utf8');
+  assert.match(src, /isTapKey\(e\)/); assert.match(src, /stopImmediatePropagation/); assert.match(src, /\}, true\);/);
+  assert.match(src, /stillNearWater\(p\.x, p\.z, sess\.water\)/);
+});

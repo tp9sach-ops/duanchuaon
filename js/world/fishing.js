@@ -53,6 +53,20 @@ export function nearWater(x, z, margin = 3.2) {
   return best;
 }
 
+/** Phím bấm thu cá (Phiên 56): Cách hoặc Enter, không phải phím lặp, không có Ctrl/Alt/Meta, không đang gõ chữ. `e` = sự kiện keydown (hoặc đối tượng giả). */
+export function isTapKey(e) {
+  if (!e || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return false;
+  const t = e.target, tag = t && t.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (t && t.isContentEditable)) return false;
+  return e.code === 'Space' || e.code === 'Enter' || e.code === 'NumpadEnter' || e.key === ' ' || e.key === 'Enter';
+}
+
+/** Người chơi còn đứng đủ gần đúng mặt nước đang câu không (Phiên 56: đi khỏi mép nước giữa chừng thì thu cầu về). */
+export function stillNearWater(x, z, waterId, margin = 3.2) {
+  const w = waterById(waterId); if (!w) return false;
+  return Math.hypot(x - w.x, z - w.z) - w.r <= margin + 1.5;   // nới 1,5 m để bước chân lắc nhẹ không làm hỏng lượt câu
+}
+
 /** Ao cá riêng chứa tối đa bấy nhiêu con. */
 export const POND_MAX = 30;
 /** Thời gian bóng cá xuất hiện sau khi quăng (giây). */

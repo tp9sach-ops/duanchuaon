@@ -1,7 +1,7 @@
 // Câu cá bằng quả cầu gieo duyên (Phiên 45, việc 3b + 3d dạng chữ). Logic ở js/world/fishing.js (có test). Mọi chữ hiển thị đi qua textContent.
 // Bảng có 3 tab: "Thả cầu" (quăng → chờ → bấm đúng lúc hoa sen nở → Thu cá / Phóng sinh), "Quả cầu" (mua / chọn / sửa bằng lá bồ đề), "Ao cá" (cá đã thu, phóng sinh từng con).
 // Nút nổi "Câu cá" hiện khi người chơi đứng gần mặt nước câu được. Lưu localStorage['lgt.fish']. Cảnh 3D câu cá: js/scene/fishing.js (Phiên 48) đọc LGT.fishing.session.
-import { ORBS, orbById, repairCost, loadFish, buyOrb, selectOrb, repairOrb, currentOrb, startCast, tick, tap, keepFish, releaseCaught, releaseFish, nearWater, waterById, fishLabel, pondSummary, speciesById, phaseText, outcomeText, orbBrief, POND_MAX } from '../world/fishing.js';
+import { ORBS, orbById, repairCost, loadFish, buyOrb, selectOrb, repairOrb, currentOrb, startCast, tick, tap, isTapKey, stillNearWater, keepFish, releaseCaught, releaseFish, nearWater, waterById, fishLabel, pondSummary, speciesById, phaseText, outcomeText, orbBrief, POND_MAX } from '../world/fishing.js';
 
 const KEY = 'lgt.fish';
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
@@ -33,6 +33,7 @@ export function initFishing(hud, { toast = () => {} } = {}) {
   function loop(now) {
     raf = 0; if (!sess || box.hidden) return;
     const dt = lastT ? (now - lastT) / 1000 : 0; lastT = now;
+    const p = pos(); if (LGT.inHouse || (p && !stillNearWater(p.x, p.z, sess.water))) { leave(); return; }   // đã đi khỏi mép nước: thu cầu về
     sess = tick(sess, dt);
     if (sess.over) { finish(); return; }
     paintCast(); raf = requestAnimationFrame(loop);
@@ -42,6 +43,7 @@ export function initFishing(hud, { toast = () => {} } = {}) {
     const r = startCast(st, w.id); if (!r.ok) { toast(r.reason === 'cracked' ? 'Quả cầu đã nứt, hãy sửa hoặc đổi cầu khác.' : r.reason === 'noorb' ? 'Bạn chưa có quả cầu nào. Mở tab “Quả cầu” để mua.' : 'Không thả cầu được ở đây.', 3200); return; }
     st = r.state; save(); sess = r.sess; caught = null; note = ''; lastT = 0; draw(); stopLoop(); raf = requestAnimationFrame(loop);
   }
+  function leave() { stopLoop(); sess = null; note = ''; draw(); toast('Bạn đã rời mặt nước nên cầu được thu về (lượt này coi như đã dùng).', 3000); }
   function pressTap() { if (!sess || sess.over) return; sess = tap(sess); finish(); }
   function finish() {
     stopLoop(); const s = sess; sess = null; note = outcomeText(s.outcome, s.fish);
@@ -84,7 +86,7 @@ export function initFishing(hud, { toast = () => {} } = {}) {
     info.textContent = cur ? `Cầu đang dùng: ${cur.orb.ten} — còn ${cur.dur}/${cur.orb.ben} lần${cur.cracked ? ' (đã nứt)' : ''}.` : 'Bạn chưa có quả cầu nào. Mở tab “Quả cầu” để mua.';
     if (sess) {
       list.appendChild(el('p', 'fs-status', phaseText(sess.phase, (waterById(sess.water) || {}).ten)));
-      const b = btn('Bấm!', pressTap, 'fs-b fs-tap'); list.appendChild(b); list.appendChild(el('p', 'fs-hint', 'Đợi hoa sen nở (chỉ khoảng nửa giây) rồi bấm. Bấm sớm cá sẽ giật mình.')); return;
+      const b = btn('Bấm!', pressTap, 'fs-b fs-tap'); list.appendChild(b); list.appendChild(el('p', 'fs-hint', 'Đợi hoa sen nở (chỉ khoảng nửa giây) rồi bấm nút này hoặc nhấn phím Cách / Enter. Bấm sớm cá sẽ giật mình.')); return;
     }
     if (caught) {
       list.appendChild(el('p', 'fs-status ok', note));
@@ -128,6 +130,11 @@ export function initFishing(hud, { toast = () => {} } = {}) {
   function open(id = 'cast') { tab = id; box.hidden = false; draw(); if (sess && !raf) { lastT = 0; raf = requestAnimationFrame(loop); } }
   function close() { box.hidden = true; stopLoop(); if (sess) { sess = null; toast('Bạn đã thu cầu về (lượt này coi như đã dùng).', 2600); } }
   x.addEventListener('click', close);
+  // Phím Cách / Enter = bấm (cửa sổ hoa sen chỉ 0,5–0,9 giây nên cần phím). Bắt ở giai đoạn capture để phím Cách không làm nhân vật nhảy (skill.js) và không bấm đúp nút "Bấm!".
+  addEventListener('keydown', (e) => {
+    if (!sess || sess.over || box.hidden || !isTapKey(e)) return;
+    e.preventDefault(); e.stopImmediatePropagation(); pressTap();
+  }, true);
   box.addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.stopPropagation(); close(); } });
 
   // nút nổi "Câu cá" chỉ hiện khi đứng gần nước và bảng đang đóng
