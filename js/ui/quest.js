@@ -66,6 +66,7 @@ export function initQuest(hud, { toast = () => {}, addMerit = () => {}, pillHost
     if (r.gain.sen) addMerit(r.gain.sen);
     if (r.levelUp) setTimeout(() => toast(`Chúc mừng! Bạn lên cấp ${r.levelUp.to} · ${levelOf(prog.xp).ten}${r.levelUp.sen ? ` · thưởng ${r.levelUp.sen} hạt sen` : ''}`, 6000), 400 + r.done.length * 1200);
     drawPill(); if (!box.hidden) drawBox();
+    if (LGT.story && LGT.story.refresh) LGT.story.refresh();   // Phiên 43: xong nhiệm vụ → thẻ "Việc kế tiếp" sang việc mới
   }
   /** Cộng điểm công hạnh từ nguồn ngoài nhiệm vụ (cốt truyện, Phiên 32). Lên cấp thì thưởng hạt sen như nhiệm vụ. */
   LGT.addXp = (n) => {

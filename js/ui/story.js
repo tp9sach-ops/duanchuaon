@@ -3,6 +3,7 @@
 // Mọi chữ hiển thị đi qua textContent, không chèn HTML. Phiên 34: nút "Dẫn đường" + "Tưới cây" dưới thẻ mục tiêu, đếm giờ thiền 3 phút, bước cốt truyện hiện trong bảng Nhiệm vụ.
 import { loadStory, apply, dialogueFor, objective, canWater, nearTree, WATER_SPOT, STORY_QUESTS } from '../world/story.js';
 import { npcById } from '../world/npc.js';
+import { nextGoal } from '../world/nextGoal.js';
 
 const KEY = 'lgt.story';
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
@@ -15,17 +16,32 @@ export function initStory(hud, { toast = () => {}, addMerit = () => {} } = {}) {
 
   // ---- thẻ mục tiêu hiện tại
   const obj = el('button', 'st-obj'); obj.type = 'button'; obj.setAttribute('aria-live', 'polite');
-  const objT = el('b'), objS = el('span'), objP = el('i'); obj.append(objT, objS, objP);
+  const objK = el('small'), objT = el('b'), objS = el('span'), objP = el('i'); obj.append(objK, objT, objS, objP);
   const wrap = el('div', 'st-wrap'), act = el('div', 'st-act');
   const goBtn = el('button', 'st-btn st-go', 'Dẫn đường'), waterBtn = el('button', 'st-btn st-water', 'Tưới cây'); goBtn.type = 'button'; waterBtn.type = 'button';
   waterBtn.dataset.id = 'tuoicay'; waterBtn.hidden = true; act.append(goBtn, waterBtn); wrap.append(obj, act); hud.appendChild(wrap);
-  let expanded = false;
+  let expanded = true, goal = null, goalKey = '', goalId = '', collapseTimer = 0;
+  // Phiên 43: thẻ này luôn hiện MỘT việc kế tiếp (cốt truyện → hành trình/hằng ngày → tự do), xem js/world/nextGoal.js. Việc mới hiện thì thẻ mở sẵn ~15 giây và có thông báo.
+  const stateNow = () => ({ story, prog: LGT.quests && LGT.quests.prog, sen: LGT.getSen ? LGT.getSen() : 0, la: LGT.merit && LGT.merit.leaf ? LGT.merit.leaf.la : 0, own: LGT.land && LGT.land.state ? LGT.land.state.own : null });
   function drawObj() {
-    const o = objective(story); obj.hidden = !o; wrap.hidden = !o; drawAct(); if (LGT.quests && LGT.quests.redraw) LGT.quests.redraw(); if (!o) return;
-    objT.textContent = o.title;
-    objS.textContent = expanded ? o.text : '';
-    objP.textContent = o.need ? (o.unit === 'giây' ? `${fmt(o.cur)} / ${fmt(o.need)}` : `${o.cur}/${o.need} ${o.unit}`) : '';
-    objP.hidden = !o.need; obj.classList.toggle('open', expanded);
+    goal = nextGoal(stateNow()); wrap.hidden = false; obj.hidden = false; drawAct();
+    if (LGT.quests && LGT.quests.redraw) LGT.quests.redraw();
+    objK.textContent = 'Việc kế tiếp · ' + goal.label; objT.textContent = goal.title;
+    objS.textContent = expanded ? goal.text : '';
+    const timed = goal.unit === 'giây';
+    objP.textContent = goal.need > 1 ? (timed ? `${fmt(goal.cur)} / ${fmt(goal.need)}` : `${goal.cur}/${goal.need}${goal.unit ? ' ' + goal.unit : ''}`) : '';
+    objP.hidden = !(goal.need > 1); obj.classList.toggle('open', expanded);
+    goBtn.hidden = !(goal.guide || goal.go); goBtn.textContent = goal.guide || (goal.go && (goal.go.npc || goal.go.place)) ? 'Dẫn đường' : 'Chỉ nút';
+  }
+  /** Tính lại việc kế tiếp; chỉ vẽ lại khi có gì đổi. Việc đổi sang việc khác → mở thẻ, nhấp nháy, báo "Việc tiếp theo". */
+  function refresh(first = false) {
+    const g = nextGoal(stateNow()), key = [g.id, g.cur, g.need, g.text].join('|'); if (key === goalKey) return;
+    const changed = g.id !== goalId; goalKey = key;
+    if (changed) {
+      const had = !!goalId; goalId = g.id; expanded = true; clearTimeout(collapseTimer); collapseTimer = setTimeout(() => { expanded = false; drawObj(); }, 15000);
+      if (had && !first) { obj.classList.remove('new'); void obj.offsetWidth; obj.classList.add('new'); setTimeout(() => toast(`Việc tiếp theo: ${g.title}. ${g.kind === 'free' ? '' : 'Bấm “Dẫn đường” để được chỉ đường.'}`, 6000), 3800); }
+    }
+    drawObj();
   }
   // ---- nút Dẫn đường + Tưới cây (Phiên 34)
   const WATER_MS = 1600; let watering = false;
@@ -35,8 +51,10 @@ export function initStory(hud, { toast = () => {}, addMerit = () => {} } = {}) {
     waterBtn.hidden = !w; if (w) waterBtn.textContent = watering ? 'Đang tưới…' : nearNow() ? 'Tưới cây' : 'Đi tới cây';
   }
   goBtn.addEventListener('click', () => {
-    const q = STORY_QUESTS.find((x) => x.step === story.step); if (!q) return;
-    if (LGT.guide) LGT.guide.start(q.id); else toast('Chưa dẫn đường được lúc này.', 2500);
+    const g = goal || nextGoal(stateNow());
+    if (g.guide) { if (LGT.guide) LGT.guide.start(g.guide); else toast('Chưa dẫn đường được lúc này.', 2500); }
+    else if (g.go && LGT.tutorial && LGT.tutorial.goTo) LGT.tutorial.goTo(g.go);
+    else toast(g.text, 4000);
   });
   waterBtn.addEventListener('click', () => {
     if (watering || LGT.panelOpen) return;
@@ -47,14 +65,14 @@ export function initStory(hud, { toast = () => {}, addMerit = () => {} } = {}) {
     setTimeout(() => { watering = false; if (nearNow()) commit({ type: 'water', near: true }); else toast('Bạn đã rời xa cây, nước chưa tới gốc.', 2500); drawAct(); }, WATER_MS);
   });
   // đếm giờ thiền: chỉ khi đang ngồi thiền ở bồ đoàn (tab ẩn vẫn đếm); mỗi nhịp cộng thời gian thật (logic tự chặn trần 2 giây/lần)
-  let lastTick = Date.now();
+  let lastTick = Date.now(), tickN = 0;
   setInterval(() => {
-    const now = Date.now(), dt = (now - lastTick) / 1000; lastTick = now; drawAct();
+    const now = Date.now(), dt = (now - lastTick) / 1000; lastTick = now; drawAct(); if (++tickN % 3 === 0) refresh();   // 1,5 giây tính lại việc kế tiếp (hạt sen / lá / nhiệm vụ đổi)
     const W = LGT.world;                                            // Phiên 38: treo web / đổi tab vẫn đếm giờ thiền (chia đoạn ≤2 giây, tổng tối đa 120 giây mỗi nhịp)
     if (W && W.mode === 'meditate' && dt > 0) for (let left = Math.min(dt, 120); left > 0 && story.step === 'meditate'; left -= 2) commit({ type: 'meditate', dt: Math.min(left, 2) });
   }, 500);
   const fmt = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
-  obj.addEventListener('click', () => { expanded = !expanded; drawObj(); });
+  obj.addEventListener('click', () => { expanded = !expanded; clearTimeout(collapseTimer); drawObj(); });
 
   // ---- hộp thoại
   const dlg = el('section', 'st-dlg'); dlg.hidden = true; dlg.setAttribute('role', 'dialog'); dlg.setAttribute('aria-label', 'Hội thoại');
@@ -72,7 +90,7 @@ export function initStory(hud, { toast = () => {}, addMerit = () => {} } = {}) {
     if (r.gain.sen) addMerit(r.gain.sen);
     if (r.gain.xp && LGT.addXp) LGT.addXp(r.gain.xp);
     r.notes.forEach((n, i) => setTimeout(() => toast(n, 5200), 700 + i * 1300));
-    drawObj(); return r;
+    refresh(); return r;
   }
   function advance() {
     if (!cur) return;
@@ -96,7 +114,7 @@ export function initStory(hud, { toast = () => {}, addMerit = () => {} } = {}) {
   }
 
   LGT.storyTalk = talk;
-  LGT.story = { get state() { return story; }, apply: commit, talk, close };
-  drawObj();
+  LGT.story = { get state() { return story; }, apply: commit, talk, close, refresh, get goal() { return goal; } };
+  setTimeout(() => refresh(true), 0); drawObj();
   return LGT.story;
 }

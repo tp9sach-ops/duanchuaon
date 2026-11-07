@@ -6,7 +6,7 @@ import { buildMarkers } from '../world/minimap.js';
 const KEY = 'lgt.tut';
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
 
-/** hud: phần tử HUD; opts: { toast(text, ms) }. Đặt LGT.tutorial = { open, close, toggle, showAdvice, advice }. */
+/** hud: phần tử HUD; opts: { toast(text, ms) }. Đặt LGT.tutorial = { goTo: go, open, close, toggle, showAdvice, advice }. */
 export function initTutorial(hud, { toast = () => {} } = {}) {
   const LGT = window.LGT || (window.LGT = {});
   let topic = TOPICS[0].id, hlTimer = 0, hlEl = null;
@@ -70,6 +70,6 @@ export function initTutorial(hud, { toast = () => {} } = {}) {
   let seen = false; try { seen = localStorage.getItem(KEY) === '1'; } catch (_) { /* bỏ qua */ }
   if (!seen) setTimeout(() => { if (box.hidden) toast('Mới chơi? Bấm nút “?” góc phải-trên để xem cách chơi, đổi lá bồ đề, xây nhà.', 8000); }, 16000);
 
-  LGT.tutorial = { open, close, toggle: () => (box.hidden ? open() : close()), showAdvice: () => open(), advice, get isOpen() { return !box.hidden; } };
+  LGT.tutorial = { goTo: go, open, close, toggle: () => (box.hidden ? open() : close()), showAdvice: () => open(), advice, get isOpen() { return !box.hidden; } };
   return LGT.tutorial;
 }
