@@ -25,6 +25,7 @@ import { buildHoaSen } from './hoasen.js';
 import { buildNpcs } from './npc.js';
 import { buildLandscape } from './landscape.js';
 import { buildOutside } from './outside.js';
+import { buildLand } from './land.js';
 import { createGovernor, levelPlan, startLevel, loadSaved, save as savePerf } from './perfLogic.js';
 import { buildGlbTrees } from './glbprops.js';
 import { inHall, PLAZA } from '../world/landscape.js';
@@ -87,6 +88,7 @@ export function createScene(canvas, { onProgress, onPick, onArrive } = {}) {
   const hoaSen = buildHoaSen(LGT); scene.add(hoaSen.group);
   const npcs = buildNpcs(scene, LGT);   // NPC: Trụ trì, Tri khách, cư sĩ vườn thiền (Phiên 14g)   // hoa sen vàng nhận lộc
   const land = buildLandscape(); scene.add(shade(land.group));   // cảnh quan mở rộng (Phiên 14f)
+  const xomScene = buildLand(); scene.add(shade(xomScene.group)); LGT.landScene = xomScene;   // khu dân cư + nhà người chơi (Phiên 36)
   const outside = buildOutside(); scene.add(shade(outside.group));   // khu ngoài chùa: làng, chợ, rừng, thác (Phiên 17)
   scene.add(buildGlbTrees().group);   // cây GLB rải trong vườn (Phiên 14f, Bước 3): nạp nền, từng loại hiện khi nạp xong
 

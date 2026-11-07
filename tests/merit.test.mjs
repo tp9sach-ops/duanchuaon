@@ -49,3 +49,11 @@ test('nối giao diện: Thầy Tri khách mở bảng đổi lá, ví tính đi
   assert.match(npc, /trikhach[\s\S]{0,80}LGT\.merit/); assert.match(hud, /initMerit\(/); assert.match(hud, /lifetimeSen\(/); assert.match(hud, /spendMerit/);
   const { npcById } = await import('../js/world/npc.js'); assert.ok(npcById('trikhach'), 'NPC trikhach phải tồn tại');
 });
+
+import { spendLa } from '../js/world/merit.js';
+test('tiêu lá: đủ thì trừ, thiếu/sai thì giữ nguyên; điểm xếp hạng (spent) không đổi', () => {
+  const l = exchange(emptyLeaf(), 1000, 100).leaf;
+  const r = spendLa(l, 100); assert.equal(r.ok, true); assert.equal(r.leaf.la, 0); assert.equal(r.leaf.spent, l.spent); assert.equal(l.la, 100, 'không sửa bản cũ');
+  for (const n of [101, 0, -1, NaN, 'x', null]) { const f = spendLa(l, n); assert.equal(f.ok, false, String(n)); assert.equal(f.leaf, l); }
+  assert.equal(loadLeaf(JSON.stringify(r.leaf)).la, 0);
+});

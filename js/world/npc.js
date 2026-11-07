@@ -116,6 +116,14 @@ export const VILLAGERS = [
       'Tiệm mở cửa suốt ngày; hôm nay trời đẹp, bạn nhớ ghé vườn sen sau chùa nhé.',
       'Chúc bạn bình an, may mắn và nhiều niềm vui.',
     ] },
+  { id: 'bacphuong', ten: 'Bác Tư khu phố', color: 'xam', hair: 'troc', beard: 'bac', x: 3.6, z: 153, ry: Math.PI / 2, stand: { x: 0.8, z: 153 },
+    lines: [
+      'Chào cháu. Xóm mình mỗi xóm mười nhà, đông quá thì lập xóm mới.',
+      'Muốn dựng nhà thì cháu chọn một lô đất, bác ghi sổ cho.',
+      'Ở xóm này hàng xóm tối lửa tắt đèn có nhau, cháu nhé.',
+      'Muốn sang xóm khác chơi thì bảo bác, bác chỉ đường cho.',
+      'Nhà cửa tươm tất thì lòng cũng yên, cháu cố gắng nhé.',
+    ] },
   { id: 'haithuoc', ten: 'Cô Mai hái thuốc', color: 'trang', hair: 'bui', x: 93, z: 115, ry: Math.PI, stand: { x: 93, z: 112 },
     lines: [
       'Cô hái lá thuốc nam bên suối, ngày nào cũng vài rổ.',

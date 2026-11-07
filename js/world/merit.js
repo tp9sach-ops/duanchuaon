@@ -40,6 +40,13 @@ export function exchange(leaf, sen, n) {
   return { ok: true, reason: '', leaf: { ...leaf, day: { ...leaf.day }, la: int(leaf.la + k, 0, MAX_LA), spent: int(leaf.spent + cost, 0, 1e9) }, cost };
 }
 
+/** Tiêu `n` lá bồ đề (mua đất, đồ...). Trả { ok, leaf }; không đủ lá hoặc n sai thì ok=false, leaf giữ nguyên. `spent` (sen đã đổi) không đổi nên điểm xếp hạng không tụt. */
+export function spendLa(leaf, n) {
+  const k = Number.isFinite(+n) ? Math.floor(+n) : 0;
+  if (k < 1 || k > leaf.la) return { ok: false, leaf };
+  return { ok: true, leaf: { ...leaf, day: { ...leaf.day }, la: leaf.la - k } };
+}
+
 /** Tổng hạt sen từng kiếm = sen còn + đã đổi (dùng cho bảng xếp hạng/đồng bộ). */
 export const lifetimeSen = (sen, leaf) => int(sen, 0, 1e9) + int(leaf && leaf.spent, 0, 1e9);
 

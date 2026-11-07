@@ -8,6 +8,7 @@ import { initQuest } from './quest.js';
 import { initGuide } from './guide.js';
 import { initStory } from './story.js';
 import { initMerit } from './merit.js';
+import { initLand } from './land.js';
 import { lifetimeSen } from '../world/merit.js';
 import { loadWallet, addSen } from '../engines/kinh.js';
 import { callApi, apiEnabled, getUserKey } from '../api.js';
@@ -105,6 +106,7 @@ export function initHudMenu(hud) {
   const quest = initQuest(hud, { toast, addMerit, pillHost: root.querySelector('.hm-wallet') });   // nhiệm vụ + cấp độ (Phiên 17)
   try { initGuide(hud, { toast }); } catch (e) { console.warn('[Diệu Giang Tự] Dẫn đường lỗi:', e && e.message); }   // dẫn đường nhiệm vụ (Phiên 18)
   try { initMerit(hud, { toast, addMerit, getSen: () => wallet.sen, spendSen: spendMerit, pillHost: root.querySelector('.hm-wallet') }); } catch (e) { console.warn('[Diệu Giang Tự] Lá bồ đề lỗi:', e && e.message); }   // đổi hạt sen lấy lá bồ đề (Phiên 35)
+  try { initLand(hud, { toast }); } catch (e) { console.warn('[Diệu Giang Tự] Đất ở lỗi:', e && e.message); }   // đất ở + xóm (Phiên 36)
   try { initStory(hud, { toast, addMerit }); } catch (e) { console.warn('[Diệu Giang Tự] Cốt truyện lỗi:', e && e.message); }   // hộp thoại + mục tiêu chương 1 (Phiên 32); lỗi thì NPC vẫn nói lời thường
 
   // ---- bản đồ chùa (lối đi tới chương: liên kết #id, stage.js tự bắt và cho nhân vật đi tới)

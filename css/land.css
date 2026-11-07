@@ -1,0 +1,20 @@
+/* Đất ở và xóm (Phiên 36) */
+.ld-box{position:absolute;left:50%;top:max(80px,calc(env(safe-area-inset-top) + 72px));transform:translateX(-50%);width:min(400px,calc(100vw - 24px));max-height:calc(100vh - 120px);overflow:auto;padding:12px 16px 14px;border-radius:16px;border:1px solid rgba(241,219,160,.6);background:rgba(14,10,7,.95);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:0 18px 60px rgba(0,0,0,.55);color:#f3ead4;pointer-events:auto;z-index:7}
+.ld-box[hidden]{display:none!important}
+.ld-box header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.ld-box h3{margin:0;font:600 18px/1.2 var(--serif,Georgia,serif);color:#fff}
+.ld-x{width:30px;height:30px;border-radius:50%;border:1px solid rgba(241,219,160,.5);background:transparent;color:#f1dba0;font-size:18px;line-height:1;cursor:pointer}
+.ld-status{margin:4px 0 8px;font:400 14px/1.45 var(--sans,inherit)}
+.ld-view{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;font:600 13px/1.2 var(--sans,inherit);color:#f1dba0}
+.ld-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:10px}
+.ld-lot{min-height:44px;border-radius:10px;border:1px solid #8fd6bf;background:rgba(143,214,191,.14);color:#fff;font:600 15px/1 var(--sans,inherit);cursor:pointer}
+.ld-lot.taken{border-color:#c9a36a;background:rgba(201,163,106,.2)}
+.ld-lot.mine{border-color:#f1db9f;background:rgba(241,219,160,.35)}
+.ld-lot.pick{outline:2px solid #fff;outline-offset:1px}
+.ld-lot:disabled{cursor:default;opacity:.55}.ld-lot.mine:disabled{opacity:1}
+.ld-b{min-height:40px;padding:8px 14px;border-radius:100px;border:1px solid #f1db9f;background:rgba(217,178,95,.2);color:#fff;font:600 14px/1 var(--sans,inherit);cursor:pointer}
+.ld-b.buy{border-color:#8fd6bf;background:rgba(143,214,191,.25)}
+.ld-b:disabled{opacity:.4;cursor:default}
+.ld-b:focus-visible,.ld-lot:focus-visible,.ld-x:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.ld-hint{font:400 13px/1.4 var(--sans,inherit);color:#bdb39a}
+.ld-note{margin:10px 0 0;font:400 11px/1.4 var(--sans,inherit);color:#9aa0b0}

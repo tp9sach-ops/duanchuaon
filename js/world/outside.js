@@ -2,6 +2,7 @@
 // DỮ LIỆU THUẦN (không three.js, có test); cảnh 3D ở js/scene/outside.js dựng từ đây. Import là tự đăng ký vùng đi bộ và vật cản (một lần).
 // Tọa độ: +z là hướng xa chùa (ra làng). Cổng Tam quan z=34, đường trước cổng tới z=62 (layout.js) — các vùng dưới đây nối tiếp từ đó.
 import { addWalk, addCircle, addRect, addWater } from './layout.js';
+import { LAND_WALKS } from './land.js';
 
 /** Các vùng đi bộ (chữ nhật, nối liền nhau). Ngoài các vùng này (và khuôn viên chùa) là chặn: cây rừng, nhà dân, sườn núi chỉ để nhìn. */
 export const OUT_WALKS = [
@@ -11,6 +12,7 @@ export const OUT_WALKS = [
   { id: 'bai-thac', x0: 84, x1: 112, z0: 86, z1: 122 },         // bãi dưới thác
   { id: 'duong-rung', x0: -100, x1: -12, z0: 84, z1: 94 },      // đường mòn vào rừng thông (rẽ trái)
   { id: 'bai-rung', x0: -118, x1: -90, z0: 72, z1: 108 },       // bãi trong rừng thông
+  ...LAND_WALKS,                                                 // Phiên 36: đường xuống xóm + khu dân cư (js/world/land.js)
 ];
 
 /** Hồ dưới chân thác (vật cản, không có cầu). */

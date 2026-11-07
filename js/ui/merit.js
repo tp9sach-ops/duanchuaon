@@ -1,6 +1,6 @@
 // Lá bồ đề (Phiên 35, bước 1 hệ thống xây nhà): thẻ số lá cạnh hạt sen, bảng đổi 10 hạt sen = 1 lá (mở khi thưa chuyện với Thầy Tri khách),
 // và thưởng hạt sen khi ngồi thiền (3 phút = 1 hạt, tối đa 10/ngày). Logic ở js/world/merit.js (có test). Mọi chữ qua textContent.
-import { loadLeaf, exchange, maxLa, addMeditation, SEN_PER_LA, LAND_LA, DAILY_CAP } from '../world/merit.js';
+import { loadLeaf, exchange, maxLa, addMeditation, spendLa, SEN_PER_LA, LAND_LA, DAILY_CAP } from '../world/merit.js';
 
 const KEY = 'lgt.la';
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
@@ -50,7 +50,9 @@ export function initMerit(hud, { toast = () => {}, addMerit = () => {}, getSen =
     if (!box.hidden) draw();
   }, 1000);
 
-  LGT.merit = { open, close, get leaf() { return leaf; }, get spent() { return leaf.spent; } };
+  /** Tiêu lá bồ đề (mua đất...). Trả false nếu không đủ. */
+  function spend(n) { const r = spendLa(leaf, n); if (!r.ok) return false; leaf = r.leaf; save(); draw(); return true; }
+  LGT.merit = { open, close, spendLa: spend, get leaf() { return leaf; }, get spent() { return leaf.spent; } };
   draw();
   return LGT.merit;
 }
