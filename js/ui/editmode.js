@@ -38,7 +38,7 @@ export function initEdit(hud, { toast = () => {} } = {}) {
     on = v; drag = null; if (v) { try { F() && F().close(); } catch (_) { /* bỏ qua */ } toast('Chế độ chỉnh sửa: bấm vào đồ để dời / xoay.', 3000); }
     select(0); if (!v && LGT.houseRemount) LGT.houseRemount(); paint();
   }
-  open.addEventListener('click', () => setOn(true)); bDone.addEventListener('click', () => setOn(false));
+  open.addEventListener('click', () => { open.classList.remove('pulse'); setOn(true); }); bDone.addEventListener('click', () => setOn(false));
   bRot.addEventListener('click', () => rotate());
   bPick.addEventListener('click', () => pickSel());
 
@@ -108,7 +108,17 @@ export function initEdit(hud, { toast = () => {} } = {}) {
     if (e.code === 'Escape') { e.stopPropagation(); setOn(false); } else if (e.code === 'KeyR') { rotate(); e.preventDefault(); } else if (e.code === 'Delete' || e.code === 'Backspace') { pickSel(); e.preventDefault(); }
   }, true);
 
-  setInterval(() => { if (on && !LGT.inHouse) setOn(false); else paint(); }, 400);   // ra khỏi nhà thì tự tắt; vào nhà thì hiện nút
+  // Phiên 52: vừa bước vào nhà thì báo ngay có nút "Chỉnh sửa" và cho nút nhấp nháy vài giây để dễ thấy (người chơi báo không thấy nút).
+  let wasIn = false, pulseTimer = 0;
+  const watchEnter = () => {
+    const now = !!LGT.inHouse;
+    if (now && !wasIn) {
+      toast('Bấm nút "Chỉnh sửa" ở giữa màn hình để dời, xoay đồ trong nhà.', 4500);
+      open.classList.add('pulse'); clearTimeout(pulseTimer); pulseTimer = setTimeout(() => open.classList.remove('pulse'), 9000);
+    } else if (!now) { open.classList.remove('pulse'); }
+    wasIn = now;
+  };
+  setInterval(() => { watchEnter(); if (on && !LGT.inHouse) setOn(false); else paint(); }, 400);   // ra khỏi nhà thì tự tắt; vào nhà thì hiện nút
   LGT.edit = { get on() { return on; }, setOn, select };
   paint();
   return LGT.edit;
