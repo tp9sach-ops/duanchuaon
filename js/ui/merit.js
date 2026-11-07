@@ -55,7 +55,7 @@ export function initMerit(hud, { toast = () => {}, addMerit = () => {}, getSen =
 
   /** Tiêu lá bồ đề (mua đất...). Trả false nếu không đủ. */
   function spend(n) { const r = spendLa(leaf, n); if (!r.ok) return false; leaf = r.leaf; save(); draw(); return true; }
-  const LABEL = { lay: 'Lạy Phật', cung: 'Cúng đèn nguyện', nhang: 'Thắp nhang' };
+  const LABEL = { lay: 'Lạy Phật', cung: 'Cúng đèn nguyện', nhang: 'Thắp nhang', phongsinh: 'Phóng sinh' };
   /** Thưởng `n` hạt sen cho một lần lạy/cúng/nhang, tối đa ACT_CAP lần/ngày mỗi loại. Trả số hạt sen thực nhận (0 nếu hết lượt). silent=true: không báo (nơi gọi tự báo). */
   function reward(kind, n, silent = false) {
     const r = claimAct(leaf, kind); n = Math.floor(+n) || 0;
