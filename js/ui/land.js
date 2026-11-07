@@ -1,7 +1,7 @@
 // Đất ở và xóm (Phiên 36, bước 2; Phiên 37 bước 3c thêm nâng cấp nhà): bảng của Bác Tư khu phố — xem các lô, mua đất bằng 100 lá bồ đề, nhận nhà trống thô sơ, nâng cấp nhà, đổi xóm xem.
 // Logic ở js/world/land.js (có test). Lưu `localStorage['lgt.land']`. Chưa có máy chủ nên sổ xóm chỉ có nhà của chính người chơi (xem docs/PHIEN36.md).
 // Mọi chữ hiển thị đi qua textContent, không chèn HTML.
-import { loadLand, localRegistry, buyLand, upgradeHouse, upgradeCost, houseLevel, HOUSE_LEVELS, MAX_LV, viewableXoms, setView, plotById, houseRect, PLOTS, XOM_SIZE, countXom } from '../world/land.js';
+import { loadLand, localRegistry, buyLand, upgradeHouse, upgradeCost, houseLevel, HOUSE_LEVELS, MAX_LV, viewableXoms, setView, plotById, houseRect, poolRect, PLOTS, XOM_SIZE, countXom } from '../world/land.js';
 import { LAND_LA } from '../world/merit.js';
 import { RECTS, addRect } from '../world/layout.js';
 
@@ -13,7 +13,7 @@ export function initLand(hud, { toast = () => {} } = {}) {
   const LGT = window.LGT || (window.LGT = {});
   let land = loadLand(null); try { land = loadLand(localStorage.getItem(KEY)); } catch (_) { /* bỏ qua */ }
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(land)); } catch (_) { /* chế độ riêng tư */ } };
-  let pick = 0, collider = null;
+  let pick = 0, colliders = [];
 
   const box = el('section', 'ld-box'); box.hidden = true; box.setAttribute('role', 'dialog'); box.setAttribute('aria-label', 'Đất ở và xóm');
   const head = el('header'), h = el('h3', null, 'Bác Tư khu phố'), x = el('button', 'ld-x', '×'); x.type = 'button'; x.setAttribute('aria-label', 'Đóng'); head.append(h, x);
@@ -27,8 +27,12 @@ export function initLand(hud, { toast = () => {} } = {}) {
   const leaves = () => (LGT.merit && LGT.merit.leaf ? LGT.merit.leaf.la : 0);
 
   function placeHouse() {   // vật cản + hình dựng theo xóm đang xem
-    if (collider) { const i = RECTS.indexOf(collider); if (i >= 0) RECTS.splice(i, 1); collider = null; }
-    if (land.own && land.view === land.own.xom) { const r = houseRect(plotById(land.own.plot), land.own.lv); collider = { x0: r.x0, x1: r.x1, z0: r.z0, z1: r.z1 }; addRect(collider); }
+    for (const c of colliders) { const i = RECTS.indexOf(c); if (i >= 0) RECTS.splice(i, 1); }
+    colliders = [];
+    if (land.own && land.view === land.own.xom) {   // thân nhà + hồ bơi (villa) đều chặn đi bộ
+      const pl = plotById(land.own.plot);
+      for (const r of [houseRect(pl, land.own.lv), poolRect(pl, land.own.lv)]) if (r) { const c = { x0: r.x0, x1: r.x1, z0: r.z0, z1: r.z1 }; colliders.push(c); addRect(c); }
+    }
     if (LGT.landScene) LGT.landScene.refresh(reg(), land.view || 1, land.own);
   }
   function draw() {
