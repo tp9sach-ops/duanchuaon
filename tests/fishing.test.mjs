@@ -136,3 +136,37 @@ test('đọc dữ liệu hỏng/sửa tay: rác → trống; cầu lạ bỏ, đ
   const round = loadFish(JSON.stringify(keepFish(owned('ngoc'), { sp: 'koi', lon: true }).state)); assert.equal(round.pond.length, 1); assert.equal(round.orbs.ngoc, 45); assert.equal(round.sel, 'ngoc');
   assert.equal(orbById('go').gia, 30);
 });
+
+// ---- Phiên 45: lời nhắc chữ + giao diện js/ui/fishing.js
+import fsx from 'node:fs';
+import * as F from '../js/world/fishing.js';
+
+test('phaseText / outcomeText / orbBrief: chữ hiển thị đúng và không rỗng', () => {
+  for (const p of ['wait', 'shadow', 'nibble', 'lotus']) assert.ok(F.phaseText(p, 'Hồ cá').length > 5, p);
+  assert.match(F.phaseText('wait', 'Hồ cá'), /Hồ cá/);
+  assert.match(F.phaseText('lotus'), /BẤM NGAY/);
+  assert.equal(F.phaseText('over'), '');
+  assert.match(F.outcomeText('got', { sp: 'koi', lon: true }), /Cá koi \(hiếm, lớn\)/);
+  assert.match(F.outcomeText('early'), /sớm/);
+  assert.match(F.outcomeText('late'), /khép/);
+  assert.equal(F.outcomeText(null), '');
+  assert.equal(F.orbBrief(F.ORBS[0]), 'bền 20 lần · may ×1 · hoa sen 0,5 giây');
+  assert.equal(F.orbBrief(F.ORBS[4]), 'bền 100 lần · may ×4,5 · hoa sen 0,9 giây');
+});
+
+test('js/ui/fishing.js chỉ nhập những hàm có thật trong js/world/fishing.js', () => {
+  const src = fsx.readFileSync(new URL('../js/ui/fishing.js', import.meta.url), 'utf8');
+  const imp = src.match(/import \{([^}]*)\} from '\.\.\/world\/fishing\.js'/);
+  assert.ok(imp, 'không thấy dòng nhập từ world/fishing.js');
+  const names = imp[1].split(',').map((x) => x.trim()).filter(Boolean);
+  for (const n of names) assert.ok(n in F, `world/fishing.js thiếu export ${n}`);
+  for (const n of ['startCast', 'tick', 'tap', 'keepFish', 'releaseCaught', 'releaseFish', 'buyOrb', 'repairOrb', 'selectOrb', 'nearWater']) assert.ok(names.includes(n), `ui/fishing.js phải dùng ${n}`);
+  assert.ok(!/innerHTML/.test(src), 'giao diện câu cá không được dùng innerHTML');
+});
+
+test('menu: nút Câu cá có trong cụm phải-trên và mở bảng câu cá', async () => {
+  const M = await import('../js/ui/menuLogic.js');
+  const it = M.TOP_ICONS.find((x) => x.id === 'cauca');
+  assert.ok(it && M.isReady(it));
+  assert.deepEqual(M.pressResult(it), { kind: 'fish' });
+});
