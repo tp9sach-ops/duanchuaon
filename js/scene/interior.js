@@ -27,7 +27,7 @@ export function buildInterior() {
   const ceilMat = new THREE.MeshStandardMaterial({ color: 0xf2ead8, roughness: 0.95 });
 
   // đèn tạo sẵn: đèn trần giữa phòng + đèn phụ gần cửa/đồ đạc
-  const L1 = new THREE.PointLight(0xffe2b0, 0, 11, 2), L2 = new THREE.PointLight(0xffc88a, 0, 8, 2);
+  const L1 = new THREE.PointLight(0xffe2b0, 0, 18, 2), L2 = new THREE.PointLight(0xffc88a, 0, 12, 2);
   group.add(L1, L2);
 
   // ---- hàm dựng nhanh
@@ -126,6 +126,8 @@ export function buildInterior() {
     };
     win(w > 6 ? -hw * 0.45 : 0, Math.min(1.6, h - 0.9), 1.2, 0.9, 'back');
     if (d >= 5.4) win(-0.5, Math.min(1.6, h - 0.9), 1.2, 0.9, 'left');
+    if (w > 9) win(hw * 0.45, Math.min(1.6, h - 0.9), 1.2, 0.9, 'back');   // Phiên 42: phòng rộng gấp 3 → thêm cửa sổ cho sáng
+    if (d > 8) win(hd * 0.4, Math.min(1.6, h - 0.9), 1.2, 0.9, 'left');
     // bệ nền: tấm tối dưới phòng để khỏi lơ lửng giữa không trung
     const pad = new THREE.Mesh(BOX, std(0x3a3128)); pad.scale.set(w + 3, 0.2, d + 3); pad.position.y = -0.11; pad.receiveShadow = true; room.add(pad);
     L1.position.set(0, h - 0.35, -0.2); L2.position.set(w * 0.2, 1.7, hd - 1.2);
