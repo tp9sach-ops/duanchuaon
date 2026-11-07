@@ -55,6 +55,9 @@ Cách dùng: làm mục [ ] đầu tiên, xong báo ptg, CHỜ "tiếp tục". L
 [ ] 8.1 PERF/FPS máy yếu, ảnh ngày mưa, responsive điện thoại thật.
 [ ] 8.2 QA cuối: test xanh Node 20+22, Pages xanh, README, dọn file thừa.
 
+## Ghi chú Phiên 55
+- Tài khoản nhân vật (Phiên 53–55): lỗi `blocked` ở màn đặt mật khẩu đang chờ Gp thử đường dự phòng form+khung (docs/PHIEN55.md). `npm test` 647/647.
+
 ## Việc của ptg
 - Tải bản Phiên 46 lên GitHub (nếu chưa), mở trang thật và thử: nút "Câu cá" cụm phải-trên, nút nổi "Câu cá" khi đứng sát nước, mua cầu, thả, bấm khi hoa sen nở, thu cá, phóng sinh.
 - Trả lời: "quả cầu" có đúng là cầu quăng xuống nước? Có tặng 1 cầu gỗ cho người mới? Duyệt số tạm câu cá (xem PHIEN44.md).

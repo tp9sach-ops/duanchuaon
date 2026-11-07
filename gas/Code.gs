@@ -39,28 +39,45 @@ function doGet() {
 }
 
 function doPost(e) {
+  // Gửi bằng <form> (Phiên 55, đường dự phòng khi fetch bị chặn CORS): có trường d (JSON lệnh) + rid; trả trang nhỏ gọi postMessage về trang game.
+  var p = (e && e.parameter) || {}, frame = p.d != null && p.rid != null, out;
   try {
-    var req = JSON.parse((e && e.postData && e.postData.contents) || '{}');
-    switch (req.action) {
-      case 'ping':         return json_({ ok: true, pong: true });
-      case 'saveProfile':  return json_(saveProfile_(req));
-      case 'getProfile':   return json_(getProfile_(req));
-      case 'deleteProfile': return json_(deleteProfile_(req));
-      case 'analyzeHand':  return json_(analyzeImage_(req, 'hand'));   // Vision.gs
-      case 'analyzeFace':  return json_(analyzeImage_(req, 'face'));
-      case 'addPrayer':    return json_(addPrayer_(req));      // Prayers.gs
-      case 'listPrayers':  return json_(listPrayers_());
-      case 'sync':         return json_(roomSync_(req));       // Room.gs (đa người)
-      case 'acctCreate':   return json_(acctCreate_(req));     // Accounts.gs (tài khoản nhân vật)
-      case 'acctLogin':    return json_(acctLogin_(req));
-      case 'acctLoad':     return json_(acctLoad_(req));
-      case 'acctSave':     return json_(acctSave_(req));
-      case 'acctLogout':   return json_(acctLogout_(req));
-      default:             return json_({ ok: false, error: 'unknown_action' });
-    }
+    out = route_(JSON.parse(frame ? String(p.d) : ((e && e.postData && e.postData.contents) || '{}')));
   } catch (err) {
-    return json_({ ok: false, error: 'server_error', detail: String(err && err.message || err) });
+    out = json_({ ok: false, error: 'server_error', detail: String(err && err.message || err) });
   }
+  return frame ? frame_(JSON.parse(out.getContent()), p.rid, p.o) : out;
+}
+
+function route_(req) {
+  switch (req.action) {
+    case 'ping':         return json_({ ok: true, pong: true });
+    case 'saveProfile':  return json_(saveProfile_(req));
+    case 'getProfile':   return json_(getProfile_(req));
+    case 'deleteProfile': return json_(deleteProfile_(req));
+    case 'analyzeHand':  return json_(analyzeImage_(req, 'hand'));   // Vision.gs
+    case 'analyzeFace':  return json_(analyzeImage_(req, 'face'));
+    case 'addPrayer':    return json_(addPrayer_(req));      // Prayers.gs
+    case 'listPrayers':  return json_(listPrayers_());
+    case 'sync':         return json_(roomSync_(req));       // Room.gs (đa người)
+    case 'acctCreate':   return json_(acctCreate_(req));     // Accounts.gs (tài khoản nhân vật)
+    case 'acctLogin':    return json_(acctLogin_(req));
+    case 'acctLoad':     return json_(acctLoad_(req));
+    case 'acctSave':     return json_(acctSave_(req));
+    case 'acctLogout':   return json_(acctLogout_(req));
+    default:             return json_({ ok: false, error: 'unknown_action' });
+  }
+}
+
+/** Trang trả về cho khung ẩn: gửi kết quả cho trang game bằng postMessage. targetOrigin = origin trang game gửi lên (hợp lệ) hoặc '*'. */
+function frame_(res, rid, origin) {
+  var msg = JSON.stringify({ lgt: String(rid).replace(/[^A-Za-z0-9-]/g, '').slice(0, 64), res: res })
+    .replace(/</g, '\\u003c').replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029');
+  var o = /^https?:\/\/[A-Za-z0-9.\-]+(:\d+)?$/.test(String(origin || '')) ? String(origin) : '*';
+  var html = '<!doctype html><meta charset="utf-8"><script>(function(){var m=' + msg + ',o=' + JSON.stringify(o) + ';' +
+    'try{window.parent.parent.postMessage(m,o)}catch(e){}' +
+    'try{if(window.top!==window.parent.parent)window.top.postMessage(m,o)}catch(e){}})();</script>';
+  return HtmlService.createHtmlOutput(html).setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
 function json_(obj) {

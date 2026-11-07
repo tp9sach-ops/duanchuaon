@@ -11,6 +11,7 @@ button{font:inherit;padding:10px 16px;border-radius:8px;border:0;background:#d9b
 <pre id="out">Đang chạy…</pre>
 <script type="module">
 import { CONFIG } from './js/config.js';
+import { callViaFrame } from './js/api.js';
 const out = document.getElementById('out'), url = CONFIG.apiUrl, lines = [];
 const say = (t, cls) => { lines.push(t); out.innerHTML = lines.map((l) => esc(l)).join('\n'); };
 const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
@@ -37,6 +38,12 @@ async function run() {
   for (const kb of [60, 200, 600]) {
     await test('6. POST ping kèm ' + kb + ' KB dữ liệu thừa', () => withTimeout(async (signal) => { const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'ping', pad: 'x'.repeat(kb * 1024) }), signal, redirect: 'follow' }); return r.status + ' ' + snip(await r.text()); }, 40000));
   }
+  // Phiên 55: đường dự phòng của game (form ẩn + khung ẩn + postMessage). Cần Code.gs bản Phiên 55 đã Deploy → New version.
+  await test('8. POST bằng form + khung ẩn (đường dự phòng không cần CORS) — phải ra {"ok":true,"pong":true}', async () => {
+    const r = await callViaFrame(JSON.stringify({ action: 'ping' }), { timeoutMs: 20000 });
+    if (!r) throw new Error('không nhận được phản hồi sau 20 giây (Code.gs chưa là bản Phiên 55 / chưa Deploy bản mới / khung bị chặn)');
+    return JSON.stringify(r);
+  });
   try { let n = 0, keys = 0; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith('lgt.')) { keys++; n += k.length + (localStorage.getItem(k) || '').length; } } say('7. Dữ liệu game lgt.* trên máy/origin này: ' + keys + ' khóa, ' + Math.round(n / 1024) + ' KB (giới hạn lưu tài khoản: 150 KB)'); } catch (e) { say('7. Không đọc được localStorage: ' + e.message); }
   say('—\nXong. Gửi lại ảnh chụp màn hình này.');
 }
