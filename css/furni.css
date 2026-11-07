@@ -50,3 +50,8 @@
 .ed-b:disabled{opacity:.4;cursor:default}
 .ed-b:focus-visible,.ed-open:focus-visible{outline:2px solid #fff;outline-offset:2px}
 body.edit-mode #house-btn{display:none}
+
+/* Phiên 52: nút Chỉnh sửa nhấp nháy vài giây sau khi vào nhà cho dễ thấy */
+.ed-open.pulse{animation:ed-pulse 1.4s ease-in-out infinite;border-color:#f1db9f}
+@keyframes ed-pulse{0%,100%{box-shadow:0 6px 24px rgba(0,0,0,.5),0 0 0 0 rgba(143,214,191,.7)}50%{box-shadow:0 6px 24px rgba(0,0,0,.5),0 0 0 12px rgba(143,214,191,0)}}
+@media (prefers-reduced-motion:reduce){.ed-open.pulse{animation:none;box-shadow:0 0 0 3px rgba(241,219,159,.85)}}
