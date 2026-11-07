@@ -1,0 +1,22 @@
+/* Cửa hàng nội thất + Túi đồ (Phiên 41) */
+.fn-box{position:absolute;left:50%;top:max(80px,calc(env(safe-area-inset-top) + 72px));transform:translateX(-50%);width:min(420px,calc(100vw - 24px));max-height:calc(100vh - 120px);display:flex;flex-direction:column;padding:12px 16px 14px;border-radius:16px;border:1px solid rgba(241,219,160,.6);background:rgba(14,10,7,.94);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:0 18px 60px rgba(0,0,0,.55);color:#f3ead4;pointer-events:auto;z-index:70}
+.fn-box[hidden]{display:none!important}
+.fn-box header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.fn-box h3{margin:0;font:600 18px/1.2 var(--serif,Georgia,serif);color:#fff}
+.fn-box h4{margin:10px 0 4px;font:600 13px/1.2 var(--sans,inherit);color:#f1dba0}
+.fn-x{width:30px;height:30px;border-radius:50%;border:1px solid rgba(241,219,160,.5);background:transparent;color:#f1dba0;font-size:18px;line-height:1;cursor:pointer}
+.fn-tabs{display:flex;gap:6px;margin-bottom:6px}
+.fn-tab{flex:1;min-height:38px;border-radius:100px;border:1px solid rgba(241,219,160,.5);background:transparent;color:#f1dba0;font:600 14px/1 var(--sans,inherit);cursor:pointer}
+.fn-tab.on{background:rgba(217,178,95,.28);color:#fff}
+.fn-info{margin:2px 0 8px;font:400 13px/1.4 var(--sans,inherit);color:#e8dcc0}
+.fn-list{overflow:auto;-webkit-overflow-scrolling:touch;padding-right:2px}
+.fn-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.08)}
+.fn-row.col{flex-direction:column;align-items:stretch}
+.fn-t{font:400 13px/1.35 var(--sans,inherit)}.fn-t b{color:#fff}.fn-t span{color:#bdb39a}
+.fn-ctl{display:flex;flex-wrap:wrap;gap:6px}
+.fn-b{min-height:40px;padding:8px 14px;border-radius:100px;border:1px solid #f1db9f;background:rgba(217,178,95,.2);color:#fff;font:600 13px/1 var(--sans,inherit);cursor:pointer;white-space:nowrap}
+.fn-b.buy{border-color:#8fd6bf;background:rgba(143,214,191,.25)}
+.fn-b.sm{min-width:44px;padding:8px 10px}
+.fn-b:disabled{opacity:.4;cursor:default}
+.fn-b:focus-visible,.fn-tab:focus-visible,.fn-x:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.fn-hint{margin:2px 0 6px;font:400 12px/1.4 var(--sans,inherit);color:#9aa0b0}
