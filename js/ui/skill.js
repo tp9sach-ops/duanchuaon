@@ -28,7 +28,9 @@ export function initSkill(hud, { toast = () => {} } = {}) {
     const W = LGT.world; if (!W) return false;
     const lv = level();
     if (!canJump({ level: lv, mode: W.mode, panelOpen: !!LGT.panelOpen, dialogOpen: dialogOpen() })) return false;
-    return jump.start(jumpHeight(lv));
+    const ok = jump.start(jumpHeight(lv));
+    if (ok && LGT.act) LGT.act('khinhthan');   // Phiên 52: nhiệm vụ “Thử Khinh thân” (3 lần nhảy)
+    return ok;
   }
   addEventListener('keydown', (e) => {
     if (e.code !== 'Space' || e.repeat || isEditable(e.target) || e.ctrlKey || e.metaKey || e.altKey) return;
