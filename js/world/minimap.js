@@ -67,7 +67,7 @@ export function terrain() {
   return {
     compound: { ...COMPOUND },
     walks: OUT_WALKS.map((r) => ({ x0: r.x0, x1: r.x1, z0: r.z0, z1: r.z1 })),
-    waters: [{ x: POND.x, z: POND.z, r: POND.r }, { x: 56, z: 10, r: 8 }, { x: THAC.pool.x, z: THAC.pool.z, r: THAC.pool.r }],
+    waters: [{ x: POND.x, z: POND.z, r: POND.r }, { x: 60, z: 10, r: 8 }, { x: THAC.pool.x, z: THAC.pool.z, r: THAC.pool.r }],
   };
 }
 

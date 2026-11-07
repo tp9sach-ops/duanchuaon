@@ -3,8 +3,8 @@
 // Cách dùng: prog = loadProg(raw); r = record(prog, { type:'nhang', n:3 }, Date.now()); r.prog (lưu lại), r.done (nhiệm vụ vừa xong), r.levelUp.
 // Giao diện: js/ui/quest.js. Các nơi phát sự kiện gọi window.LGT.act(type, arg|n) (xem js/ui/quest.js).
 
-/** Các loại sự kiện hợp lệ. 'npc' và 'visit' có `arg` (id NPC / id điểm đến); 'nhang' có n = số nén; 'doila' (đổi lá), 'muadat', 'nangnha' phát từ js/ui/merit.js và js/ui/land.js (Phiên 39). */
-export const EVENT_TYPES = ['nhang', 'bow', 'thien', 'kinh', 'niem', 'den', 'loc', 'npc', 'visit', 'chat', 'doila', 'muadat', 'nangnha'];
+/** Các loại sự kiện hợp lệ. 'npc' và 'visit' có `arg` (id NPC / id điểm đến); 'nhang' có n = số nén; 'doila' (đổi lá), 'muadat', 'nangnha' phát từ js/ui/merit.js và js/ui/land.js (Phiên 39); 'cau' (câu được một con cá) và 'phongsinh' (thả một con về nước) phát từ js/ui/fishing.js (Phiên 47). */
+export const EVENT_TYPES = ['nhang', 'bow', 'thien', 'kinh', 'niem', 'den', 'loc', 'npc', 'visit', 'chat', 'doila', 'muadat', 'nangnha', 'cau', 'phongsinh'];
 
 /** Cấp độ: ngưỡng điểm tối thiểu để đạt cấp i+1 và danh hiệu. Cấp tối đa = số phần tử. */
 export const LEVELS = [
@@ -37,6 +37,9 @@ export const QUESTS = [
   { id: 'm-doila', loai: 'mot', ten: 'Đổi lá bồ đề đầu tiên', mo: 'Gặp Thầy Tri khách và đổi hạt sen lấy lá bồ đề (10 hạt = 1 lá).', dk: { key: 'doila', n: 1 }, xp: 30, sen: 2 },
   { id: 'm-muadat', loai: 'mot', ten: 'Có mảnh đất đầu tiên', mo: 'Gom đủ lá bồ đề, gặp Bác Tư khu phố ở khu nhà ở và mua một lô đất (được tặng nhà trống).', dk: { key: 'muadat', n: 1 }, xp: 80, sen: 5 },
   { id: 'm-nangnha', loai: 'mot', ten: 'Nâng cấp nhà lần đầu', mo: 'Nâng căn nhà trống lên nhà lầu hoặc cao hơn ở chỗ Bác Tư khu phố.', dk: { key: 'nangnha', n: 1 }, xp: 60, sen: 5 },
+  { id: 'm-cau', loai: 'mot', ten: 'Câu được con cá đầu tiên', mo: 'Mua một quả cầu (nút “Câu cá” → tab “Quả cầu”), đứng sát mép nước, thả cầu và bấm đúng lúc hoa sen nở.', dk: { key: 'cau', n: 1 }, xp: 30, sen: 2 },
+  { id: 'm-phongsinh', loai: 'mot', ten: 'Phóng sinh lần đầu', mo: 'Câu được cá rồi bấm “Phóng sinh” để thả con vật về nước.', dk: { key: 'phongsinh', n: 1 }, xp: 40, sen: 3 },
+  { id: 'n-phongsinh', loai: 'ngay', ten: 'Phóng sinh một con', mo: 'Thả một con cá, rùa hay mực về nước (câu được hoặc lấy từ ao cá riêng).', dk: { key: 'phongsinh', n: 1 }, xp: 15, sen: 1 },
   { id: 'm-loc', loai: 'mot', ten: 'Nhận lộc hoa sen vàng', mo: 'Tìm hoa sen vàng trong chùa và nhận lộc.', dk: { key: 'loc', n: 1 }, xp: 20, sen: 2 },
 ];
 export const questById = (id) => QUESTS.find((q) => q.id === id) || null;

@@ -1,7 +1,8 @@
 // Sổ tay hướng dẫn cách chơi + "việc nên làm kế tiếp" (Phiên 39). LOGIC THUẦN (không DOM, không three.js, có test: tests/tutorial.test.mjs).
 // Giao diện: js/ui/tutorial.js. Mọi con số lấy từ merit.js / land.js (một nguồn duy nhất) nên đổi giá ở đó là chữ hướng dẫn đổi theo.
-// Chỉ nói những gì ĐÃ chạy trong bản này; tính năng chưa làm (phóng sinh, nội thất) ghi rõ "sắp có", không giả vờ.
+// Chỉ nói những gì ĐÃ chạy trong bản này; tính năng chưa làm (nội thất, cảnh 3D câu cá) ghi rõ "sắp có", không giả vờ.
 import { SEN_PER_LA, LAND_LA, MED_SECONDS_PER_SEN, DAILY_CAP } from './merit.js';
+import { ORBS, POND_MAX } from './fishing.js';
 import { HOUSE_LEVELS, MAX_LV, houseLevel, upgradeCost, XOM_SIZE } from './land.js';
 
 /** Chỗ đi tới: { npc: id } (đi tới NPC), { place: id } (đi tới nơi trong bản đồ), { tap: id } (chỉ nút cần bấm). */
@@ -41,10 +42,13 @@ export const TOPICS = [
       { text: 'Đứng gần cửa nhà, bấm nút “Vào nhà” để vào bên trong, “Ra ngoài” để ra. Nút “Dẫn tôi tới nhà” trong bảng của Bác Tư đưa bạn về trước cửa.', go: place('xom') },
       { text: 'Mua nội thất và mời khách tới tham quan, mở tiệc: đang làm, sắp có.', soon: true },
     ] },
-  { id: 'phongsinh', ten: 'Phóng sinh', moTa: 'Hồ cá chép — sắp có',
+  { id: 'phongsinh', ten: 'Phóng sinh', moTa: 'Câu cá gieo duyên, thả về nước',
     steps: [
-      { text: 'Hồ cá chép nằm ở phía Đông sân chùa (đi theo hành lang, qua Gác chuông). Hiện bạn có thể ra ngắm hồ và trò chuyện, hít thở bên lương đình giữa hồ.', go: place('hoca') },
-      { text: 'Thả cá phóng sinh để tích công đức đang được làm, chưa dùng được trong bản này. Khi có, bạn sẽ thả cá ngay tại hồ và nhận hạt sen.', soon: true },
+      { text: 'Hồ cá chép nằm ở phía Đông sân chùa (đi theo hành lang, qua Gác chuông). Ao sen trước chánh điện và hồ chân thác cũng câu được: chỉ cần đứng sát mép nước.', go: place('hoca') },
+      { text: `Bấm biểu tượng “Câu cá” (cụm nút tròn góc phải-trên, hoặc nút nổi khi đứng sát nước). Vào tab “Quả cầu” mua quả đầu tiên bằng lá bồ đề: ${ORBS[0].ten} giá ${ORBS[0].gia} lá. Cầu càng đắt càng bền, càng dễ gặp cá hiếm.`, go: tap('cauca') },
+      { text: 'Sang tab “Thả cầu”, bấm “Thả cầu”, đợi hoa sen nở (chỉ khoảng nửa giây) rồi bấm “Bấm!”. Bấm sớm quá cá giật mình, bấm trễ cá bơi mất. Mỗi lần thả tốn 1 độ bền của cầu; cầu nứt thì sửa bằng 1/5 giá.' },
+      { text: `Câu được cá thì chọn “Thu cá” (nuôi ở ao riêng, tối đa ${POND_MAX} con) hoặc “Phóng sinh” (thả về nước, nhận 1 đến 3 hạt sen; mỗi ngày tối đa 10 lần có thưởng). Cá trong tab “Ao cá” phóng sinh được bất cứ lúc nào.` },
+      { text: 'Hiện việc câu cá hiển thị bằng chữ trong bảng; hình 3D quả cầu bay, vòng sóng và hoa sen nở trên mặt nước đang làm, sắp có.', soon: true },
     ] },
 ];
 export const topicById = (id) => TOPICS.find((t) => t.id === id) || null;
