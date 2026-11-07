@@ -87,3 +87,10 @@ export function exitPlan(land) {
   const own = land && land.own, pl = own ? plotById(own.plot) : null; if (!pl) return null;
   return { x: pl.front.x, z: pl.front.z, ry: pl.face > 0 ? 0 : Math.PI };
 }
+
+/** Nút nổi nào nên hiện? 'exit' (đang ở trong phòng), 'enter' (đứng gần cửa nhà mình), '' (không hiện gì). land = trạng thái đất, p = vị trí người chơi. */
+export function houseAction(land, p) {
+  if (!land || !land.own || !p) return '';
+  if (isInterior(p.x, p.z)) return 'exit';
+  return enterPlan(land, p).ok ? 'enter' : '';
+}

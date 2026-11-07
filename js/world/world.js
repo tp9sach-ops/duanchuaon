@@ -192,7 +192,13 @@ export function createWorld({ scene, camera, canvas, coarse = false, LGT = windo
     onArrive?.(s.id);
   }
 
-  function teleport(x, z) { P.x = x; P.z = z; nav.clear(); mark.visible = false; cam.init = false; }
+  /** Dịch chuyển tới (x, z). ry (tùy chọn) = hướng nhìn của nhân vật; khi có thì camera về phía sau lưng (yaw = 0). Phiên 38: dùng khi vào/ra nhà. */
+  function teleport(x, z, ry) {
+    release(); arrival.cancel(); showHint(null);
+    P.x = x; P.z = z; P.y = 0; nav.clear(); mark.visible = false; cam.init = false;
+    if (Number.isFinite(ry)) { avatar.setFacing(ry, true); yaw = 0; }
+    avatar.group.position.set(P.x, P.y, P.z);
+  }
 
   /** Gọi mỗi khung hình (thay rail.update khi ở chế độ đi bộ). */
   function update(dt) {
