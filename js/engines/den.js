@@ -4,7 +4,7 @@ import { kiemTraNguyen } from './temple.js';
 
 export const MAX_LAMPS = 50, MAX_LOG = 40, LIT_MS = 24 * 3600 * 1000;
 /** Công đức nhận được — GIÁ TRỊ TẠM (ptg chưa chốt, Phiên 16 làm tiến trình thật). */
-export const DEN_MERIT = { lamp: 2, nhang: { 1: 1, 3: 2, 9: 3 }, loc: 1 };
+export const DEN_MERIT = { lamp: 2, nhang: { 1: 1, 3: 2, 9: 3 }, loc: 1, lay: 1 };   // lay: hạt sen mỗi lần Lạy Phật (Phiên 49, tạm; trần 10 lần/ngày ở ACT_CAP.lay)
 export const nhangMerit = (n) => DEN_MERIT.nhang[n] || 0;
 
 const toInt = (v, a, b) => { v = Math.floor(+v); return Number.isFinite(v) ? Math.min(b, Math.max(a, v)) : a; };
