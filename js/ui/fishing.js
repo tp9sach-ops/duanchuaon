@@ -46,6 +46,7 @@ export function initFishing(hud, { toast = () => {} } = {}) {
   function finish() {
     stopLoop(); const s = sess; sess = null; note = outcomeText(s.outcome, s.fish);
     caught = s.outcome === 'got' ? s.fish : null; draw();
+    if (caught && LGT.act) LGT.act('cau');   // nhiệm vụ “Câu được con cá đầu tiên”
   }
   function keep() {
     if (!caught) return; const r = keepFish(st, caught); if (!r.ok) { toast(WHY[r.reason] || 'Không thu được.', 3000); return; }
@@ -55,7 +56,7 @@ export function initFishing(hud, { toast = () => {} } = {}) {
     if (!caught) return; const f = caught, r = releaseCaught(st, f); if (!r.ok) return;
     st = r.state; caught = null; note = `Bạn đã phóng sinh ${fishLabel(f)}. Nam mô A Di Đà Phật.`; changed(); rewardRelease(r.sen);
   }
-  function rewardRelease(sen) { if (LGT.merit && LGT.merit.reward) LGT.merit.reward('phongsinh', sen); }   // trần 10 lần/ngày; hết trần vẫn được thả, chỉ không cộng sen
+  function rewardRelease(sen) { if (LGT.act) LGT.act('phongsinh'); if (LGT.merit && LGT.merit.reward) LGT.merit.reward('phongsinh', sen); }   // trần 10 lần/ngày; hết trần vẫn được thả, chỉ không cộng sen
 
   function buy(id) {
     const o = orbById(id); if (!o) return; const r = buyOrb(st, leaves(), id); if (!r.ok) { toast(WHY[r.reason] || 'Không mua được.', 2800); return; }
