@@ -95,3 +95,9 @@ test('Phiên 51: đặt món nội thất đầu tiên hoàn thành nhiệm vụ
   assert.ok(EVENT_TYPES.includes('noithat'));
   const a = record(emptyProg(), { type: 'noithat' }, new Date(2026, 10, 7, 9, 0).getTime()); assert.deepEqual(a.done.map((q) => q.id), ['m-noithat']);
 });
+test('Phiên 52: nhảy đủ 3 lần hoàn thành nhiệm vụ m-khinhthan', () => {
+  const T0 = new Date(2026, 10, 7, 9, 0).getTime();
+  let r = record(emptyProg(), { type: 'khinhthan' }, T0); assert.equal(r.done.length, 0);
+  r = record(r.prog, { type: 'khinhthan' }, T0); r = record(r.prog, { type: 'khinhthan' }, T0);
+  assert.deepEqual(r.done.map((q) => q.id), ['m-khinhthan']);
+});

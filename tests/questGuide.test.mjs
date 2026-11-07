@@ -145,3 +145,7 @@ test('Phiên 51: nhiệm vụ nội thất chỉ nút Cửa hàng rồi Túi đ�
   const g2 = planGuide('m-noithat', emptyProg(), P0, { now: T0, idx: 1 });
   assert.equal(g2.tap, 'tuido');
 });
+test('Phiên 52: nhiệm vụ Khinh thân có thẻ hướng dẫn, không bắt đi đâu', () => {
+  const g = planGuide('m-khinhthan', emptyProg(), P0, { now: T0 });
+  assert.equal(g.target, null); assert.match(g.steps[0].text, /Space/);
+});
