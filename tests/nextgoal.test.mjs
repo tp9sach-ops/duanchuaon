@@ -76,3 +76,12 @@ test('Phiên 47: việc câu cá — chưa có cầu thì chỉ cách có cầu;
   const d = nextGoal({ ...st, prog, orbs: 1 });   // còn việc hằng ngày phóng sinh
   assert.equal(d.kind, 'daily'); assert.equal(d.id, 'n-phongsinh');
 });
+test('Phiên 51: nhiệm vụ nội thất — chưa có nhà thì bỏ qua; có nhà mà thiếu lá thì dẫn đi kiếm hạt sen', () => {
+  let prog = emptyProg(); for (const q of QUESTS) if (q.id !== 'm-noithat') prog = mark(prog, q.id);
+  const own = { xom: 1, plot: 1, lv: 0 };
+  assert.notEqual(nextGoal({ story: doneStory(), prog, sen: 0, la: 999, own: null, now: NOW }).guide, 'm-noithat');
+  const rich = nextGoal({ story: doneStory(), prog, sen: 0, la: 999, own, now: NOW });
+  assert.equal(rich.guide, 'm-noithat'); assert.equal(rich.id, 'm-noithat');
+  const poor = nextGoal({ story: doneStory(), prog: emptyProg(), sen: 0, la: 0, own, now: NOW });
+  assert.ok(poor.id !== 'm-noithat' || poor.text.length > 0);
+});

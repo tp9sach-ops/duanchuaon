@@ -91,3 +91,7 @@ test('Phiên 47: câu được cá và phóng sinh ghi nhận đúng nhiệm v�
   const c = record(b.prog, { type: 'phongsinh' }, T); assert.equal(c.done.length, 0);
   const next = record(c.prog, { type: 'phongsinh' }, T + 24 * 3600 * 1000); assert.deepEqual(next.done.map((q) => q.id), ['n-phongsinh']);   // sang ngày: làm lại việc hằng ngày, hành trình không lặp
 });
+test('Phiên 51: đặt món nội thất đầu tiên hoàn thành nhiệm vụ m-noithat', () => {
+  assert.ok(EVENT_TYPES.includes('noithat'));
+  const a = record(emptyProg(), { type: 'noithat' }, new Date(2026, 10, 7, 9, 0).getTime()); assert.deepEqual(a.done.map((q) => q.id), ['m-noithat']);
+});

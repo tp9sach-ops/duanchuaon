@@ -139,3 +139,9 @@ test('Phiên 47: nhiệm vụ câu cá dẫn ra mặt nước rồi chỉ nút �
     assert.equal(near.idx, 1); assert.equal(near.tap, 'cauca'); assert.equal(near.target, null);
   }
 });
+test('Phiên 51: nhiệm vụ nội thất chỉ nút Cửa hàng rồi Túi đồ', () => {
+  const g = planGuide('m-noithat', emptyProg(), P0, { now: T0 });
+  assert.equal(g.tap, 'cuahang');
+  const g2 = planGuide('m-noithat', emptyProg(), P0, { now: T0, idx: 1 });
+  assert.equal(g2.tap, 'tuido');
+});
