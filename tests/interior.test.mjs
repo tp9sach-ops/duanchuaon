@@ -1,7 +1,7 @@
 // Bên trong nhà (Phiên 38, 3d-2a): phòng riêng theo cấp, đồ nội thất, đăng ký va chạm, cửa vào/ra, kế hoạch vào nhà.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { INTERIOR, DOOR_R, ROOMS, roomFor, roomRect, entryPoint, doorInside, atDoor, isInterior, furnitureRects, registerRoom, doorPoint, nearDoor, enterPlan, exitPlan } from '../js/world/interior.js';
+import { INTERIOR, DOOR_R, ROOMS, roomFor, roomRect, entryPoint, doorInside, atDoor, isInterior, furnitureRects, registerRoom, doorPoint, nearDoor, enterPlan, exitPlan, houseAction } from '../js/world/interior.js';
 import { PLOTS, HOUSE_LEVELS, houseRect, poolRect, LAND_WALKS, loadLand } from '../js/world/land.js';
 import { blocked, bodyBlocked, canStepBody, WALKS, RECTS, addRect, addWalk } from '../js/world/layout.js';
 
@@ -89,4 +89,13 @@ test('điểm ra ngoài (trước lô) luôn đi được khi nhà và hồ bơi
 
 test('atDoor: đúng ở sát cửa, sai ở giữa phòng', () => {
   for (const L of lvs) { const d = doorInside(L); assert.ok(atDoor({ x: d.x, z: d.z - 0.5 }, L)); assert.ok(!atDoor({ x: INTERIOR.x, z: INTERIOR.z }, L)); }
+});
+
+test('houseAction: hiện đúng nút theo chỗ đứng', () => {
+  const pl = PLOTS[2], land = loadLand({ own: { xom: 1, plot: pl.id, lv: 1 } });
+  assert.equal(houseAction(loadLand(null), pl.front), '', 'chưa có đất thì không hiện gì');
+  assert.equal(houseAction(land, { x: 0, z: 100 }), '', 'xa cửa thì không hiện');
+  assert.equal(houseAction(land, pl.front), 'enter');
+  assert.equal(houseAction(land, entryPoint(1)), 'exit', 'ở trong phòng thì chỉ còn nút ra');
+  assert.equal(houseAction(land, null), '');
 });
