@@ -195,6 +195,8 @@ Việc ptg làm song song (không chặn các phiên trên): bật Pages (Settin
 
 - **2026-11-07 (Phiên 53):** Gp yêu cầu (gửi 2 lần): đăng nhập bằng **tên + mật khẩu** để mọi máy vào đúng nhân vật và giữ dữ liệu game đã chơi; **nhân vật tạo từ trước phải nhập thêm mật khẩu khi vào**; **cảnh báo, không cho tạo khi tên + mật khẩu đã trùng trên hệ thống**; nơi lưu tài khoản là **GAS**. → Đã làm (mã + 631 test + 16 kịch bản trình duyệt + 4 điện thoại). **Gp cần dán `gas/Accounts.gs` + `gas/Code.gs` vào Apps Script rồi Deploy bản mới** (xem `docs/PHIEN53.md`). Chưa có đổi/quên mật khẩu.
 
+- **2026-11-08 (Phiên 54):** ptg báo lỗi đăng nhập: màn "Đặt mật khẩu cho nhân vật" hiện "Chưa kết nối được máy chủ" (chụp trên baocaonoibo.io.vn). Đã phân loại lỗi trong `js/api.js` (network/blocked/bad_response), hiện mã lỗi trên màn vào cửa, kéo dài chờ lệnh tài khoản 30s; nguyên nhân gốc nhiều khả năng là Apps Script chưa cập nhật/Authorize (xem `docs/PHIEN54.md`). Quy tắc: làm từng mục một, cuối phiên gửi prompt bàn giao.
+
 ## 8. PROMPT KHỞI ĐỘNG PHIÊN MỚI (dán nguyên văn)
 
 ```
