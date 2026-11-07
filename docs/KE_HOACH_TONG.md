@@ -32,7 +32,7 @@ Cách dùng: làm mục [ ] đầu tiên, xong báo ptg, CHỜ "tiếp tục". L
 
 ## Giai đoạn 5 — Game thế giới mở (Master Prompt)
 [x] 5.1 Nhạc nền thử phát khi tải trang + lời mời + thanh âm lượng + ghi nhớ: ĐÃ CÓ (`js/ui/soundLogic.js`, `initSound` ở main.js; Phiên 31).
-[~] 5.2 Khinh công: có bảng 8 bậc nhảy trong `js/world/skills.js`, chỉ bậc 1 mở (qua cốt truyện). Chưa có bậc 2–8 mở khóa, chưa parkour.
+[x] 5.2 Khinh công bậc 2–8: ĐÃ LÀM Ở PHIÊN 52 (xem docs/PHIEN52.md): luyện bằng cấp độ + hạt sen qua bảng "Luyện Khinh thân". Chưa có parkour (không bắt buộc). CHƯA thử trên máy thật.
 [ ] 5.3 Bơi, lặn: CHƯA có.
 [~] 5.4 Cấp độ + nhiệm vụ: có (quests.js, 10 cấp). Xếp hạng/"Bảng vàng"/"Mua công đức": nút Xếp hạng còn "sắp có".
 [~] 5.5 Thời trang: có đồng phục 9 Sạch (Phiên 14d); chưa có cửa hàng thời trang.
