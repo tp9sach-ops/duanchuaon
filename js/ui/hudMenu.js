@@ -7,6 +7,8 @@ import { initChat } from './chat.js';
 import { initQuest } from './quest.js';
 import { initGuide } from './guide.js';
 import { initStory } from './story.js';
+import { initMerit } from './merit.js';
+import { lifetimeSen } from '../world/merit.js';
 import { loadWallet, addSen } from '../engines/kinh.js';
 import { callApi, apiEnabled, getUserKey } from '../api.js';
 import { loadProfile } from './hudLogic.js';
@@ -83,18 +85,26 @@ export function initHudMenu(hud) {
     if (!apiEnabled()) return;
     try {
       const prof = loadProfile(localStorage);
-      const res = await callApi('saveScore', { userKey: getUserKey(), n: prof.name, sen: wallet.sen });
-      if (res && res.ok && Number(res.sen) > wallet.sen) { wallet = { ...wallet, sen: Number(res.sen) }; localStorage.setItem('lgt.wallet', JSON.stringify(wallet)); const b = root.querySelector('#hm-sen'); if (b) b.textContent = formatCount(wallet.sen); }
+      const spent = (LGT.merit && LGT.merit.leaf) || null, total = lifetimeSen(wallet.sen, spent);   // điểm xếp hạng = tổng sen từng kiếm (đổi lá không làm tụt)
+      const res = await callApi('saveScore', { userKey: getUserKey(), n: prof.name, sen: total });
+      if (res && res.ok && Number(res.sen) > total) { wallet = { ...wallet, sen: wallet.sen + (Number(res.sen) - total) }; localStorage.setItem('lgt.wallet', JSON.stringify(wallet)); const b = root.querySelector('#hm-sen'); if (b) b.textContent = formatCount(wallet.sen); }
     } catch (_) { /* mạng lỗi: lần cộng sau sẽ gửi lại */ }
   };
   const addMerit = (n) => { wallet = addSen(wallet, n); try { localStorage.setItem('lgt.wallet', JSON.stringify(wallet)); } catch (_) { /* bỏ qua */ } const b = root.querySelector('#hm-sen'); if (b) b.textContent = formatCount(wallet.sen); clearTimeout(scoreTimer); scoreTimer = setTimeout(pushScore, 4000); };
   LGT.addMerit = addMerit;
+  /** Trừ hạt sen khi tiêu (đổi lá bồ đề...). Trả false nếu không đủ. */
+  const spendMerit = (n) => {
+    n = Math.floor(+n); if (!(n > 0) || wallet.sen < n) return false;
+    wallet = { ...wallet, sen: wallet.sen - n }; try { localStorage.setItem('lgt.wallet', JSON.stringify(wallet)); } catch (_) { /* bỏ qua */ }
+    const b = root.querySelector('#hm-sen'); if (b) b.textContent = formatCount(wallet.sen); return true;
+  };
   const practice = initPractice(hud, { toast, addMerit });
   const den = initDen(hud, { toast, addMerit });
   initNpc({ toast, addMerit });
   const chat = initChat(hud, { toast });
   const quest = initQuest(hud, { toast, addMerit, pillHost: root.querySelector('.hm-wallet') });   // nhiệm vụ + cấp độ (Phiên 17)
   try { initGuide(hud, { toast }); } catch (e) { console.warn('[Diệu Giang Tự] Dẫn đường lỗi:', e && e.message); }   // dẫn đường nhiệm vụ (Phiên 18)
+  try { initMerit(hud, { toast, addMerit, getSen: () => wallet.sen, spendSen: spendMerit, pillHost: root.querySelector('.hm-wallet') }); } catch (e) { console.warn('[Diệu Giang Tự] Lá bồ đề lỗi:', e && e.message); }   // đổi hạt sen lấy lá bồ đề (Phiên 35)
   try { initStory(hud, { toast, addMerit }); } catch (e) { console.warn('[Diệu Giang Tự] Cốt truyện lỗi:', e && e.message); }   // hộp thoại + mục tiêu chương 1 (Phiên 32); lỗi thì NPC vẫn nói lời thường
 
   // ---- bản đồ chùa (lối đi tới chương: liên kết #id, stage.js tự bắt và cho nhân vật đi tới)

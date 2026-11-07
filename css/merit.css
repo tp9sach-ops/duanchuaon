@@ -1,0 +1,14 @@
+/* Lá bồ đề (Phiên 35): thẻ số lá + bảng đổi lá */
+.mr-pill{gap:4px;font:600 12px/1 var(--sans,inherit);color:#bfe3b0}
+.mr-pill b{color:#e6f6d8}
+.mr-box{position:absolute;left:50%;top:max(80px,calc(env(safe-area-inset-top) + 72px));transform:translateX(-50%);width:min(380px,calc(100vw - 24px));padding:12px 16px 14px;border-radius:16px;border:1px solid rgba(143,214,191,.55);background:rgba(14,10,7,.94);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:0 18px 60px rgba(0,0,0,.55);color:#f3ead4;pointer-events:auto;z-index:7}
+.mr-box[hidden]{display:none!important}
+.mr-box header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.mr-box h3{margin:0;font:600 18px/1.2 var(--serif,Georgia,serif);color:#fff}
+.mr-x{width:30px;height:30px;border-radius:50%;border:1px solid rgba(143,214,191,.5);background:transparent;color:#bfe3b0;font-size:18px;line-height:1;cursor:pointer}
+.mr-have{margin:4px 0 10px;font:400 14px/1.4 var(--sans,inherit)}
+.mr-btns{display:flex;flex-direction:column;gap:6px}
+.mr-b{min-height:40px;padding:8px 14px;border-radius:100px;border:1px solid #8fd6bf;background:rgba(143,214,191,.18);color:#fff;font:600 14px/1 var(--sans,inherit);cursor:pointer}
+.mr-b:disabled{opacity:.4;cursor:default}
+.mr-b:focus-visible,.mr-x:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.mr-note{margin:10px 0 0;font:400 11px/1.4 var(--sans,inherit);color:#9aa0b0}

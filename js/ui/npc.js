@@ -16,6 +16,7 @@ export function initNpc({ toast, addMerit }) {
       const a = LGT.npcs && LGT.npcs[id]; if (a && a.say) a.say(r.line);
       toast(r.npc.act ? `${r.npc.ten}: ${r.line}` : `${r.npc.ten}: “${r.line}”`, 6500);
     }
+    if (id === 'trikhach' && LGT.merit && !story) setTimeout(() => LGT.merit.open(), 700);   // Thầy Tri khách giữ việc đổi lá bồ đề (Phiên 35)
     if (LGT.act) LGT.act(r.npc.act ? 'visit' : 'npc', id);   // nhiệm vụ: trò chuyện / ghé điểm cảnh
     if (r.reward) { addMerit(r.reward); setTimeout(() => toast(`${r.npc.ten} tặng bạn ${r.reward} hạt sen hôm nay.`, 3500), 2500); }
   };
