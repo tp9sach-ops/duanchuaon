@@ -33,6 +33,11 @@ async function run() {
   await test('3. POST acctLogin thử (khóa giả) — phải ra bad_login', () => withTimeout(async (signal) => { const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'acctLogin', name: 'chan doan', key: '0'.repeat(64) }), signal, redirect: 'follow' }); return r.status + ' ' + snip(await r.text()); }));
   await test('4. POST kiểu no-cors (chỉ gửi, không đọc)', () => withTimeout(async (signal) => { const r = await fetch(url, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'ping' }), signal }); return 'đã gửi, loại phản hồi: ' + r.type; }));
   await test('5. POST bằng XMLHttpRequest', () => new Promise((res, rej) => { const x = new XMLHttpRequest(); x.open('POST', url); x.setRequestHeader('Content-Type', 'text/plain;charset=utf-8'); x.timeout = 20000; x.onload = () => res(x.status + ' ' + snip(x.responseText)); x.onerror = () => rej(new Error('XHR bị chặn (CORS/mạng)')); x.ontimeout = () => rej(new Error('quá thời gian')); x.send(JSON.stringify({ action: 'ping' })); }));
+  // Giả thuyết: gói tạo nhân vật (kèm toàn bộ dữ liệu game) quá lớn nên POST bị cắt giữa chừng.
+  for (const kb of [60, 200, 600]) {
+    await test('6. POST ping kèm ' + kb + ' KB dữ liệu thừa', () => withTimeout(async (signal) => { const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'ping', pad: 'x'.repeat(kb * 1024) }), signal, redirect: 'follow' }); return r.status + ' ' + snip(await r.text()); }, 40000));
+  }
+  try { let n = 0, keys = 0; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith('lgt.')) { keys++; n += k.length + (localStorage.getItem(k) || '').length; } } say('7. Dữ liệu game lgt.* trên máy/origin này: ' + keys + ' khóa, ' + Math.round(n / 1024) + ' KB (giới hạn lưu tài khoản: 150 KB)'); } catch (e) { say('7. Không đọc được localStorage: ' + e.message); }
   say('—\nXong. Gửi lại ảnh chụp màn hình này.');
 }
 document.getElementById('again').onclick = run;
