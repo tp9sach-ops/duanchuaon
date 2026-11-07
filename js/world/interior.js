@@ -11,12 +11,12 @@ export const DOOR_R = 8;
 
 // Phiên 41: nhà BAN ĐẦU TRỐNG (ptg chốt 07/11). Nội thất do người chơi mua và đặt (js/world/furniture.js), rồi truyền vào registerRoom/furnitureRects và cảnh 3D.
 // Một món đã đặt (kết quả của furniture.toFurniture): { uid, id, kind, x, z, w, d, rw, rd (đã xoay, dùng cho va chạm), h, color, solid, ry }.
-/** 4 phòng theo cấp nhà. w = rộng (x), d = sâu (z), h = trần. Cửa ở giữa tường +z. `furniture` (đồ có sẵn) luôn rỗng. */
+/** 4 phòng theo cấp nhà. Phiên 42: DIỆN TÍCH gấp 3 lần bản cũ (mỗi chiều × √3 ≈ 1,73; cũ 5,6×4,8 / 6,8×5,6 / 8,6×6,0), trần cao thêm 0,3–0,4 m. w = rộng (x), d = sâu (z), h = trần. Cửa ở giữa tường +z. `furniture` (đồ có sẵn) luôn rỗng. */
 export const ROOMS = [
-  { lv: 0, w: 5.6, d: 4.8, h: 2.5, furniture: [] },
-  { lv: 1, w: 6.8, d: 5.6, h: 3.0, furniture: [] },
-  { lv: 2, w: 6.8, d: 5.6, h: 3.0, furniture: [] },
-  { lv: 3, w: 8.6, d: 6.0, h: 3.4, furniture: [] },
+  { lv: 0, w: 9.7, d: 8.3, h: 2.8, furniture: [] },
+  { lv: 1, w: 11.8, d: 9.7, h: 3.3, furniture: [] },
+  { lv: 2, w: 11.8, d: 9.7, h: 3.3, furniture: [] },
+  { lv: 3, w: 14.9, d: 10.4, h: 3.7, furniture: [] },
 ];
 /** Phòng của cấp nhà `lv` (kẹp 0..3 như houseLevel). */
 export const roomFor = (lv) => ROOMS[houseLevel(lv).lv];
