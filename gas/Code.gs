@@ -1,6 +1,6 @@
 /**
  * Diệu Giang Tự — backend Google Apps Script (Web App trả JSON).
- * Giai đoạn 3: lưu/đọc/xóa hồ sơ (Storage.gs). Các hàm khác để TODO theo giai đoạn.
+ * Giai đoạn 3: lưu/đọc/xóa hồ sơ (Storage.gs). Phiên 53: tài khoản nhân vật (Accounts.gs). Các hàm khác để TODO theo giai đoạn.
  *
  * TRIỂN KHAI: Extensions → Apps Script → dán file này → Deploy → New deployment → Web app
  *   Execute as: Me  |  Who has access: Anyone  → copy URL (…/exec) vào js/config.js (apiUrl).
@@ -15,7 +15,9 @@ var SHEETS = {
   Incense:  ['userKey', 'soNhangThap', 'chuoiNgay', 'lanCuoi', 'loiNguyen'],
   Prayers:  ['id', 'userKey', 'noiDung', 'congKhai', 'ngay'],
   Scriptures: ['id', 'ten', 'nguon', 'urlAudio', 'thoiLuong', 'loai'],
-  Logs:     ['thoiGian', 'hanhDong', 'ghiChu']
+  Logs:     ['thoiGian', 'hanhDong', 'ghiChu'],
+  // Tài khoản nhân vật + bản lưu dữ liệu game (Accounts.gs, Phiên 53). Cột d1..d4 = bản lưu chia 4 ô.
+  Accounts: ['aid', 'accKey', 'name', 'ngayTao', 'lanDangNhap', 'tokens', 'rev', 'sid', 'capNhat', 'd1', 'd2', 'd3', 'd4']
 };
 
 /** Chạy một lần bằng tay để tạo Spreadsheet và các sheet. Lưu id vào Script Properties. */
@@ -49,6 +51,11 @@ function doPost(e) {
       case 'addPrayer':    return json_(addPrayer_(req));      // Prayers.gs
       case 'listPrayers':  return json_(listPrayers_());
       case 'sync':         return json_(roomSync_(req));       // Room.gs (đa người)
+      case 'acctCreate':   return json_(acctCreate_(req));     // Accounts.gs (tài khoản nhân vật)
+      case 'acctLogin':    return json_(acctLogin_(req));
+      case 'acctLoad':     return json_(acctLoad_(req));
+      case 'acctSave':     return json_(acctSave_(req));
+      case 'acctLogout':   return json_(acctLogout_(req));
       default:             return json_({ ok: false, error: 'unknown_action' });
     }
   } catch (err) {

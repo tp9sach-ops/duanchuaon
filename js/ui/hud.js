@@ -3,6 +3,7 @@
 import { cleanProfile, loadProfile, saveProfile, initialOf, robeCss, insideHall, COURTYARD_POINT, HALL_POINT, PLAYER_COLORS, clockLabel } from './hudLogic.js';
 import { HAIR_STYLES } from '../world/avatarLogic.js';
 import { initHudMenu } from './hudMenu.js';
+import { initAccountGate, initAccountBanner } from './accountGate.js';
 
 const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -52,17 +53,28 @@ export function initHud() {
   // ---------------- Màn vào cửa
   const enter = el('div', 'enter'); enter.id = 'enter'; enter.setAttribute('role', 'dialog'); enter.setAttribute('aria-modal', 'true'); enter.setAttribute('aria-labelledby', 'enter-ttl'); enter.hidden = true;
   enter.innerHTML = `
-    <form class="enter-card" autocomplete="off">
+    <form class="enter-card" autocomplete="on" data-mode="offline">
       <div class="enter-han">DIỆU GIANG TỰ</div>
       <h2 id="enter-ttl">Bước vào cửa chùa</h2>
-      <label class="en-l" for="en-name">Tên của bạn</label>
-      <input id="en-name" class="en-in" type="text" maxlength="20" placeholder="Ví dụ: Minh An" spellcheck="false" enterkeyhint="go">
-      <div class="en-l">Màu áo</div>
-      <div class="en-colors" role="radiogroup" aria-label="Màu áo">${PLAYER_COLORS.map((c) => `<button type="button" role="radio" class="sw" data-color="${c.id}" aria-label="${esc(c.ten)}" title="${esc(c.ten)}" style="background:${robeCss(c.id)}"></button>`).join('')}</div>
-      <div class="en-l">Kiểu đầu</div>
-      <div class="en-hair" role="radiogroup" aria-label="Kiểu đầu">${HAIR_STYLES.map((h) => `<button type="button" role="radio" class="hr" data-hair="${h.id}">${esc(h.ten)}</button>`).join('')}</div>
-      <button type="submit" class="hud-btn gold big">Vào chùa</button>
-      <p class="en-note">Tên hiện trên đầu nhân vật. Chỉ lưu trong trình duyệt của bạn.</p>
+      <p class="en-sub" id="en-sub" hidden></p>
+      <label class="en-l" for="en-name">Tên nhân vật</label>
+      <input id="en-name" class="en-in" type="text" maxlength="20" placeholder="Ví dụ: Minh An" spellcheck="false" enterkeyhint="next" autocomplete="username">
+      <div class="en-pw"><label class="en-l" for="en-pw">Mật khẩu</label>
+        <input id="en-pw" class="en-in" type="password" maxlength="64" placeholder="Ít nhất 6 ký tự" enterkeyhint="go" autocomplete="new-password">
+        <label class="en-show"><input type="checkbox" id="en-show"> Hiện mật khẩu</label></div>
+      <div class="en-pw2"><label class="en-l" for="en-pw2">Nhập lại mật khẩu</label>
+        <input id="en-pw2" class="en-in" type="password" maxlength="64" enterkeyhint="go" autocomplete="new-password"></div>
+      <div class="en-look">
+        <div class="en-l">Màu áo</div>
+        <div class="en-colors" role="radiogroup" aria-label="Màu áo">${PLAYER_COLORS.map((c) => `<button type="button" role="radio" class="sw" data-color="${c.id}" aria-label="${esc(c.ten)}" title="${esc(c.ten)}" style="background:${robeCss(c.id)}"></button>`).join('')}</div>
+        <div class="en-l">Kiểu đầu</div>
+        <div class="en-hair" role="radiogroup" aria-label="Kiểu đầu">${HAIR_STYLES.map((h) => `<button type="button" role="radio" class="hr" data-hair="${h.id}">${esc(h.ten)}</button>`).join('')}</div>
+      </div>
+      <p class="en-err" id="en-err" role="alert" hidden></p>
+      <button type="button" class="en-link" id="en-temp" hidden>Chơi tạm (chưa lưu tài khoản)</button>
+      <button type="submit" class="hud-btn gold big" id="en-go">Vào chùa</button>
+      <div class="en-links"><button type="button" class="en-link" id="en-alt" hidden></button><button type="button" class="en-link" id="en-out" hidden>Không phải bạn? Đăng xuất</button></div>
+      <p class="en-note"></p>
     </form>`;
   document.body.appendChild(enter);
   const form = enter.querySelector('form'), nameIn = enter.querySelector('#en-name');
@@ -76,20 +88,26 @@ export function initHud() {
     const c = e.target.closest('[data-color]'), h = e.target.closest('[data-hair]');
     if (c) { draft.color = c.dataset.color; paintEnter(); preview(); } else if (h) { draft.hair = h.dataset.hair; paintEnter(); preview(); }
   });
-  form.addEventListener('submit', (e) => {
-    e.preventDefault();
-    profile = { ...saveProfile(localStorage, { name: nameIn.value, color: draft.color, hair: draft.hair }), has: true };
+  /** Vào chùa thật sự: lưu hồ sơ (tên/màu/kiểu đầu) vào máy, ẩn màn vào cửa, hiện HUD, bật tự động lưu tài khoản. */
+  function enterWorld(rawName) {
+    profile = { ...saveProfile(localStorage, { name: rawName, color: draft.color, hair: draft.hair }), has: true };
     W.setProfile(profile); paintChip();
     enter.hidden = true; document.body.classList.remove('entering'); LGT.panelOpen = false; hud.hidden = false;
     menu && menu.welcome();
     document.getElementById('gl')?.focus?.();
-  });
+    try { LGT.account && LGT.account.startSync && LGT.account.startSync(); } catch (_) { /* bỏ qua */ }
+  }
+  // Tài khoản (Phiên 53): tạo / đăng nhập / đặt mật khẩu cho nhân vật cũ. LGT.account = null khi chưa cấu hình máy chủ → như cũ (không mật khẩu).
+  const gate = initAccountGate({ form, nameIn, client: LGT.account || null, hasLegacy: () => profile.has, getDraft: () => draft, onEnter: enterWorld });
+  try { initAccountBanner(LGT.account || null); } catch (e) { console.warn('[Diệu Giang Tự] Băng thông báo tài khoản lỗi:', e && e.message); }
 
   function open() {
     draft = { ...profile }; nameIn.value = profile.has ? profile.name : ''; paintEnter();
     LGT.panelOpen = true;                         // chặn phím/chuột đi lại khi đang nhập tên
     document.body.classList.add('entering'); enter.hidden = false; hud.hidden = true;
-    preview(); setTimeout(() => nameIn.focus({ preventScroll: true }), 80);
+    preview();
+    if (gate.begin()) return;                     // vừa đăng nhập xong và tải lại: tự vào chùa
+    setTimeout(() => nameIn.focus({ preventScroll: true }), 80);
   }
   paintChip(); open();
   return { get profile() { return profile; }, open };

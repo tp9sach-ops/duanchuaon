@@ -4,7 +4,8 @@ import { CONFIG } from './config.js';
 
 export const apiEnabled = () => !!CONFIG.apiUrl;
 
-export async function callApi(action, payload = {}) {
+/** opts.keepalive: cho phép yêu cầu hoàn tất cả khi trang đang đóng (dùng khi lưu tài khoản lúc rời trang; gói ≤ 64KB). */
+export async function callApi(action, payload = {}, opts = {}) {
   if (!apiEnabled()) return { ok: false, error: 'api_disabled' };
   let lastErr = 'unknown';
   for (let attempt = 0; attempt <= CONFIG.apiRetries; attempt++) {
@@ -12,7 +13,7 @@ export async function callApi(action, payload = {}) {
     try {
       const res = await fetch(CONFIG.apiUrl, {
         method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action, ...payload }), signal: ctl.signal, redirect: 'follow',
+        body: JSON.stringify({ action, ...payload }), signal: ctl.signal, redirect: 'follow', keepalive: !!opts.keepalive,
       });
       clearTimeout(timer);
       if (!res.ok) { lastErr = 'http_' + res.status; continue; }

@@ -18,6 +18,7 @@ import { initRoom } from './net/room.js';
 import { isNpcSpot } from './world/spots.js';
 import { initWind } from './scene/wind.js';
 import { initViewport } from './ui/viewport.js';
+import { initAccount } from './net/account.js';
 
 const pct = document.getElementById('pre-pct'), fill = document.getElementById('pre-fill'), pre = document.getElementById('pre');
 const setProgress = (v) => { const p = Math.round(v * 100); pct.textContent = p; fill.style.right = (100 - p) + '%'; };
@@ -26,6 +27,11 @@ document.body.classList.add('is-locked');
 try { initViewport(); } catch (e) { console.warn('[Diệu Giang Tự] Khung nhìn lỗi:', e && e.message); }   // Phiên 31: đo khung nhìn thật cho điện thoại/Z Fold/thanh công cụ dưới
 // Âm thanh: thử phát nhạc nền NGAY từ lúc trang khởi động (trước cả khi cảnh 3D nạp xong). Bị chặn thì hiện lời mời bật âm thanh, phát ở lần chạm đầu tiên.
 try { initSound(); } catch (e) { console.warn('[Diệu Giang Tự] Âm thanh lỗi:', e && e.message); }
+
+// Tài khoản nhân vật (Phiên 53): máy đã đăng nhập thì kéo bản lưu mới nhất (do máy khác lưu) VỀ TRƯỚC khi các phần của game đọc localStorage.
+// Chạy song song với việc nạp font/cảnh; boot() chờ tối đa vài giây. Lỗi/mạng chậm thì chơi tiếp bằng dữ liệu trên máy.
+let acct = { ready: Promise.resolve(), attach() {} };
+try { acct = initAccount(); } catch (e) { console.warn('[Diệu Giang Tự] Tài khoản lỗi:', e && e.message); }
 
 // Hạt nhiễu cho lớp grain (sinh bằng canvas, không cần ảnh)
 (function grain() {
@@ -57,6 +63,7 @@ async function boot() {
     ]);
   } catch (_) { /* tiếp tục với font dự phòng */ }
   setProgress(0.1);
+  await Promise.race([acct.ready, new Promise((r) => setTimeout(r, 4500))]);   // bản lưu từ tài khoản phải xuống trước khi dựng cảnh/HUD đọc dữ liệu
 
   let created;
   try {
@@ -69,6 +76,7 @@ async function boot() {
   } catch (e) { return fallback(e && e.message); }
 
   window.LGT = window.LGT || {};
+  try { acct.attach(window.LGT); } catch (e) { console.warn('[Diệu Giang Tự] Gắn tài khoản lỗi:', e && e.message); }   // LGT.account (chỉ gắn SAU khi cảnh dựng xong: scene/index.js tự tạo LGT mặc định)
   window.LGT.getPos = () => (created.world ? created.world.pos : null);   // vị trí người chơi {x, z}: ui.js dùng để chỉnh to/nhỏ tiếng thác và chuông
 
   stage = initAll(created.rail);

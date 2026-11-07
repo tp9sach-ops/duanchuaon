@@ -1,0 +1,28 @@
+/* Tài khoản nhân vật (Phiên 53): các ô mật khẩu trong màn vào cửa + băng thông báo xung đột. Nạp TRƯỚC responsive.css. */
+.enter-card [hidden]{display:none!important}
+.enter-card{max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflow-y:auto;overscroll-behavior:contain}
+.en-sub{margin:0 0 2px;font-size:13px;line-height:1.45;color:var(--moon,#e8eaf2);opacity:.82}
+.en-pw,.en-pw2,.en-look{display:flex;flex-direction:column;gap:10px}
+.en-pw{gap:6px}.en-pw2{gap:6px}
+.en-show{display:flex;align-items:center;gap:8px;margin-top:2px;font-size:12px;color:var(--muted,#8a90a6);cursor:pointer;user-select:none}
+.en-show input{width:16px;height:16px;accent-color:var(--gold,#d9b25f)}
+.en-err{margin:0;padding:9px 12px;border-radius:10px;font-size:13px;line-height:1.45;color:#ffd9d4;background:rgba(200,50,43,.18);border:1px solid rgba(200,50,43,.6)}
+.en-links{display:flex;flex-wrap:wrap;justify-content:center;gap:2px 16px}
+.en-link{background:none;border:0;padding:8px 4px;color:var(--gold-soft,#f1dba0);font:400 13px/1.2 var(--sans,inherit);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.en-link:hover,.en-link:focus-visible{color:#fff;outline:none}
+.en-link:disabled,.enter-card .big:disabled{opacity:.55;cursor:wait}
+.enter-card .en-note{color:var(--gold-soft,#f1dba0);opacity:.85}
+@media (max-width:899px){
+  .enter-card .en-note{display:block;font-size:11px}   /* nhắc nhớ mật khẩu: không ẩn trên điện thoại như ghi chú cũ */
+  .en-sub{font-size:12px;line-height:1.35}
+  .en-link{padding:6px 4px}
+  /* Lời mời bật nhạc (js/ui.js, nằm cách đáy 86px, z-index 130) sẽ đè lên nút gửi của thẻ vào cửa cao hơn → khi màn vào cửa mở thì đẩy lên đầu màn hình */
+  body.entering #sound-invite{bottom:auto!important;top:max(10px,env(safe-area-inset-top))!important}
+}
+/* Băng thông báo: máy khác vừa lưu bản mới hơn / phiên đăng nhập hết hạn */
+.acct-banner{position:fixed;top:max(10px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:90;width:min(480px,calc(100% - 20px));padding:12px 14px;border-radius:14px;background:rgba(14,10,7,.94);border:1px solid rgba(217,178,95,.6);box-shadow:0 14px 50px rgba(0,0,0,.6);color:#fff;display:flex;flex-direction:column;gap:10px}
+.acct-banner p{margin:0;font-size:13px;line-height:1.45}
+.acct-banner div{display:flex;flex-wrap:wrap;gap:8px}
+.acct-banner button{flex:1 1 150px;padding:10px 12px;border-radius:10px;border:1px solid rgba(217,178,95,.6);background:transparent;color:var(--gold-soft,#f1dba0);font:500 13px/1.2 var(--sans,inherit);cursor:pointer}
+.acct-banner button:first-child{background:var(--gold,#d9b25f);color:#2a1a08;border-color:var(--gold,#d9b25f);font-weight:600}
+.acct-banner button:disabled{opacity:.55;cursor:wait}
