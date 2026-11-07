@@ -15,17 +15,19 @@ export function initHouse(hud, { toast = () => {} } = {}) {
   let unreg = null, shownLv = -1, mode = '';
   const land = () => (LGT.land && LGT.land.state) || null;
   const pos = () => (LGT.world && LGT.world.pos) || null;
-  const closePanels = () => { try { LGT.land && LGT.land.close(); } catch (_) { /* bỏ qua */ } try { LGT.merit && LGT.merit.close && LGT.merit.close(); } catch (_) { /* bỏ qua */ } };
+  const closePanels = () => { try { LGT.furni && LGT.furni.close(); } catch (_) { /* bỏ qua */ } try { LGT.land && LGT.land.close(); } catch (_) { /* bỏ qua */ } try { LGT.merit && LGT.merit.close && LGT.merit.close(); } catch (_) { /* bỏ qua */ } };
 
   function mountRoom(lv) {   // đăng ký + hiện phòng cấp lv (gỡ phòng cũ trước)
     if (unreg) { unreg(); unreg = null; }
-    unreg = registerRoom(lv); shownLv = lv;
-    if (LGT.interiorScene) LGT.interiorScene.show(lv);
+    const placed = LGT.furni ? LGT.furni.placed : [];   // đồ người chơi đã đặt (Phiên 41)
+    unreg = registerRoom(lv, placed); shownLv = lv;
+    if (LGT.interiorScene) LGT.interiorScene.show(lv, placed);
   }
   function unmountRoom() {
     if (unreg) { unreg(); unreg = null; }
     shownLv = -1; if (LGT.interiorScene) LGT.interiorScene.hide();
   }
+  LGT.houseRemount = () => { if (LGT.inHouse && shownLv >= 0) mountRoom(shownLv); };   // dựng lại phòng khi đổi bố trí nội thất
   function enter() {
     const W = LGT.world, L = land(), p = pos(); if (!W || !L || !p) return;
     const plan = enterPlan(L, p);

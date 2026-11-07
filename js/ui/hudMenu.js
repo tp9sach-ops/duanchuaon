@@ -10,6 +10,7 @@ import { initStory } from './story.js';
 import { initMerit } from './merit.js';
 import { initLand } from './land.js';
 import { initHouse } from './house.js';
+import { initFurni } from './furni.js';
 import { initSkill } from './skill.js';
 import { initMinimap } from './minimap.js';
 import { initTutorial } from './tutorial.js';
@@ -112,6 +113,7 @@ export function initHudMenu(hud) {
   try { initGuide(hud, { toast }); } catch (e) { console.warn('[Diệu Giang Tự] Dẫn đường lỗi:', e && e.message); }   // dẫn đường nhiệm vụ (Phiên 18)
   try { initMerit(hud, { toast, addMerit, getSen: () => wallet.sen, spendSen: spendMerit, pillHost: root.querySelector('.hm-wallet') }); } catch (e) { console.warn('[Diệu Giang Tự] Lá bồ đề lỗi:', e && e.message); }   // đổi hạt sen lấy lá bồ đề (Phiên 35)
   try { initLand(hud, { toast }); } catch (e) { console.warn('[Diệu Giang Tự] Đất ở lỗi:', e && e.message); }   // đất ở + xóm (Phiên 36)
+  try { initFurni(hud, { toast }); } catch (e) { console.warn('[Diệu Giang Tự] Nội thất lỗi:', e && e.message); }   // cửa hàng nội thất + túi đồ (Phiên 41, bước 4)
   try { initHouse(hud, { toast }); } catch (e) { console.warn('[Diệu Giang Tự] Vào nhà lỗi:', e && e.message); }   // nút Vào nhà / Ra ngoài (Phiên 38, 3d-2c)
   try { initStory(hud, { toast, addMerit }); } catch (e) { console.warn('[Diệu Giang Tự] Cốt truyện lỗi:', e && e.message); }   // hộp thoại + mục tiêu chương 1 (Phiên 32); lỗi thì NPC vẫn nói lời thường
   try { initTutorial(hud, { toast }); } catch (e) { console.warn('[Diệu Giang Tự] Sổ tay hướng dẫn lỗi:', e && e.message); }   // hướng dẫn chơi + gợi ý việc kế tiếp (Phiên 39)
@@ -151,6 +153,8 @@ export function initHudMenu(hud) {
     if (r.kind === 'beads' || r.kind === 'chant') return practice.open(r.kind);
     if (r.kind === 'chat') return chat.toggle();
     if (r.kind === 'quest') return quest.toggle();
+    if (r.kind === 'bag') return LGT.furni ? LGT.furni.openBag() : toast('Túi đồ chưa sẵn sàng.', 2500);
+    if (r.kind === 'shop') return LGT.furni ? LGT.furni.openShop() : toast('Cửa hàng chưa sẵn sàng.', 2500);
     if (r.kind === 'le') return den.openLe();
     if (r.kind === 'den') return den.openDen();
     if (r.kind === 'goto') {
