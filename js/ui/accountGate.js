@@ -17,7 +17,7 @@ export function initAccountGate({ form, nameIn, client, hasLegacy, getDraft, onE
 
   const clearErr = () => { err.hidden = true; err.textContent = ''; temp.hidden = true; };
   function showErr(code, ctx = {}) {
-    err.textContent = errMsg(code, ctx) + (isNetworkError(code) ? ' (mã: ' + code + ')' : ''); err.hidden = false;   // hiện mã để quản trị biết đúng nguyên nhân
+    err.textContent = errMsg(code, ctx) + (isNetworkError(code) ? ' (mã: ' + code + (ctx.detail ? ' · ' + ctx.detail : '') + ')' : ''); err.hidden = false;   // hiện mã để quản trị biết đúng nguyên nhân
     const f = ctx.field === 'pw2' ? pw2In : ctx.field === 'name' ? nameIn : pwIn;
     if (code === 'exists' || code === 'bad_login') { pwIn.value = ''; pw2In.value = ''; }
     try { (code === 'exists' ? alt : f).focus({ preventScroll: true }); } catch (_) { /* bỏ qua */ }
@@ -48,7 +48,7 @@ export function initAccountGate({ form, nameIn, client, hasLegacy, getDraft, onE
 
   async function doLogin(f) {
     const r = await client.login(f);
-    if (!r.ok) { showErr(r.error, { name: f.name, field: 'pw' }); if (isNetworkError(r.error)) temp.hidden = false; return; }
+    if (!r.ok) { showErr(r.error, { name: f.name, field: 'pw', detail: r.detail }); if (isNetworkError(r.error)) temp.hidden = false; return; }
     if (client.hasProgress() && !confirm('Máy này đang có dữ liệu chơi chưa gắn với tài khoản. Đăng nhập “' + r.res.name + '” sẽ THAY dữ liệu trên máy này bằng dữ liệu đã lưu của nhân vật đó. Tiếp tục?')) return;
     client.adopt(r.res);
     try { sessionStorage.setItem(AUTO_KEY, '1'); } catch (_) { /* bỏ qua */ }
@@ -57,7 +57,7 @@ export function initAccountGate({ form, nameIn, client, hasLegacy, getDraft, onE
   async function doCreate(f, name) {
     const d = getDraft();
     const r = await client.create({ name, password: f.password, overrides: { 'lgt.name': name, 'lgt.color': d.color, 'lgt.hair': d.hair } });
-    if (!r.ok) { showErr(r.error, { name, field: 'pw' }); if (isNetworkError(r.error)) temp.hidden = false; return; }
+    if (!r.ok) { showErr(r.error, { name, field: 'pw', detail: r.detail }); if (isNetworkError(r.error)) temp.hidden = false; return; }
     onEnter(name);
   }
   async function submit() {
