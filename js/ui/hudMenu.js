@@ -8,6 +8,7 @@ import { initQuest } from './quest.js';
 import { initGuide } from './guide.js';
 import { initStory } from './story.js';
 import { initMerit } from './merit.js';
+import { DEN_MERIT } from '../engines/den.js';
 import { initLand } from './land.js';
 import { initHouse } from './house.js';
 import { initFurni } from './furni.js';
@@ -152,7 +153,10 @@ export function initHudMenu(hud) {
     if (r.kind === 'bow' || r.kind === 'meditate') {
       if (LGT.panelOpen || !LGT.world) return;
       const ok = r.kind === 'bow' ? LGT.world.bow() : LGT.world.meditate();
-      if (ok === 'outside') toast(OUTSIDE_TEXT, 4500); else if (ok === false) toast('Bạn đang bận, thử lại sau một chút nhé.', 2500); else if (ok && LGT.act) LGT.act(r.kind === 'bow' ? 'bow' : 'thien');
+      if (ok === 'outside') toast(OUTSIDE_TEXT, 4500); else if (ok === false) toast('Bạn đang bận, thử lại sau một chút nhé.', 2500); else if (ok) {
+        if (LGT.act) LGT.act(r.kind === 'bow' ? 'bow' : 'thien');
+        if (r.kind === 'bow' && LGT.merit && LGT.merit.reward) LGT.merit.reward('lay', DEN_MERIT.lay);   // Phiên 49 (mục 1.5): lạy Phật được hạt sen, trần 10 lần/ngày
+      }
       return;
     }
     if (r.kind === 'beads' || r.kind === 'chant') return practice.open(r.kind);
