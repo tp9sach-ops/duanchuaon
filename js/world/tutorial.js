@@ -1,6 +1,6 @@
 // Sổ tay hướng dẫn cách chơi + "việc nên làm kế tiếp" (Phiên 39). LOGIC THUẦN (không DOM, không three.js, có test: tests/tutorial.test.mjs).
 // Giao diện: js/ui/tutorial.js. Mọi con số lấy từ merit.js / land.js (một nguồn duy nhất) nên đổi giá ở đó là chữ hướng dẫn đổi theo.
-// Chỉ nói những gì ĐÃ chạy trong bản này; tính năng chưa làm (nội thất, cảnh 3D câu cá) ghi rõ "sắp có", không giả vờ.
+// Chỉ nói những gì ĐÃ chạy trong bản này; tính năng chưa làm (nội thất) ghi rõ "sắp có", không giả vờ.
 import { SEN_PER_LA, LAND_LA, MED_SECONDS_PER_SEN, DAILY_CAP } from './merit.js';
 import { ORBS, POND_MAX } from './fishing.js';
 import { HOUSE_LEVELS, MAX_LV, houseLevel, upgradeCost, XOM_SIZE } from './land.js';
@@ -48,7 +48,7 @@ export const TOPICS = [
       { text: `Bấm biểu tượng “Câu cá” (cụm nút tròn góc phải-trên, hoặc nút nổi khi đứng sát nước). Vào tab “Quả cầu” mua quả đầu tiên bằng lá bồ đề: ${ORBS[0].ten} giá ${ORBS[0].gia} lá. Cầu càng đắt càng bền, càng dễ gặp cá hiếm.`, go: tap('cauca') },
       { text: 'Sang tab “Thả cầu”, bấm “Thả cầu”, đợi hoa sen nở (chỉ khoảng nửa giây) rồi bấm “Bấm!”. Bấm sớm quá cá giật mình, bấm trễ cá bơi mất. Mỗi lần thả tốn 1 độ bền của cầu; cầu nứt thì sửa bằng 1/5 giá.' },
       { text: `Câu được cá thì chọn “Thu cá” (nuôi ở ao riêng, tối đa ${POND_MAX} con) hoặc “Phóng sinh” (thả về nước, nhận 1 đến 3 hạt sen; mỗi ngày tối đa 10 lần có thưởng). Cá trong tab “Ao cá” phóng sinh được bất cứ lúc nào.` },
-      { text: 'Hiện việc câu cá hiển thị bằng chữ trong bảng; hình 3D quả cầu bay, vòng sóng và hoa sen nở trên mặt nước đang làm, sắp có.', soon: true },
+      { text: 'Trên mặt nước bạn sẽ thấy quả cầu bay xuống, vòng sóng lan ra, bóng cá lượn quanh cầu rồi hoa sen hồng nở: đó là lúc bấm “Bấm!”.' },
     ] },
 ];
 export const topicById = (id) => TOPICS.find((t) => t.id === id) || null;

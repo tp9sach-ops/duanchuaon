@@ -29,6 +29,7 @@ import { buildLand } from './land.js';
 import { buildInterior } from './interior.js';
 import { createGovernor, levelPlan, startLevel, loadSaved, save as savePerf } from './perfLogic.js';
 import { buildGlbTrees } from './glbprops.js';
+import { buildFishing } from './fishing.js';
 import { inHall, PLAZA } from '../world/landscape.js';
 import { groundY, blocked } from '../world/layout.js';
 import { createWeather, parseWeatherParam, changeMessage } from '../world/weather.js';
@@ -87,6 +88,7 @@ export function createScene(canvas, { onProgress, onPick, onArrive } = {}) {
   const censer = buildCenser(); censer.group.position.set(0, 0, -8);
   scene.add(shade(tam), chanh.group, shade(tower.group), shade(censer.group), shade(buildProps()), shade(buildGarden()), shade(buildHouses()), shade(buildCushions())); onProgress?.(0.55);
   const hoaSen = buildHoaSen(LGT); scene.add(hoaSen.group);
+  const fishing = buildFishing(LGT, { reduce, perf: () => level }); scene.add(fishing.group);   // Phiên 48: cảnh câu cá 3D (đọc LGT.fishing.session)
   const npcs = buildNpcs(scene, LGT);   // NPC: Trụ trì, Tri khách, cư sĩ vườn thiền (Phiên 14g)   // hoa sen vàng nhận lộc
   const land = buildLandscape(); scene.add(shade(land.group));   // cảnh quan mở rộng (Phiên 14f)
   const xomScene = buildLand(); scene.add(shade(xomScene.group)); LGT.landScene = xomScene;
@@ -265,7 +267,7 @@ export function createScene(canvas, { onProgress, onPick, onArrive } = {}) {
     if (Math.abs(viewX) > 0.5) camera.setViewOffset(w, h, viewX, 0, w, h); else if (camera.view && camera.view.enabled) camera.clearViewOffset();
 
     if (world) { const wp = world.pos, sp = snapToTexel(wp.x, wp.z, sunOffset, (2 * SHADOW_R) / appliedShadowSize); moonLight.target.position.set(sp.x, sp.y, sp.z); moonLight.position.set(sp.x + sunOffset.x, sp.y + sunOffset.y, sp.z + sunOffset.z); }   // Phiên 28b: nhích vùng bóng theo từng texel (hết răng cưa bò khi đi)   // sunOffset do applyDay cập nhật theo giờ   // vùng đổ bóng đi theo người chơi
-    interior.update(LGT.night || 0); timeU.value = t; hoaSen.update(t); land.update(t); outside.update(t); if (world) npcs.update(dt, world.pos);
+    interior.update(LGT.night || 0); timeU.value = t; hoaSen.update(t); fishing.update(t, dt); land.update(t); outside.update(t); if (world) npcs.update(dt, world.pos);
     sky.rotation.y = t * 0.004;
     if (!reduce) {
       if (!DAY || fireflies.obj.visible) fireflies.update(t, dt); petals.update(t, dt); smoke.update(t, dt);

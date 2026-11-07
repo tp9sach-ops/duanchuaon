@@ -33,8 +33,8 @@ test('chữ hướng dẫn dùng đúng con số của luật (đổi giá ở m
   assert.ok(/Nhà lầu 150 lá/.test(all) && /Villa hồ bơi 900 lá/.test(all));
 });
 
-test('phóng sinh và nội thất được ghi rõ là chưa dùng được', () => {
-  assert.ok(topicById('phongsinh').steps.some((s) => s.soon));
+test('nội thất được ghi rõ là chưa dùng được; phóng sinh đã dùng được (không còn bước "sắp có")', () => {
+  assert.ok(!topicById('phongsinh').steps.some((s) => s.soon));
   assert.ok(topicById('xaydung').steps.some((s) => s.soon && /nội thất/.test(s.text)));
 });
 
