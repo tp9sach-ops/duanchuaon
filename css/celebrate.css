@@ -1,0 +1,17 @@
+/* Ăn mừng nhiệm vụ (Phiên 64) */
+.cel{position:fixed;inset:0;z-index:60;pointer-events:none;overflow:hidden}
+.cel[hidden]{display:none}
+.cel-cv{position:absolute;inset:0;width:100%;height:100%}
+.cel-glow{position:absolute;inset:0;background:radial-gradient(circle at 50% 40%,rgba(255,226,140,calc(var(--flash,.2)*1.6)),rgba(255,200,90,0) 62%);opacity:0}
+.cel.go .cel-glow{animation:celGlow var(--ms,3s) ease-out forwards}
+.cel-card{position:absolute;left:50%;top:22%;transform:translate(-50%,-30px) scale(.8);opacity:0;min-width:220px;max-width:min(86vw,420px);padding:14px 22px 16px;text-align:center;color:#3b2508;border-radius:18px;
+  background:linear-gradient(180deg,#fff6d2,#f7d77a);border:2px solid #fff3b8;box-shadow:0 8px 30px rgba(120,70,0,.45),0 0 40px rgba(255,214,102,.7);display:flex;flex-direction:column;gap:3px}
+.cel.go .cel-card{animation:celCard var(--ms,3s) cubic-bezier(.2,1.4,.4,1) forwards}
+.cel-k{font-size:12px;letter-spacing:.08em;text-transform:uppercase;opacity:.75}
+.cel-t{font-size:20px;line-height:1.2}
+.cel.big .cel-t,.cel.epic .cel-t{font-size:24px}
+.cel-s{font-size:13px;opacity:.85}
+.cel-r{font-style:normal;font-weight:700;font-size:14px;color:#8a4b00}
+@keyframes celGlow{0%{opacity:0}12%{opacity:1}100%{opacity:0}}
+@keyframes celCard{0%{opacity:0;transform:translate(-50%,-30px) scale(.8)}10%{opacity:1;transform:translate(-50%,0) scale(1.06)}16%{transform:translate(-50%,0) scale(1)}85%{opacity:1;transform:translate(-50%,0) scale(1)}100%{opacity:0;transform:translate(-50%,-14px) scale(.98)}}
+@media (prefers-reduced-motion:reduce){.cel.go .cel-glow{animation:none;opacity:.5}.cel.go .cel-card{animation:none;opacity:1;transform:translate(-50%,0)}}

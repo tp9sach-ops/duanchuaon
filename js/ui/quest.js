@@ -3,6 +3,8 @@
 // Mọi chữ hiển thị đến từ dữ liệu cố định của dự án và qua textContent/esc, không chèn HTML lạ.
 import { loadProg, record, questStatus, levelOf, levelReward, QUESTS } from '../world/quests.js';
 import { CHAPTERS } from '../world/chapters.js';
+import { chaptersJustDone } from '../world/celebrate.js';
+import { celebrate } from './celebrate.js';
 import { placesAt } from '../world/outside.js';
 import { storyRows } from '../world/story.js';
 import { initJourney } from './journey.js';
@@ -71,10 +73,16 @@ export function initQuest(hud, { toast = () => {}, addMerit = () => {}, pillHost
   function act(type, x) {
     const ev = (type === 'npc' || type === 'visit') ? { type, arg: x } : { type, n: x };
     const r = record(prog, ev); if (r.prog === prog) return;
-    prog = r.prog; save();
-    r.done.forEach((q, i) => setTimeout(() => toast(`Hoàn thành nhiệm vụ: ${q.ten} · +${q.xp} điểm, +${q.sen} hạt sen`, 4500), i * 1200));
+    const before = questStatus(prog); prog = r.prog; save();
+    const lvInfo = r.levelUp ? { to: r.levelUp.to, ten: levelOf(prog.xp).ten, sen: r.levelUp.sen } : null;
     if (r.gain.sen) addMerit(r.gain.sen);
-    if (r.levelUp) setTimeout(() => toast(`Chúc mừng! Bạn lên cấp ${r.levelUp.to} · ${levelOf(prog.xp).ten}${r.levelUp.sen ? ` · thưởng ${r.levelUp.sen} hạt sen` : ''}`, 6000), 400 + r.done.length * 1200);
+    let shown = null;
+    if (r.done.length || lvInfo) { try { shown = celebrate({ done: r.done, levelUp: lvInfo, chapters: chaptersJustDone(before, questStatus(prog)) }); } catch (_) { shown = null; } }   // Phiên 64: hiệu ứng + âm thanh ăn mừng
+    if (shown) { const m = []; r.done.forEach((q) => m.push(q.ten)); if (m.length) toast(`✓ ${m.join(' · ')}`, 3000); }
+    else {
+      r.done.forEach((q, i) => setTimeout(() => toast(`Hoàn thành nhiệm vụ: ${q.ten} · +${q.xp} điểm, +${q.sen} hạt sen`, 4500), i * 1200));
+      if (r.levelUp) setTimeout(() => toast(`Chúc mừng! Bạn lên cấp ${r.levelUp.to} · ${levelOf(prog.xp).ten}${r.levelUp.sen ? ` · thưởng ${r.levelUp.sen} hạt sen` : ''}`, 6000), 400 + r.done.length * 1200);
+    }
     drawPill(); if (!box.hidden) drawBox();
     if (LGT.story && LGT.story.refresh) LGT.story.refresh();   // Phiên 43: xong nhiệm vụ → thẻ "Việc kế tiếp" sang việc mới
   }
@@ -83,7 +91,7 @@ export function initQuest(hud, { toast = () => {}, addMerit = () => {}, pillHost
     n = Math.max(0, Math.min(500, Math.floor(+n) || 0)); if (!n) return;
     const before = levelOf(prog.xp).lv; prog = { ...prog, xp: prog.xp + n }; save();
     const after = levelOf(prog.xp).lv;
-    if (after > before) { let bonus = 0; for (let l = before + 1; l <= after; l++) bonus += levelReward(l); if (bonus) addMerit(bonus); setTimeout(() => toast(`Chúc mừng! Bạn lên cấp ${after} · ${levelOf(prog.xp).ten}${bonus ? ` · thưởng ${bonus} hạt sen` : ''}`, 6000), 400); }
+    if (after > before) { let bonus = 0; for (let l = before + 1; l <= after; l++) bonus += levelReward(l); if (bonus) addMerit(bonus); let ok = false; try { ok = !!celebrate({ levelUp: { to: after, ten: levelOf(prog.xp).ten, sen: bonus } }); } catch (_) { /* dùng toast */ } if (!ok) setTimeout(() => toast(`Chúc mừng! Bạn lên cấp ${after} · ${levelOf(prog.xp).ten}${bonus ? ` · thưởng ${bonus} hạt sen` : ''}`, 6000), 400); }
     drawPill(); if (!box.hidden) drawBox();
   };
   LGT.act = act; LGT.quests = { get prog() { return prog; }, count: QUESTS.length, redraw() { if (!box.hidden) drawBox(); } };

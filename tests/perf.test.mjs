@@ -14,9 +14,9 @@ test('clampLevel: kẹp 0..5, rác về 0', () => {
 
 test('levelPlan: bậc 0 đầy đủ, bậc 5 nhẹ nhất, chỉ ngày càng nhẹ khi bậc tăng', () => {
   const p0 = levelPlan(0, { dpr: 3, shadowBase: 2048 });
-  assert.deepEqual(p0, { level: 0, pixelRatio: 2, bloom: true, shadows: true, shadowSize: 2048, forestShadow: true, forest: true, particles: 'full' });
+  assert.deepEqual(p0, { level: 0, pixelRatio: 2, bloom: true, shadows: true, shadowSize: 2048, forestShadow: true, forest: true, forestDensity: 1, particles: 'full' });
   const p5 = levelPlan(5, { dpr: 3, shadowBase: 2048 });
-  assert.deepEqual(p5, { level: 5, pixelRatio: 0.75, bloom: false, shadows: false, shadowSize: 1024, forestShadow: false, forest: false, particles: 'low' });
+  assert.deepEqual(p5, { level: 5, pixelRatio: 0.75, bloom: false, shadows: false, shadowSize: 1024, forestShadow: false, forest: true, forestDensity: 0.35, particles: 'low' });
   let prev = levelPlan(0, { dpr: 2 });
   for (let l = 1; l <= MAX_LEVEL; l++) {
     const p = levelPlan(l, { dpr: 2 });
@@ -32,7 +32,8 @@ test('levelPlan: mốc từng bậc đúng như ghi ở đầu file', () => {
   assert.equal(levelPlan(2).bloom, false); assert.equal(levelPlan(1).bloom, true);
   assert.equal(levelPlan(3, { shadowBase: 2048 }).shadowSize, 1024); assert.equal(levelPlan(3).forestShadow, false); assert.equal(levelPlan(3).shadows, true);
   assert.equal(levelPlan(4).shadows, false); assert.equal(levelPlan(4).forest, true);
-  assert.equal(levelPlan(5).forest, false);
+  assert.equal(levelPlan(5).forest, true, 'không ẩn hẳn rừng'); assert.equal(levelPlan(5).forestDensity, 0.35); assert.equal(levelPlan(3).forestDensity, 0.7);
+  for (let l = 1; l <= 5; l++) assert.ok(levelPlan(l).forestDensity <= levelPlan(l - 1).forestDensity, 'rừng chỉ thưa dần ở bậc ' + l);
 });
 
 test('levelPlan: bản đồ bóng không nhỏ hơn 512; dpr thiếu/lạ không làm hỏng', () => {

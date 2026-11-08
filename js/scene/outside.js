@@ -202,7 +202,7 @@ function buildForest(g) {
   const coneG = new THREE.ConeGeometry(2.1, 4.4, 7); coneG.translate(0, 4.6, 0);
   const cone2G = new THREE.ConeGeometry(1.6, 3.6, 7); cone2G.translate(0, 7.1, 0);
   const ballG = new THREE.IcosahedronGeometry(2.6, 1); ballG.translate(0, 5.2, 0);
-  const mk = (geo, mat, list, shadow) => { const m = new THREE.InstancedMesh(geo, mat, Math.max(1, list.length)); list.forEach((t, i) => { dummy.position.set(t.x, 0, t.z); dummy.scale.setScalar(t.s); dummy.rotation.y = i; dummy.updateMatrix(); m.setMatrixAt(i, dummy.matrix); }); m.count = list.length; m.castShadow = shadow; m.receiveShadow = false; g.add(m); return m; };
+  const mk = (geo, mat, list, shadow) => { const m = new THREE.InstancedMesh(geo, mat, Math.max(1, list.length)); list.forEach((t, i) => { dummy.position.set(t.x, 0, t.z); dummy.scale.setScalar(t.s); dummy.rotation.y = i; dummy.updateMatrix(); m.setMatrixAt(i, dummy.matrix); }); m.count = list.length; m.userData.full = list.length; m.castShadow = shadow; m.receiveShadow = false; g.add(m); return m; };
   const tm = flat(0x5a3d26);
   mk(trunkG, tm, pines, true); mk(coneG, flat(0x2f6b3c), pines, true); mk(cone2G, flat(0x3a7d46), pines, true);
   mk(trunkG, tm, broads, true); mk(ballG, flat(0x4d9a42), broads, true);
@@ -294,7 +294,7 @@ function buildPineWoods(g) {
   const inst = (geo, mat, list, shadow, tint) => {
     const m = new THREE.InstancedMesh(geo, mat, Math.max(1, list.length));
     list.forEach((t, i) => { dummy.position.set(t.x, 0, t.z); dummy.scale.set(t.s, t.s * (0.9 + (i % 5) * 0.05), t.s); dummy.rotation.y = i * 1.7; dummy.updateMatrix(); m.setMatrixAt(i, dummy.matrix); if (tint) { col.setHex(tint[(i + ((t.c || 0) * 7 | 0)) % tint.length]); m.setColorAt(i, col); } });
-    m.count = list.length; m.castShadow = shadow; m.receiveShadow = false; g.add(m); return m;
+    m.count = list.length; m.userData.full = list.length; m.castShadow = shadow; m.receiveShadow = false; g.add(m); return m;
   };
   const trunk = new THREE.CylinderGeometry(0.3, 0.46, 3.2, 6); trunk.translate(0, 1.6, 0);
   const c1 = new THREE.ConeGeometry(2.5, 4.2, 8); c1.translate(0, 4.4, 0);

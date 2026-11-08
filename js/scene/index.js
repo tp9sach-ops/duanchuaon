@@ -153,7 +153,7 @@ export function createScene(canvas, { onProgress, onPick, onArrive } = {}) {
     bloomOn = plan.bloom;
     if (plan.shadowSize !== appliedShadowSize) { appliedShadowSize = plan.shadowSize; moonLight.shadow.mapSize.set(plan.shadowSize, plan.shadowSize); if (moonLight.shadow.map) { moonLight.shadow.map.dispose(); moonLight.shadow.map = null; } }
     moonLight.castShadow = plan.shadows;
-    outside.group.traverse((o) => { if (o.isInstancedMesh) { o.visible = plan.forest; o.castShadow = plan.forest && plan.forestShadow; } });   // trong khu ngoài chùa chỉ rừng dùng InstancedMesh (outside.js, hàm mk)
+    outside.group.traverse((o) => { if (o.isInstancedMesh) { if (o.userData.full == null) o.userData.full = o.count; o.visible = plan.forest; o.count = Math.max(1, Math.round(o.userData.full * plan.forestDensity)); o.castShadow = plan.forest && plan.forestShadow; } });   // trong khu ngoài chùa chỉ rừng dùng InstancedMesh (outside.js, hàm mk)
     rainCap = plan.particles === 'low' ? 0.4 : level >= 3 ? 0.7 : 1;
     if (plan.particles === 'low') { fireflies.setCount(40); petals.setCount(30); }
     resize();

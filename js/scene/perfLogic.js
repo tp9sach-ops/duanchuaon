@@ -7,7 +7,7 @@
      2  tắt bloom
      3  bản đồ bóng nhỏ một nửa (≥ 512) + rừng thôi đổ bóng
      4  tắt đổ bóng
-     5  pixelRatio 0,75 + ít hạt + ẩn rừng ngoài chùa
+     5  pixelRatio 0,75 + ít hạt + rừng ngoài chùa thưa còn 35% (Phiên 64: trước đây ẨN HẾT nên máy yếu mất sạch cây)
    Ngưỡng và số liệu là QUY ƯỚC TẠM (chờ thử trên điện thoại thật). */
 
 export const MAX_LEVEL = 5;
@@ -26,7 +26,8 @@ export function levelPlan(level, { dpr = 1, shadowBase = 2048 } = {}) {
     shadows: L < 4,
     shadowSize: L >= 3 ? Math.max(512, shadowBase >> 1) : shadowBase,
     forestShadow: L < 3,
-    forest: L < 5,
+    forest: true,                                  // không bao giờ ẩn hẳn rừng nữa
+    forestDensity: L >= 5 ? 0.35 : L >= 3 ? 0.7 : 1,   // tỉ lệ cây còn lại (cắt bớt cuối danh sách)
     particles: L >= 5 ? 'low' : 'full',
   };
 }
