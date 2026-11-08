@@ -1,6 +1,8 @@
 # HANDOFF — Web tâm linh "DIỆU GIANG TỰ" (chùa Việt 3D) — tên cũ: Linh Giang Tự (Phiên 5 đổi tên theo ptg)
 
-> **Cập nhật Phiên 68 (2026-11-08): mã thật đang ở Phiên 68 (Phiên 55–67 xem `docs/PHIEN55.md` … `PHIEN67.md`; HANDOFF này chỉ chi tiết tới Phiên 36 và 54). ĐỌC `docs/PHIEN68.md` (mục "Chưa làm" + prompt khởi động) TRƯỚC. `npm test` 709/709, `sw.js` = `dgt-v73`.**
+> **Cập nhật Phiên 69 (2026-11-08): mã thật đang ở Phiên 69 (Phiên 55–68 xem `docs/PHIEN55.md` … `PHIEN69.md`; HANDOFF này chỉ chi tiết tới Phiên 36 và 54). ĐỌC `docs/PHIEN69.md` (mục "Chưa làm" + prompt khởi động) TRƯỚC. `npm test` 710/710, `sw.js` = `dgt-v74`.**
+
+> **(cũ) Cập nhật Phiên 68: nút Dẫn đường nhấp nháy — `docs/PHIEN68.md`. 709/709, `dgt-v73`.**
 
 > **(cũ) Cập nhật Phiên 54 (2026-11-08): sửa lỗi "Chưa kết nối được máy chủ" ở màn đăng nhập — đọc `docs/PHIEN54.md` TRƯỚC; Gp phải cập nhật/Authorize Apps Script. `npm test` 638/638, `sw.js` = `dgt-v59`.**
 
