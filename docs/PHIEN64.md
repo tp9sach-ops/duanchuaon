@@ -20,3 +20,8 @@
 2. Thêm kiến trúc (cầu đá, bảo tháp, thủy tạ… — hỏi ptg loại nào).
 3. Suối Trong (nơi câu thứ 4) + cá 3D ao riêng; trang "Tu tập" + "NPC" trong Lộ trình.
 4. Xếp hạng ("Bảng vàng"), bơi–lặn. "Mời tiệc" để sau. Sửa test đom đóm chập chờn.
+
+## GHI CHÚ THÊM (ptg báo: "nút nhảy Khinh thân trên điện thoại không thấy đâu")
+- Điều tra, CHƯA sửa mã. Chụp giả lập điện thoại 390×780: khi bậc Khinh thân ≥ 1 thì cụm nút góc phải-dưới (`js/ui/dock.js`) hiện đủ "Nhảy / Kỹ năng / Túi đồ" (nút Nhảy ở ~x306,y580). Nút chỉ hiện khi `LGT.skill.level > 0` (bậc 1 mở bằng cốt truyện tưới cây bồ đề với Thầy trụ trì) và khi `world.mode==='free'`, không có bảng/hội thoại mở, không đang câu cá/khiêng vật.
+- Nghi vấn chính: ptg chưa mở bậc 1 nên nút bị ẩn hoàn toàn. Đề xuất chờ ptg chọn: (A) luôn hiện nút Nhảy mờ, bấm khi chưa mở thì báo cách mở; (B) giữ như cũ.
+- Lỗi bố cục thật: cột menu dọc bên phải (đến y≈470) đè lên nút Túi đồ/Kỹ năng của cụm (`css/dock.css` `.dk` bottom 176px ở ≤899px) → nên hạ cụm xuống hoặc dời cột menu.
