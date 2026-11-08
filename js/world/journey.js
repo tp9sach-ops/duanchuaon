@@ -24,13 +24,14 @@ export const PLACE_HINT = {
   cho: 'Cuối đường làng, quanh gốc đa có các quầy hàng.',
   rung: 'Ngã ba đường làng, rẽ trái theo đường mòn vào rừng thông.',
   thacnuoc: 'Ngã ba đường làng, rẽ phải theo đường mòn tới thác nước.',
+  daiphat: 'Cuối đường mòn thác nước, bãi bên phải: tượng Phật lớn khắc vào vách đá.',
   dienmaylamsen: 'Nhà phố bên trái đường làng, đoạn gần cổng làng.',
   kimhoanngoclan: 'Nhà phố cuối đường làng, gần chợ.',
   didongsenvang: 'Nhà phố bên trái đường làng, xa hơn nữa về phía chợ.',
 };
 /** Nhiệm vụ có nút “Dẫn đường” cho từng nơi (id nhiệm vụ trong js/world/quests.js). */
 export const PLACE_QUEST = { lang: 'm-lang', thacnuoc: 'm-thac', rung: 'm-rung' };
-const ICON = { sanchua: '⛩️', chanhdien: '🛕', nhato: '🏯', gacchuong: '🔔', trathat: '🍵', vuonthien: '🧘', hoca: '🐟', quanam: '🪷', lang: '🏘️', cho: '🧺', rung: '🌲', thacnuoc: '💧', dienmaylamsen: '🔌', kimhoanngoclan: '💍', didongsenvang: '📱' };
+const ICON = { sanchua: '⛩️', chanhdien: '🛕', nhato: '🏯', gacchuong: '🔔', trathat: '🍵', vuonthien: '🧘', hoca: '🐟', quanam: '🪷', lang: '🏘️', cho: '🧺', rung: '🌲', thacnuoc: '💧', daiphat: '🗿', dienmaylamsen: '🔌', kimhoanngoclan: '💍', didongsenvang: '📱' };
 
 const seenVisit = (prog) => new Set((prog && isObj(prog.seen) && Array.isArray(prog.seen.visit)) ? prog.seen.visit : []);
 const tot = (prog, k) => num(prog && prog.tot && prog.tot[k]);

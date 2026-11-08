@@ -17,7 +17,7 @@ Cách dùng: làm mục [ ] đầu tiên, xong báo ptg, CHỜ "tiếp tục". L
 ## Giai đoạn 2 — Dọn lỗi nhỏ
 [x] 2.1 ĐÃ SỬA Ở PHIÊN 47: `js/world/minimap.js` hồ cá `x: 56` → `x: 60` (= `KOI.x`).
 [x] 2.2 Test lỗi thoáng qua (Phiên 43 gặp 1 lần). Phiên 49–50 chạy thêm 3 lần liên tiếp: 585/585 đạt cả 3, không thấy lỗi thoáng qua (Node 22; Node 20 chưa chạy). Nếu gặp lại thì ghi tên test đỏ.
-[ ] 2.3 (ptg làm tay) xóa file lạc: (3 file `js/fishing.js`, `js/hudMenu.js`, `js/menuLogic.js` đã được Phiên 48 xóa) `phien26.patch`, `PHIEN31.md`, `PHIEN33.md`, `landscape.js` (gốc), `docs/PHIEN42_BAN_GIAO (2).md`, `docs/PHIEN42_BAN_GIAO (3).md`. `HANDOFF.md` gốc đã cũ (chỉ giữ để tra). Đã hết file lạc `js/fishing.js`, `js/hudMenu.js`, `js/menuLogic.js` (Phiên 46 chuyển đúng chỗ).
+[x] 2.3 ĐÃ XÓA Ở PHIÊN 59 (ptg đồng ý). Danh sách cũ: (3 file `js/fishing.js`, `js/hudMenu.js`, `js/menuLogic.js` đã được Phiên 48 xóa) `phien26.patch`, `PHIEN31.md`, `PHIEN33.md`, `landscape.js` (gốc), `docs/PHIEN42_BAN_GIAO (2).md`, `docs/PHIEN42_BAN_GIAO (3).md`. `HANDOFF.md` gốc đã cũ (chỉ giữ để tra). Đã hết file lạc `js/fishing.js`, `js/hudMenu.js`, `js/menuLogic.js` (Phiên 46 chuyển đúng chỗ).
 
 ## Giai đoạn 3 — Nhà và nội thất
 [ ] 3.1 Thử Chromium: vào/ra 4 cấp nhà, nút #house-btn không che menu điện thoại, camera trong phòng. (ptg thử trên máy thật.)
@@ -62,6 +62,7 @@ Cách dùng: làm mục [ ] đầu tiên, xong báo ptg, CHỜ "tiếp tục". L
 - Phiên 57: Cầu Gỗ bán 50 hạt sen (cầu khác vẫn bằng lá), quầy cầu hiển thị cả hai loại tiền, sổ sưu tầm loài cá; bảng Nhiệm vụ có tab "Lộ trình" (4 trang ô hình + dấu ?: Khinh công / Khám phá / Gieo duyên / Đất-Nhà-Tiệc; "Mời tiệc" = sắp có). docs/PHIEN57.md. `npm test` 657/657.
 
 - Phiên 58: kiểm lại repo thật (657/657, import khớp), `pages.yml` chép thêm `chan-doan.html`, bổ sung nhật ký PROMPT.md. Các việc còn lại đều cần ptg quyết (xem docs/PHIEN58.md). Mục 2.3 (file lạc) vẫn chờ ptg.
+- Phiên 59 (ƯU TIÊN CẢNH): đã có Đại Phật khắc vách đá. Còn: rừng thông dày/đẹp hơn, sông + hồ, thêm kiến trúc; rồi Suối Trong + cá 3D ao riêng, trang Tu tập/NPC trong Lộ trình, Xếp hạng, bơi–lặn. docs/PHIEN59.md.
 
 ## Việc của ptg
 - Tải bản Phiên 46 lên GitHub (nếu chưa), mở trang thật và thử: nút "Câu cá" cụm phải-trên, nút nổi "Câu cá" khi đứng sát nước, mua cầu, thả, bấm khi hoa sen nở, thu cá, phóng sinh.

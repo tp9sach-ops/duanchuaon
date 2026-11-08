@@ -118,3 +118,16 @@ test('Điện Máy Lam Sen và Kim Hoàn Ngọc Lan: tên riêng, đi tới đư
   }
   assert.ok(placesAt({ x: -15.5, z: 70 }).includes('dienmaylamsen')); assert.ok(placesAt({ x: 15.5, z: 131.5 }).includes('kimhoanngoclan'));
 });
+
+test('Đại Phật vách đá (Phiên 58): có trong PLACES, chỗ đứng ngắm đi tới được, bậc đá + đèn đá chặn, ngách nằm sát vách ngoài vùng đi bộ', async () => {
+  const { DAI_PHAT } = await import('../js/world/outside.js');
+  assert.ok(placeById('daiphat'), 'có nơi daiphat');
+  assert.equal(blocked(DAI_PHAT.stand.x, DAI_PHAT.stand.z), false, 'chỗ ngắm không bị chặn');
+  assert.ok(has(DAI_PHAT.stand.x, DAI_PHAT.stand.z), 'chỗ ngắm đi tới được từ chỗ xuất hiện');
+  assert.ok(placesAt(DAI_PHAT.stand).includes('daiphat'), 'đứng ở chỗ ngắm thì tính là đã ghé');
+  const b = DAI_PHAT.bac; assert.equal(blocked((b.x0 + b.x1) / 2, (b.z0 + b.z1) / 2), true, 'bậc đá chặn');
+  for (const l of DAI_PHAT.den) assert.equal(blocked(l.x, l.z), true, 'đèn đá chặn');
+  assert.ok(DAI_PHAT.face > 112, 'ngách nằm ngoài mép bãi thác (x1 = 112)');
+  assert.equal(blocked(DAI_PHAT.face + 1, DAI_PHAT.z), true, 'trong vách đá là chặn');
+  assert.ok(DAI_PHAT.z - DAI_PHAT.w / 2 > 104 + 6.4 / 2, 'tượng nằm cách dải nước thác (z=104, rộng 6,4 m)');
+});

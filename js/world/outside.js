@@ -32,6 +32,15 @@ export const STREET_LAMPS = [70, 86, 102, 118, 134, 148].flatMap((z) => [-12, 12
 /** Đá lớn quanh hồ thác. */
 export const OUT_ROCKS = [{ x: 100, z: 92, r: 1.2 }, { x: 101, z: 117, r: 1.5 }, { x: 109, z: 90, r: 1.3 }, { x: 108, z: 118, r: 1.4 }];
 
+/** Đại Phật khắc trên vách đá cạnh thác (Phiên 58). `face` = mặt phẳng ngách đá (x), tượng quay mặt về -x; `z` = tâm; `h` = cao tổng thể của ngách.
+ *  Bậc đá phía trước (rect vật cản) + hai đèn đá (vòng tròn). `stand` = chỗ đứng ngắm (đi tới được, đã kiểm bằng test). */
+export const DAI_PHAT = {
+  id: 'daiphat', face: 113.6, z: 117, h: 16, w: 11,
+  bac: { x0: 110, x1: 113.7, z0: 113, z1: 121 },
+  den: [{ x: 110.6, z: 112.5, r: 0.35 }, { x: 110.6, z: 121.5, r: 0.35 }],
+  stand: { x: 108.7, z: 120.9 },
+};
+
 /** Cửa hàng 9 Sạch (nhà phố mặt tiền bên phải đường làng, quay mặt về phía -x ra đường). Dữ liệu thuần; cảnh 3D ở js/scene/store9sach.js.
  *  Mặt tiền tại x = front; thân nhà kéo dài về +x (sâu `sau` m); `z` là tâm bề ngang `rong`. Sân trước (lát gạch) nối liền vỉa hè để đi tới tận cửa.
  *  Đồ trước cửa đặt theo tọa độ THẾ GIỚI {x,z,r} (r = bán kính vật cản): phông Grand Opening, giỏ hoa hồng đỏ, giỏ hoa hồng phấn, standee "MUA 1 ĐƯỢC 3". */
@@ -115,6 +124,7 @@ export const PLACES = [
   { id: 'trathat', ten: 'Trà thất', x: -64, z: 12, r: 7 }, { id: 'vuonthien', ten: 'Vườn thiền', x: -62, z: -20, r: 8 },
   { id: 'hoca', ten: 'Hồ cá', x: 52, z: 10, r: 8 }, { id: 'quanam', ten: 'Quan Âm đài', x: 0, z: -59, r: 7 },
   { id: 'lang', ten: 'Đường làng', x: 0, z: 88, r: 14 }, { id: 'cho', ten: 'Chợ làng', x: 0, z: 128, r: 14 },
+  { id: 'daiphat', ten: 'Đại Phật vách đá', x: 108.7, z: 120.5, r: 5 },
   { id: 'rung', ten: 'Rừng thông', x: -98, z: 89, r: 9 }, { id: 'thacnuoc', ten: 'Thác nước', x: 95, z: 104, r: 7 },
   { id: 'dienmaylamsen', ten: 'Điện Máy Lam Sen', x: -15.5, z: 70, r: 7 }, { id: 'kimhoanngoclan', ten: 'Kim Hoàn Ngọc Lan', x: 15.5, z: 131.5, r: 6 },
   { id: 'didongsenvang', ten: 'Di Động Sen Vàng', x: -15.5, z: 112, r: 6 },
@@ -144,6 +154,7 @@ export function registerOutside() {
   [DA_LANG, GIENG, CO_THU, ...OUT_ROCKS, ...STREET_LAMPS, ...VILLAGE_GATE.posts.map((x) => ({ x, z: VILLAGE_GATE.z, r: VILLAGE_GATE.r }))].forEach((c) => addCircle({ x: c.x, z: c.z, r: c.r }));
   STALLS.forEach((s) => addRect({ x0: s.x0, x1: s.x1, z0: s.z0, z1: s.z1 }));
   addRect(DINH_NGHI); addRect(MIEU);
+  addRect(DAI_PHAT.bac); DAI_PHAT.den.forEach((c) => addCircle({ x: c.x, z: c.z, r: c.r }));
   // Cửa hàng 9 Sạch: sân trước đi được; thân nhà và đồ trước cửa là vật cản
   addWalk(STORE_9SACH.san); addRect(STORE_9SACH.than); Object.values(STORE_9SACH.props).forEach((c) => addCircle({ x: c.x, z: c.z, r: c.r }));
   addWalk(STORE_DIDONG.san); addRect(STORE_DIDONG.than); Object.values(STORE_DIDONG.props).forEach((c) => addCircle({ x: c.x, z: c.z, r: c.r }));
