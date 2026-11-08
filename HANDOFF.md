@@ -1,6 +1,8 @@
 # HANDOFF — Web tâm linh "DIỆU GIANG TỰ" (chùa Việt 3D) — tên cũ: Linh Giang Tự (Phiên 5 đổi tên theo ptg)
 
-> **Cập nhật Phiên 69 (2026-11-08): mã thật đang ở Phiên 69 (Phiên 55–68 xem `docs/PHIEN55.md` … `PHIEN69.md`; HANDOFF này chỉ chi tiết tới Phiên 36 và 54). ĐỌC `docs/PHIEN69.md` (mục "Chưa làm" + prompt khởi động) TRƯỚC. `npm test` 710/710, `sw.js` = `dgt-v74`.**
+> **Cập nhật Phiên 70 (2026-11-09): mã thật đang ở Phiên 70 (Phiên 55–69 xem `docs/PHIEN55.md` … `PHIEN70.md`; HANDOFF này chỉ chi tiết tới Phiên 36 và 54). ĐỌC `docs/PHIEN70.md` (mục "Chưa làm" + prompt khởi động) TRƯỚC. `npm test` 715/715, `sw.js` = `dgt-v75`.**
+
+> **(cũ) Phiên 69: chữ nhãn nút phải-trên — `docs/PHIEN69.md`. 710/710, `dgt-v74`.**
 
 > **(cũ) Cập nhật Phiên 68: nút Dẫn đường nhấp nháy — `docs/PHIEN68.md`. 709/709, `dgt-v73`.**
 

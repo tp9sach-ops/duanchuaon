@@ -202,6 +202,8 @@ Việc ptg làm song song (không chặn các phiên trên): bật Pages (Settin
 
 - **2026-11-08 (Phiên 69):** Gp bảo xem lại repo, đọc kỹ, hiểu phần còn thiếu, làm tiếp. Kiểm repo thật: `main` @ `3ed3ba0` (Gp đã tải đủ 10 file Phiên 68), 709/709. Làm 1 mục nhỏ: chữ nhãn dưới các nút tròn góc phải-trên (`captionOf` trong `js/ui/menuLogic.js`, `.hm-ic-tx` trong `css/hudmenu.css`; điện thoại nhấn giữ nút để báo tên), `docs/PHIEN69.md`. **Quy tắc giữ nguyên:** làm từng mục nhỏ, xong báo, chờ "tiếp tục"; cuối mỗi phiên cập nhật mục này + `docs/PHIENxx.md` và gửi prompt bàn giao chi tiết.
 
+- **2026-11-09 (Phiên 70):** Gp nói "tiếp tục". Làm 1 mục nhỏ: màn hướng dẫn lần đầu 3 bước có mũi tên (`js/world/coach.js` logic + `tests/coach.test.mjs`, `js/ui/coach.js`, `css/coach.css`, nối ở `hudMenu.js`; chỉ người mới thấy, bỏ qua được, nhớ `lgt.coach`), `docs/PHIEN70.md`. **Quy tắc giữ nguyên:** làm từng mục nhỏ, xong báo, chờ "tiếp tục"; cuối mỗi phiên cập nhật mục này + `docs/PHIENxx.md` và gửi prompt bàn giao chi tiết.
+
 ## 8. PROMPT KHỞI ĐỘNG PHIÊN MỚI (dán nguyên văn)
 
 ```
