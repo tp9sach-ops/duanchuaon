@@ -73,6 +73,8 @@ Cách dùng: làm mục [ ] đầu tiên, xong báo ptg, CHỜ "tiếp tục". L
 - Phiên 67: yêu quái 2 khung giờ (03:00 trung bình, 20:00 cao) + nút chiến đấu gọn. docs/PHIEN67.md. `npm test` 705/705.
 - Phiên 68: nút "Dẫn đường" nhấp nháy cho việc mới và cho người mới (js/world/goPulse.js). Còn: nhãn chữ nút góc phải-trên, màn hướng dẫn 3 bước, chơi chung qua mạng. docs/PHIEN68.md. `npm test` 709/709.
 
+- Phiên 69: chữ nhãn dưới nút tròn góc phải-trên (máy tính hiện sẵn; điện thoại nhấn giữ báo tên). Còn: màn hướng dẫn 3 bước, chơi chung qua mạng. docs/PHIEN69.md. `npm test` 710/710.
+
 ## Việc của ptg
 - Tải bản Phiên 46 lên GitHub (nếu chưa), mở trang thật và thử: nút "Câu cá" cụm phải-trên, nút nổi "Câu cá" khi đứng sát nước, mua cầu, thả, bấm khi hoa sen nở, thu cá, phóng sinh.
 - Trả lời: "quả cầu" có đúng là cầu quăng xuống nước? Có tặng 1 cầu gỗ cho người mới? Duyệt số tạm câu cá (xem PHIEN44.md).
