@@ -25,7 +25,7 @@ import { lifetimeSen } from '../world/merit.js';
 import { loadWallet, addSen } from '../engines/kinh.js';
 import { callApi, apiEnabled, getUserKey } from '../api.js';
 import { loadProfile } from './hudLogic.js';
-import { BOTTOM_MENU, ACTIONS, TOP_ICONS, WALLET_PLACEHOLDER, HELP_TEXT, WELCOME_TEXT, pressResult, ariaLabel, OUTSIDE_TEXT, isReady, mapEntries, formatCount, createToastState } from './menuLogic.js';
+import { BOTTOM_MENU, ACTIONS, TOP_ICONS, WALLET_PLACEHOLDER, HELP_TEXT, WELCOME_TEXT, pressResult, ariaLabel, OUTSIDE_TEXT, captionOf, LONG_PRESS_MS, isReady, mapEntries, formatCount, createToastState } from './menuLogic.js';
 
 const P = {
   scroll: '<path d="M8 4h10v13a3 3 0 0 0 3 3H8a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3z"/><path d="M10 9h6M10 13h6"/>',
@@ -187,6 +187,15 @@ export function initHudMenu(hud) {
     b.type = 'button'; b.dataset.id = item.id; b.setAttribute('aria-label', ariaLabel(item)); b.title = isReady(item) ? item.label : item.label + ' — sắp có';
     if (!isReady(item)) b.setAttribute('aria-disabled', 'true');
     b.innerHTML = svg(item.icon) + (withLabel ? `<span>${esc(item.label)}</span>` : '');
+    if (cls === 'hm-ic') {   // Phiên 69: chữ dưới nút tròn (máy tính) + nhấn giữ báo tên (điện thoại)
+      b.insertAdjacentHTML('beforeend', `<span class="hm-ic-tx" aria-hidden="true">${esc(captionOf(item))}</span>`);
+      let hold = 0, held = false;
+      const stop = () => { clearTimeout(hold); hold = 0; };
+      b.addEventListener('pointerdown', (e) => { if (e.pointerType === 'mouse') return; held = false; stop(); hold = setTimeout(() => { held = true; toast(isReady(item) ? item.label : item.label + ' — sắp có', 2200); }, LONG_PRESS_MS); });
+      for (const ev of ['pointerup', 'pointercancel', 'pointerleave', 'pointermove']) b.addEventListener(ev, stop);
+      b.addEventListener('click', (e) => { if (held) { held = false; e.preventDefault(); return; } press(item); });
+      return b;
+    }
     b.addEventListener('click', () => press(item));
     return b;
   };

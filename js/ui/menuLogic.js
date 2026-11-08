@@ -37,6 +37,16 @@ export const TOP_ICONS = [
   { id: 'trogiup',  label: 'Trợ giúp',  icon: 'help',  status: 'ready', action: 'help' },
 ];
 
+/** Chữ hiện dưới nút tròn phải-trên (Phiên 69): người mới không đoán biểu tượng. Dùng nhãn gốc; chỉ rút gọn khi quá dài để không đè nút bên cạnh. */
+export const CAPTION_MAX = 9;
+export const LONG_PRESS_MS = 450;   // điện thoại: nhấn giữ một nút tròn → báo tên nút (không bấm)
+const CAPTION_SHORT = { 'Đèn nguyện': 'Đèn', 'Thông báo': 'Báo tin' };
+export function captionOf(item) {
+  if (!item || !item.label) return '';
+  const t = CAPTION_SHORT[item.label] || item.label;
+  return t.length > CAPTION_MAX ? t.slice(0, CAPTION_MAX - 1) + '…' : t;
+}
+
 /** Số hạt sen / ngọc: GIÁ TRỊ TẠM (chưa có tiến trình — Phiên 16). Không bịa số như ảnh mẫu. */
 export const WALLET_PLACEHOLDER = { sen: 0, ngoc: 0 };
 
