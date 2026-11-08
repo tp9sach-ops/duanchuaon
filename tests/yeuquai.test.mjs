@@ -3,7 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import '../js/world/outside.js';
-import { YQ, YQ_ORDER, AOE, monthEvent, eventAt, eventPhase, nextEvent, maxHp, hitDamage, newPlayer, hurt, tickPlayer, INVULN_S, RESPAWN, stoneDamage, spearDamage, throwBossDamage, bossHp, createBoss, aoeShapes, inShape, stepBoss, hitBoss, shareOf, lootDrops, pickLoot, tickLoot, rewardFor, MIN_SHARE, loadYq, emptyYq, rngSeed } from '../js/world/yeuquai.js';
+import { YQ, YQ_ORDER, AOE, DIFF, monthEvents, windupOf, rewardFor as rewardFor2, lootDrops as lootDrops2, monthEvent, eventAt, eventPhase, nextEvent, maxHp, hitDamage, newPlayer, hurt, tickPlayer, INVULN_S, RESPAWN, stoneDamage, spearDamage, throwBossDamage, bossHp, createBoss, aoeShapes, inShape, stepBoss, hitBoss, shareOf, lootDrops, pickLoot, tickLoot, rewardFor, MIN_SHARE, loadYq, emptyYq, rngSeed } from '../js/world/yeuquai.js';
 import { throwCheck, markThrown, tickCooldown, inTemple, strengthOf, THROW_COOLDOWN_S, THROW_COST_SEN } from '../js/world/strength.js';
 import { blocked, region } from '../js/world/layout.js';
 import { emptyLeaf, addLa, loadLeaf, SEN_PER_LA } from '../js/world/merit.js';
@@ -22,8 +22,8 @@ test('lịch: mỗi tháng đúng một sự kiện, cố định theo năm-thá
 test('giai đoạn: trước / đang / sau; eventAt dùng tháng theo giờ VN; nextEvent chuyển sang tháng sau', () => {
   const e = monthEvent(2026, 11);
   assert.equal(eventPhase(e, e.start - 1000).phase, 'before'); assert.equal(eventPhase(e, e.start).phase, 'live'); assert.equal(eventPhase(e, e.end - 1).phase, 'live'); assert.equal(eventPhase(e, e.end).phase, 'after'); assert.equal(eventPhase(e, e.start + 60000).secs, 89 * 60);
-  assert.equal(eventAt(Date.UTC(2026, 10, 30, 16, 59)).key, '2026-11', '23:59 ngày 30/11 giờ VN'); assert.equal(eventAt(Date.UTC(2026, 10, 30, 17, 0)).key, '2026-12', '00:00 ngày 1/12 giờ VN đã sang tháng 12');
-  assert.equal(nextEvent(e.start - 5).key, '2026-11'); assert.equal(nextEvent(e.end + 5).key, '2026-12'); assert.equal(nextEvent(monthEvent(2026, 12).end + 5).key, '2027-01');
+  assert.equal(eventAt(Date.UTC(2026, 10, 30, 16, 59)).key, '2026-11-cao', '23:59 ngày 30/11 giờ VN'); assert.equal(eventAt(Date.UTC(2026, 10, 30, 17, 0)).key, '2026-12-trung', '00:00 ngày 1/12 giờ VN đã sang tháng 12');
+  assert.equal(nextEvent(e.start - 5).key, '2026-11-cao'); assert.equal(nextEvent(e.end + 5).key, '2026-12-trung'); assert.equal(nextEvent(monthEvent(2026, 12).end + 5).key, '2027-01-trung');
 });
 test('máu người chơi theo cấp; cấp càng cao mất càng ít (cả giá trị lẫn tỉ lệ); 3 đòn hạ cấp 1', () => {
   assert.equal(maxHp(1), 100); assert.ok(maxHp(10) > maxHp(5)); assert.equal(maxHp(NaN), 100);
@@ -108,4 +108,22 @@ test('nối dây: initYeuQuai trong hudMenu, cảnh 3D, thanh máu, gửi thư�
   const h = read('js/ui/hudMenu.js'), s = read('js/scene/index.js'), u = read('js/ui/yeuquai.js'), m = read('js/ui/merit.js'), c = read('js/ui/carry.js');
   assert.match(h, /initYeuQuai\(hud, \{ toast \}\)/); assert.match(s, /buildYeuQuai\(\)/); assert.match(s, /yeuQuai\.update\(t, LGT\.yqView\)/); assert.match(u, /LGT\.merit\.addLa/); assert.match(u, /teleport\(RESPAWN\.x, RESPAWN\.z\)/); assert.match(u, /get\('yq'\)/); assert.ok(!/innerHTML/.test(u));
   assert.match(m, /addLa: gain/); assert.match(c, /bonus: LGT\.yq \? LGT\.yq\.bonus : 0/);
+});
+
+test('hai khung giờ mỗi tháng: 03:00 trung bình, 20:00 cao, cùng ngày, mỗi khung 90 phút', () => {
+  const [a, b] = monthEvents(2026, 11);
+  assert.equal(a.diff, 'trung'); assert.equal(b.diff, 'cao'); assert.equal(a.day, b.day);
+  assert.equal(new Date(a.start + 7 * 3600e3).getUTCHours(), 3); assert.equal(new Date(b.start + 7 * 3600e3).getUTCHours(), 20);
+  assert.equal(a.end - a.start, 90 * 60000); assert.ok(a.end < b.start);
+  assert.equal(eventAt(a.start + 1000).key, a.key); assert.equal(eventAt(b.start + 1000).key, b.key);
+  assert.equal(eventAt(a.end + 1000).key, b.key, 'giữa hai khung: chỉ khung sau');
+});
+test('độ khó cao: máu nhiều, đánh đau hơn, gồng ngắn hơn, rơi nhiều lá, thưởng lớn hơn', () => {
+  const t = createBoss('da', { diff: 'trung' }), c = createBoss('da', { diff: 'cao' });
+  assert.ok(c.max > t.max); assert.ok(hitDamage('da', 1, 'cao') > hitDamage('da', 1, 'trung'));
+  assert.ok(windupOf(c) < windupOf(t));
+  assert.ok(lootDrops2(0, 0, 1, () => 0.5, 'cao').length > lootDrops2(0, 0, 1, () => 0.5, 'trung').length);
+  assert.ok(rewardFor2(1, 'cao').xp > rewardFor2(1, 'trung').xp); assert.equal(rewardFor2(0, 'cao').xp, 0);
+  assert.equal(createBoss('da', {}).diff, 'trung'); assert.equal(createBoss('da', { diff: 'xx' }).diff, 'trung');
+  assert.ok(DIFF.cao.hour === 20 && DIFF.trung.hour === 3);
 });

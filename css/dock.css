@@ -32,6 +32,7 @@ body.has-dock .fs-fab{display:none!important}
 .dk.wrap{flex-direction:row-reverse;flex-wrap:wrap-reverse;justify-content:flex-start;align-content:flex-end;max-width:142px}
 .dk.small .dk-b{width:46px;height:46px}.dk.small .dk-b.big{width:58px;height:58px}.dk.small .dk-b .dk-ic{font-size:18px}.dk.small .dk-b .dk-tx{font-size:9.5px}
 .dk-b.lock{opacity:.5;border-style:dashed}
+.dk-b.wait{opacity:.55;filter:saturate(.4)}
 /* Yêu quái hằng tháng: thanh máu */
 .yq-hud{position:absolute;left:50%;top:max(58px,calc(env(safe-area-inset-top) + 50px));transform:translateX(-50%);width:min(340px,calc(100vw - 150px));display:flex;flex-direction:column;gap:4px;padding:8px 10px;border-radius:12px;background:rgba(8,10,20,.82);border:1px solid rgba(255,120,90,.6);color:#fff;font:600 12px/1.2 var(--sans,system-ui,sans-serif);pointer-events:none;z-index:4}
 .yq-hud[hidden]{display:none!important}

@@ -41,7 +41,7 @@ export function initDock(hud, { toast = () => {} } = {}) {
     const W = LGT.world, fs = LGT.fishing ? LGT.fishing.status() : { phase: 'idle' };
     const cs = LGT.carry ? LGT.carry.status() : null;
     const ys = LGT.yq ? LGT.yq.status() : null;
-    const c = { yq: ys ? { active: ys.active, ten: ys.ten, canThrow: ys.canThrow } : null, carry: cs ? { holding: cs.holding, heldName: cs.heldName, near: cs.near } : null, free: !!W && W.mode === 'free' && !LGT.panelOpen && !document.querySelector('.st-dlg:not([hidden])'), khinh: LGT.skill ? LGT.skill.level : 0, canTrain: !!(LGT.skill && LGT.skill.canTrain), water: !!fs.water && !LGT.inHouse, fish: fs };
+    const c = { yq: ys ? { active: ys.active, ten: ys.ten, canThrow: ys.canThrow, stoneCd: ys.stoneCd, spearCd: ys.spearCd } : null, carry: cs ? { holding: cs.holding, heldName: cs.heldName, near: cs.near } : null, free: !!W && W.mode === 'free' && !LGT.panelOpen && !document.querySelector('.st-dlg:not([hidden])'), khinh: LGT.skill ? LGT.skill.level : 0, canTrain: !!(LGT.skill && LGT.skill.canTrain), water: !!fs.water && !LGT.inHouse, fish: fs };
     const list = dockButtons(c), next = list.map((b) => b.id).join(',');
     root.hidden = !list.length;
     if (next !== sig) {   // bộ nút đổi → dựng lại các nút còn thiếu / bỏ nút thừa
@@ -51,7 +51,7 @@ export function initDock(hud, { toast = () => {} } = {}) {
     }
     const hint = pickHint(list, seen);
     for (const b of list) {
-      const it = items.get(b.id); it.btn.classList.toggle('big', !!b.big); it.btn.classList.toggle('hot', !!b.hot); it.btn.classList.toggle('lock', !!b.locked);
+      const it = items.get(b.id); it.btn.classList.toggle('big', !!b.big); it.btn.classList.toggle('hot', !!b.hot); it.btn.classList.toggle('lock', !!b.locked); it.btn.classList.toggle('wait', !!b.wait);
       const tx = it.btn.querySelector('.dk-tx'); if (tx.textContent !== b.label) tx.textContent = b.label;
       it.say.hidden = !b.say; if (b.say && it.say.textContent !== b.say) it.say.textContent = b.say;
       const h = hint && hint.id === b.id; it.hint.hidden = !h; it.btn.classList.toggle('ping', !!h); if (h && it.hint.textContent !== hint.text) it.hint.textContent = hint.text;

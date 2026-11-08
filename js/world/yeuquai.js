@@ -17,26 +17,42 @@ export const YQ_ORDER = ['da', 'nuoc', 'lua'];
 /** Bán kính các đòn diện rộng (m). */
 export const AOE = { slam: 6.5, ringIn: 3, ringOut: 10, burst: 3.5, burstN: 3 };
 
-// ---- lịch: mỗi tháng (giờ Việt Nam, UTC+7) một lần, 20:00–21:30, ngày cố định theo tháng (5..25)
+// ---- lịch: mỗi tháng (giờ Việt Nam, UTC+7) hai khung giờ trong CÙNG MỘT NGÀY cố định (5..25): 03:00 độ khó TRUNG BÌNH, 20:00 độ khó CAO (ptg chốt 08/11). Mỗi khung kéo dài 90 phút và thu phục được một lần.
 export const VN_OFFSET_MS = 7 * 3600e3, EVENT_HOUR = 20, EVENT_MIN = 90;
+/** Độ khó theo khung giờ: hp/dmg/windup/cd là HỆ SỐ nhân; loot = hệ số số túi lá rơi; xp/str = thưởng thu phục. QUY ƯỚC TẠM chờ ptg duyệt. */
+export const DIFF = {
+  trung: { id: 'trung', ten: 'Trung bình', hour: 3, hp: 1, dmg: 1, windup: 1, cd: 1, loot: 1, xp: 60, str: 3 },
+  cao: { id: 'cao', ten: 'Cao', hour: 20, hp: 1.6, dmg: 1.35, windup: 0.8, cd: 0.75, loot: 1.5, xp: 100, str: 5 },
+};
+export const SLOT_ORDER = ['trung', 'cao'];
 const hash = (n) => { n = (n ^ 61) ^ (n >>> 16); n = (n + (n << 3)) | 0; n ^= n >>> 4; n = Math.imul(n, 0x27d4eb2d); n ^= n >>> 15; return n >>> 0; };
 /** Sự kiện của tháng (month 1..12). Cùng năm-tháng luôn cho cùng kết quả ở mọi máy. */
-export function monthEvent(year, month) {
-  const y = Math.floor(num(year, 2026)), m = clamp(Math.floor(num(month, 1)), 1, 12), idx = y * 12 + m;
-  const day = 5 + (hash(idx) % 21), start = Date.UTC(y, m - 1, day, EVENT_HOUR - 7, 0, 0);
-  return { key: `${y}-${String(m).padStart(2, '0')}`, year: y, month: m, day, type: YQ_ORDER[idx % 3], start, end: start + EVENT_MIN * 60000 };
+export function monthEvents(year, month) {
+  const y = Math.floor(num(year, 2026)), m = clamp(Math.floor(num(month, 1)), 1, 12), idx = y * 12 + m, day = 5 + (hash(idx) % 21);
+  return SLOT_ORDER.map((slot, i) => {
+    const d = DIFF[slot], start = Date.UTC(y, m - 1, day, d.hour - 7, 0, 0);   // 03:00 giờ VN = 20:00 UTC hôm trước (Date.UTC tự lùi ngày)
+    return { key: `${y}-${String(m).padStart(2, '0')}-${slot}`, year: y, month: m, day, slot, diff: slot, type: YQ_ORDER[(idx + i) % 3], start, end: start + EVENT_MIN * 60000 };
+  });
 }
-/** Sự kiện của tháng chứa thời điểm `now` (theo giờ VN). */
-export function eventAt(now) { const d = new Date(num(now, Date.now()) + VN_OFFSET_MS); return monthEvent(d.getUTCFullYear(), d.getUTCMonth() + 1); }
+/** Sự kiện 20:00 (độ khó cao) của tháng — tương thích tên cũ. */
+export const monthEvent = (year, month) => monthEvents(year, month)[1];
+/** Sự kiện đang diễn ra tại `now`; không có thì sự kiện kế tiếp trong tháng (giờ VN), hết thì sự kiện cuối tháng. */
+export function eventAt(now) {
+  const n = num(now, Date.now()), d = new Date(n + VN_OFFSET_MS), list = monthEvents(d.getUTCFullYear(), d.getUTCMonth() + 1);
+  return list.find((e) => n >= e.start && n < e.end) || list.find((e) => n < e.start) || list[list.length - 1];
+}
 /** Trạng thái theo thời gian: 'before' | 'live' | 'after', kèm số giây còn lại. */
 export function eventPhase(ev, now) { const n = num(now, Date.now()); return n < ev.start ? { phase: 'before', secs: Math.ceil((ev.start - n) / 1000) } : n < ev.end ? { phase: 'live', secs: Math.ceil((ev.end - n) / 1000) } : { phase: 'after', secs: 0 }; }
 /** Sự kiện kế tiếp chưa kết thúc (tháng này nếu chưa hết giờ, không thì tháng sau). */
-export function nextEvent(now) { const e = eventAt(now); if (now < e.end) return e; const d = new Date(now + VN_OFFSET_MS), y = d.getUTCFullYear(), m = d.getUTCMonth() + 1; return m === 12 ? monthEvent(y + 1, 1) : monthEvent(y, m + 1); }
+export function nextEvent(now) {
+  const n = num(now, Date.now()), e = eventAt(n); if (n < e.end) return e;
+  const d = new Date(n + VN_OFFSET_MS), y = d.getUTCFullYear(), m = d.getUTCMonth() + 1; return (m === 12 ? monthEvents(y + 1, 1) : monthEvents(y, m + 1))[0];
+}
 
 // ---- người chơi
 export const maxHp = (level) => 100 + 20 * (clamp(Math.floor(num(level, 1)), 1, 99) - 1);
 /** Máu mất khi dính một đòn: cấp càng cao càng ít (giảm 5%/cấp, tối đa 50%). Cấp 1: 40 (3 đòn là ngã), cấp 10: 22 trên 280 máu. */
-export const hitDamage = (typeId, level) => { const t = YQ[typeId]; return t ? Math.max(1, Math.round(t.dmg * (1 - Math.min(0.5, 0.05 * (clamp(Math.floor(num(level, 1)), 1, 99) - 1))))) : 0; };
+export const hitDamage = (typeId, level, diff = 'trung') => { const t = YQ[typeId], d = DIFF[diff] || DIFF.trung; return t ? Math.max(1, Math.round(t.dmg * d.dmg * (1 - Math.min(0.5, 0.05 * (clamp(Math.floor(num(level, 1)), 1, 99) - 1))))) : 0; };
 export const RESPAWN = { x: 0, z: 38 };   // cửa chùa: ngay trước cổng Tam quan
 export const INVULN_S = 3;                // bất tử ngắn sau khi hồi sinh
 export const newPlayer = (level) => ({ hp: maxHp(level), max: maxHp(level), inv: 0, deaths: 0 });
@@ -61,12 +77,14 @@ export const throwBossDamage = (str) => Math.round(150 + clamp(num(str), 0, 1e4)
 function mulberry(a) { return () => { a |= 0; a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
 export const rngSeed = mulberry;
 /** Máu tăng theo số người đánh chung: +50% mỗi người thêm. */
-export const bossHp = (typeId, n = 1) => { const t = YQ[typeId]; return t ? Math.round(t.hp * (1 + 0.5 * (clamp(Math.floor(num(n, 1)), 1, 20) - 1))) : 0; };
-export function createBoss(typeId, { x = 0, z = 100, n = 1 } = {}) {
+export const bossHp = (typeId, n = 1, diff = 'trung') => { const t = YQ[typeId], d = DIFF[diff] || DIFF.trung; return t ? Math.round(t.hp * d.hp * (1 + 0.5 * (clamp(Math.floor(num(n, 1)), 1, 20) - 1))) : 0; };
+export function createBoss(typeId, { x = 0, z = 100, n = 1, diff = 'trung' } = {}) {
   const t = YQ[typeId]; if (!t) return null;
-  const max = bossHp(typeId, n);
-  return { type: typeId, hp: max, max, x, z, ry: 0, state: 'move', t: 0, shapes: [], cd: 3, dead: false, dmgBy: {} };
+  const dd = DIFF[diff] ? diff : 'trung', max = bossHp(typeId, n, dd);
+  return { type: typeId, diff: dd, hp: max, max, x, z, ry: 0, state: 'move', t: 0, shapes: [], cd: 3 * DIFF[dd].cd, dead: false, dmgBy: {} };
 }
+/** Thời gian gồng thực tế của yêu quái này (độ khó cao gồng ngắn hơn → khó né hơn). */
+export const windupOf = (b) => YQ[b.type].windup * (DIFF[b.diff] || DIFF.trung).windup;
 /** Hình vùng đánh khi gồng: vòng tròn { k:'c', x, z, r } hoặc vành khuyên { k:'ring', x, z, r0, r }. */
 export function aoeShapes(b, targets, rng) {
   const t = YQ[b.type];
@@ -96,15 +114,15 @@ export function stepBoss(b, dt, players, rng, walk) {
     if (nr) {
       b.ry = Math.atan2(nr.p.x - b.x, nr.p.z - b.z);
       if (nr.d > t.gap) { const step = Math.min(t.speed * d, nr.d - t.gap), dx = Math.sin(b.ry) * step, dz = Math.cos(b.ry) * step, r = walk ? walk(b.x, b.z, dx, dz) : { x: b.x + dx, z: b.z + dz }; b.x = r.x; b.z = r.z; }
-      if (b.cd <= 0 && nr.d <= AOE.ringOut + 6) { b.shapes = aoeShapes(b, ps, rng); b.state = 'windup'; b.t = 0; ev.push({ k: 'windup', shapes: b.shapes, dur: t.windup }); }
+      if (b.cd <= 0 && nr.d <= AOE.ringOut + 6) { b.shapes = aoeShapes(b, ps, rng); b.state = 'windup'; b.t = 0; ev.push({ k: 'windup', shapes: b.shapes, dur: windupOf(b) }); }
     }
   } else if (b.state === 'windup') {
-    if (b.t >= t.windup) {
+    if (b.t >= windupOf(b)) {
       const hits = []; for (const p of ps) if (b.shapes.some((s) => inShape(s, p.x, p.z))) hits.push(p.id);
       ev.push({ k: 'strike', shapes: b.shapes, hits }); b.state = 'recover'; b.t = 0;
     }
   } else if (b.state === 'recover') {
-    if (b.t >= t.recover) { b.state = 'move'; b.t = 0; b.shapes = []; b.cd = 2.5 + rng() * 1.5; }
+    if (b.t >= t.recover) { b.state = 'move'; b.t = 0; b.shapes = []; b.cd = (2.5 + rng() * 1.5) * (DIFF[b.diff] || DIFF.trung).cd; }
   }
   return ev;
 }
@@ -121,8 +139,8 @@ export const MIN_SHARE = 0.05;   // đánh được ≥ 5% máu mới có thư�
 
 // ---- phần thưởng
 /** Lá bồ đề rơi ra khi thu phục: càng nhiều người đánh càng nhiều túi lá; mỗi túi 1–3 lá, nằm quanh xác yêu quái. Ai chạm trước lấy trước. */
-export function lootDrops(x, z, n = 1, rng = Math.random) {
-  const cnt = 6 + 2 * clamp(Math.floor(num(n, 1)), 1, 20), out = [];
+export function lootDrops(x, z, n = 1, rng = Math.random, diff = 'trung') {
+  const cnt = Math.round((6 + 2 * clamp(Math.floor(num(n, 1)), 1, 20)) * (DIFF[diff] || DIFF.trung).loot), out = [];
   for (let i = 0; i < cnt; i++) { const a = (i / cnt) * Math.PI * 2 + rng() * 0.5, r = 2 + rng() * 5; out.push({ id: i + 1, x: x + Math.cos(a) * r, z: z + Math.sin(a) * r, la: 1 + Math.floor(rng() * 3), ttl: 150 }); }
   return out;
 }
@@ -136,14 +154,14 @@ export function pickLoot(drops, x, z) {
 export const tickLoot = (drops, dt) => (drops || []).map((d) => ({ ...d, ttl: d.ttl - clamp(num(dt), 0, 5) })).filter((d) => d.ttl > 0);
 /** Thưởng khi thu phục cho người đánh được ≥ MIN_SHARE: điểm cấp + sức mạnh vĩnh viễn. */
 export const REWARD = { xp: 60, strength: 3 };
-export const rewardFor = (share) => (share >= MIN_SHARE ? { ...REWARD } : { xp: 0, strength: 0 });
+export const rewardFor = (share, diff = 'trung') => { const d = DIFF[diff] || DIFF.trung; return share >= MIN_SHARE ? { xp: d.xp, strength: d.str } : { xp: 0, strength: 0 }; };
 
 // ---- lưu (lgt.yq): đã thu phục tháng nào, tổng lần, sức mạnh cộng thêm
 export const emptyYq = () => ({ v: 1, done: {}, kills: 0, bonus: 0, deaths: 0 });
 export function loadYq(raw) {
   let o = raw; if (typeof raw === 'string') { try { o = JSON.parse(raw); } catch (_) { o = null; } }
   const s = emptyYq(); if (!isObj(o)) return s;
-  if (isObj(o.done)) for (const k of Object.keys(o.done)) if (/^\d{4}-\d{2}$/.test(k) && o.done[k] === true) s.done[k] = true;
+  if (isObj(o.done)) for (const k of Object.keys(o.done)) if (/^\d{4}-\d{2}(-(trung|cao))?$/.test(k) && o.done[k] === true) s.done[k] = true;
   s.kills = clamp(Math.floor(num(o.kills)), 0, 1e6); s.bonus = clamp(Math.floor(num(o.bonus)), 0, 100); s.deaths = clamp(Math.floor(num(o.deaths)), 0, 1e6);
   return s;
 }

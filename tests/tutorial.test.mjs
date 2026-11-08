@@ -43,7 +43,7 @@ test('chủ đề mới: nút góc phải, sức mạnh, yêu quái, lộ trình
   const t = (id) => topicById(id).steps.map((s) => s.text).join(' ');
   assert.ok(/Khiêng/.test(t('nutphai')) && /Ném đá/.test(t('nutphai')) && /Túi đồ/.test(t('nutphai')));
   assert.ok(/Thùng gỗ 6 kg/.test(t('sucmanh')) && /Khúc gỗ lim 200 kg/.test(t('sucmanh')) && /120 cho 200 kg/.test(t("sucmanh")));
-  assert.ok(/20:00/.test(t('yeuquai')) && /90 phút/.test(t('yeuquai')) && /60 điểm/.test(t('yeuquai')) && /3 sức mạnh/.test(t('yeuquai')));
+  assert.ok(/3:00/.test(t('yeuquai')) && /20:00/.test(t('yeuquai')) && /90 phút/.test(t('yeuquai')) && /60 điểm/.test(t('yeuquai')) && /100 điểm/.test(t('yeuquai')) && /5 sức mạnh/.test(t('yeuquai')));
   assert.ok(topicById('sucmanh').steps.some((s) => s.soon) && topicById('yeuquai').steps.some((s) => s.soon), 'phần mạng ghi rõ sắp có');
   assert.ok(/Lộ trình/.test(t('lotrinh')));
 });

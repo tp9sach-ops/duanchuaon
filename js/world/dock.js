@@ -38,9 +38,10 @@ export function dockButtons(c = {}) {
   if (cr.holding) return [{ id: 'nem', label: 'Ném', big: true, say: cr.heldName ? `Đang khiêng: ${cr.heldName}` : '' }, { id: 'ha', label: 'Đặt xuống' }];   // tay đang khiêng vật: chỉ Ném / Đặt xuống
   if (cr.near) out.push({ id: 'khieng', label: 'Khiêng', big: true, say: `Gần: ${cr.near}` });
   const yq = isObj(k.yq) ? k.yq : {};
-  if (yq.active) { out.push({ id: 'da', label: 'Ném đá', big: true, say: yq.ten ? `${yq.ten} đang ở làng!` : '' }, { id: 'thuong', label: 'Thương' }); if (yq.canThrow) out.push({ id: 'nemyq', label: 'Ném yêu quái' }); }
+  if (yq.active) { out.push({ id: 'da', label: 'Ném đá', big: true, wait: +yq.stoneCd > 0, say: yq.ten ? `${yq.ten} đang ở làng!` : '' }, { id: 'thuong', label: 'Thương', wait: +yq.spearCd > 0 }); if (yq.canThrow) out.push({ id: 'nemyq', label: 'Ném yêu quái' }); }
   if (k.water && !yq.active) out.push({ id: 'cast', label: f.cracked ? 'Sửa cầu' : f.hasOrb ? 'Thả cầu' : 'Mua cầu', big: true, say: f.text ? String(f.text) : '' });
-  if (num(k.khinh) > 0) { out.push({ id: 'nhay', label: 'Nhảy', big: !k.water && !yq.active }); out.push({ id: 'kynang', label: 'Kỹ năng', hot: !!k.canTrain }); }
+  if (yq.active) { if (num(k.khinh) > 0) out.push({ id: 'nhay', label: 'Nhảy' }); return out; }   // đang đánh yêu quái: chỉ giữ Ném đá / Thương / Ném yêu quái / Nhảy — ẩn Kỹ năng, Túi đồ, Nhảy mờ cho đỡ vướng
+  if (num(k.khinh) > 0) { out.push({ id: 'nhay', label: 'Nhảy', big: !k.water }); out.push({ id: 'kynang', label: 'Kỹ năng', hot: !!k.canTrain }); }
   else out.push({ id: 'nhay', label: 'Nhảy', locked: true });   // chưa mở Khinh thân: vẫn hiện nút mờ, bấm vào được chỉ cách mở (người mới không phải đoán)
   out.push({ id: 'tui', label: 'Túi đồ' });
   return out;

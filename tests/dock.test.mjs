@@ -63,8 +63,8 @@ test('khiêng: gần vật → nút Khiêng; đang khiêng → chỉ Ném + Đ�
 
 test('yêu quái: có yêu quái → Ném đá + Thương (+ Ném yêu quái nếu đủ mạnh), bỏ nút thả cầu; hint đúng thứ tự', () => {
   const b = (yq, extra = {}) => dockButtons({ free: true, khinh: 1, water: true, fish: { phase: 'idle', hasOrb: true }, yq, ...extra });
-  assert.deepEqual(b({ active: true, ten: 'Yêu Đá', canThrow: false }).map((x) => x.id), ['da', 'thuong', 'nhay', 'kynang', 'tui']);
-  assert.deepEqual(b({ active: true, canThrow: true }).map((x) => x.id), ['da', 'thuong', 'nemyq', 'nhay', 'kynang', 'tui']);
+  assert.deepEqual(b({ active: true, ten: 'Yêu Đá', canThrow: false }).map((x) => x.id), ['da', 'thuong', 'nhay']);
+  assert.deepEqual(b({ active: true, canThrow: true }).map((x) => x.id), ['da', 'thuong', 'nemyq', 'nhay']);
   assert.equal(b({ active: true, ten: 'Yêu Đá' })[0].say, 'Yêu Đá đang ở làng!'); assert.ok(!b({ active: true }).some((x) => x.id === 'cast'));
   assert.ok(b({ active: false }).some((x) => x.id === 'cast'));
   assert.equal(pickHint(b({ active: true }), []).id, 'da'); assert.equal(pickHint(b({ active: true }), ['da']).id, 'thuong');
@@ -75,4 +75,12 @@ test('nối dây: nút yêu quái + tự co lại không đè menu + Nhảy mờ
   const d = read('js/ui/dock.js'), css = read('css/dock.css');
   assert.match(d, /da: \(\) => LGT\.yq && LGT\.yq\.stone\(\)/); assert.match(d, /thuong: \(\) => LGT\.yq && LGT\.yq\.spear\(\)/); assert.match(d, /nemyq: \(\) => LGT\.yq && LGT\.yq\.throwBoss\(\)/);
   assert.match(d, /function fit\(\)/); assert.match(d, /\['wrap', 'small'\]/); assert.match(css, /\.dk\.wrap/); assert.match(css, /\.dk-b\.lock/); assert.match(d, /Khinh thân chưa mở/);
+});
+
+test('đang đánh yêu quái: chỉ còn Ném đá/Thương/(Ném yêu quái)/Nhảy; có trạng thái chờ hồi chiêu', () => {
+  const b = dockButtons({ free: true, khinh: 2, yq: { active: true, ten: 'Yêu Đá', canThrow: true, stoneCd: 0.8, spearCd: 0 } });
+  const ids = b.map((x) => x.id); assert.deepEqual(ids, ['da', 'thuong', 'nemyq', 'nhay']);
+  assert.equal(b[0].wait, true); assert.equal(b[1].wait, false);
+  const c = dockButtons({ free: true, khinh: 0, yq: { active: true, stoneCd: 0, spearCd: 0 } }).map((x) => x.id);
+  assert.deepEqual(c, ['da', 'thuong'], 'chưa mở Khinh thân: không hiện Nhảy mờ khi đang đánh');
 });

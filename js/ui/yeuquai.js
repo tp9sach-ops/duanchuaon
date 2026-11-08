@@ -1,7 +1,7 @@
 // Yêu quái hằng tháng (Phiên 64): mô phỏng, thanh máu, đòn ném đá / thương / ném yêu quái, hồi sinh ở cửa chùa, nhặt lá bồ đề. Logic ở js/world/yeuquai.js (có test).
 // Đặt LGT.yq = { active, boss, hp, stat, bonus, stone(), spear(), throwBoss(), status() } và LGT.yqView (cảnh 3D js/scene/yeuquai.js đọc). Thử ngay không cần chờ lịch: thêm ?yq=da (hoặc nuoc / lua) vào địa chỉ trang.
 // Nhiều người đánh chung / máu chung / tranh nhặt lá qua máy chủ: CHƯA nối (docs/PHIEN64.md). Hiện mỗi máy tự mô phỏng một con yêu quái từ cùng lịch tháng.
-import { YQ, eventAt, eventPhase, nextEvent, createBoss, stepBoss, hitBoss, shareOf, rewardFor, hitDamage, newPlayer, hurt, tickPlayer, RESPAWN, STONE, SPEAR, stoneDamage, spearDamage, throwBossDamage, lootDrops, pickLoot, tickLoot, loadYq, rngSeed, MIN_SHARE } from '../world/yeuquai.js';
+import { YQ, DIFF, windupOf, eventAt, eventPhase, nextEvent, createBoss, stepBoss, hitBoss, shareOf, rewardFor, hitDamage, newPlayer, hurt, tickPlayer, RESPAWN, STONE, SPEAR, stoneDamage, spearDamage, throwBossDamage, lootDrops, pickLoot, tickLoot, loadYq, rngSeed, MIN_SHARE } from '../world/yeuquai.js';
 import { canGrab } from '../world/strength.js';
 import { move } from '../world/layout.js';
 import { levelOf } from '../world/quests.js';
@@ -15,7 +15,7 @@ export function initYeuQuai(hud, { toast = () => {} } = {}) {
   const LGT = window.LGT || (window.LGT = {});
   let stat = loadYq(null); try { stat = loadYq(localStorage.getItem(KEY)); } catch (_) { /* riêng tư */ }
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(stat)); } catch (_) { /* bỏ qua */ } };
-  let force = ''; try { const q = new URLSearchParams(location.search).get('yq'); if (q && YQ[q]) force = q; } catch (_) { /* bỏ qua */ }
+  let force = '', forceDiff = 'cao'; try { const q = new URLSearchParams(location.search).get('yq'); if (q && YQ[q]) force = q; const yd = new URLSearchParams(location.search).get('yd'); if (yd && DIFF[yd]) forceDiff = yd; } catch (_) { /* bỏ qua */ }
   const rng = rngSeed((Date.now() ^ 0x5bd1e995) >>> 0), view = LGT.yqView = { boss: null, shapes: [], wt: 0, flash: 0, loot: [], stones: [], type: '' };
   let boss = null, me = newPlayer(1), drops = [], cdStone = 0, cdSpear = 0, cdThrow = 0, spawnedKey = '', announced = false, lastT = performance.now();
 
@@ -35,13 +35,13 @@ export function initYeuQuai(hud, { toast = () => {} } = {}) {
     const r = hurt(me, dmg, level()); me = r.p; if (r.lost) flashNow();
     if (r.died) { stat.deaths++; save(); if (LGT.world && LGT.world.teleport) LGT.world.teleport(RESPAWN.x, RESPAWN.z); toast('Bạn hết sức và được đưa về cửa chùa hồi sinh. Quay lại tiếp tục bảo vệ dân làng!', 4600); }
   }
-  function spawn(ev, type) {
-    boss = createBoss(type, { x: 0, z: 100, n: 1 }); me = newPlayer(level()); drops = []; view.loot = drops; view.type = type; view.boss = boss;
-    toast(`${YQ[type].ten} xuất hiện ở đường làng! Hãy ném đá từ xa, né vùng đỏ và dùng thương khi tới gần.`, 7000);
+  function spawn(ev, type, diff) {
+    boss = createBoss(type, { x: 0, z: 100, n: 1, diff }); me = newPlayer(level()); drops = []; view.loot = drops; view.type = type; view.boss = boss;
+    toast(`${YQ[type].ten} (độ khó ${DIFF[diff].ten}) xuất hiện ở đường làng! Hãy ném đá từ xa, né vùng đỏ và dùng thương khi tới gần.`, 7000);
   }
   function defeat(key) {
-    const t = YQ[boss.type], share = shareOf(boss, 'ban'), rw = rewardFor(share);
-    drops = lootDrops(boss.x, boss.z, 1, rng); view.loot = drops; stat.done[key] = true; stat.kills++;
+    const t = YQ[boss.type], share = shareOf(boss, 'ban'), rw = rewardFor(share, boss.diff);
+    drops = lootDrops(boss.x, boss.z, 1, rng, boss.diff); view.loot = drops; stat.done[key] = true; stat.kills++;
     if (rw.xp) { if (LGT.addXp) LGT.addXp(rw.xp); stat.bonus = Math.min(100, stat.bonus + rw.strength); }
     save(); toast(rw.xp ? `Bạn đã thu phục ${t.ten}! +${rw.xp} điểm, +${rw.strength} sức mạnh. Nhặt nhanh những túi lá bồ đề rơi quanh đó!` : `${t.ten} đã bị thu phục. Bạn đánh chưa đủ ${Math.round(MIN_SHARE * 100)}% nên chưa có thưởng — nhưng vẫn nhặt được lá rơi!`, 7000);
   }
@@ -65,17 +65,17 @@ export function initYeuQuai(hud, { toast = () => {} } = {}) {
   function tick() {
     const now = performance.now(), dt = Math.min(0.25, (now - lastT) / 1000); lastT = now; const t0 = Date.now();
     cdStone = Math.max(0, cdStone - dt); cdSpear = Math.max(0, cdSpear - dt); cdThrow = Math.max(0, cdThrow - dt); me = tickPlayer(me, dt);
-    const ev = eventAt(t0), ph = force ? { phase: 'live', secs: 0 } : eventPhase(ev, t0), key = force ? 'thu-' + force : ev.key, type = force || ev.type;
-    if (!announced && !force) { announced = true; const nx = nextEvent(t0); if (nx.start - t0 < 14 * 86400e3 && !stat.done[nx.key] && ph.phase !== 'live') toast(`Sắp có ${YQ[nx.type].ten} xuất hiện ở làng vào ${fmt(nx.start)}. Hãy luyện sức mạnh và chuẩn bị!`, 7000); }
-    if (ph.phase === 'live' && !stat.done[key] && !boss && spawnedKey !== key && LGT.world) { spawnedKey = key; spawn(ev, type); }
-    if (boss && !force && ph.phase !== 'live' && !boss.dead) { toast(`${YQ[boss.type].ten} đã bỏ đi. Hẹn tháng sau!`, 4000); boss = null; view.boss = null; view.shapes = []; }
+    const ev = eventAt(t0), ph = force ? { phase: 'live', secs: 0 } : eventPhase(ev, t0), key = force ? 'thu-' + force : ev.key, type = force || ev.type, diff = force ? forceDiff : ev.diff;
+    if (!announced && !force) { announced = true; const nx = nextEvent(t0); if (nx.start - t0 < 14 * 86400e3 && !stat.done[nx.key] && ph.phase !== 'live') toast(`Sắp có ${YQ[nx.type].ten} (độ khó ${DIFF[nx.diff].ten}) xuất hiện ở làng vào ${fmt(nx.start)}. Hãy luyện sức mạnh và chuẩn bị!`, 7000); }
+    if (ph.phase === 'live' && !stat.done[key] && !boss && spawnedKey !== key && LGT.world) { spawnedKey = key; spawn(ev, type, diff); }
+    if (boss && !force && ph.phase !== 'live' && !boss.dead) { toast(`${YQ[boss.type].ten} đã bỏ đi. Hẹn lần sau!`, 4000); boss = null; view.boss = null; view.shapes = []; }
     if (boss && !boss.dead && here()) {
       const p = pos(), events = stepBoss(boss, dt, p ? [{ id: 'ban', x: p.x, z: p.z }] : [], rng, (x, z, dx, dz) => move(x, z, dx, dz));
       for (const e of events) {
         if (e.k === 'windup') { view.shapes = e.shapes; view.wt = 0; view.dur = e.dur; }
-        else if (e.k === 'strike') { view.shapes = e.shapes; view.wt = -1; view.flash = 0.35; if (e.hits.includes('ban')) damageMe(hitDamage(boss.type, level())); }
+        else if (e.k === 'strike') { view.shapes = e.shapes; view.wt = -1; view.flash = 0.35; if (e.hits.includes('ban')) damageMe(hitDamage(boss.type, level(), boss.diff)); }
       }
-      if (boss.state === 'windup') view.wt = Math.min(1, boss.t / YQ[boss.type].windup); else if (boss.state === 'move') { view.shapes = []; view.wt = 0; }
+      if (boss.state === 'windup') view.wt = Math.min(1, boss.t / windupOf(boss)); else if (boss.state === 'move') { view.shapes = []; view.wt = 0; }
     }
     view.flash = Math.max(0, (view.flash || 0) - dt);
     // đá đang bay
@@ -85,14 +85,14 @@ export function initYeuQuai(hud, { toast = () => {} } = {}) {
     if (boss && boss.dead && !drops.length) { boss = null; view.boss = null; view.shapes = []; }
     // thanh máu
     const on = !!boss && !boss.dead && here(); hudBox.hidden = !on;
-    if (on) { const t = YQ[boss.type]; bn.textContent = `${t.ten} · ${boss.hp}/${boss.max}`; bf.style.width = `${Math.round(boss.hp / boss.max * 100)}%`; pf.style.width = `${Math.round(me.hp / me.max * 100)}%`; pt.textContent = `${me.hp}/${me.max}${me.inv > 0 ? ' · bất tử' : ''}`; tm.textContent = force ? 'Chế độ thử' : `Còn ${Math.floor(ph.secs / 60)} phút`; }
+    if (on) { const t = YQ[boss.type]; bn.textContent = `${t.ten} · ${DIFF[boss.diff].ten} · ${boss.hp}/${boss.max}`; bf.style.width = `${Math.round(boss.hp / boss.max * 100)}%`; pf.style.width = `${Math.round(me.hp / me.max * 100)}%`; pt.textContent = `${me.hp}/${me.max}${me.inv > 0 ? ' · bất tử' : ''}`; tm.textContent = force ? 'Chế độ thử' : `Còn ${Math.floor(ph.secs / 60)} phút`; }
   }
   setInterval(tick, 50);
 
   LGT.yq = {
     get boss() { return boss; }, get active() { return !!boss && !boss.dead; }, get bonus() { return stat.bonus; }, get stat() { return stat; }, get hp() { return me; },
     stone, spear, throwBoss, canThrowBoss,
-    status() { const a = !!boss && !boss.dead && here(), d = distBoss(); return { active: a, ten: a ? YQ[boss.type].ten : '', far: a ? d > STONE.range + YQ[boss.type].body : false, near: a ? d - YQ[boss.type].body <= SPEAR.range : false, canThrow: a && canThrowBoss() }; },
+    status() { const a = !!boss && !boss.dead && here(), d = distBoss(); return { active: a, stoneCd: cdStone, spearCd: cdSpear, ten: a ? YQ[boss.type].ten : '', far: a ? d > STONE.range + YQ[boss.type].body : false, near: a ? d - YQ[boss.type].body <= SPEAR.range : false, canThrow: a && canThrowBoss() }; },
   };
   return LGT.yq;
 }
