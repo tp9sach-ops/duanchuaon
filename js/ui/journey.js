@@ -11,7 +11,7 @@ export function initJourney(host, { close = () => {} } = {}) {
   let page = 0, pick = null;
   const ctx = () => {
     const prog = LGT.quests && LGT.quests.prog || null, st = LGT.story && LGT.story.state;
-    return { prog, khinh: LGT.skill ? LGT.skill.level : khinhBac(st, 0), capNguoi: levelOf(prog ? prog.xp : 0).lv, sen: LGT.getSen ? LGT.getSen() : 0, fish: LGT.fishing && LGT.fishing.state, land: LGT.land && LGT.land.state, furni: LGT.furni && LGT.furni.state };
+    return { str: LGT.strength ? LGT.strength.value : 0, yq: LGT.yq && LGT.yq.stat ? { kills: LGT.yq.stat.kills, bonus: LGT.yq.stat.bonus } : null, prog, khinh: LGT.skill ? LGT.skill.level : khinhBac(st, 0), capNguoi: levelOf(prog ? prog.xp : 0).lv, sen: LGT.getSen ? LGT.getSen() : 0, fish: LGT.fishing && LGT.fishing.state, land: LGT.land && LGT.land.state, furni: LGT.furni && LGT.furni.state };
   };
   const run = (act, quest) => {
     if (quest && LGT.guide) { close(); LGT.guide.start(quest); return; }

@@ -2,14 +2,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { buildJourney, pageKhinh, pageKham, pageGieoDuyen, pageNhaCua, PLACE_HINT } from '../js/world/journey.js';
+import { pageSucManh, buildJourney, pageKhinh, pageKham, pageGieoDuyen, pageNhaCua, PLACE_HINT } from '../js/world/journey.js';
 import { PLACES } from '../js/world/outside.js';
 import { SPECIES } from '../js/world/fishing.js';
 import { QUESTS } from '../js/world/quests.js';
 
 test('4 trang, id ô không trùng, ctx rỗng/hỏng vẫn dựng được và chưa ô nào xong', () => {
   for (const c of [undefined, null, 5, 'x', {}, { prog: 7, fish: [], land: 'a', furni: 3 }]) {
-    const p = buildJourney(c); assert.deepEqual(p.map((x) => x.id), ['khinh', 'kham', 'gieoduyen', 'nhacua']);
+    const p = buildJourney(c); assert.deepEqual(p.map((x) => x.id), ['khinh', 'kham', 'gieoduyen', 'nhacua', 'sucmanh']);
     const ids = p.flatMap((x) => x.tiles.map((t) => t.id)); assert.equal(ids.length, new Set(ids).size); assert.equal(p.reduce((a, x) => a + x.done, 0), 0);
   }
 });
@@ -42,4 +42,12 @@ test('nối dây: tab Lộ trình trong quest.js, LGT.spendSen, cầu gỗ bán 
   const q = readFileSync(new URL('../js/ui/quest.js', import.meta.url), 'utf8'), h = readFileSync(new URL('../js/ui/hudMenu.js', import.meta.url), 'utf8'), f = readFileSync(new URL('../js/ui/fishing.js', import.meta.url), 'utf8'), j = readFileSync(new URL('../js/ui/journey.js', import.meta.url), 'utf8');
   assert.match(q, /initJourney/); assert.match(q, /data-t="j"/); assert.match(h, /LGT\.spendSen = spendMerit/); assert.match(f, /LGT\.spendSen/); assert.match(f, /priceText/);
   assert.ok(!/innerHTML/.test(j), 'giao diện lộ trình không dùng innerHTML');
+});
+
+test('trang Sức mạnh · Yêu quái: bậc theo sức mạnh, thu phục + sức mạnh thưởng theo số liệu, có giờ 15:00 và 20:00', () => {
+  const p0 = pageSucManh({}); assert.equal(p0.done, 0); assert.equal(p0.tiles.length, 4 + 2);
+  const p1 = pageSucManh({ str: 50, yq: { kills: 1, bonus: 3 } }); assert.equal(p1.tiles.filter((t) => t.id.startsWith('sm-') && /^sm-\d+$/.test(t.id) && t.done).length, 2);
+  assert.ok(p1.tiles.find((t) => t.id === 'sm-yq-thu').done && p1.tiles.find((t) => t.id === 'sm-yq-bonus').done);
+  assert.match(p1.tiles.find((t) => t.id === 'sm-yq-thu').how[0], /15:00.*20:00/);
+  assert.equal(pageSucManh(null).tiles.length, 6);
 });
