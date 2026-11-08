@@ -1,8 +1,10 @@
 // Yêu quái hằng tháng (Phiên 64): mô phỏng, thanh máu, đòn ném đá / thương / ném yêu quái, hồi sinh ở cửa chùa, nhặt lá bồ đề. Logic ở js/world/yeuquai.js (có test).
 // Đặt LGT.yq = { active, boss, hp, stat, bonus, stone(), spear(), throwBoss(), status() } và LGT.yqView (cảnh 3D js/scene/yeuquai.js đọc). Thử ngay không cần chờ lịch: thêm ?yq=da (hoặc nuoc / lua) vào địa chỉ trang.
-// Nhiều người đánh chung / máu chung / tranh nhặt lá qua máy chủ: CHƯA nối (docs/PHIEN64.md). Hiện mỗi máy tự mô phỏng một con yêu quái từ cùng lịch tháng.
+// Đánh CHUNG (Phiên 71): khi có apiUrl và đang ở khung giờ thật, máu yêu quái + túi lá bồ đề dùng chung qua Apps Script (gas/Yq.gs, action 'yq'; logic js/world/yqCoop.js). Chuyển động/vùng đỏ vẫn mỗi máy tự mô phỏng. Không có apiUrl hoặc chế độ thử ?yq= → đánh một mình như cũ.
 import { YQ, DIFF, windupOf, eventAt, eventPhase, nextEvent, createBoss, stepBoss, hitBoss, shareOf, rewardFor, hitDamage, newPlayer, hurt, tickPlayer, RESPAWN, STONE, SPEAR, stoneDamage, spearDamage, throwBossDamage, lootDrops, pickLoot, tickLoot, loadYq, rngSeed, MIN_SHARE } from '../world/yeuquai.js';
 import { canGrab } from '../world/strength.js';
+import { callApi, apiEnabled } from '../api.js';
+import { COOP_POLL_MS, coopKeyOk, buildReq, applyServer, lootFromServer, leavesGranted } from '../world/yqCoop.js';
 import { move } from '../world/layout.js';
 import { levelOf } from '../world/quests.js';
 
@@ -17,6 +19,8 @@ export function initYeuQuai(hud, { toast = () => {} } = {}) {
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(stat)); } catch (_) { /* bỏ qua */ } };
   let force = '', forceDiff = 'cao'; try { const q = new URLSearchParams(location.search).get('yq'); if (q && YQ[q]) force = q; const yd = new URLSearchParams(location.search).get('yd'); if (yd && DIFF[yd]) forceDiff = yd; } catch (_) { /* bỏ qua */ }
   const rng = rngSeed((Date.now() ^ 0x5bd1e995) >>> 0), view = LGT.yqView = { boss: null, shapes: [], wt: 0, flash: 0, loot: [], stones: [], type: '' };
+  const pageId = (globalThis.crypto && crypto.randomUUID ? crypto.randomUUID() : 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10));
+  let coopOn = false, dealt = 0, coopBusy = false, coopLast = 0, allDrops = [], lootBuilt = false, claimQ = [], inflight = [], rewarded = false;
   let boss = null, me = newPlayer(1), drops = [], cdStone = 0, cdSpear = 0, cdThrow = 0, spawnedKey = '', announced = false, lastT = performance.now();
 
   const hudBox = el('div', 'yq-hud'); hudBox.hidden = true;
@@ -36,12 +40,14 @@ export function initYeuQuai(hud, { toast = () => {} } = {}) {
     if (r.died) { stat.deaths++; save(); if (LGT.world && LGT.world.teleport) LGT.world.teleport(RESPAWN.x, RESPAWN.z); toast('Bạn hết sức và được đưa về cửa chùa hồi sinh. Quay lại tiếp tục bảo vệ dân làng!', 4600); }
   }
   function spawn(ev, type, diff) {
-    boss = createBoss(type, { x: 0, z: 100, n: 1, diff }); me = newPlayer(level()); drops = []; view.loot = drops; view.type = type; view.boss = boss;
+    boss = createBoss(type, { x: 0, z: 100, n: 1, diff }); me = newPlayer(level()); coopOn = !force && apiEnabled() && coopKeyOk(spawnedKey); dealt = 0; coopBusy = false; coopLast = 0; allDrops = []; lootBuilt = false; claimQ = []; inflight = []; rewarded = false; drops = []; view.loot = drops; view.type = type; view.boss = boss;
     toast(`${YQ[type].ten} (độ khó ${DIFF[diff].ten}) xuất hiện ở đường làng! Hãy ném đá từ xa, né vùng đỏ và dùng thương khi tới gần.`, 7000);
   }
   function defeat(key) {
+    if (rewarded) return; rewarded = true;
     const t = YQ[boss.type], share = shareOf(boss, 'ban'), rw = rewardFor(share, boss.diff);
-    drops = lootDrops(boss.x, boss.z, 1, rng, boss.diff); view.loot = drops; stat.done[key] = true; stat.kills++;
+    if (!coopOn) drops = lootDrops(boss.x, boss.z, 1, rng, boss.diff);   // đánh chung: túi lá do máy chủ chia (cùng hạt giống cho mọi người)
+    view.loot = drops; stat.done[key] = true; stat.kills++;
     if (rw.xp) { if (LGT.addXp) LGT.addXp(rw.xp); stat.bonus = Math.min(100, stat.bonus + rw.strength); }
     save(); toast(rw.xp ? `Bạn đã thu phục ${t.ten}! +${rw.xp} điểm, +${rw.strength} sức mạnh. Nhặt nhanh những túi lá bồ đề rơi quanh đó!` : `${t.ten} đã bị thu phục. Bạn đánh chưa đủ ${Math.round(MIN_SHARE * 100)}% nên chưa có thưởng — nhưng vẫn nhặt được lá rơi!`, 7000);
   }
@@ -59,7 +65,32 @@ export function initYeuQuai(hud, { toast = () => {} } = {}) {
     const t = YQ[boss.type]; if (!canGrab({ lv: level(), str: str() }, { lv: t.lv, str: t.str }).ok) { toast(`Chưa đủ sức nhấc ${t.ten}: cần cấp lớn hơn ${t.lv} và sức mạnh lớn hơn ${t.str}.`, 3200); return; }
     cdThrow = 6; toast(`Bạn nhấc ${t.ten} lên và ném xuống đất!`, 2600); hit(throwBossDamage(str()));
   }
-  function hit(dmg) { const r = hitBoss(boss, dmg, 'ban'); if (r.dead) defeat(spawnedKey); }
+  function hit(dmg) {
+    if (coopOn) {   // đánh chung: không tự kết liễu — gửi sát thương lên máy chủ, máy chủ báo hết máu chung thì mới thu phục
+      if (!boss || boss.dead || !(dmg > 0)) return; const real = Math.min(Math.max(0, boss.hp - 1), Math.floor(dmg)); dealt += Math.floor(dmg); boss.hp -= real; boss.dmgBy.ban = (boss.dmgBy.ban || 0) + Math.floor(dmg);
+      if (boss.hp <= 1) coopLast = 0; return;   // máu cục bộ chạm đáy: đồng bộ ngay để biết đã hết máu chung chưa
+    }
+    const r = hitBoss(boss, dmg, 'ban'); if (r.dead) defeat(spawnedKey);
+  }
+  function coopSync() {
+    if (!coopOn || coopBusy || !boss) return; if (boss.dead && !drops.length && !claimQ.length) return;
+    const nowMs = Date.now(); if (nowMs - coopLast < COOP_POLL_MS && !claimQ.length) return; coopLast = nowMs; coopBusy = true;
+    const mine = claimQ.splice(0, 20); inflight = mine; const bossRef = boss;
+    callApi('yq', buildReq({ pageId, key: spawnedKey, boss: bossRef, dealt, claim: mine })).then((res) => {
+      coopBusy = false; if (boss !== bossRef) return;
+      if (!res || !res.ok) { claimQ.unshift(...inflight); inflight = []; return; }   // lỗi mạng: giữ túi chờ gửi lại
+      const r = applyServer(boss, res, dealt);
+      if (res.dead && !lootBuilt) { lootBuilt = true; allDrops = lootFromServer({ ...res, claimed: {} }, boss); drops = lootFromServer(res, boss); view.loot = drops; }
+      if (r.killedByOthers || (res.dead && !rewarded)) defeat(spawnedKey);
+      if (res.dead) {
+        const la = leavesGranted(res, allDrops);
+        if (la > 0) { const n = LGT.merit && LGT.merit.addLa ? LGT.merit.addLa(la) : 0; toast(`Nhặt được ${n} lá bồ đề!`, 2200); }
+        const lost = inflight.filter((id) => !(res.granted || []).includes(id)); if (lost.length) toast('Có người nhanh tay hơn bạn nhặt mất túi lá!', 2400);
+        drops = drops.filter((d) => !res.claimed || !res.claimed[d.id]); view.loot = drops;
+      }
+      inflight = [];
+    }).catch(() => { coopBusy = false; claimQ.unshift(...inflight); inflight = []; });
+  }
   const canThrowBoss = () => { if (!boss || boss.dead) return false; const t = YQ[boss.type]; return canGrab({ lv: level(), str: str() }, { lv: t.lv, str: t.str }).ok; };
 
   function tick() {
@@ -81,8 +112,9 @@ export function initYeuQuai(hud, { toast = () => {} } = {}) {
     // đá đang bay
     view.stones = view.stones.filter((s) => { s.t += dt; if (s.t < s.dur) return true; if (boss && !boss.dead) hit(s.dmg); return false; });
     // nhặt lá bồ đề: ai chạm trước lấy trước (hiện mỗi máy tự nhặt; tranh nhặt giữa nhiều người cần máy chủ)
-    if (drops.length) { drops = tickLoot(drops, dt); const p = pos(); if (p && here()) { const r = pickLoot(drops, p.x, p.z); if (r.got) { drops = r.drops; const n = LGT.merit && LGT.merit.addLa ? LGT.merit.addLa(r.got.la) : 0; toast(`Nhặt được ${n} lá bồ đề!`, 2200); } } view.loot = drops; }
-    if (boss && boss.dead && !drops.length) { boss = null; view.boss = null; view.shapes = []; }
+    if (drops.length) { drops = tickLoot(drops, dt); const p = pos(); if (p && here()) { const r = pickLoot(drops, p.x, p.z); if (r.got) { drops = r.drops; if (coopOn) { claimQ.push(r.got.id); coopLast = 0; } else { const n = LGT.merit && LGT.merit.addLa ? LGT.merit.addLa(r.got.la) : 0; toast(`Nhặt được ${n} lá bồ đề!`, 2200); } } } view.loot = drops; }
+    coopSync();
+    if (boss && boss.dead && !drops.length && !claimQ.length && !coopBusy) { boss = null; view.boss = null; view.shapes = []; }
     // thanh máu
     const on = !!boss && !boss.dead && here(); hudBox.hidden = !on;
     if (on) { const t = YQ[boss.type]; bn.textContent = `${t.ten} · ${DIFF[boss.diff].ten} · ${boss.hp}/${boss.max}`; bf.style.width = `${Math.round(boss.hp / boss.max * 100)}%`; pf.style.width = `${Math.round(me.hp / me.max * 100)}%`; pt.textContent = `${me.hp}/${me.max}${me.inv > 0 ? ' · bất tử' : ''}`; tm.textContent = force ? 'Chế độ thử' : `Còn ${Math.floor(ph.secs / 60)} phút`; }

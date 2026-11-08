@@ -60,6 +60,7 @@ function route_(req) {
     case 'addPrayer':    return json_(addPrayer_(req));      // Prayers.gs
     case 'listPrayers':  return json_(listPrayers_());
     case 'sync':         return json_(roomSync_(req));       // Room.gs (đa người)
+    case 'yq':           return json_(yqSync_(req));         // Yq.gs (yêu quái đánh chung)
     case 'acctCreate':   return json_(acctCreate_(req));     // Accounts.gs (tài khoản nhân vật)
     case 'acctLogin':    return json_(acctLogin_(req));
     case 'acctLoad':     return json_(acctLoad_(req));
