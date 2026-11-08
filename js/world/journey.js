@@ -30,7 +30,7 @@ export const PLACE_HINT = {
   didongsenvang: 'Nhà phố bên trái đường làng, xa hơn nữa về phía chợ.',
 };
 /** Nhiệm vụ có nút “Dẫn đường” cho từng nơi (id nhiệm vụ trong js/world/quests.js). */
-export const PLACE_QUEST = { lang: 'm-lang', thacnuoc: 'm-thac', rung: 'm-rung' };
+export const PLACE_QUEST = { lang: 'm-lang', thacnuoc: 'm-thac', rung: 'm-rung', ...Object.fromEntries(['chanhdien', 'quanam', 'nhato', 'vuonthien', 'trathat', 'gacchuong', 'hoca', 'cho', 'dienmaylamsen', 'didongsenvang', 'kimhoanngoclan', 'daiphat'].map((id) => [id, 'v-' + id])) };
 const ICON = { sanchua: '⛩️', chanhdien: '🛕', nhato: '🏯', gacchuong: '🔔', trathat: '🍵', vuonthien: '🧘', hoca: '🐟', quanam: '🪷', lang: '🏘️', cho: '🧺', rung: '🌲', thacnuoc: '💧', daiphat: '🗿', dienmaylamsen: '🔌', kimhoanngoclan: '💍', didongsenvang: '📱' };
 
 const seenVisit = (prog) => new Set((prog && isObj(prog.seen) && Array.isArray(prog.seen.visit)) ? prog.seen.visit : []);

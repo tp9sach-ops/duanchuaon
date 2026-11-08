@@ -19,13 +19,13 @@ test('cốt truyện còn dở: mỗi bước đều có mục tiêu và dẫn �
   }
   assert.equal(nextGoal({ story: emptyStory(), prog: emptyProg(), now: NOW }).guide, 's-meet');
 });
-test('xong cốt truyện: không còn trống, việc đầu là việc hằng ngày nhẹ nhất', () => {
+test('xong cốt truyện: không còn trống, việc đầu là việc đầu tiên của chương 2 (dạo trong chùa)', () => {
   const g = nextGoal({ story: doneStory(), prog: emptyProg(), sen: 50, la: 0, now: NOW });
-  assert.equal(g.kind, 'daily'); assert.equal(g.guide, CHAIN[0]); assert.ok(g.text.length > 5);
+  assert.equal(g.kind, 'journey'); assert.equal(g.guide, CHAIN[0]); assert.equal(g.guide, 'v-chanhdien'); assert.match(g.label, /^Chương 2 · Dạo trong chùa · 0\/9$/); assert.ok(g.text.length > 5);
 });
 test('làm xong một việc thì tự sang việc kế, không lặp lại việc đã xong', () => {
   let prog = emptyProg(); const seen = new Set();
-  for (let i = 0; i < 40; i++) {
+  for (let i = 0; i < 90; i++) {
     const g = nextGoal({ story: doneStory(), prog, sen: 999, la: 999, own: i > 12 ? { xom: 1, plot: 1, lv: 0 } : null, now: NOW });
     if (g.kind === 'free') break;
     assert.ok(!seen.has(g.id), 'lặp ' + g.id); seen.add(g.id);

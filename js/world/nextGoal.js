@@ -1,15 +1,16 @@
 // "Việc kế tiếp" liên tục (Phiên 43, việc 2). LOGIC THUẦN (không DOM, không three.js, có test: tests/nextgoal.test.mjs).
 // Ghép 3 nguồn việc thành MỘT chuỗi không bao giờ đứt: cốt truyện chương 1 (story.js) → hành trình + hằng ngày (quests.js) theo thứ tự CHAIN → gợi ý tự do (tutorial.js advise).
 // Trả về luôn đúng MỘT mục tiêu để thẻ mục tiêu (js/ui/story.js) hiển thị và để nút "Dẫn đường" dùng (guide = id nhiệm vụ cho js/ui/guide.js).
-import { loadStory, objective, STORY_QUESTS } from './story.js';
+import { loadStory, objective, STORY_QUESTS, storyRows } from './story.js';
+import { CHAPTERS, CHAIN, chapterOf, chapterProgress } from './chapters.js';
 import { QUESTS, questById, questStatus } from './quests.js';
 import { advise } from './tutorial.js';
 import { SEN_PER_LA } from './merit.js';
 import { ORBS } from './fishing.js';
 import { FURNITURE } from './furniture.js';
 
-/** Thứ tự làm sau cốt truyện: việc hằng ngày nhẹ trước (mỗi sáng bắt đầu từ đây), rồi hành trình từ gần tới xa, việc cần lá bồ đề để sau. Nhiệm vụ nào không có trong đây vẫn được làm cuối cùng. */
-export const CHAIN = ['n-nhang', 'n-lay', 'm-den', 'm-loc', 'm-lang', 'm-khinhthan', 'm-npc', 'n-kinh', 'm-niem', 'm-doila', 'm-muadat', 'm-thac', 'm-rung', 'm-dao', 'm-nangnha', 'm-noithat', 'm-cau', 'm-phongsinh', 'm-nhang', 'm-kinh', 'n-thien', 'n-npc', 'n-phongsinh'];
+/** Thứ tự làm sau cốt truyện = thứ tự các chương (js/world/chapters.js). Nhiệm vụ nào không có trong đây vẫn được làm cuối cùng. */
+export { CHAIN };
 /** Việc hằng ngày dùng để kiếm hạt sen khi chưa đủ để đổi lá / mua đất. */
 const EARN = ['n-thien', 'n-nhang', 'n-lay', 'n-kinh'];
 const NEEDS_RES = new Set(['m-doila', 'm-muadat', 'm-nangnha']);
@@ -17,6 +18,7 @@ const NEEDS_RES = new Set(['m-doila', 'm-muadat', 'm-nangnha']);
 const FISH_QUESTS = new Set(['m-cau', 'm-phongsinh', 'n-phongsinh']);
 
 const LABEL = { story: 'Cốt truyện', daily: 'Hằng ngày', journey: 'Hành trình', free: 'Tự do tu tập' };
+const chLabel = (c) => `Chương ${c.n} · ${c.ten} · ${c.done}/${c.of}`;
 
 /**
  * state: { story (loadStory), prog (loadProg), sen, la, own: {xom,plot,lv}|null, now }.
@@ -30,7 +32,8 @@ export function nextGoal(state = {}) {
   const o = objective(story);   // cốt truyện chương 1 còn dở: luôn là việc chính
   if (o) {
     const sq = STORY_QUESTS.find((q) => q.step === story.step);
-    return { ...base, id: sq.id, kind: 'story', label: LABEL.story, title: o.title, text: o.text, cur: o.cur || 0, need: o.need || 0, unit: o.unit || '', guide: sq.id, left: QUESTS.length };
+    const rows = storyRows(story), ch = chapterProgress(CHAPTERS[0], [], { done: rows.filter((r) => r.done).length, of: rows.length });
+    return { ...base, chapter: ch, id: sq.id, kind: 'story', label: chLabel(ch), title: o.title, text: o.text, cur: o.cur || 0, need: o.need || 0, unit: o.unit || '', guide: sq.id, left: QUESTS.length };
   }
 
   const status = prog ? questStatus(prog, now) : QUESTS.map((q) => ({ q, cur: 0, need: q.dk.n, done: false }));
@@ -45,7 +48,8 @@ export function nextGoal(state = {}) {
     if (q.id === 'm-nangnha' && !own) continue;     // chưa có nhà thì chưa nâng được; sẽ tới lượt sau khi mua đất
     if (q.id === 'm-noithat' && !own) continue;     // chưa có nhà thì chưa có chỗ đặt đồ
     if (q.id === 'm-muadat' && own) continue;       // đã có đất (nhiệm vụ sẽ được ghi nhận khi mua)
-    const g = { ...base, id: q.id, kind, label: LABEL[kind], title: q.ten, text: q.mo, cur: r.cur, need: r.need, unit: '', guide: q.id, left };
+    const co = chapterOf(q.id), ch = co ? chapterProgress(co, status) : null;
+    const g = { ...base, chapter: ch, id: q.id, kind, label: ch ? chLabel(ch) : LABEL[kind], title: q.ten, text: q.mo, cur: r.cur, need: r.need, unit: '', guide: q.id, left };
     if (FISH_QUESTS.has(q.id) && !orbs) {   // chưa có quả cầu nào: nói rõ cách có cầu (câu cá cần cầu; ao cá riêng cũng cần từng câu được cá)
       const cheap = ORBS[0];
       if (la >= cheap.gia) { g.text = `Mở nút “Câu cá” → tab “Quả cầu”, mua ${cheap.ten} (${cheap.gia} lá bồ đề), rồi ra mép nước thả cầu.`; g.guide = q.id; }

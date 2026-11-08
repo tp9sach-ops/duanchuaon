@@ -2,6 +2,7 @@
 // Các nơi khác báo sự kiện bằng window.LGT.act(type, n | arg): nhang(n nén), bow, thien, kinh, niem, den, loc, npc(id), visit(id), chat.
 // Mọi chữ hiển thị đến từ dữ liệu cố định của dự án và qua textContent/esc, không chèn HTML lạ.
 import { loadProg, record, questStatus, levelOf, levelReward, QUESTS } from '../world/quests.js';
+import { CHAPTERS } from '../world/chapters.js';
 import { placesAt } from '../world/outside.js';
 import { storyRows } from '../world/story.js';
 import { initJourney } from './journey.js';
@@ -43,17 +44,20 @@ export function initQuest(hud, { toast = () => {}, addMerit = () => {}, pillHost
       const prog = r.done ? '✓ xong' : r.locked ? 'chưa tới' : r.q.unit === 'giây' ? `${Math.floor(r.cur / 60)}:${String(r.cur % 60).padStart(2, '0')} / ${Math.floor(r.need / 60)}:00` : `${r.cur}/${r.need}`;
       return `<li class="${r.done ? 'done' : ''}${r.locked ? ' locked' : ''}"><div><b>${esc(r.q.ten)}</b><small>${esc(r.q.mo)}</small></div><div class="qs-r"><i class="qs-bar"><i style="width:${Math.round(r.cur / r.need * 100)}%"></i></i><span>${prog}</span><em>+${r.q.xp} điểm${r.q.sen ? ` · +${r.q.sen} sen` : ''}</em>${r.done ? '' : `<button type="button" class="qs-guide" data-q="${esc(r.q.id)}">Dẫn đường</button>`}</div></li>`;
     }).join('');
-    return `<h4>Cốt truyện · Chăm sóc cây bồ đề</h4><ul>${rows}</ul>`;
+    return `<h4>Chương 1 · Làm quen — chăm sóc cây bồ đề</h4><ul>${rows}</ul>`;
   }
   function drawBox() {
     const L = levelOf(prog.xp);
     lvBox.innerHTML = `<b>Cấp ${L.lv} · ${esc(L.ten)}</b><i class="qs-bar big"><i style="width:${L.pct}%"></i></i><span>${L.xp1 == null ? 'Cấp cao nhất' : `${L.xp} / ${L.xp1} điểm để lên cấp ${L.lv + 1}`}</span>`;
-    const st = questStatus(prog), group = (loai, title) => {
-      const rows = st.filter((r) => r.q.loai === loai).map((r) => `<li class="${r.done ? 'done' : ''}"><div><b>${esc(r.q.ten)}</b><small>${esc(r.q.mo)}</small></div><div class="qs-r"><i class="qs-bar"><i style="width:${Math.round(r.cur / r.need * 100)}%"></i></i><span>${r.done ? '✓ xong' : `${r.cur}/${r.need}`}</span><em>+${r.q.xp} điểm · +${r.q.sen} sen</em>${r.done ? '' : `<button type="button" class="qs-guide" data-q="${esc(r.q.id)}">Dẫn đường</button>`}</div></li>`).join('');
-      return `<h4>${title}</h4><ul>${rows}</ul>`;
-    };
+    const st = questStatus(prog), nextId = LGT.nextGoalId || '';
+    const rowHtml = (r) => `<li class="${r.done ? 'done' : ''}${!r.done && r.q.id === nextId ? ' next' : ''}"><div><b>${!r.done && r.q.id === nextId ? '▶ ' : ''}${esc(r.q.ten)}${r.q.loai === 'ngay' ? ' <u class="qs-dl">hằng ngày</u>' : ''}</b><small>${esc(r.q.mo)}</small></div><div class="qs-r"><i class="qs-bar"><i style="width:${Math.round(r.cur / r.need * 100)}%"></i></i><span>${r.done ? '✓ xong' : `${r.cur}/${r.need}`}</span><em>+${r.q.xp} điểm · +${r.q.sen} sen</em>${r.done ? '' : `<button type="button" class="qs-guide" data-q="${esc(r.q.id)}">Dẫn đường</button>`}</div></li>`;
+    // Phiên 60: nhiệm vụ chia theo CHƯƠNG (js/world/chapters.js) — làm từ trên xuống; việc kế tiếp có dấu ▶; chương xong thì mờ
+    const chapters = CHAPTERS.filter((c) => c.ids.length).map((c) => {
+      const rows = c.ids.map((id) => st.find((r) => r.q.id === id)).filter(Boolean), done = rows.filter((r) => r.done).length, n = CHAPTERS.indexOf(c) + 1;
+      return `<h4 class="${done === rows.length ? 'qs-chdone' : ''}">Chương ${n} · ${esc(c.ten)} <span>${done}/${rows.length}</span></h4><p class="qs-chmo">${esc(c.mo)}</p><ul>${rows.map(rowHtml).join('')}</ul>`;
+    }).join('');
     if (tab === 'j') journey.draw();
-    list.innerHTML = storyGroup() + group('ngay', 'Hằng ngày (làm lại mỗi ngày)') + group('mot', 'Hành trình');
+    list.innerHTML = storyGroup() + chapters;
   }
   const open = () => { drawBox(); box.hidden = false; box.querySelector('.qs-x').focus({ preventScroll: true }); };
   const close = () => { box.hidden = true; };

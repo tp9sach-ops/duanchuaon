@@ -24,7 +24,7 @@ export function initStory(hud, { toast = () => {}, addMerit = () => {} } = {}) {
   // Phiên 43: thẻ này luôn hiện MỘT việc kế tiếp (cốt truyện → hành trình/hằng ngày → tự do), xem js/world/nextGoal.js. Việc mới hiện thì thẻ mở sẵn ~15 giây và có thông báo.
   const stateNow = () => ({ story, prog: LGT.quests && LGT.quests.prog, sen: LGT.getSen ? LGT.getSen() : 0, la: LGT.merit && LGT.merit.leaf ? LGT.merit.leaf.la : 0, own: LGT.land && LGT.land.state ? LGT.land.state.own : null, orbs: LGT.fishing && LGT.fishing.state ? Object.keys(LGT.fishing.state.orbs || {}).length : 0 });
   function drawObj() {
-    goal = nextGoal(stateNow()); wrap.hidden = false; obj.hidden = false; drawAct();
+    goal = nextGoal(stateNow()); LGT.nextGoalId = goal.guide || goal.id; wrap.hidden = false; obj.hidden = false; drawAct();
     if (LGT.quests && LGT.quests.redraw) LGT.quests.redraw();
     objK.textContent = 'Việc kế tiếp · ' + goal.label; objT.textContent = goal.title;
     objS.textContent = expanded ? goal.text : '';

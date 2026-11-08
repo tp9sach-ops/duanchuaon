@@ -60,6 +60,13 @@ function storySteps(id) {
   }
 }
 
+/** Nhiệm vụ “ghé một nơi” (dk.key = visit:<id>, Phiên 60) tự có bước dẫn đường tới chỗ đứng của nơi đó; nơi ngoài chùa (z > 55) đi qua Tam quan ra làng trước. */
+function visitSteps(q) {
+  const m = /^visit:([\w-]+)$/.exec(q.dk.key), st = m && PLACE_STAND[m[1]]; if (!st) return [];
+  const pl = PLACES.find((p) => p.id === m[1]), step = go(st.x, st.z, Math.max(2, (pl ? pl.r : 6) * 0.5), q.mo);
+  return st.z > 55 ? [WAY_LANG, step] : [step];
+}
+
 /** Nhiệm vụ cần nhắm đích theo tình huống (người khác, nơi chưa ghé, hoa sen vàng). */
 const DYNAMIC = new Set(['n-npc', 'm-npc', 'm-dao', 'm-loc']);
 
@@ -99,7 +106,7 @@ export function planGuide(questId, prog, pos, ctx = {}) {
   const row = questStatus(prog, ctx.now || Date.now()).find((r) => r.q.id === questId); if (!row) return null;
   const q = row.q, base = { id: q.id, ten: q.ten, cur: row.cur, need: row.need };
   if (row.done) return { ...base, done: true, idx: 0, steps: [], target: null, tap: null, key: q.id + ':done', dist: null, wait: 0 };
-  const raw = DYNAMIC.has(q.id) ? dynamicSteps(q, prog, pos, ctx) : (STATIC_STEPS[q.id] ? STATIC_STEPS[q.id]() : []);
+  const raw = DYNAMIC.has(q.id) ? dynamicSteps(q, prog, pos, ctx) : (STATIC_STEPS[q.id] ? STATIC_STEPS[q.id]() : visitSteps(q));
   if (!raw.length) return { ...base, done: false, idx: 0, steps: [{ text: q.mo, state: 'now' }], target: null, tap: null, key: q.id + ':plain', dist: null, wait: 0 };
   return buildPlan(base, q.id, raw, pos, ctx);
 }
