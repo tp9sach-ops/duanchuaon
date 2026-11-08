@@ -75,6 +75,8 @@ Cách dùng: làm mục [ ] đầu tiên, xong báo ptg, CHỜ "tiếp tục". L
 
 - Phiên 69: chữ nhãn dưới nút tròn góc phải-trên (máy tính hiện sẵn; điện thoại nhấn giữ báo tên). Còn: màn hướng dẫn 3 bước, chơi chung qua mạng. docs/PHIEN69.md. `npm test` 710/710.
 
+- Phiên 70: màn hướng dẫn lần đầu 3 bước có mũi tên (js/world/coach.js, js/ui/coach.js, css/coach.css). Còn: chơi chung qua mạng + việc chờ Gp thử máy thật. docs/PHIEN70.md. `npm test` 715/715.
+
 ## Việc của ptg
 - Tải bản Phiên 46 lên GitHub (nếu chưa), mở trang thật và thử: nút "Câu cá" cụm phải-trên, nút nổi "Câu cá" khi đứng sát nước, mua cầu, thả, bấm khi hoa sen nở, thu cá, phóng sinh.
 - Trả lời: "quả cầu" có đúng là cầu quăng xuống nước? Có tặng 1 cầu gỗ cho người mới? Duyệt số tạm câu cá (xem PHIEN44.md).
