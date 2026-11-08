@@ -11,13 +11,13 @@ import { POND } from '../js/world/layout.js';
 
 const rngSeed = (a) => () => { a |= 0; a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
 const run = (s, secs, dt = 0.05) => { for (let t = 0; t < secs; t += dt) s = tick(s, dt); return s; };
-const owned = (id = 'go', la = 1e6) => buyOrb(emptyFish(), la, id).state;
+const owned = (id = 'go', la = 1e6) => buyOrb(emptyFish(), { la, sen: 1e6 }, id).state;
 
-test('luật ptg: 5 loại quả cầu, giá 30 → 1000 lá, càng đắt càng bền/may/dễ bấm; cửa sổ hoa sen loại đầu = 0,5 giây', () => {
-  assert.equal(ORBS.length, 5); assert.equal(ORBS[0].gia, 30); assert.equal(ORBS[4].gia, 1000); assert.equal(ORBS[0].cua, 0.5); assert.equal(T_SHADOW, 4);
+test('luật ptg: 5 loại quả cầu, Cầu Gỗ 50 hạt sen, còn lại 100 → 1000 lá, càng đắt càng bền/may/dễ bấm; cửa sổ hoa sen loại đầu = 0,5 giây', () => {
+  assert.equal(ORBS.length, 5); assert.equal(ORBS[0].gia, 50); assert.equal(ORBS[0].don, 'sen'); assert.ok(ORBS.slice(1).every((o) => o.don === 'la')); assert.equal(ORBS[4].gia, 1000); assert.equal(ORBS[0].cua, 0.5); assert.equal(T_SHADOW, 4);
   for (let i = 1; i < ORBS.length; i++) for (const k of ['gia', 'ben', 'may', 'cua']) assert.ok(ORBS[i][k] > ORBS[i - 1][k], `${ORBS[i].id}.${k}`);
   assert.equal(new Set(ORBS.map((o) => o.id)).size, 5); assert.equal(new Set(SPECIES.map((s) => s.id)).size, SPECIES.length);
-  assert.deepEqual(ORBS.map(repairCost), [6, 20, 50, 120, 200]);
+  assert.deepEqual(ORBS.map(repairCost), [10, 20, 50, 120, 200]);
 });
 
 test('ao cá riêng gồm cá, rùa, ba ba, mực; có cả loài thường và hiếm', () => {
@@ -32,14 +32,15 @@ test('nước câu: hồ cá, ao sen, hồ thác; đứng gần mép (≤3,2 m) 
 });
 
 test('mua cầu: đủ lá thì có, thiếu/đã có/lạ thì giữ nguyên; cầu đầu tiên tự chọn; không sửa bản cũ', () => {
-  const s0 = emptyFish(), a = buyOrb(s0, 30, 'go');
-  assert.equal(a.ok, true); assert.equal(a.cost, 30); assert.equal(a.state.sel, 'go'); assert.equal(a.state.orbs.go, 20); assert.equal(s0.sel, null); assert.deepEqual(s0.orbs, {});
-  const poor = buyOrb(s0, 29, 'go'); assert.equal(poor.ok, false); assert.equal(poor.reason, 'poor'); assert.equal(poor.state, s0);
-  const dup = buyOrb(a.state, 1e6, 'go'); assert.equal(dup.reason, 'owned'); assert.equal(dup.state, a.state);
+  const s0 = emptyFish(), a = buyOrb(s0, { la: 0, sen: 50 }, 'go');
+  assert.equal(a.ok, true); assert.equal(a.cost, 50); assert.equal(a.don, 'sen'); assert.equal(a.state.sel, 'go'); assert.equal(a.state.orbs.go, 20); assert.equal(s0.sel, null); assert.deepEqual(s0.orbs, {});
+  assert.equal(buyOrb(s0, 1e6, 'go').reason, 'poor', 'số trần = lá, không mua được cầu gỗ bằng lá'); assert.equal(buyOrb(s0, { la: 1e6, sen: 49 }, 'go').reason, 'poor');
+  const poor = buyOrb(s0, { la: 0, sen: 49 }, 'go'); assert.equal(poor.ok, false); assert.equal(poor.reason, 'poor'); assert.equal(poor.state, s0);
+  const dup = buyOrb(a.state, { la: 1e6, sen: 1e6 }, 'go'); assert.equal(dup.reason, 'owned'); assert.equal(dup.state, a.state);
   assert.equal(buyOrb(s0, 1e6, 'xyz').reason, 'unknown');
   const b = buyOrb(a.state, 100, 'da'); assert.equal(b.ok, true); assert.equal(b.state.sel, 'go', 'cầu thứ hai không tự đổi cầu đang dùng');
   assert.equal(selectOrb(b.state, 'da').state.sel, 'da'); assert.equal(selectOrb(b.state, 'kim').ok, false);
-  for (const bad of [NaN, -5, 'abc', null, undefined]) assert.equal(buyOrb(s0, bad, 'go').reason, 'poor');
+  for (const bad of [NaN, -5, 'abc', null, undefined, { sen: NaN }]) assert.equal(buyOrb(s0, bad, 'go').reason, 'poor');
 });
 
 test('quăng: trừ 1 độ bền mỗi lần, không giới hạn mỗi ngày; chưa có cầu / sai nước / cầu nứt thì không quăng được', () => {
@@ -51,10 +52,10 @@ test('quăng: trừ 1 độ bền mỗi lần, không giới hạn mỗi ngày; 
   assert.equal(ORBS[0].ben, 20, 'không có trần ngày: chỉ có độ bền cầu');
 });
 
-test('sửa cầu nứt: tốn lá (1/5 giá), chỉ khi nứt, đủ lá mới sửa; sửa xong quăng lại được', () => {
+test('sửa cầu nứt: tốn 1/5 giá (cầu gỗ: hạt sen), chỉ khi nứt, đủ lá mới sửa; sửa xong quăng lại được', () => {
   let s = owned('go'); s = { ...s, orbs: { go: 0 } };
-  assert.equal(repairOrb(s, 5, 'go').reason, 'poor'); const r = repairOrb(s, 6, 'go'); assert.equal(r.ok, true); assert.equal(r.cost, 6); assert.equal(r.state.orbs.go, 20); assert.equal(s.orbs.go, 0);
-  assert.equal(repairOrb(r.state, 99, 'go').reason, 'intact'); assert.equal(repairOrb(s, 99, 'da').reason, 'notowned'); assert.equal(repairOrb(s, 99, 'q').reason, 'unknown');
+  assert.equal(repairOrb(s, { sen: 9 }, 'go').reason, 'poor'); assert.equal(repairOrb(s, 99, 'go').reason, 'poor', 'lá không trả được phí sửa cầu gỗ'); const r = repairOrb(s, { sen: 10 }, 'go'); assert.equal(r.ok, true); assert.equal(r.cost, 10); assert.equal(r.don, 'sen'); assert.equal(r.state.orbs.go, 20); assert.equal(s.orbs.go, 0);
+  assert.equal(repairOrb(r.state, { sen: 99 }, 'go').reason, 'intact'); assert.equal(repairOrb(s, 99, 'da').reason, 'notowned'); assert.equal(repairOrb(s, 99, 'q').reason, 'unknown');
   assert.equal(startCast(r.state, 'aosen', rngSeed(1)).ok, true);
 });
 
@@ -130,11 +131,12 @@ test('nhãn và tóm tắt ao', () => {
 test('đọc dữ liệu hỏng/sửa tay: rác → trống; cầu lạ bỏ, độ bền kẹp, cầu chọn phải đang có; ao lọc cá lạ/trùng uid, tối đa 30', () => {
   for (const bad of [null, undefined, 'rác{', '[]', 5, '{"orbs":"x"}']) assert.deepEqual(loadFish(bad), emptyFish());
   const l = loadFish({ orbs: { go: 999, da: -4, xx: 5, kim: 'abc' }, sel: 'da', pond: [{ uid: 5, sp: 'koi', lon: true }, { uid: 5, sp: 'chep' }, { uid: 6, sp: 'khongco' }, { uid: 'a', sp: 'chep' }, 7, null, { uid: 9, sp: 'baba', lon: 'yes' }], seq: 2, stat: { cast: -3, got: 4.9, rel: 'x' } });
-  assert.deepEqual(l.orbs, { go: 20, da: 0, kim: 0 }); assert.equal(l.sel, 'da'); assert.deepEqual(l.pond, [{ uid: 5, sp: 'koi', lon: true }, { uid: 9, sp: 'baba', lon: false }]); assert.equal(l.seq, 9, 'seq theo kịp uid lớn nhất'); assert.deepEqual(l.stat, { cast: 0, got: 4, rel: 0 });
+  assert.deepEqual(l.orbs, { go: 20, da: 0, kim: 0 }); assert.deepEqual(l.dex, {}); assert.equal(l.sel, 'da'); assert.deepEqual(l.pond, [{ uid: 5, sp: 'koi', lon: true }, { uid: 9, sp: 'baba', lon: false }]); assert.equal(l.seq, 9, 'seq theo kịp uid lớn nhất'); assert.deepEqual(l.stat, { cast: 0, got: 4, rel: 0 });
   assert.equal(loadFish({ orbs: { go: 5 }, sel: 'kim' }).sel, null);
   const many = loadFish({ pond: Array.from({ length: 80 }, (_, i) => ({ uid: i + 1, sp: 'chep' })) }); assert.equal(many.pond.length, POND_MAX);
   const round = loadFish(JSON.stringify(keepFish(owned('ngoc'), { sp: 'koi', lon: true }).state)); assert.equal(round.pond.length, 1); assert.equal(round.orbs.ngoc, 45); assert.equal(round.sel, 'ngoc');
-  assert.equal(orbById('go').gia, 30);
+  assert.equal(orbById('go').gia, 50);
+  const d = loadFish({ dex: { koi: 3, chep: -1, khongco: 9, rua: 'x' } }); assert.deepEqual(d.dex, { koi: 3 });
 });
 
 // ---- Phiên 45: lời nhắc chữ + giao diện js/ui/fishing.js
@@ -196,4 +198,12 @@ test('js/ui/fishing.js nối phím bấm ở giai đoạn capture và kiểm r�
   const src = fsx.readFileSync(new URL('../js/ui/fishing.js', import.meta.url), 'utf8');
   assert.match(src, /isTapKey\(e\)/); assert.match(src, /stopImmediatePropagation/); assert.match(src, /\}, true\);/);
   assert.match(src, /stillNearWater\(p\.x, p\.z, sess\.water\)/);
+});
+
+test('sổ sưu tầm: câu/giữ/phóng sinh được loài nào thì ghi loài đó', () => {
+  const s0 = emptyFish();
+  const a = keepFish(owned('go'), { sp: 'koi', lon: false }).state; assert.equal(a.dex.koi, 1);
+  const b = noteCaught(s0, { sp: 'chep' }); assert.equal(b.dex.chep, 1); assert.deepEqual(s0.dex, {});
+  assert.deepEqual(noteCaught(s0, { sp: 'khongco' }).dex, {}); assert.deepEqual(noteCaught(s0).dex, {});
+  const r = releaseCaught(b, { sp: 'chep', lon: false }); assert.equal(r.state.dex.chep, 2);
 });

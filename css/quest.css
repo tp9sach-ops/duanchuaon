@@ -18,3 +18,16 @@
 .qs-note{margin:10px 0 0;font:400 11px/1.4 var(--sans,inherit);color:#9aa0b0}
 @media (max-width:899px){.qs-box{top:max(64px,calc(env(safe-area-inset-top) + 56px))}.qs-pill .qs-bar{width:30px}}
 .qs-list li.locked{opacity:.4}
+/* Lộ trình (Phiên 57) */
+.qs-tabs{display:flex;gap:6px;margin:10px 0 4px}.qs-tab{flex:1;min-height:36px;border-radius:10px;border:1px solid rgba(217,178,95,.45);background:transparent;color:#f1dba0;font:600 13px var(--sans,inherit);cursor:pointer}.qs-tab.on{background:rgba(217,178,95,.22);color:#fff}
+.qs-list[hidden],.qs-jn[hidden]{display:none!important}
+.jn-tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px}.jn-tab{flex:none;min-height:34px;padding:0 10px;border-radius:999px;border:1px solid rgba(217,178,95,.4);background:transparent;color:#d6d9e4;font:500 12px var(--sans,inherit);cursor:pointer;white-space:nowrap}.jn-tab.on{background:#d9b25f;color:#1a1208;font-weight:600}
+.jn-sub,.jn-hint{margin:6px 0;font:400 12px/1.4 var(--sans,inherit);color:#9aa0b0}
+.jn-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}
+.jn-tile{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;min-height:96px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:#e8eaf2;font:400 11px/1.25 var(--sans,inherit);text-align:center;cursor:pointer}
+.jn-tile .jn-ic{font-size:26px;line-height:1.2;color:#9aa0b0}.jn-tile b{font-weight:600;font-size:12px;color:#fff}.jn-tile small{color:#aeb3c2;font-size:10.5px}
+.jn-tile.done{border-color:rgba(143,214,191,.6);background:rgba(143,214,191,.1)}.jn-tile.done .jn-ic{color:inherit}
+.jn-tile.soon{opacity:.5}.jn-tile.sel{outline:2px solid #d9b25f}
+.jn-det{margin-top:10px;padding:10px 12px;border-radius:12px;background:rgba(217,178,95,.1);border:1px solid rgba(217,178,95,.35);font:400 13px/1.4 var(--sans,inherit)}
+.jn-det h5{margin:0 0 2px;font:600 14px var(--sans,inherit);color:#f1dba0}.jn-st{margin:0 0 6px;font-size:12px;color:#8fd6bf}.jn-det ol{margin:0 0 8px;padding-left:18px}
+.jn-go{min-height:38px;padding:0 16px;border-radius:10px;border:0;background:#d9b25f;color:#1a1208;font:600 13px var(--sans,inherit);cursor:pointer}

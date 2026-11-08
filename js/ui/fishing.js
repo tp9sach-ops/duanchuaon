@@ -1,11 +1,11 @@
 // Câu cá bằng quả cầu gieo duyên (Phiên 45, việc 3b + 3d dạng chữ). Logic ở js/world/fishing.js (có test). Mọi chữ hiển thị đi qua textContent.
 // Bảng có 3 tab: "Thả cầu" (quăng → chờ → bấm đúng lúc hoa sen nở → Thu cá / Phóng sinh), "Quả cầu" (mua / chọn / sửa bằng lá bồ đề), "Ao cá" (cá đã thu, phóng sinh từng con).
 // Nút nổi "Câu cá" hiện khi người chơi đứng gần mặt nước câu được. Lưu localStorage['lgt.fish']. Cảnh 3D câu cá: js/scene/fishing.js (Phiên 48) đọc LGT.fishing.session.
-import { ORBS, orbById, repairCost, loadFish, buyOrb, selectOrb, repairOrb, currentOrb, startCast, tick, tap, isTapKey, stillNearWater, keepFish, releaseCaught, releaseFish, nearWater, waterById, fishLabel, pondSummary, speciesById, phaseText, outcomeText, orbBrief, POND_MAX } from '../world/fishing.js';
+import { ORBS, orbById, repairCost, orbCurrency, priceText, loadFish, buyOrb, selectOrb, repairOrb, currentOrb, startCast, tick, tap, isTapKey, stillNearWater, keepFish, releaseCaught, releaseFish, nearWater, waterById, fishLabel, pondSummary, speciesById, phaseText, outcomeText, orbBrief, POND_MAX } from '../world/fishing.js';
 
 const KEY = 'lgt.fish';
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
-const WHY = { poor: 'Chưa đủ lá bồ đề.', owned: 'Bạn đã có quả cầu này.', unknown: 'Quả cầu này không có.', notowned: 'Bạn chưa có quả cầu này.', intact: 'Quả cầu còn nguyên, chưa cần sửa.', full: `Ao cá đã đầy (${POND_MAX} con). Hãy phóng sinh bớt.` };
+const WHY = { poor: 'Chưa đủ tiền (hạt sen / lá bồ đề).', owned: 'Bạn đã có quả cầu này.', unknown: 'Quả cầu này không có.', notowned: 'Bạn chưa có quả cầu này.', intact: 'Quả cầu còn nguyên, chưa cần sửa.', full: `Ao cá đã đầy (${POND_MAX} con). Hãy phóng sinh bớt.` };
 
 /** opts: { toast(text, ms) }. Đặt LGT.fishing = { open(tab), close, get state, get session }. */
 export function initFishing(hud, { toast = () => {} } = {}) {
@@ -13,6 +13,9 @@ export function initFishing(hud, { toast = () => {} } = {}) {
   let st = loadFish(null); try { st = loadFish(localStorage.getItem(KEY)); } catch (_) { /* bỏ qua */ }
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (_) { /* chế độ riêng tư */ } };
   const leaves = () => (LGT.merit && LGT.merit.leaf ? LGT.merit.leaf.la : 0);
+  const sens = () => (LGT.getSen ? LGT.getSen() : 0);   // hạt sen (Phiên 57: Cầu Gỗ mua bằng hạt sen)
+  const bal = () => ({ la: leaves(), sen: sens() });
+  const pay = (o, n) => (orbCurrency(o) === 'sen' ? !!(LGT.spendSen && LGT.spendSen(n)) : !!(LGT.merit && LGT.merit.spendLa(n)));
   const pos = () => (LGT.world && LGT.world.pos) || null;
   const here = () => { const p = pos(); return p && !LGT.inHouse ? nearWater(p.x, p.z) : null; };
   let tab = 'cast', sess = null, caught = null, note = '', raf = 0, lastT = 0;   // sess = phiên câu đang chạy; caught = cá vừa câu chờ Thu/Phóng sinh
@@ -61,15 +64,15 @@ export function initFishing(hud, { toast = () => {} } = {}) {
   function rewardRelease(sen) { if (LGT.act) LGT.act('phongsinh'); if (LGT.merit && LGT.merit.reward) LGT.merit.reward('phongsinh', sen); }   // trần 10 lần/ngày; hết trần vẫn được thả, chỉ không cộng sen
 
   function buy(id) {
-    const o = orbById(id); if (!o) return; const r = buyOrb(st, leaves(), id); if (!r.ok) { toast(WHY[r.reason] || 'Không mua được.', 2800); return; }
-    if (!LGT.merit || !LGT.merit.spendLa(r.cost)) { toast(WHY.poor, 2800); return; }
-    st = r.state; changed(); toast(`Đã mua ${o.ten} (trừ ${r.cost} lá).`, 3000);
+    const o = orbById(id); if (!o) return; const r = buyOrb(st, bal(), id); if (!r.ok) { toast(WHY[r.reason] || 'Không mua được.', 2800); return; }
+    if (!pay(o, r.cost)) { toast(WHY.poor, 2800); return; }
+    st = r.state; changed(); toast(`Đã mua ${o.ten} (trừ ${priceText(r.cost, o)}).`, 3000);
   }
   function pick(id) { const r = selectOrb(st, id); if (r.ok) { st = r.state; changed(); } }
   function fix(id) {
-    const o = orbById(id); if (!o) return; const r = repairOrb(st, leaves(), id); if (!r.ok) { toast(WHY[r.reason] || 'Không sửa được.', 2800); return; }
-    if (!LGT.merit || !LGT.merit.spendLa(r.cost)) { toast(WHY.poor, 2800); return; }
-    st = r.state; changed(); toast(`Đã sửa ${o.ten} (trừ ${r.cost} lá).`, 3000);
+    const o = orbById(id); if (!o) return; const r = repairOrb(st, bal(), id); if (!r.ok) { toast(WHY[r.reason] || 'Không sửa được.', 2800); return; }
+    if (!pay(o, r.cost)) { toast(WHY.poor, 2800); return; }
+    st = r.state; changed(); toast(`Đã sửa ${o.ten} (trừ ${priceText(r.cost, o)}).`, 3000);
   }
   function freeFish(uid) {
     const r = releaseFish(st, uid); if (!r.ok) return;
@@ -95,17 +98,18 @@ export function initFishing(hud, { toast = () => {} } = {}) {
     }
     if (note) list.appendChild(el('p', 'fs-status', note));
     list.appendChild(el('p', 'fs-hint', w ? `Bạn đang đứng gần ${w.ten}. Bấm “Thả cầu” để bắt đầu.` : 'Hãy đi tới hồ cá, ao sen hoặc hồ thác (đứng sát mép nước) rồi mở lại bảng này.'));
+    if (!cur) { const g = orbById('go'), b = btn(`Mua ${g.ten} — ${priceText(g.gia, g)}`, () => buy('go'), 'fs-b buy'); b.disabled = sens() < g.gia; list.appendChild(b); }   // lối tắt: chưa có cầu thì mua ngay cầu gỗ
     const go = btn(cur && cur.cracked ? 'Cầu đã nứt — sửa ở tab Quả cầu' : 'Thả cầu', begin, 'fs-b buy'); go.disabled = !(w && cur && !cur.cracked); list.appendChild(go);
   }
   function drawOrbs() {
-    info.textContent = `Bạn có ${leaves()} lá bồ đề. Cầu càng tốt: càng bền, càng dễ gặp cá hiếm, hoa sen hiện càng lâu.`;
+    info.textContent = `Bạn có ${sens()} hạt sen và ${leaves()} lá bồ đề. Cầu gỗ mua bằng hạt sen; các cầu khác mua bằng lá. Cầu càng tốt: càng bền, càng dễ gặp cá hiếm, hoa sen hiện càng lâu.`;
     for (const o of ORBS) {
       const own = st.orbs[o.id] !== undefined, dur = st.orbs[o.id], row = el('div', 'fs-row'), t = el('div', 'fs-t');
       t.append(el('b', null, o.ten), el('span', null, ` ${orbBrief(o)}${own ? ` · còn ${dur}/${o.ben}` : ''}`));
       const c = el('div', 'fs-ctl');
-      if (!own) { const b = btn(`Mua ${o.gia} lá`, () => buy(o.id), 'fs-b buy'); b.disabled = leaves() < o.gia; c.appendChild(b); }
+      if (!own) { const b = btn(`Mua ${priceText(o.gia, o)}`, () => buy(o.id), 'fs-b buy'); b.disabled = (orbCurrency(o) === 'sen' ? sens() : leaves()) < o.gia; c.appendChild(b); }
       else {
-        if (dur <= 0) { const cost = repairCost(o), b = btn(`Sửa ${cost} lá`, () => fix(o.id), 'fs-b buy'); b.disabled = leaves() < cost; c.appendChild(b); }
+        if (dur <= 0) { const cost = repairCost(o), b = btn(`Sửa ${priceText(cost, o)}`, () => fix(o.id), 'fs-b buy'); b.disabled = (orbCurrency(o) === 'sen' ? sens() : leaves()) < cost; c.appendChild(b); }
         const sel = st.sel === o.id, b = btn(sel ? 'Đang dùng' : 'Chọn', () => pick(o.id), 'fs-b'); b.disabled = sel; c.appendChild(b);
       }
       row.append(t, c); list.appendChild(row);

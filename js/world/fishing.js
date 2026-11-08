@@ -9,17 +9,26 @@ import { POND } from './layout.js';
 import { KOI } from './landscape.js';
 import { THAC } from './outside.js';
 
-/** Năm loại quả cầu. gia = lá bồ đề; ben = số lần quăng trước khi nứt; may = hệ số nhân cơ hội gặp loài hiếm; cua = giây hoa sen hiện (0,5 giây ở loại đầu). */
+/** Năm loại quả cầu. gia = giá (đơn vị theo `don`: 'la' = lá bồ đề — mặc định; 'sen' = hạt sen. Phiên 57: Cầu Gỗ bán bằng 50 HẠT SEN = 5 lá); ben = số lần quăng trước khi nứt; may = hệ số nhân cơ hội gặp loài hiếm; cua = giây hoa sen hiện (0,5 giây ở loại đầu). */
 export const ORBS = [
-  { id: 'go', ten: 'Cầu Gỗ Bồ Đề', gia: 30, ben: 20, may: 1, cua: 0.5 },
-  { id: 'da', ten: 'Cầu Đá Suối', gia: 100, ben: 30, may: 1.4, cua: 0.6 },
-  { id: 'ngoc', ten: 'Cầu Ngọc Bích', gia: 250, ben: 45, may: 2, cua: 0.7 },
-  { id: 'luuly', ten: 'Cầu Lưu Ly', gia: 600, ben: 70, may: 3, cua: 0.8 },
-  { id: 'kim', ten: 'Cầu Kim Quang', gia: 1000, ben: 100, may: 4.5, cua: 0.9 },
+  { id: 'go', ten: 'Cầu Gỗ Bồ Đề', gia: 50, don: 'sen', ben: 20, may: 1, cua: 0.5 },
+  { id: 'da', ten: 'Cầu Đá Suối', gia: 100, don: 'la', ben: 30, may: 1.4, cua: 0.6 },
+  { id: 'ngoc', ten: 'Cầu Ngọc Bích', gia: 250, don: 'la', ben: 45, may: 2, cua: 0.7 },
+  { id: 'luuly', ten: 'Cầu Lưu Ly', gia: 600, don: 'la', ben: 70, may: 3, cua: 0.8 },
+  { id: 'kim', ten: 'Cầu Kim Quang', gia: 1000, don: 'la', ben: 100, may: 4.5, cua: 0.9 },
 ];
 export const orbById = (id) => ORBS.find((o) => o.id === id) || null;
-/** Lá bồ đề để sửa một quả cầu đã nứt (một phần năm giá, làm tròn lên). */
+/** Đơn vị tiền của quả cầu: 'sen' (hạt sen) hoặc 'la' (lá bồ đề). */
+export const orbCurrency = (orb) => (orb && orb.don === 'sen' ? 'sen' : 'la');
+/** Chi phí sửa một quả cầu đã nứt (một phần năm giá, làm tròn lên; cùng đơn vị với giá cầu). */
 export const repairCost = (orb) => Math.ceil(orb.gia / 5);
+/** Số tiền người chơi có theo đơn vị của quả cầu. `bal` = số (lá bồ đề — cách gọi cũ) hoặc { la, sen }. */
+export function balanceFor(orb, bal) {
+  if (bal && typeof bal === 'object') return int(orbCurrency(orb) === 'sen' ? bal.sen : bal.la, 0, 1e9);
+  return orbCurrency(orb) === 'sen' ? 0 : int(bal, 0, 1e9);
+}
+/** Chữ giá hiển thị: "50 hạt sen" / "100 lá". */
+export const priceText = (n, orb) => `${n} ${orbCurrency(orb) === 'sen' ? 'hạt sen' : 'lá'}`;
 
 /** Các loài: loai = ca | rua | baba | muc; hiem = loài hiếm; w = trọng số gặp (loài hiếm còn nhân với `may` của quả cầu). */
 export const SPECIES = [
@@ -78,7 +87,7 @@ const int = (x, lo, hi) => (Number.isFinite(+x) ? Math.max(lo, Math.min(hi, Math
 const isObj = (o) => o && typeof o === 'object' && !Array.isArray(o);
 
 /** Trạng thái trống. orbs: { idCầu: độ bền còn lại }; sel: cầu đang dùng; pond: [{ uid, sp, lon }]; seq: bộ đếm uid; stat: thống kê. */
-export const emptyFish = () => ({ v: 1, orbs: {}, sel: null, pond: [], seq: 0, stat: { cast: 0, got: 0, rel: 0 } });
+export const emptyFish = () => ({ v: 1, orbs: {}, sel: null, pond: [], seq: 0, stat: { cast: 0, got: 0, rel: 0 }, dex: {} });
 
 /** Đọc dữ liệu đã lưu (chuỗi JSON hoặc đối tượng). Dữ liệu hỏng/sửa tay → bỏ phần hỏng, không bao giờ ném lỗi. */
 export function loadFish(raw) {
@@ -97,19 +106,22 @@ export function loadFish(raw) {
       if (uid > s.seq) s.seq = uid;
     }
   }
+  if (isObj(o.dex)) for (const sp of SPECIES) if (Object.prototype.hasOwnProperty.call(o.dex, sp.id)) { const c = int(o.dex[sp.id], 0, 1e9); if (c > 0) s.dex[sp.id] = c; }   // sổ sưu tầm: loài đã từng câu được (Phiên 57)
   if (isObj(o.stat)) s.stat = { cast: int(o.stat.cast, 0, 1e9), got: int(o.stat.got, 0, 1e9), rel: int(o.stat.rel, 0, 1e9) };
   return s;
 }
 
-const clone = (st) => ({ ...st, orbs: { ...st.orbs }, pond: st.pond.slice(), stat: { ...st.stat } });
+const clone = (st) => ({ ...st, orbs: { ...st.orbs }, pond: st.pond.slice(), stat: { ...st.stat }, dex: { ...(st.dex || {}) } });
+/** Ghi vào sổ sưu tầm một con vừa câu được (loài lạ thì bỏ qua). */
+const noteDex = (n, fish) => { if (fish && speciesById(fish.sp)) n.dex[fish.sp] = int((n.dex[fish.sp] || 0) + 1, 0, 1e9); };
 
-/** Mua một quả cầu bằng `la` lá bồ đề đang có. Trả { ok, reason: ''|'unknown'|'owned'|'poor', cost, state }. Nơi gọi tự trừ lá (LGT.merit.spendLa(cost)) khi ok. Cầu mới đầy độ bền; cầu đầu tiên tự được chọn. */
-export function buyOrb(st, la, id) {
+/** Mua một quả cầu. `bal` = số lá bồ đề (cách cũ) hoặc { la, sen }. Trả { ok, reason: ''|'unknown'|'owned'|'poor', cost, don: 'la'|'sen', state }. Nơi gọi tự trừ đúng loại tiền (lá: LGT.merit.spendLa(cost); hạt sen: LGT.spendSen(cost)) khi ok. Cầu mới đầy độ bền; cầu đầu tiên tự được chọn. */
+export function buyOrb(st, bal, id) {
   const orb = orbById(id); if (!orb) return { ok: false, reason: 'unknown', cost: 0, state: st };
-  if (st.orbs[id] !== undefined) return { ok: false, reason: 'owned', cost: orb.gia, state: st };
-  if (int(la, 0, 1e9) < orb.gia) return { ok: false, reason: 'poor', cost: orb.gia, state: st };
+  if (st.orbs[id] !== undefined) return { ok: false, reason: 'owned', cost: orb.gia, don: orbCurrency(orb), state: st };
+  if (balanceFor(orb, bal) < orb.gia) return { ok: false, reason: 'poor', cost: orb.gia, don: orbCurrency(orb), state: st };
   const n = clone(st); n.orbs[id] = orb.ben; if (!n.sel) n.sel = id;
-  return { ok: true, reason: '', cost: orb.gia, state: n };
+  return { ok: true, reason: '', cost: orb.gia, don: orbCurrency(orb), state: n };
 }
 
 /** Chọn quả cầu đang dùng (phải đang có). */
@@ -118,14 +130,14 @@ export function selectOrb(st, id) {
   const n = clone(st); n.sel = id; return { ok: true, state: n };
 }
 
-/** Sửa quả cầu đã nứt (độ bền 0) bằng lá. Trả { ok, reason: ''|'unknown'|'notowned'|'intact'|'poor', cost, state }. Cầu còn nguyên thì không sửa (không có sửa nửa chừng). */
-export function repairOrb(st, la, id) {
+/** Sửa quả cầu đã nứt (độ bền 0) bằng đúng loại tiền của cầu (`bal` như buyOrb). Trả { ok, reason: ''|'unknown'|'notowned'|'intact'|'poor', cost, don, state }. Cầu còn nguyên thì không sửa (không có sửa nửa chừng). */
+export function repairOrb(st, bal, id) {
   const orb = orbById(id); if (!orb) return { ok: false, reason: 'unknown', cost: 0, state: st };
   if (st.orbs[id] === undefined) return { ok: false, reason: 'notowned', cost: 0, state: st };
   const cost = repairCost(orb);
-  if (st.orbs[id] > 0) return { ok: false, reason: 'intact', cost, state: st };
-  if (int(la, 0, 1e9) < cost) return { ok: false, reason: 'poor', cost, state: st };
-  const n = clone(st); n.orbs[id] = orb.ben; return { ok: true, reason: '', cost, state: n };
+  if (st.orbs[id] > 0) return { ok: false, reason: 'intact', cost, don: orbCurrency(orb), state: st };
+  if (balanceFor(orb, bal) < cost) return { ok: false, reason: 'poor', cost, don: orbCurrency(orb), state: st };
+  const n = clone(st); n.orbs[id] = orb.ben; return { ok: true, reason: '', cost, don: orbCurrency(orb), state: n };
 }
 
 /** Cầu đang dùng: { orb, dur (còn lại), cracked } hoặc null nếu chưa có cầu nào. */
@@ -196,12 +208,12 @@ export function keepFish(st, fish) {
   if (!fish || !speciesById(fish.sp)) return { ok: false, reason: 'unknown', state: st, uid: 0 };
   if (st.pond.length >= POND_MAX) return { ok: false, reason: 'full', state: st, uid: 0 };
   const n = clone(st), uid = int(n.seq + 1, 1, MAX_SEQ); n.seq = uid;
-  n.pond.push({ uid, sp: fish.sp, lon: fish.lon === true }); n.stat.got = int(n.stat.got + 1, 0, 1e9);
+  n.pond.push({ uid, sp: fish.sp, lon: fish.lon === true }); n.stat.got = int(n.stat.got + 1, 0, 1e9); noteDex(n, fish);
   return { ok: true, reason: '', state: n, uid };
 }
 
 /** Ghi nhận một con cá câu được mà phóng sinh ngay (không vào ao): chỉ tăng thống kê câu được. */
-export function noteCaught(st) { const n = clone(st); n.stat.got = int(n.stat.got + 1, 0, 1e9); return n; }
+export function noteCaught(st, fish) { const n = clone(st); n.stat.got = int(n.stat.got + 1, 0, 1e9); noteDex(n, fish); return n; }
 
 /** Hạt sen thưởng khi phóng sinh một con: 1, +1 nếu loài hiếm, +1 nếu cỡ lớn (1..3). Nơi gọi đưa vào LGT.merit.reward('phongsinh', n) (trần 10 lần/ngày). */
 export function releaseSen(fish) {
@@ -218,7 +230,7 @@ export function releaseFish(st, uid) {
 /** Phóng sinh con vừa câu (chưa vào ao): tăng thống kê thả. */
 export function releaseCaught(st, fish) {
   const sen = releaseSen(fish); if (!sen) return { ok: false, sen: 0, state: st };
-  const n = clone(st); n.stat.rel = int(n.stat.rel + 1, 0, 1e9); n.stat.got = int(n.stat.got + 1, 0, 1e9);
+  const n = clone(st); n.stat.rel = int(n.stat.rel + 1, 0, 1e9); n.stat.got = int(n.stat.got + 1, 0, 1e9); noteDex(n, fish);
   return { ok: true, sen, state: n };
 }
 

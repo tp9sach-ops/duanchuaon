@@ -109,6 +109,7 @@ export function initHudMenu(hud) {
     wallet = { ...wallet, sen: wallet.sen - n }; try { localStorage.setItem('lgt.wallet', JSON.stringify(wallet)); } catch (_) { /* bỏ qua */ }
     const b = root.querySelector('#hm-sen'); if (b) b.textContent = formatCount(wallet.sen); return true;
   };
+  LGT.spendSen = spendMerit;   // Phiên 57: quầy cầu gỗ trừ hạt sen
   const practice = initPractice(hud, { toast, addMerit });
   const den = initDen(hud, { toast, addMerit });
   initNpc({ toast, addMerit });

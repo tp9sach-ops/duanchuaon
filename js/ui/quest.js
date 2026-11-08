@@ -4,6 +4,7 @@
 import { loadProg, record, questStatus, levelOf, levelReward, QUESTS } from '../world/quests.js';
 import { placesAt } from '../world/outside.js';
 import { storyRows } from '../world/story.js';
+import { initJourney } from './journey.js';
 
 const KEY = 'lgt.prog';
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -28,9 +29,13 @@ export function initQuest(hud, { toast = () => {}, addMerit = () => {}, pillHost
 
   // ---- bảng nhiệm vụ
   const box = document.createElement('section'); box.className = 'qs-box'; box.hidden = true; box.setAttribute('role', 'dialog'); box.setAttribute('aria-label', 'Nhiệm vụ');
-  box.innerHTML = '<header><h3>Nhiệm vụ</h3><button type="button" class="qs-x" aria-label="Đóng">×</button></header><div class="qs-lvbox"></div><div class="qs-list"></div><p class="qs-note">Hoàn thành nhiệm vụ để nhận điểm công hạnh, hạt sen và lên cấp. Số điểm là giá trị tạm của bản thử.</p>';
+  box.innerHTML = '<header><h3>Nhiệm vụ</h3><button type="button" class="qs-x" aria-label="Đóng">×</button></header><div class="qs-lvbox"></div><div class="qs-tabs"><button type="button" class="qs-tab on" data-t="q">Nhiệm vụ</button><button type="button" class="qs-tab" data-t="j">Lộ trình</button></div><div class="qs-list"></div><div class="qs-jn" hidden></div><p class="qs-note">Hoàn thành nhiệm vụ để nhận điểm công hạnh, hạt sen và lên cấp. Số điểm là giá trị tạm của bản thử.</p>';
   hud.appendChild(box);
-  const lvBox = box.querySelector('.qs-lvbox'), list = box.querySelector('.qs-list');
+  const lvBox = box.querySelector('.qs-lvbox'), list = box.querySelector('.qs-list'), jbox = box.querySelector('.qs-jn');
+  let tab = 'q';   // Phiên 57: tab “Nhiệm vụ” | “Lộ trình” (ô hình + dấu ?)
+  const journey = initJourney(jbox, { close: () => { box.hidden = true; } });
+  const setTab = (t) => { tab = t; list.hidden = t !== 'q'; jbox.hidden = t !== 'j'; for (const b of box.querySelectorAll('.qs-tab')) b.classList.toggle('on', b.dataset.t === t); if (t === 'j') journey.draw(); };
+  for (const b of box.querySelectorAll('.qs-tab')) b.addEventListener('click', () => setTab(b.dataset.t));
   /** Nhóm "Cốt truyện" (Phiên 34): các bước chương 1 từ js/world/story.js; bước chưa tới thì mờ, bước đang làm có nút Dẫn đường. */
   function storyGroup() {
     const st = window.LGT && window.LGT.story && window.LGT.story.state; if (!st) return '';
@@ -47,6 +52,7 @@ export function initQuest(hud, { toast = () => {}, addMerit = () => {}, pillHost
       const rows = st.filter((r) => r.q.loai === loai).map((r) => `<li class="${r.done ? 'done' : ''}"><div><b>${esc(r.q.ten)}</b><small>${esc(r.q.mo)}</small></div><div class="qs-r"><i class="qs-bar"><i style="width:${Math.round(r.cur / r.need * 100)}%"></i></i><span>${r.done ? '✓ xong' : `${r.cur}/${r.need}`}</span><em>+${r.q.xp} điểm · +${r.q.sen} sen</em>${r.done ? '' : `<button type="button" class="qs-guide" data-q="${esc(r.q.id)}">Dẫn đường</button>`}</div></li>`).join('');
       return `<h4>${title}</h4><ul>${rows}</ul>`;
     };
+    if (tab === 'j') journey.draw();
     list.innerHTML = storyGroup() + group('ngay', 'Hằng ngày (làm lại mỗi ngày)') + group('mot', 'Hành trình');
   }
   const open = () => { drawBox(); box.hidden = false; box.querySelector('.qs-x').focus({ preventScroll: true }); };

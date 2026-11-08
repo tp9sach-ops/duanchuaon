@@ -59,6 +59,7 @@ Cách dùng: làm mục [ ] đầu tiên, xong báo ptg, CHỜ "tiếp tục". L
 - Tài khoản nhân vật (Phiên 53–55): lỗi `blocked` ở màn đặt mật khẩu đang chờ Gp thử đường dự phòng form+khung (docs/PHIEN55.md). `npm test` 647/647.
 
 - Câu cá (Phiên 56): thêm phím Cách/Enter để bấm + thu cầu khi rời mặt nước (docs/PHIEN56.md). Đang chờ ptg quyết: tặng cầu gỗ cho người mới? thêm Suối Trong? `npm test` 650/650.
+- Phiên 57: Cầu Gỗ bán 50 hạt sen (cầu khác vẫn bằng lá), quầy cầu hiển thị cả hai loại tiền, sổ sưu tầm loài cá; bảng Nhiệm vụ có tab "Lộ trình" (4 trang ô hình + dấu ?: Khinh công / Khám phá / Gieo duyên / Đất-Nhà-Tiệc; "Mời tiệc" = sắp có). docs/PHIEN57.md. `npm test` 657/657.
 
 ## Việc của ptg
 - Tải bản Phiên 46 lên GitHub (nếu chưa), mở trang thật và thử: nút "Câu cá" cụm phải-trên, nút nổi "Câu cá" khi đứng sát nước, mua cầu, thả, bấm khi hoa sen nở, thu cá, phóng sinh.
