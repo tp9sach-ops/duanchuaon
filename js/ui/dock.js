@@ -3,7 +3,7 @@
 import { dockButtons, pickHint, loadSeen } from '../world/dock.js';
 
 const KEY = 'lgt.dockhint';
-const ICON = { tap: '🪷', cast: '🎣', thu: '🧺', phong: '🕊️', nhay: '⬆️', kynang: '✦', tui: '🎒', khieng: '💪', nem: '🎯', ha: '⬇️', da: '🪨', thuong: '🔱', nemyq: '🤼' };
+const ICON = { tap: '🪷', cast: '🎣', thu: '🧺', phong: '🕊️', nhay: '⬆️', kynang: '✦', tui: '🎒', khieng: '💪', nem: '🎯', ha: '⬇️', da: '🪨', thuong: '🔱', nemyq: '🤼', nemnguoi: '🙌' };
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
 
 /** hud: phần tử HUD. opts: { toast }. Đặt LGT.dock = { refresh, get ids }. */
@@ -19,7 +19,7 @@ export function initDock(hud, { toast = () => {} } = {}) {
   const ACT = {
     tap: () => LGT.fishing && LGT.fishing.tap(), cast: () => LGT.fishing && LGT.fishing.cast(), thu: () => LGT.fishing && LGT.fishing.keep(), phong: () => LGT.fishing && LGT.fishing.release(),
     khieng: () => LGT.carry && LGT.carry.pickup(), nem: () => LGT.carry && LGT.carry.throw(), ha: () => LGT.carry && LGT.carry.drop(),
-    da: () => LGT.yq && LGT.yq.stone(), thuong: () => LGT.yq && LGT.yq.spear(), nemyq: () => LGT.yq && LGT.yq.throwBoss(),
+    da: () => LGT.yq && LGT.yq.stone(), thuong: () => LGT.yq && LGT.yq.spear(), nemyq: () => LGT.yq && LGT.yq.throwBoss(), nemnguoi: () => LGT.throwP && LGT.throwP.throw(),
     nhay: () => (LGT.skill && LGT.skill.level > 0 ? LGT.skill.jump() : toast('Khinh thân chưa mở. Gặp Thầy trụ trì và làm nhiệm vụ tưới cây bồ đề để mở bậc 1, rồi bạn sẽ nhảy được.', 5200)), kynang: () => LGT.skill && LGT.skill.open(),
     tui: () => (LGT.inHouse && LGT.furni ? LGT.furni.openBag() : LGT.bag ? LGT.bag.open() : toast('Túi đồ chưa sẵn sàng.', 2500)),
   };
@@ -41,7 +41,8 @@ export function initDock(hud, { toast = () => {} } = {}) {
     const W = LGT.world, fs = LGT.fishing ? LGT.fishing.status() : { phase: 'idle' };
     const cs = LGT.carry ? LGT.carry.status() : null;
     const ys = LGT.yq ? LGT.yq.status() : null;
-    const c = { yq: ys ? { active: ys.active, ten: ys.ten, canThrow: ys.canThrow, stoneCd: ys.stoneCd, spearCd: ys.spearCd } : null, carry: cs ? { holding: cs.holding, heldName: cs.heldName, near: cs.near } : null, free: !!W && W.mode === 'free' && !LGT.panelOpen && !document.querySelector('.st-dlg:not([hidden])'), khinh: LGT.skill ? LGT.skill.level : 0, canTrain: !!(LGT.skill && LGT.skill.canTrain), water: !!fs.water && !LGT.inHouse, fish: fs };
+    const ps = LGT.throwP ? LGT.throwP.status() : null;
+    const c = { ply: ps ? { near: ps.near } : null, yq: ys ? { active: ys.active, ten: ys.ten, canThrow: ys.canThrow, stoneCd: ys.stoneCd, spearCd: ys.spearCd } : null, carry: cs ? { holding: cs.holding, heldName: cs.heldName, near: cs.near } : null, free: !!W && W.mode === 'free' && !LGT.panelOpen && !document.querySelector('.st-dlg:not([hidden])'), khinh: LGT.skill ? LGT.skill.level : 0, canTrain: !!(LGT.skill && LGT.skill.canTrain), water: !!fs.water && !LGT.inHouse, fish: fs };
     const list = dockButtons(c), next = list.map((b) => b.id).join(',');
     root.hidden = !list.length;
     if (next !== sig) {   // bộ nút đổi → dựng lại các nút còn thiếu / bỏ nút thừa

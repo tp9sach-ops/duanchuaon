@@ -16,13 +16,14 @@ export const HINTS = {
   nhay: 'Bấm “Nhảy” để bay lên (Khinh thân).',
   kynang: 'Bạn đủ điều kiện luyện bậc kế — bấm vào đây.',
   tui: 'Túi đồ: xem bạn đang có những gì.',
+  nemnguoi: 'Có người ở gần — bấm “Ném người” để nhấc họ lên ném (chỉ ném được người cấp và sức mạnh nhỏ hơn bạn; không ném trong chùa).',
   khieng: 'Có vật khiêng được ngay đây — bấm “Khiêng”. Vật nặng cần sức mạnh cao hơn.',
   nem: 'Bấm “Ném” để ném vật ra phía trước mặt.',
   da: 'Bấm “Ném đá” khi yêu quái còn xa. Khi nó gồng (vùng đỏ trên đất), chạy ra ngoài vùng đỏ!',
   thuong: 'Lại gần yêu quái rồi bấm “Thương” để đâm — mạnh hơn ném đá.',
   nemyq: 'Bạn đủ mạnh để nhấc cả yêu quái lên ném!',
 };
-const HINT_ORDER = ['tap', 'da', 'thuong', 'nemyq', 'cast', 'thu', 'nem', 'khieng', 'nhay', 'kynang', 'tui'];
+const HINT_ORDER = ['tap', 'da', 'thuong', 'nemyq', 'cast', 'thu', 'nem', 'khieng', 'nemnguoi', 'nhay', 'kynang', 'tui'];
 
 /**
  * Các nút cần hiện, xếp từ DƯỚI lên (nút đầu = gần ngón cái nhất).
@@ -37,6 +38,8 @@ export function dockButtons(c = {}) {
   const cr = isObj(k.carry) ? k.carry : {};
   if (cr.holding) return [{ id: 'nem', label: 'Ném', big: true, say: cr.heldName ? `Đang khiêng: ${cr.heldName}` : '' }, { id: 'ha', label: 'Đặt xuống' }];   // tay đang khiêng vật: chỉ Ném / Đặt xuống
   if (cr.near) out.push({ id: 'khieng', label: 'Khiêng', big: true, say: `Gần: ${cr.near}` });
+  const pl = isObj(k.ply) ? k.ply : {};
+  if (pl.near && !(isObj(k.yq) && k.yq.active)) out.push({ id: 'nemnguoi', label: 'Ném người', say: `Gần: ${pl.near}` });
   const yq = isObj(k.yq) ? k.yq : {};
   if (yq.active) { out.push({ id: 'da', label: 'Ném đá', big: true, wait: +yq.stoneCd > 0, say: yq.ten ? `${yq.ten} đang ở làng!` : '' }, { id: 'thuong', label: 'Thương', wait: +yq.spearCd > 0 }); if (yq.canThrow) out.push({ id: 'nemyq', label: 'Ném yêu quái' }); }
   if (k.water && !yq.active) out.push({ id: 'cast', label: f.cracked ? 'Sửa cầu' : f.hasOrb ? 'Thả cầu' : 'Mua cầu', big: true, say: f.text ? String(f.text) : '' });

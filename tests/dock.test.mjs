@@ -84,3 +84,12 @@ test('đang đánh yêu quái: chỉ còn Ném đá/Thương/(Ném yêu quái)/N
   const c = dockButtons({ free: true, khinh: 0, yq: { active: true, stoneCd: 0, spearCd: 0 } }).map((x) => x.id);
   assert.deepEqual(c, ['da', 'thuong'], 'chưa mở Khinh thân: không hiện Nhảy mờ khi đang đánh');
 });
+
+test('có người chơi khác ở gần → nút Ném người (sau Khiêng, ẩn khi đánh yêu quái/đang khiêng)', () => {
+  const ids = (c) => dockButtons({ free: true, khinh: 1, ...c }).map((x) => x.id);
+  assert.ok(ids({ ply: { near: 'An' } }).includes('nemnguoi'));
+  assert.ok(!ids({ ply: { near: '' } }).includes('nemnguoi'));
+  assert.ok(!ids({ ply: { near: 'An' }, yq: { active: true } }).includes('nemnguoi'));
+  assert.ok(!ids({ ply: { near: 'An' }, carry: { holding: true } }).includes('nemnguoi'));
+  const b = dockButtons({ free: true, khinh: 1, ply: { near: 'An' } }); assert.equal(b.find((x) => x.id === 'nemnguoi').say, 'Gần: An');
+});

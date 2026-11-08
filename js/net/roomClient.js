@@ -18,7 +18,7 @@ export function createRoomClient(deps) {
   const schedule = deps.schedule || ((fn, ms) => setTimeout(fn, ms)), cancel = deps.cancel || ((h) => clearTimeout(h));
   const remotes = createRemotes(), views = new Map();       // id → { av, key }
   let cursor = 0, first = true, pendingSay = '', timer = null, running = false, active = true, fails = 0, busy = false, lastCount = 1, hiddenMs = 9000;
-  const API = {};
+  const API = { pageId };
 
   function viewFor(p) {
     const key = p.n + '|' + p.c + '|' + p.h; let v = views.get(p.id);
@@ -76,6 +76,8 @@ export function createRoomClient(deps) {
   API.stop = () => { running = false; if (timer != null) cancel(timer); timer = null; for (const v of views.values()) { scene.remove(v.av.group); v.av.dispose(); } views.clear(); };
   /** Tab ẩn thì thưa hẳn đi để đỡ tốn lượt gọi Apps Script. */
   API.setActive = (a) => { active = !!a; };
+  /** Danh sách người khác đang thấy trong cảnh: [{id,n,x,z}] (vị trí đã nội suy). */
+  API.players = () => [...views].map(([id, v]) => ({ id, n: v.name, x: v.av.group.position.x, z: v.av.group.position.z }));
   Object.defineProperty(API, 'count', { get: () => lastCount });
   Object.defineProperty(API, 'remoteCount', { get: () => views.size });
   return API;
