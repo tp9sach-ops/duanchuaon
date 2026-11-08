@@ -4,6 +4,7 @@
 import { loadStory, apply, dialogueFor, objective, canWater, nearTree, WATER_SPOT, STORY_QUESTS } from '../world/story.js';
 import { npcById } from '../world/npc.js';
 import { nextGoal } from '../world/nextGoal.js';
+import { shouldPulse, pulseUntil, readUsed, USED_KEY, PULSE_MS } from '../world/goPulse.js';
 
 const KEY = 'lgt.story';
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
@@ -21,6 +22,8 @@ export function initStory(hud, { toast = () => {}, addMerit = () => {} } = {}) {
   const goBtn = el('button', 'st-btn st-go', 'Dẫn đường'), waterBtn = el('button', 'st-btn st-water', 'Tưới cây'); goBtn.type = 'button'; waterBtn.type = 'button';
   waterBtn.dataset.id = 'tuoicay'; waterBtn.hidden = true; act.append(goBtn, waterBtn); wrap.append(obj, act); hud.appendChild(wrap);
   let expanded = true, goal = null, goalKey = '', goalId = '', collapseTimer = 0;
+  // Phiên 68: nút "Dẫn đường" nhấp nháy khi có việc mới (PULSE_MS) và cho người mới tới khi bấm lần đầu (js/world/goPulse.js)
+  let pulseEnd = 0, pulseTimer = 0, used = false; try { used = readUsed(localStorage.getItem(USED_KEY)); } catch (_) { /* bỏ qua */ }
   // Phiên 43: thẻ này luôn hiện MỘT việc kế tiếp (cốt truyện → hành trình/hằng ngày → tự do), xem js/world/nextGoal.js. Việc mới hiện thì thẻ mở sẵn ~15 giây và có thông báo.
   const stateNow = () => ({ story, prog: LGT.quests && LGT.quests.prog, sen: LGT.getSen ? LGT.getSen() : 0, la: LGT.merit && LGT.merit.leaf ? LGT.merit.leaf.la : 0, own: LGT.land && LGT.land.state ? LGT.land.state.own : null, orbs: LGT.fishing && LGT.fishing.state ? Object.keys(LGT.fishing.state.orbs || {}).length : 0 });
   function drawObj() {
@@ -32,6 +35,7 @@ export function initStory(hud, { toast = () => {}, addMerit = () => {} } = {}) {
     objP.textContent = goal.need > 1 ? (timed ? `${fmt(goal.cur)} / ${fmt(goal.need)}` : `${goal.cur}/${goal.need}${goal.unit ? ' ' + goal.unit : ''}`) : '';
     objP.hidden = !(goal.need > 1); obj.classList.toggle('open', expanded);
     goBtn.hidden = !(goal.guide || goal.go); goBtn.textContent = goal.guide || (goal.go && (goal.go.npc || goal.go.place)) ? 'Dẫn đường' : 'Chỉ nút';
+    goBtn.classList.toggle('gd-hl', shouldPulse({ hasButton: !goBtn.hidden, kind: goal.kind, until: pulseEnd, used, now: Date.now() }));
   }
   /** Tính lại việc kế tiếp; chỉ vẽ lại khi có gì đổi. Việc đổi sang việc khác → mở thẻ, nhấp nháy, báo "Việc tiếp theo". */
   function refresh(first = false) {
@@ -39,7 +43,7 @@ export function initStory(hud, { toast = () => {}, addMerit = () => {} } = {}) {
     const changed = g.id !== goalId; goalKey = key;
     if (changed) {
       const had = !!goalId; goalId = g.id; expanded = true; clearTimeout(collapseTimer); collapseTimer = setTimeout(() => { expanded = false; drawObj(); }, 15000);
-      if (had && !first) { obj.classList.remove('new'); void obj.offsetWidth; obj.classList.add('new'); setTimeout(() => toast(`Việc tiếp theo: ${g.title}. ${g.kind === 'free' ? '' : 'Bấm “Dẫn đường” để được chỉ đường.'}`, 6000), 3800); }
+      if (had && !first) { pulseEnd = pulseUntil(); clearTimeout(pulseTimer); pulseTimer = setTimeout(drawObj, PULSE_MS + 50); obj.classList.remove('new'); void obj.offsetWidth; obj.classList.add('new'); setTimeout(() => toast(`Việc tiếp theo: ${g.title}. ${g.kind === 'free' ? '' : 'Bấm “Dẫn đường” để được chỉ đường.'}`, 6000), 3800); }
     }
     drawObj();
   }
@@ -51,6 +55,8 @@ export function initStory(hud, { toast = () => {}, addMerit = () => {} } = {}) {
     waterBtn.hidden = !w; if (w) waterBtn.textContent = watering ? 'Đang tưới…' : nearNow() ? 'Tưới cây' : 'Đi tới cây';
   }
   goBtn.addEventListener('click', () => {
+    if (!used) { used = true; try { localStorage.setItem(USED_KEY, '1'); } catch (_) { /* chế độ riêng tư */ } }
+    pulseEnd = 0; clearTimeout(pulseTimer); goBtn.classList.remove('gd-hl');
     const g = goal || nextGoal(stateNow());
     if (g.guide) { if (LGT.guide) LGT.guide.start(g.guide); else toast('Chưa dẫn đường được lúc này.', 2500); }
     else if (g.go && LGT.tutorial && LGT.tutorial.goTo) LGT.tutorial.goTo(g.go);
