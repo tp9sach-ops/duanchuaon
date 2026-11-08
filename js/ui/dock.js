@@ -3,7 +3,7 @@
 import { dockButtons, pickHint, loadSeen } from '../world/dock.js';
 
 const KEY = 'lgt.dockhint';
-const ICON = { tap: '🪷', cast: '🎣', thu: '🧺', phong: '🕊️', nhay: '⬆️', kynang: '✦', tui: '🎒', khieng: '💪', nem: '🎯', ha: '⬇️' };
+const ICON = { tap: '🪷', cast: '🎣', thu: '🧺', phong: '🕊️', nhay: '⬆️', kynang: '✦', tui: '🎒', khieng: '💪', nem: '🎯', ha: '⬇️', da: '🪨', thuong: '🔱', nemyq: '🤼' };
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
 
 /** hud: phần tử HUD. opts: { toast }. Đặt LGT.dock = { refresh, get ids }. */
@@ -19,10 +19,11 @@ export function initDock(hud, { toast = () => {} } = {}) {
   const ACT = {
     tap: () => LGT.fishing && LGT.fishing.tap(), cast: () => LGT.fishing && LGT.fishing.cast(), thu: () => LGT.fishing && LGT.fishing.keep(), phong: () => LGT.fishing && LGT.fishing.release(),
     khieng: () => LGT.carry && LGT.carry.pickup(), nem: () => LGT.carry && LGT.carry.throw(), ha: () => LGT.carry && LGT.carry.drop(),
-    nhay: () => LGT.skill && LGT.skill.jump(), kynang: () => LGT.skill && LGT.skill.open(),
+    da: () => LGT.yq && LGT.yq.stone(), thuong: () => LGT.yq && LGT.yq.spear(), nemyq: () => LGT.yq && LGT.yq.throwBoss(),
+    nhay: () => (LGT.skill && LGT.skill.level > 0 ? LGT.skill.jump() : toast('Khinh thân chưa mở. Gặp Thầy trụ trì và làm nhiệm vụ tưới cây bồ đề để mở bậc 1, rồi bạn sẽ nhảy được.', 5200)), kynang: () => LGT.skill && LGT.skill.open(),
     tui: () => (LGT.inHouse && LGT.furni ? LGT.furni.openBag() : LGT.bag ? LGT.bag.open() : toast('Túi đồ chưa sẵn sàng.', 2500)),
   };
-  const FAST = new Set(['tap', 'nhay']);   // phản xạ nhanh: bấm xuống là chạy
+  const FAST = new Set(['tap', 'nhay', 'da', 'thuong']);   // phản xạ nhanh: bấm xuống là chạy
   function press(id) {
     if (!seen.includes(id)) { seen.push(id); saveSeen(); }   // bấm rồi thì không nhắc chỗ này nữa
     try { const f = ACT[id]; if (f) f(); } catch (_) { /* nút không làm sập game */ }
@@ -39,7 +40,8 @@ export function initDock(hud, { toast = () => {} } = {}) {
   function refresh() {
     const W = LGT.world, fs = LGT.fishing ? LGT.fishing.status() : { phase: 'idle' };
     const cs = LGT.carry ? LGT.carry.status() : null;
-    const c = { carry: cs ? { holding: cs.holding, heldName: cs.heldName, near: cs.near } : null, free: !!W && W.mode === 'free' && !LGT.panelOpen && !document.querySelector('.st-dlg:not([hidden])'), khinh: LGT.skill ? LGT.skill.level : 0, canTrain: !!(LGT.skill && LGT.skill.canTrain), water: !!fs.water && !LGT.inHouse, fish: fs };
+    const ys = LGT.yq ? LGT.yq.status() : null;
+    const c = { yq: ys ? { active: ys.active, ten: ys.ten, canThrow: ys.canThrow } : null, carry: cs ? { holding: cs.holding, heldName: cs.heldName, near: cs.near } : null, free: !!W && W.mode === 'free' && !LGT.panelOpen && !document.querySelector('.st-dlg:not([hidden])'), khinh: LGT.skill ? LGT.skill.level : 0, canTrain: !!(LGT.skill && LGT.skill.canTrain), water: !!fs.water && !LGT.inHouse, fish: fs };
     const list = dockButtons(c), next = list.map((b) => b.id).join(',');
     root.hidden = !list.length;
     if (next !== sig) {   // bộ nút đổi → dựng lại các nút còn thiếu / bỏ nút thừa
@@ -49,13 +51,23 @@ export function initDock(hud, { toast = () => {} } = {}) {
     }
     const hint = pickHint(list, seen);
     for (const b of list) {
-      const it = items.get(b.id); it.btn.classList.toggle('big', !!b.big); it.btn.classList.toggle('hot', !!b.hot);
+      const it = items.get(b.id); it.btn.classList.toggle('big', !!b.big); it.btn.classList.toggle('hot', !!b.hot); it.btn.classList.toggle('lock', !!b.locked);
       const tx = it.btn.querySelector('.dk-tx'); if (tx.textContent !== b.label) tx.textContent = b.label;
       it.say.hidden = !b.say; if (b.say && it.say.textContent !== b.say) it.say.textContent = b.say;
       const h = hint && hint.id === b.id; it.hint.hidden = !h; it.btn.classList.toggle('ping', !!h); if (h && it.hint.textContent !== hint.text) it.hint.textContent = hint.text;
     }
   }
-  setInterval(refresh, 120); refresh();
+  // Tự co lại để KHÔNG đè lên cột menu dọc bên phải (điện thoại): thử 1 cột → 2 cột → 2 cột nút nhỏ, lấy cách đầu tiên vừa chỗ
+  function fit() {
+    root.classList.remove('wrap', 'small'); if (root.hidden) return;
+    const bar = hud.querySelector('.hm-bar'); if (!bar) return; const br = bar.getBoundingClientRect();
+    if (!br.width || br.width > 90 || br.right < innerWidth * 0.6) return;   // chỉ khi menu là cột dọc sát mép phải
+    const rr = root.getBoundingClientRect(), room = rr.bottom - br.bottom - 8;
+    for (const cls of [[], ['wrap'], ['wrap', 'small']]) { root.classList.remove('wrap', 'small'); for (const c of cls) root.classList.add(c); if (root.getBoundingClientRect().height <= room) return; }
+  }
+  let fitSig = ''; const fitNow = () => { const s = sig + '|' + innerWidth + 'x' + innerHeight + '|' + (items.get('da') ? 1 : 0); if (s !== fitSig) { fitSig = s; fit(); } };
+  setInterval(() => { refresh(); fitNow(); }, 120); refresh();
+  addEventListener('resize', () => { fitSig = ''; fitNow(); });
   LGT.dock = { refresh, get ids() { return sig; } };
   return LGT.dock;
 }

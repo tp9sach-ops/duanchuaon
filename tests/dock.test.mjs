@@ -7,8 +7,8 @@ import { dockButtons, pickHint, loadSeen, bagSections, HINTS } from '../js/world
 const ids = (c) => dockButtons(c).map((b) => b.id);
 const read = (p) => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
 
-test('nút theo hoàn cảnh: người mới chỉ có Túi đồ; mở khinh thân có Nhảy + Kỹ năng', () => {
-  assert.deepEqual(ids({ free: true }), ['tui']);
+test('nút theo hoàn cảnh: người mới có Nhảy mờ + Túi đồ; mở khinh thân có thêm Kỹ năng', () => {
+  assert.deepEqual(ids({ free: true }), ['nhay', 'tui'], 'chưa mở Khinh thân: nút Nhảy vẫn hiện (mờ) để người mới biết chỗ'); assert.equal(dockButtons({ free: true })[0].locked, true); assert.equal(dockButtons({ free: true, khinh: 1 })[0].locked, undefined);
   assert.deepEqual(ids({ free: true, khinh: 1 }), ['nhay', 'kynang', 'tui']);
   assert.equal(dockButtons({ free: true, khinh: 1 })[0].big, true, 'không có nước → Nhảy là nút to');
   assert.equal(dockButtons({ free: true, khinh: 2, canTrain: true }).find((b) => b.id === 'kynang').hot, true);
@@ -22,7 +22,7 @@ test('câu cá: sát nước → Thả cầu / Mua cầu / Sửa cầu; đang c�
   const t = w({ phase: 'wait', text: 'Chờ' }); assert.deepEqual(t.map((b) => b.id), ['tap']); assert.equal(t[0].hot, false); assert.equal(t[0].say, 'Chờ');
   assert.equal(w({ phase: 'lotus' })[0].hot, true);
   assert.deepEqual(w({ phase: 'caught', text: 'Được cá' }).map((b) => b.id), ['thu', 'phong']);
-  assert.deepEqual(ids({ free: true, water: false, fish: { phase: 'idle' } }), ['tui'], 'xa nước → không có nút thả cầu');
+  assert.deepEqual(ids({ free: true, water: false, fish: { phase: 'idle' } }), ['nhay', 'tui'], 'xa nước → không có nút thả cầu');
 });
 test('lời chỉ chỗ bấm: mỗi nút một lần, đúng thứ tự ưu tiên, Kỹ năng chỉ khi đủ điều kiện', () => {
   const b = dockButtons({ free: true, khinh: 1, water: true, fish: { phase: 'idle', hasOrb: true } });
@@ -54,9 +54,25 @@ test('nối dây: dock + bag trong hudMenu, câu cá chạy khi bảng đóng, n
 });
 
 test('khiêng: gần vật → nút Khiêng; đang khiêng → chỉ Ném + Đặt xuống', () => {
-  assert.deepEqual(ids({ free: true, carry: { near: 'Bao gạo' } }), ['khieng', 'tui']);
+  assert.deepEqual(ids({ free: true, carry: { near: 'Bao gạo' } }), ['khieng', 'nhay', 'tui']);
   assert.deepEqual(ids({ free: true, khinh: 2, carry: { holding: true, heldName: 'Thùng gỗ' } }), ['nem', 'ha']); assert.equal(dockButtons({ free: true, carry: { holding: true, heldName: 'Thùng gỗ' } })[0].say, 'Đang khiêng: Thùng gỗ');
   assert.deepEqual(ids({ free: false, carry: { holding: true } }), []);
   assert.equal(pickHint(dockButtons({ free: true, carry: { holding: true } }), []).id, 'nem');
   assert.equal(pickHint(dockButtons({ free: true, carry: { near: 'x' } }), ['tui']).id, 'khieng');
+});
+
+test('yêu quái: có yêu quái → Ném đá + Thương (+ Ném yêu quái nếu đủ mạnh), bỏ nút thả cầu; hint đúng thứ tự', () => {
+  const b = (yq, extra = {}) => dockButtons({ free: true, khinh: 1, water: true, fish: { phase: 'idle', hasOrb: true }, yq, ...extra });
+  assert.deepEqual(b({ active: true, ten: 'Yêu Đá', canThrow: false }).map((x) => x.id), ['da', 'thuong', 'nhay', 'kynang', 'tui']);
+  assert.deepEqual(b({ active: true, canThrow: true }).map((x) => x.id), ['da', 'thuong', 'nemyq', 'nhay', 'kynang', 'tui']);
+  assert.equal(b({ active: true, ten: 'Yêu Đá' })[0].say, 'Yêu Đá đang ở làng!'); assert.ok(!b({ active: true }).some((x) => x.id === 'cast'));
+  assert.ok(b({ active: false }).some((x) => x.id === 'cast'));
+  assert.equal(pickHint(b({ active: true }), []).id, 'da'); assert.equal(pickHint(b({ active: true }), ['da']).id, 'thuong');
+  assert.deepEqual(ids({ free: true, carry: { holding: true }, yq: { active: true } }), ['nem', 'ha'], 'đang khiêng vật thì chỉ Ném / Đặt xuống');
+  assert.deepEqual(ids({ free: false, yq: { active: true } }), []);
+});
+test('nối dây: nút yêu quái + tự co lại không đè menu + Nhảy mờ chỉ cách mở', () => {
+  const d = read('js/ui/dock.js'), css = read('css/dock.css');
+  assert.match(d, /da: \(\) => LGT\.yq && LGT\.yq\.stone\(\)/); assert.match(d, /thuong: \(\) => LGT\.yq && LGT\.yq\.spear\(\)/); assert.match(d, /nemyq: \(\) => LGT\.yq && LGT\.yq\.throwBoss\(\)/);
+  assert.match(d, /function fit\(\)/); assert.match(d, /\['wrap', 'small'\]/); assert.match(css, /\.dk\.wrap/); assert.match(css, /\.dk-b\.lock/); assert.match(d, /Khinh thân chưa mở/);
 });

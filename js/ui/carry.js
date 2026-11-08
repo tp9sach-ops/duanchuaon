@@ -10,7 +10,7 @@ export function initCarry({ toast = () => {} } = {}) {
   const world = LGT.carryWorld || (LGT.carryWorld = createCarry());
   const level = () => levelOf(LGT.quests && LGT.quests.prog ? LGT.quests.prog.xp : 0).lv;
   const total = () => { const sen = LGT.getSen ? LGT.getSen() : 0; return lifetimeSen(sen, LGT.merit && LGT.merit.leaf ? LGT.merit.leaf : null); };
-  const str = () => strengthOf({ level: level(), khinh: LGT.skill ? LGT.skill.level : 0, sen: total() });
+  const str = () => strengthOf({ level: level(), khinh: LGT.skill ? LGT.skill.level : 0, sen: total(), bonus: LGT.yq ? LGT.yq.bonus : 0 });   // bonus: sức mạnh từ thu phục yêu quái
   const pos = () => (LGT.world && LGT.world.pos) || null;
   const ry = () => { const a = LGT.world && LGT.world.avatar; return a && a.group ? a.group.rotation.y : 0; };
   const usable = () => !!LGT.world && LGT.world.mode === 'free' && !LGT.inHouse;

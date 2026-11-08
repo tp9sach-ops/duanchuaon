@@ -1,6 +1,6 @@
 // Lá bồ đề (Phiên 35, bước 1 hệ thống xây nhà): thẻ số lá cạnh hạt sen, bảng đổi 10 hạt sen = 1 lá (mở khi thưa chuyện với Thầy Tri khách),
 // và thưởng hạt sen khi ngồi thiền (3 phút = 1 hạt, tối đa 10/ngày). Logic ở js/world/merit.js (có test). Mọi chữ qua textContent.
-import { loadLeaf, exchange, maxLa, addMeditation, spendLa, claimAct, ACT_CAP, SEN_PER_LA, LAND_LA, DAILY_CAP } from '../world/merit.js';
+import { loadLeaf, addLa, exchange, maxLa, addMeditation, spendLa, claimAct, ACT_CAP, SEN_PER_LA, LAND_LA, DAILY_CAP } from '../world/merit.js';
 
 const KEY = 'lgt.la';
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
@@ -55,6 +55,8 @@ export function initMerit(hud, { toast = () => {}, addMerit = () => {}, getSen =
 
   /** Tiêu lá bồ đề (mua đất...). Trả false nếu không đủ. */
   function spend(n) { const r = spendLa(leaf, n); if (!r.ok) return false; leaf = r.leaf; save(); draw(); return true; }
+  /** Nhận lá bồ đề làm thưởng (rơi từ yêu quái…). Trả số lá nhận được. */
+  function gain(n) { const r = addLa(leaf, n); if (!r.ok) return 0; leaf = r.leaf; save(); draw(); return Math.floor(+n); }
   const LABEL = { lay: 'Lạy Phật', cung: 'Cúng đèn nguyện', nhang: 'Thắp nhang', phongsinh: 'Phóng sinh' };
   /** Thưởng `n` hạt sen cho một lần lạy/cúng/nhang, tối đa ACT_CAP lần/ngày mỗi loại. Trả số hạt sen thực nhận (0 nếu hết lượt). silent=true: không báo (nơi gọi tự báo). */
   function reward(kind, n, silent = false) {
@@ -64,7 +66,7 @@ export function initMerit(hud, { toast = () => {}, addMerit = () => {}, getSen =
     if (!silent && n > 0) toast(`${LABEL[kind]}: +${n} hạt sen (còn ${r.left} lần hôm nay).`, 2800);
     return n;
   }
-  LGT.merit = { open, close, reward, spendLa: spend, get leaf() { return leaf; }, get spent() { return leaf.spent; } };
+  LGT.merit = { open, close, reward, addLa: gain, spendLa: spend, get leaf() { return leaf; }, get spent() { return leaf.spent; } };
   draw();
   return LGT.merit;
 }

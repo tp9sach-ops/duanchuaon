@@ -2,7 +2,7 @@
 // Sức mạnh tăng theo CẤP ĐỘ, BẬC LUYỆN THÂN (Khinh thân) và CÔNG ĐỨC (tổng hạt sen từng kiếm). Càng mạnh càng khiêng được vật nặng, ném càng xa.
 // Luật ptg chốt 08/11: nhân vật có cấp VÀ sức mạnh đều lớn hơn thì khiêng/ném được người khác dù họ không đồng ý (phần ném NGƯỜI qua mạng: xem docs/PHIEN63.md).
 // Mọi con số (kg, quãng ném, công thức) là QUY ƯỚC TẠM của dự án, chờ ptg duyệt.
-import { canStep, blocked } from './layout.js';
+import { canStep, blocked, BOUNDS, GATE } from './layout.js';
 
 const num = (x, d = 0) => (Number.isFinite(+x) ? +x : d);
 const clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
@@ -10,9 +10,9 @@ const isObj = (o) => o && typeof o === 'object' && !Array.isArray(o);
 
 /** Sức mạnh từ cấp độ người chơi (1..10), bậc Khinh thân (0..8) và tổng hạt sen từng kiếm. Số nguyên ≥ 0; đầu vào lạ → coi như 0 (cấp tối thiểu 1). */
 export function strengthOf(o) {
-  const { level = 1, khinh = 0, sen = 0 } = isObj(o) ? o : {};
+  const { level = 1, khinh = 0, sen = 0, bonus = 0 } = isObj(o) ? o : {};   // bonus = sức mạnh vĩnh viễn từ thu phục yêu quái (js/world/yeuquai.js)
   const lv = clamp(Math.floor(num(level, 1)), 1, 99), kb = clamp(Math.floor(num(khinh)), 0, 8), s = clamp(num(sen), 0, 1e9);
-  return Math.floor(lv * 6 + kb * 10 + Math.sqrt(s) * 2);
+  return Math.floor(lv * 6 + kb * 10 + Math.sqrt(s) * 2) + clamp(Math.floor(num(bonus)), 0, 100);
 }
 /** Danh hiệu sức mạnh. */
 export const TIERS = [{ min: 0, ten: 'Tay yếu' }, { min: 20, ten: 'Khỏe khoắn' }, { min: 45, ten: 'Lực sĩ' }, { min: 80, ten: 'Dũng sĩ' }, { min: 120, ten: 'Kim cương lực' }];
@@ -110,3 +110,27 @@ export function createCarry(defs = CARRY_ITEMS) {
   return api;
 }
 export { blocked as _blocked };   // dùng trong test kiểm chỗ đặt
+
+// ---- Luật ném NGƯỜI CHƠI khác (ptg chốt 08/11, Phiên 64). Chưa nối mạng (xem docs/PHIEN64.md); logic và test đã sẵn.
+export const THROW_COOLDOWN_S = 10;   // hồi chiêu cho MỖI CẶP (người ném → người bị ném)
+export const THROW_COST_SEN = 1;      // người ném người khác bị trừ 1 công đức (hạt sen)
+/** (x, z) có nằm trong khuôn viên chùa (sân chùa, chánh điện, vườn, hành lang… từ chánh điện tới hết cổng Tam quan) không. Trong chùa KHÔNG được ném người. */
+export const inTemple = (x, z) => Number.isFinite(+x) && Number.isFinite(+z) && Math.abs(+x) <= BOUNDS.xMax && +z >= BOUNDS.zMin && +z <= GATE.z + 2.4;
+/** Khóa hồi chiêu của một cặp. */
+export const pairKey = (a, b) => `${String(a)}>${String(b)}`;
+/**
+ * Có được khiêng-ném người chơi khác lúc này không? in: { att: {lv,str,x,z}, tgt: {lv,str,x,z,meditating}, cd: { [pairKey]: giây còn lại }, attId, tgtId }.
+ * Trả { ok, reason: ''|'invalid'|'level'|'strength'|'weight'|'temple'|'meditating'|'cooldown', cost (hạt sen phải trừ), wait (giây) }.
+ * Người bị ném rơi an toàn, không mất gì (nơi gọi dịch chuyển người đó tới `landing`, không trừ máu/đồ).
+ */
+export function throwCheck({ att, tgt, cd = {}, attId = 'a', tgtId = 'b' } = {}) {
+  const g = canGrab(att, tgt); if (!g.ok) return { ok: false, reason: g.reason, cost: 0, wait: 0 };
+  if (inTemple(att.x, att.z) || inTemple(tgt.x, tgt.z)) return { ok: false, reason: 'temple', cost: 0, wait: 0 };
+  if (tgt.meditating) return { ok: false, reason: 'meditating', cost: 0, wait: 0 };
+  const w = num(cd && cd[pairKey(attId, tgtId)]); if (w > 0) return { ok: false, reason: 'cooldown', cost: 0, wait: Math.ceil(w) };
+  return { ok: true, reason: '', cost: THROW_COST_SEN, wait: 0 };
+}
+/** Ghi hồi chiêu sau một cú ném (trả bản sao). */
+export const markThrown = (cd, attId, tgtId) => ({ ...(isObj(cd) ? cd : {}), [pairKey(attId, tgtId)]: THROW_COOLDOWN_S });
+/** Trừ hồi chiêu theo thời gian (trả bản sao, bỏ cặp đã hết). */
+export function tickCooldown(cd, dt) { const o = {}, d = clamp(num(dt), 0, 60); for (const [k, v] of Object.entries(isObj(cd) ? cd : {})) { const r = num(v) - d; if (r > 0) o[k] = r; } return o; }

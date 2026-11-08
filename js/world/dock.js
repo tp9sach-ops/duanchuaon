@@ -18,12 +18,15 @@ export const HINTS = {
   tui: 'Túi đồ: xem bạn đang có những gì.',
   khieng: 'Có vật khiêng được ngay đây — bấm “Khiêng”. Vật nặng cần sức mạnh cao hơn.',
   nem: 'Bấm “Ném” để ném vật ra phía trước mặt.',
+  da: 'Bấm “Ném đá” khi yêu quái còn xa. Khi nó gồng (vùng đỏ trên đất), chạy ra ngoài vùng đỏ!',
+  thuong: 'Lại gần yêu quái rồi bấm “Thương” để đâm — mạnh hơn ném đá.',
+  nemyq: 'Bạn đủ mạnh để nhấc cả yêu quái lên ném!',
 };
-const HINT_ORDER = ['tap', 'cast', 'thu', 'nem', 'khieng', 'nhay', 'kynang', 'tui'];
+const HINT_ORDER = ['tap', 'da', 'thuong', 'nemyq', 'cast', 'thu', 'nem', 'khieng', 'nhay', 'kynang', 'tui'];
 
 /**
  * Các nút cần hiện, xếp từ DƯỚI lên (nút đầu = gần ngón cái nhất).
- * c = { free (đang đi lại bình thường), khinh (bậc), canTrain, water (đứng sát mép nước, ngoài nhà), fish: { phase: 'idle'|'wait'|'lotus'|'caught', hasOrb, cracked, text }, carry: { holding, heldName, near } }.
+ * c = { free (đang đi lại bình thường), khinh (bậc), canTrain, water (đứng sát mép nước, ngoài nhà), fish: { phase: 'idle'|'wait'|'lotus'|'caught', hasOrb, cracked, text }, carry: { holding, heldName, near }, yq: { active, ten, canThrow } }.
  * Mỗi nút { id, label, big?, hot?, say? }. Đang ngồi/thiền/lạy → không có nút nào.
  */
 export function dockButtons(c = {}) {
@@ -34,8 +37,11 @@ export function dockButtons(c = {}) {
   const cr = isObj(k.carry) ? k.carry : {};
   if (cr.holding) return [{ id: 'nem', label: 'Ném', big: true, say: cr.heldName ? `Đang khiêng: ${cr.heldName}` : '' }, { id: 'ha', label: 'Đặt xuống' }];   // tay đang khiêng vật: chỉ Ném / Đặt xuống
   if (cr.near) out.push({ id: 'khieng', label: 'Khiêng', big: true, say: `Gần: ${cr.near}` });
-  if (k.water) out.push({ id: 'cast', label: f.cracked ? 'Sửa cầu' : f.hasOrb ? 'Thả cầu' : 'Mua cầu', big: true, say: f.text ? String(f.text) : '' });
-  if (num(k.khinh) > 0) { out.push({ id: 'nhay', label: 'Nhảy', big: !k.water }); out.push({ id: 'kynang', label: 'Kỹ năng', hot: !!k.canTrain }); }
+  const yq = isObj(k.yq) ? k.yq : {};
+  if (yq.active) { out.push({ id: 'da', label: 'Ném đá', big: true, say: yq.ten ? `${yq.ten} đang ở làng!` : '' }, { id: 'thuong', label: 'Thương' }); if (yq.canThrow) out.push({ id: 'nemyq', label: 'Ném yêu quái' }); }
+  if (k.water && !yq.active) out.push({ id: 'cast', label: f.cracked ? 'Sửa cầu' : f.hasOrb ? 'Thả cầu' : 'Mua cầu', big: true, say: f.text ? String(f.text) : '' });
+  if (num(k.khinh) > 0) { out.push({ id: 'nhay', label: 'Nhảy', big: !k.water && !yq.active }); out.push({ id: 'kynang', label: 'Kỹ năng', hot: !!k.canTrain }); }
+  else out.push({ id: 'nhay', label: 'Nhảy', locked: true });   // chưa mở Khinh thân: vẫn hiện nút mờ, bấm vào được chỉ cách mở (người mới không phải đoán)
   out.push({ id: 'tui', label: 'Túi đồ' });
   return out;
 }

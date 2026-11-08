@@ -18,13 +18,13 @@ const isObj = (o) => o && typeof o === 'object' && !Array.isArray(o);
 export const dayKey = (now = Date.now()) => { const d = new Date(now), p = (x) => String(x).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`; };
 
 /** Trạng thái lá: la = số lá đang có; spent = tổng hạt sen đã đem đổi; day = bộ đếm trong ngày { k, thien (số sen thiền đã nhận), med (giây thiền dở) }. */
-export const emptyLeaf = () => ({ v: 1, la: 0, spent: 0, day: { k: '', thien: 0, med: 0, acts: {} } });
+export const emptyLeaf = () => ({ v: 1, la: 0, spent: 0, gift: 0, day: { k: '', thien: 0, med: 0, acts: {} } });
 
 export function loadLeaf(raw) {
   let o = raw; if (typeof raw === 'string') { try { o = JSON.parse(raw); } catch (_) { o = null; } }
   const s = emptyLeaf(); if (!isObj(o)) return s;
-  s.la = int(o.la, 0, MAX_LA); s.spent = int(o.spent, 0, 1e9);
-  if (s.spent < s.la * SEN_PER_LA) s.spent = s.la * SEN_PER_LA;      // dữ liệu vô lý (ít sen đã tiêu hơn số lá có) → chỉnh lại cho nhất quán
+  s.la = int(o.la, 0, MAX_LA); s.spent = int(o.spent, 0, 1e9); s.gift = int(o.gift, 0, MAX_LA);   // gift = lá được THƯỞNG (rơi từ yêu quái, Phiên 64), không do đổi hạt sen
+  if (s.spent < Math.max(0, s.la - s.gift) * SEN_PER_LA) s.spent = Math.max(0, s.la - s.gift) * SEN_PER_LA;      // dữ liệu vô lý (ít sen đã tiêu hơn số lá có) → chỉnh lại cho nhất quán
   if (isObj(o.day) && typeof o.day.k === 'string') s.day = { k: o.day.k.slice(0, 10), thien: int(o.day.thien, 0, DAILY_CAP.thien), med: int(o.day.med, 0, MED_SECONDS_PER_SEN - 1), acts: cleanActs(o.day.acts) };
   return s;
 }
@@ -48,6 +48,12 @@ export function spendLa(leaf, n) {
   const k = Number.isFinite(+n) ? Math.floor(+n) : 0;
   if (k < 1 || k > leaf.la) return { ok: false, leaf };
   return { ok: true, leaf: { ...leaf, day: { ...leaf.day }, la: leaf.la - k } };
+}
+
+/** Nhận `n` lá bồ đề làm phần thưởng (không do đổi hạt sen nên `spent` không đổi, điểm xếp hạng không bị thổi phồng). Trả { ok, leaf }. */
+export function addLa(leaf, n) {
+  const k = Number.isFinite(+n) ? Math.floor(+n) : 0; if (k < 1 || k > 1000) return { ok: false, leaf };
+  return { ok: true, leaf: { ...leaf, day: { ...leaf.day }, la: int(leaf.la + k, 0, MAX_LA), gift: int((leaf.gift || 0) + k, 0, MAX_LA) } };
 }
 
 /** Tổng hạt sen từng kiếm = sen còn + đã đổi (dùng cho bảng xếp hạng/đồng bộ). */
