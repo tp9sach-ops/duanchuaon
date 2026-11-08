@@ -66,6 +66,7 @@ Cách dùng: làm mục [ ] đầu tiên, xong báo ptg, CHỜ "tiếp tục". L
 - Phiên 60: nhiệm vụ làm lại thành 7 chương dẫn đi hết mọi nơi (docs/PHIEN60.md). npm test 662/662.
 - Phiên 61: rừng thông dày (docs/PHIEN61.md). Còn: sông + hồ, kiến trúc, Suối Trong + cá 3D, Tu tập/NPC trong Lộ trình, Xếp hạng, bơi–lặn.
 - Phiên 62: cụm nút thao tác góc phải-dưới cho điện thoại (Nhảy/Kỹ năng/Thả cầu/Bấm!/Thu cá/Phóng sinh/Túi đồ) + bong bóng chỉ chỗ bấm một lần + Túi đồ xem được khi ở ngoài nhà (docs/PHIEN62.md). `npm test` 669/669. Chờ ptg quyết thiết kế SỨC MẠNH (khiêng/ném) và YÊU QUÁI hằng tháng.
+- Phiên 63: hệ thống SỨC MẠNH (cấp + luyện thân + công đức) → khiêng và ném 8 vật nặng (thùng → khúc gỗ lim 200 kg), nút Khiêng/Ném/Đặt xuống trong cụm góc phải-dưới; luật `canGrab` (cấp VÀ sức mạnh nhỏ hơn thì bị khiêng được, không cần đồng ý) đã có logic + test nhưng CHƯA nối mạng (docs/PHIEN63.md). Kế: yêu quái hằng tháng (ném đá + thương, hồi sinh ở cửa chùa). `npm test` 678/678.
 
 ## Việc của ptg
 - Tải bản Phiên 46 lên GitHub (nếu chưa), mở trang thật và thử: nút "Câu cá" cụm phải-trên, nút nổi "Câu cá" khi đứng sát nước, mua cầu, thả, bấm khi hoa sen nở, thu cá, phóng sinh.

@@ -16,12 +16,14 @@ export const HINTS = {
   nhay: 'Bấm “Nhảy” để bay lên (Khinh thân).',
   kynang: 'Bạn đủ điều kiện luyện bậc kế — bấm vào đây.',
   tui: 'Túi đồ: xem bạn đang có những gì.',
+  khieng: 'Có vật khiêng được ngay đây — bấm “Khiêng”. Vật nặng cần sức mạnh cao hơn.',
+  nem: 'Bấm “Ném” để ném vật ra phía trước mặt.',
 };
-const HINT_ORDER = ['tap', 'cast', 'thu', 'nhay', 'kynang', 'tui'];
+const HINT_ORDER = ['tap', 'cast', 'thu', 'nem', 'khieng', 'nhay', 'kynang', 'tui'];
 
 /**
  * Các nút cần hiện, xếp từ DƯỚI lên (nút đầu = gần ngón cái nhất).
- * c = { free (đang đi lại bình thường), khinh (bậc), canTrain, water (đứng sát mép nước, ngoài nhà), fish: { phase: 'idle'|'wait'|'lotus'|'caught', hasOrb, cracked, text } }.
+ * c = { free (đang đi lại bình thường), khinh (bậc), canTrain, water (đứng sát mép nước, ngoài nhà), fish: { phase: 'idle'|'wait'|'lotus'|'caught', hasOrb, cracked, text }, carry: { holding, heldName, near } }.
  * Mỗi nút { id, label, big?, hot?, say? }. Đang ngồi/thiền/lạy → không có nút nào.
  */
 export function dockButtons(c = {}) {
@@ -29,6 +31,9 @@ export function dockButtons(c = {}) {
   if (!k.free) return out;
   if (f.phase === 'wait' || f.phase === 'lotus') return [{ id: 'tap', label: 'Bấm!', big: true, hot: f.phase === 'lotus', say: String(f.text || '') }];
   if (f.phase === 'caught') return [{ id: 'thu', label: 'Thu cá', big: true, say: String(f.text || '') }, { id: 'phong', label: 'Phóng sinh', say: '' }];
+  const cr = isObj(k.carry) ? k.carry : {};
+  if (cr.holding) return [{ id: 'nem', label: 'Ném', big: true, say: cr.heldName ? `Đang khiêng: ${cr.heldName}` : '' }, { id: 'ha', label: 'Đặt xuống' }];   // tay đang khiêng vật: chỉ Ném / Đặt xuống
+  if (cr.near) out.push({ id: 'khieng', label: 'Khiêng', big: true, say: `Gần: ${cr.near}` });
   if (k.water) out.push({ id: 'cast', label: f.cracked ? 'Sửa cầu' : f.hasOrb ? 'Thả cầu' : 'Mua cầu', big: true, say: f.text ? String(f.text) : '' });
   if (num(k.khinh) > 0) { out.push({ id: 'nhay', label: 'Nhảy', big: !k.water }); out.push({ id: 'kynang', label: 'Kỹ năng', hot: !!k.canTrain }); }
   out.push({ id: 'tui', label: 'Túi đồ' });
@@ -66,6 +71,6 @@ export function bagSections(ctx = {}) {
   const fRows = Object.keys(owned).filter((id) => furnitureById(id) && num(owned[id]) > 0).map((id) => ({ ten: furnitureById(id).ten, mo: `× ${num(owned[id])} (đã đặt ${placed.filter((p) => p && p.id === id).length})` }));
   S.push({ title: 'Nội thất', rows: fRows.length ? fRows : [{ ten: 'Chưa có món nào', mo: 'Mua ở “Cửa hàng” khi đang ở trong nhà' }] });
   const kb = Math.min(MAX_BAC, num(c.khinh)), own = isObj(c.land) && isObj(c.land.own) ? c.land.own : null;
-  S.push({ title: 'Thân pháp & nhà', rows: [{ ten: 'Khinh thân', mo: kb > 0 ? `bậc ${kb}/${MAX_BAC} · ${KHINH_TEN[kb]}` : 'chưa mở' }, { ten: 'Nhà', mo: own ? houseLevel(own.lv).ten : 'chưa có đất' }] });
+  S.push({ title: 'Thân pháp & nhà', rows: [{ ten: 'Sức mạnh', mo: c.strength ? `${num(c.strength.value)} · ${String(c.strength.tier || '')} · khiêng tối đa ${num(c.strength.limit)} kg` : 'chưa có' }, { ten: 'Khinh thân', mo: kb > 0 ? `bậc ${kb}/${MAX_BAC} · ${KHINH_TEN[kb]}` : 'chưa mở' }, { ten: 'Nhà', mo: own ? houseLevel(own.lv).ten : 'chưa có đất' }] });
   return S;
 }

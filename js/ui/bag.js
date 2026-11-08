@@ -12,7 +12,7 @@ export function initBag(hud) {
   function draw() {
     list.textContent = '';
     const la = LGT.merit && LGT.merit.leaf ? LGT.merit.leaf.la : 0, ns = LGT.skill ? LGT.skill.level : 0;
-    for (const s of bagSections({ sen: LGT.getSen ? LGT.getSen() : 0, la, fish: LGT.fishing && LGT.fishing.state, furni: LGT.furni && LGT.furni.state, khinh: ns, land: LGT.land && LGT.land.state })) {
+    for (const s of bagSections({ sen: LGT.getSen ? LGT.getSen() : 0, la, fish: LGT.fishing && LGT.fishing.state, furni: LGT.furni && LGT.furni.state, khinh: ns, land: LGT.land && LGT.land.state, strength: LGT.strength ? { value: LGT.strength.value, tier: LGT.strength.tier, limit: LGT.strength.limit } : null })) {
       const sec = el('div', 'bg-sec'); sec.appendChild(el('h4', null, s.title));
       for (const r of s.rows) { const row = el('div', 'bg-row'); row.append(el('b', null, r.ten), el('span', null, r.mo)); sec.appendChild(row); }
       list.appendChild(sec);

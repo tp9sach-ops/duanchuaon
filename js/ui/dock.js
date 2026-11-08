@@ -3,7 +3,7 @@
 import { dockButtons, pickHint, loadSeen } from '../world/dock.js';
 
 const KEY = 'lgt.dockhint';
-const ICON = { tap: '🪷', cast: '🎣', thu: '🧺', phong: '🕊️', nhay: '⬆️', kynang: '✦', tui: '🎒' };
+const ICON = { tap: '🪷', cast: '🎣', thu: '🧺', phong: '🕊️', nhay: '⬆️', kynang: '✦', tui: '🎒', khieng: '💪', nem: '🎯', ha: '⬇️' };
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
 
 /** hud: phần tử HUD. opts: { toast }. Đặt LGT.dock = { refresh, get ids }. */
@@ -18,6 +18,7 @@ export function initDock(hud, { toast = () => {} } = {}) {
 
   const ACT = {
     tap: () => LGT.fishing && LGT.fishing.tap(), cast: () => LGT.fishing && LGT.fishing.cast(), thu: () => LGT.fishing && LGT.fishing.keep(), phong: () => LGT.fishing && LGT.fishing.release(),
+    khieng: () => LGT.carry && LGT.carry.pickup(), nem: () => LGT.carry && LGT.carry.throw(), ha: () => LGT.carry && LGT.carry.drop(),
     nhay: () => LGT.skill && LGT.skill.jump(), kynang: () => LGT.skill && LGT.skill.open(),
     tui: () => (LGT.inHouse && LGT.furni ? LGT.furni.openBag() : LGT.bag ? LGT.bag.open() : toast('Túi đồ chưa sẵn sàng.', 2500)),
   };
@@ -37,7 +38,8 @@ export function initDock(hud, { toast = () => {} } = {}) {
   }
   function refresh() {
     const W = LGT.world, fs = LGT.fishing ? LGT.fishing.status() : { phase: 'idle' };
-    const c = { free: !!W && W.mode === 'free' && !LGT.panelOpen && !document.querySelector('.st-dlg:not([hidden])'), khinh: LGT.skill ? LGT.skill.level : 0, canTrain: !!(LGT.skill && LGT.skill.canTrain), water: !!fs.water && !LGT.inHouse, fish: fs };
+    const cs = LGT.carry ? LGT.carry.status() : null;
+    const c = { carry: cs ? { holding: cs.holding, heldName: cs.heldName, near: cs.near } : null, free: !!W && W.mode === 'free' && !LGT.panelOpen && !document.querySelector('.st-dlg:not([hidden])'), khinh: LGT.skill ? LGT.skill.level : 0, canTrain: !!(LGT.skill && LGT.skill.canTrain), water: !!fs.water && !LGT.inHouse, fish: fs };
     const list = dockButtons(c), next = list.map((b) => b.id).join(',');
     root.hidden = !list.length;
     if (next !== sig) {   // bộ nút đổi → dựng lại các nút còn thiếu / bỏ nút thừa

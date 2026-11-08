@@ -14,6 +14,7 @@ import { initHouse } from './house.js';
 import { initFurni } from './furni.js';
 import { initFishing } from './fishing.js';
 import { initDock } from './dock.js';
+import { initCarry } from './carry.js';
 import { initBag } from './bag.js';
 import { initEdit } from './editmode.js';
 import { initSkill } from './skill.js';
@@ -128,6 +129,7 @@ export function initHudMenu(hud) {
   try { initTutorial(hud, { toast }); } catch (e) { console.warn('[Diệu Giang Tự] Sổ tay hướng dẫn lỗi:', e && e.message); }   // hướng dẫn chơi + gợi ý việc kế tiếp (Phiên 39)
   try { initSkill(hud, { toast, getSen: () => wallet.sen, spendSen: spendMerit }); } catch (e) { console.warn('[Diệu Giang Tự] Kỹ năng lỗi:', e && e.message); }   // Khinh thân: phím Space / nút Nhảy khi đã mở bậc 1 (Phiên 4)
   try { initBag(hud); } catch (e) { console.warn('[Diệu Giang Tự] Túi đồ lỗi:', e && e.message); }   // Phiên 62
+  try { initCarry({ toast }); } catch (e) { console.warn('[Diệu Giang Tự] Khiêng/ném lỗi:', e && e.message); }   // Phiên 63: sức mạnh, khiêng và ném vật nặng
   try { initDock(hud, { toast }); } catch (e) { console.warn('[Diệu Giang Tự] Cụm nút lỗi:', e && e.message); }   // Phiên 62: cụm nút thao tác góc phải-dưới
 
   // ---- bản đồ chùa (lối đi tới chương: liên kết #id, stage.js tự bắt và cho nhân vật đi tới)

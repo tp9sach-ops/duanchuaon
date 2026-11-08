@@ -42,7 +42,8 @@ test('Túi đồ ngoài nhà: tiền, cầu, ao cá, nội thất, thân pháp &
   assert.match(e[1].rows[0].mo, /50 hạt sen/);
   const f = bagSections({ sen: 12, la: 3, fish: { orbs: { go: 0, da: 5 }, sel: 'da', pond: [{ sp: 'koi' }, { sp: 'koi' }, { sp: 'zzz' }] }, furni: { owned: { zzz: 2 }, placed: [] }, khinh: 2, land: { own: { lv: 1 } } });
   assert.deepEqual(f[0].rows.map((r) => r.mo), ['12', '3']); assert.match(f[1].rows[0].mo, /đã nứt/); assert.match(f[1].rows[1].mo, /đang dùng/); assert.deepEqual(f[2].rows, [{ ten: 'Cá koi', mo: '× 2' }]);
-  assert.equal(f[3].rows[0].ten, 'Chưa có món nào', 'món lạ bị bỏ'); assert.match(f[4].rows[0].mo, /bậc 2\/8/); assert.equal(f[4].rows[1].mo, 'Nhà lầu');
+  assert.equal(f[3].rows[0].ten, 'Chưa có món nào', 'món lạ bị bỏ'); assert.equal(f[4].rows[0].mo, 'chưa có'); assert.match(f[4].rows[1].mo, /bậc 2\/8/); assert.equal(f[4].rows[2].mo, 'Nhà lầu');
+  assert.match(bagSections({ strength: { value: 40, tier: 'Khỏe khoắn', limit: 72 } })[4].rows[0].mo, /40 · Khỏe khoắn · khiêng tối đa 72 kg/);
 });
 test('nối dây: dock + bag trong hudMenu, câu cá chạy khi bảng đóng, nút cũ ẩn, CSS và sw', () => {
   const h = read('js/ui/hudMenu.js'), f = read('js/ui/fishing.js'), s = read('js/ui/skill.js'), d = read('js/ui/dock.js'), css = read('css/dock.css'), html = read('index.html');
@@ -50,4 +51,12 @@ test('nối dây: dock + bag trong hudMenu, câu cá chạy khi bảng đóng, n
   assert.match(f, /cast: castQuick, tap: pressTap, keep, release, status/); assert.ok(!/raf = 0; if \(!sess \|\| box\.hidden\)/.test(f), 'vòng câu không dừng khi đóng bảng'); assert.ok(!/fs-fab/.test(f));
   assert.match(s, /get canTrain\(\)/); assert.match(css, /body\.has-dock #jump-btn/); assert.match(css, /\.dk\{position:absolute;right:/); assert.match(html, /css\/dock\.css/);
   assert.ok(!/innerHTML/.test(d), 'dock không dùng innerHTML'); assert.match(d, /pointerdown/);
+});
+
+test('khiêng: gần vật → nút Khiêng; đang khiêng → chỉ Ném + Đặt xuống', () => {
+  assert.deepEqual(ids({ free: true, carry: { near: 'Bao gạo' } }), ['khieng', 'tui']);
+  assert.deepEqual(ids({ free: true, khinh: 2, carry: { holding: true, heldName: 'Thùng gỗ' } }), ['nem', 'ha']); assert.equal(dockButtons({ free: true, carry: { holding: true, heldName: 'Thùng gỗ' } })[0].say, 'Đang khiêng: Thùng gỗ');
+  assert.deepEqual(ids({ free: false, carry: { holding: true } }), []);
+  assert.equal(pickHint(dockButtons({ free: true, carry: { holding: true } }), []).id, 'nem');
+  assert.equal(pickHint(dockButtons({ free: true, carry: { near: 'x' } }), ['tui']).id, 'khieng');
 });
