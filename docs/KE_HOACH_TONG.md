@@ -70,6 +70,9 @@ Cách dùng: làm mục [ ] đầu tiên, xong báo ptg, CHỜ "tiếp tục". L
 - Phiên 65: yêu quái hằng tháng (Đá/Nước/Lửa, 20:00 ngày cố định mỗi tháng; thử bằng ?yq=da|nuoc|lua), gồng chiêu diện rộng, máu theo cấp, hồi sinh cửa chùa, rơi lá bồ đề, thưởng điểm + sức mạnh; luật ném người (không ném trong chùa/đang thiền, hồi chiêu 10 s, -1 hạt sen) viết xong chưa nối mạng; cụm nút điện thoại tự co không đè menu, nút Nhảy luôn hiện. docs/PHIEN65.md. `npm test` 701/701. Nhiều người đánh chung qua máy chủ CHƯA làm.
 - Phiên 66: sổ tay `?` cập nhật: sửa chữ cũ sai (cầu gỗ 50 hạt sen, nội thất đã dùng được) + 4 chủ đề mới (nút góc phải-dưới, sức mạnh/khiêng/ném, yêu quái hằng tháng, lộ trình). docs/PHIEN66.md. `npm test` 702/702.
 
+- Phiên 67: yêu quái 2 khung giờ (03:00 trung bình, 20:00 cao) + nút chiến đấu gọn. docs/PHIEN67.md. `npm test` 705/705.
+- Phiên 68: nút "Dẫn đường" nhấp nháy cho việc mới và cho người mới (js/world/goPulse.js). Còn: nhãn chữ nút góc phải-trên, màn hướng dẫn 3 bước, chơi chung qua mạng. docs/PHIEN68.md. `npm test` 709/709.
+
 ## Việc của ptg
 - Tải bản Phiên 46 lên GitHub (nếu chưa), mở trang thật và thử: nút "Câu cá" cụm phải-trên, nút nổi "Câu cá" khi đứng sát nước, mua cầu, thả, bấm khi hoa sen nở, thu cá, phóng sinh.
 - Trả lời: "quả cầu" có đúng là cầu quăng xuống nước? Có tặng 1 cầu gỗ cho người mới? Duyệt số tạm câu cá (xem PHIEN44.md).
