@@ -1,5 +1,6 @@
 // Bản đồ mini + bản đồ lớn (Phiên 39). LOGIC THUẦN (không DOM, không three.js, có test: tests/minimap.test.mjs). Vẽ ở js/ui/minimap.js.
 // Hướng bản đồ: phía trên = -z (chánh điện, Quan Âm đài), phía dưới = +z (làng, chợ, khu nhà ở); trái = -x, phải = +x (giống màn hình khi camera nhìn về chánh điện).
+import { LAKE, riverCircles } from './river.js';
 import { PLACES, OUT_WALKS, THAC, STORE_9SACH, STORE_TACHHOA } from './outside.js';
 import { NPCS } from './npc.js';
 import { PLACE_STAND } from './questGuide.js';
@@ -67,7 +68,7 @@ export function terrain() {
   return {
     compound: { ...COMPOUND },
     walks: OUT_WALKS.map((r) => ({ x0: r.x0, x1: r.x1, z0: r.z0, z1: r.z1 })),
-    waters: [{ x: POND.x, z: POND.z, r: POND.r }, { x: 60, z: 10, r: 8 }, { x: THAC.pool.x, z: THAC.pool.z, r: THAC.pool.r }],
+    waters: [{ x: POND.x, z: POND.z, r: POND.r }, { x: 60, z: 10, r: 8 }, { x: THAC.pool.x, z: THAC.pool.z, r: THAC.pool.r }, { x: LAKE.x, z: LAKE.z, r: LAKE.r }, ...riverCircles()],   // Phiên 74: sông + Hồ Rừng
   };
 }
 

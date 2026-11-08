@@ -35,7 +35,7 @@ export const CARRY_ITEMS = [
   { id: 'chum', ten: 'Chum sành', kg: 45, color: 0x8a5a3c, shape: 'cyl', size: [0.4, 0.8, 0.4], home: { x: -10, z: 125 } },
   { id: 'danho', ten: 'Tảng đá nhỏ', kg: 70, color: 0x8c9096, shape: 'rock', size: [0.55, 0.45, 0.5], home: { x: -96, z: 98 } },
   { id: 'dacanh', ten: 'Đá cảnh hồ cá', kg: 90, color: 0x6f7a80, shape: 'rock', size: [0.65, 0.55, 0.6], home: { x: 46, z: 4 } },
-  { id: 'dalon', ten: 'Tảng đá lớn', kg: 120, color: 0x7d8288, shape: 'rock', size: [0.8, 0.65, 0.75], home: { x: 96, z: 114 } },
+  { id: 'dalon', ten: 'Tảng đá lớn', kg: 120, color: 0x7d8288, shape: 'rock', size: [0.8, 0.65, 0.75], home: { x: 88, z: 112 } },
   { id: 'golim', ten: 'Khúc gỗ lim', kg: 200, color: 0x5a3a24, shape: 'cyl', size: [0.45, 1.3, 0.45], home: { x: -112, z: 84 } },
 ];
 export const itemById = (id) => CARRY_ITEMS.find((i) => i.id === id) || null;

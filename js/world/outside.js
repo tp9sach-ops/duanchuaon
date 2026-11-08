@@ -2,6 +2,7 @@
 // DỮ LIỆU THUẦN (không three.js, có test); cảnh 3D ở js/scene/outside.js dựng từ đây. Import là tự đăng ký vùng đi bộ và vật cản (một lần).
 // Tọa độ: +z là hướng xa chùa (ra làng). Cổng Tam quan z=34, đường trước cổng tới z=62 (layout.js) — các vùng dưới đây nối tiếp từ đó.
 import { addWalk, addCircle, addRect, addWater } from './layout.js';
+import { registerRiver } from './river.js';
 import { LAND_WALKS } from './land.js';
 
 /** Các vùng đi bộ (chữ nhật, nối liền nhau). Ngoài các vùng này (và khuôn viên chùa) là chặn: cây rừng, nhà dân, sườn núi chỉ để nhìn. */
@@ -151,6 +152,7 @@ export function registerOutside() {
   if (done) return; done = true;
   OUT_WALKS.forEach(addWalk);
   addWater({ x: THAC.pool.x, z: THAC.pool.z, r: THAC.pool.r, bridges: [] });
+  registerRiver();   // Phiên 74: sông chảy ra từ hồ thác + cầu đá + Hồ Rừng (js/world/river.js)
   [DA_LANG, GIENG, CO_THU, ...OUT_ROCKS, ...STREET_LAMPS, ...VILLAGE_GATE.posts.map((x) => ({ x, z: VILLAGE_GATE.z, r: VILLAGE_GATE.r }))].forEach((c) => addCircle({ x: c.x, z: c.z, r: c.r }));
   STALLS.forEach((s) => addRect({ x0: s.x0, x1: s.x1, z0: s.z0, z1: s.z1 }));
   addRect(DINH_NGHI); addRect(MIEU);

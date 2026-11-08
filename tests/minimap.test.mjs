@@ -65,5 +65,5 @@ test('mô tả hướng và khoảng cách bằng tiếng Việt', () => {
 });
 
 test('hình nền: có đường đi, khuôn viên và nước', () => {
-  const t = terrain(); assert.ok(t.walks.length >= 7 && t.waters.length === 3 && t.compound.x1 > t.compound.x0);
+  const t = terrain(); assert.ok(t.walks.length >= 7 && t.waters.length > 3 && t.compound.x1 > t.compound.x0);
 });

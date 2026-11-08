@@ -10,6 +10,7 @@ import { buildPhoneShop } from './didong.js';
 import { buildElectronicsStore } from './dienmay.js';
 import { buildJewelryStore } from './kimhoan.js';
 import { buildDaiPhat } from './daiphat.js';
+import { buildRiver } from './river.js';
 
 const std = (c, o = {}) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.85, ...o });
 const flat = (c, o = {}) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.95, flatShading: true, ...o });
@@ -321,7 +322,7 @@ function buildPineWoods(g) {
 export function buildOutside() {
   const group = new THREE.Group();
   buildGround(group); buildStreet(group); buildVillageGate(group); buildHouses(group); lamps(group); buildFences(group); buildDecor(group); buildFestoons(group); buildMarket(group); buildForest(group); mountains(group);
-  const wf = buildWaterfall(group); buildForestGlade(group); group.add(buildDaiPhat()); const pw = buildPineWoods(group);
+  const wf = buildWaterfall(group); buildForestGlade(group); group.add(buildDaiPhat()); group.add(buildRiver()); const pw = buildPineWoods(group);
   group.add(buildStore9Sach()); group.add(buildTachHoa()); group.add(buildPhoneShop()); group.add(buildElectronicsStore()); group.add(buildJewelryStore());   // Cửa hàng 9 Sạch (nhà phố mặt đường làng, bên phải)
   // đường mòn đất (Đông, Tây) và hai bãi
   const dt = dirtTex(); dt.repeat.set(30, 3);
