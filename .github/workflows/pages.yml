@@ -36,7 +36,7 @@ jobs:
         run: |
           mkdir _site
           cp index.html .nojekyll _site/
-          cp sw.js manifest.webmanifest robots.txt sitemap.xml _site/
+          cp sw.js manifest.webmanifest robots.txt sitemap.xml chan-doan.html _site/
           cp -r css js _site/
           [ -d assets ] && cp -r assets _site/ || true
       - uses: actions/configure-pages@v5

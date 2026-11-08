@@ -61,6 +61,8 @@ Cách dùng: làm mục [ ] đầu tiên, xong báo ptg, CHỜ "tiếp tục". L
 - Câu cá (Phiên 56): thêm phím Cách/Enter để bấm + thu cầu khi rời mặt nước (docs/PHIEN56.md). Đang chờ ptg quyết: tặng cầu gỗ cho người mới? thêm Suối Trong? `npm test` 650/650.
 - Phiên 57: Cầu Gỗ bán 50 hạt sen (cầu khác vẫn bằng lá), quầy cầu hiển thị cả hai loại tiền, sổ sưu tầm loài cá; bảng Nhiệm vụ có tab "Lộ trình" (4 trang ô hình + dấu ?: Khinh công / Khám phá / Gieo duyên / Đất-Nhà-Tiệc; "Mời tiệc" = sắp có). docs/PHIEN57.md. `npm test` 657/657.
 
+- Phiên 58: kiểm lại repo thật (657/657, import khớp), `pages.yml` chép thêm `chan-doan.html`, bổ sung nhật ký PROMPT.md. Các việc còn lại đều cần ptg quyết (xem docs/PHIEN58.md). Mục 2.3 (file lạc) vẫn chờ ptg.
+
 ## Việc của ptg
 - Tải bản Phiên 46 lên GitHub (nếu chưa), mở trang thật và thử: nút "Câu cá" cụm phải-trên, nút nổi "Câu cá" khi đứng sát nước, mua cầu, thả, bấm khi hoa sen nở, thu cá, phóng sinh.
 - Trả lời: "quả cầu" có đúng là cầu quăng xuống nước? Có tặng 1 cầu gỗ cho người mới? Duyệt số tạm câu cá (xem PHIEN44.md).
