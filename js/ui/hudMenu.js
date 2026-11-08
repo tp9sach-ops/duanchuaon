@@ -13,6 +13,8 @@ import { initLand } from './land.js';
 import { initHouse } from './house.js';
 import { initFurni } from './furni.js';
 import { initFishing } from './fishing.js';
+import { initDock } from './dock.js';
+import { initBag } from './bag.js';
 import { initEdit } from './editmode.js';
 import { initSkill } from './skill.js';
 import { initMinimap } from './minimap.js';
@@ -125,6 +127,8 @@ export function initHudMenu(hud) {
   try { initStory(hud, { toast, addMerit }); } catch (e) { console.warn('[Diệu Giang Tự] Cốt truyện lỗi:', e && e.message); }   // hộp thoại + mục tiêu chương 1 (Phiên 32); lỗi thì NPC vẫn nói lời thường
   try { initTutorial(hud, { toast }); } catch (e) { console.warn('[Diệu Giang Tự] Sổ tay hướng dẫn lỗi:', e && e.message); }   // hướng dẫn chơi + gợi ý việc kế tiếp (Phiên 39)
   try { initSkill(hud, { toast, getSen: () => wallet.sen, spendSen: spendMerit }); } catch (e) { console.warn('[Diệu Giang Tự] Kỹ năng lỗi:', e && e.message); }   // Khinh thân: phím Space / nút Nhảy khi đã mở bậc 1 (Phiên 4)
+  try { initBag(hud); } catch (e) { console.warn('[Diệu Giang Tự] Túi đồ lỗi:', e && e.message); }   // Phiên 62
+  try { initDock(hud, { toast }); } catch (e) { console.warn('[Diệu Giang Tự] Cụm nút lỗi:', e && e.message); }   // Phiên 62: cụm nút thao tác góc phải-dưới
 
   // ---- bản đồ chùa (lối đi tới chương: liên kết #id, stage.js tự bắt và cho nhân vật đi tới)
   const mapBox = $('hm-map');
@@ -163,7 +167,7 @@ export function initHudMenu(hud) {
     if (r.kind === 'beads' || r.kind === 'chant') return practice.open(r.kind);
     if (r.kind === 'chat') return chat.toggle();
     if (r.kind === 'quest') return quest.toggle();
-    if (r.kind === 'bag') return LGT.furni ? LGT.furni.openBag() : toast('Túi đồ chưa sẵn sàng.', 2500);
+    if (r.kind === 'bag') return (!LGT.inHouse && LGT.bag) ? LGT.bag.open() : LGT.furni ? LGT.furni.openBag() : toast('Túi đồ chưa sẵn sàng.', 2500);   // Phiên 62: ngoài nhà → xem đồ đang có
     if (r.kind === 'shop') return LGT.furni ? LGT.furni.openShop() : toast('Cửa hàng chưa sẵn sàng.', 2500);
     if (r.kind === 'fish') return LGT.fishing ? LGT.fishing.open('cast') : toast('Câu cá chưa sẵn sàng.', 2500);
     if (r.kind === 'le') return den.openLe();

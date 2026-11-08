@@ -118,6 +118,6 @@ export function initSkill(hud, { toast = () => {}, getSen = () => 0, spendSen = 
   addEventListener('keydown', (e) => { if (e.code === 'Escape' && !box.hidden) { closeBox(); e.stopPropagation(); } }, true);
   setInterval(paintChip, 700); paintChip();
 
-  LGT.skill = { get level() { return level(); }, jump: doJump, open: openBox, close: closeBox, train };
+  LGT.skill = { get level() { return level(); }, get canTrain() { return !!plan().ok; }, jump: doJump, open: openBox, close: closeBox, train };
   return LGT.skill;
 }

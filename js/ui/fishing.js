@@ -26,15 +26,13 @@ export function initFishing(hud, { toast = () => {} } = {}) {
   for (const [id, label] of [['cast', 'Thả cầu'], ['orbs', 'Quả cầu'], ['pond', 'Ao cá']]) { const b = el('button', 'fs-tab', label); b.type = 'button'; b.addEventListener('click', () => show(id)); tabs.appendChild(b); tabBtns[id] = b; }
   const info = el('p', 'fs-info'), list = el('div', 'fs-list'); box.append(head, tabs, info, list); hud.appendChild(box);
 
-  const fab = el('button', 'fs-fab', 'Câu cá'); fab.type = 'button'; fab.hidden = true; fab.setAttribute('aria-label', 'Mở bảng câu cá'); hud.appendChild(fab);
-  fab.addEventListener('click', () => open('cast'));
 
   const btn = (label, fn, cls = 'fs-b', aria) => { const b = el('button', cls, label); b.type = 'button'; if (aria) b.setAttribute('aria-label', aria); b.addEventListener('click', fn); return b; };
   const changed = () => { save(); draw(); };
 
   function stopLoop() { if (raf) { cancelAnimationFrame(raf); raf = 0; } }
   function loop(now) {
-    raf = 0; if (!sess || box.hidden) return;
+    raf = 0; if (!sess) return;   // Phiên 62: lượt câu chạy cả khi bảng đóng (điều khiển bằng cụm nút góc phải-dưới)
     const dt = lastT ? (now - lastT) / 1000 : 0; lastT = now;
     const p = pos(); if (LGT.inHouse || (p && !stillNearWater(p.x, p.z, sess.water))) { leave(); return; }   // đã đi khỏi mép nước: thu cầu về
     sess = tick(sess, dt);
@@ -50,7 +48,7 @@ export function initFishing(hud, { toast = () => {} } = {}) {
   function pressTap() { if (!sess || sess.over) return; sess = tap(sess); finish(); }
   function finish() {
     stopLoop(); const s = sess; sess = null; note = outcomeText(s.outcome, s.fish);
-    caught = s.outcome === 'got' ? s.fish : null; draw();
+    caught = s.outcome === 'got' ? s.fish : null; draw(); if (box.hidden) toast(note, 3200);
     if (caught && LGT.act) LGT.act('cau');   // nhiệm vụ “Câu được con cá đầu tiên”
   }
   function keep() {
@@ -132,18 +130,28 @@ export function initFishing(hud, { toast = () => {} } = {}) {
   }
   function show(id) { tab = id; draw(); }
   function open(id = 'cast') { tab = id; box.hidden = false; draw(); if (sess && !raf) { lastT = 0; raf = requestAnimationFrame(loop); } }
-  function close() { box.hidden = true; stopLoop(); if (sess) { sess = null; toast('Bạn đã thu cầu về (lượt này coi như đã dùng).', 2600); } }
+  function close() { box.hidden = true; }   // Phiên 62: đóng bảng KHÔNG hủy lượt câu đang chạy (nút “Bấm!” nằm ở cụm nút góc phải-dưới)
   x.addEventListener('click', close);
   // Phím Cách / Enter = bấm (cửa sổ hoa sen chỉ 0,5–0,9 giây nên cần phím). Bắt ở giai đoạn capture để phím Cách không làm nhân vật nhảy (skill.js) và không bấm đúp nút "Bấm!".
   addEventListener('keydown', (e) => {
-    if (!sess || sess.over || box.hidden || !isTapKey(e)) return;
+    if (!sess || sess.over || !isTapKey(e)) return;
     e.preventDefault(); e.stopImmediatePropagation(); pressTap();
   }, true);
   box.addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.stopPropagation(); close(); } });
 
-  // nút nổi "Câu cá" chỉ hiện khi đứng gần nước và bảng đang đóng
-  setInterval(() => { fab.hidden = !box.hidden || !here(); }, 500);
-
-  LGT.fishing = { open, close, get state() { return st; }, get session() { return sess; } };
+  // ---- Phiên 62: điều khiển nhanh cho cụm nút góc phải-dưới (js/ui/dock.js), không cần mở bảng
+  function castQuick() {
+    if (sess || caught) return;
+    const cur = currentOrb(st);
+    if (!cur) { toast('Bạn chưa có quả cầu. Mua Cầu Gỗ Bồ Đề (50 hạt sen) ở bảng này nhé.', 3600); open('orbs'); return; }
+    if (cur.cracked) { toast('Quả cầu đã nứt — hãy sửa hoặc đổi cầu khác.', 3200); open('orbs'); return; }
+    begin();
+  }
+  function status() {
+    const cur = currentOrb(st), w = sess ? waterById(sess.water) : null;
+    const phase = sess ? (sess.phase === 'lotus' ? 'lotus' : 'wait') : caught ? 'caught' : 'idle';
+    return { phase, hasOrb: !!cur, cracked: !!(cur && cur.cracked), water: !!here(), text: sess ? phaseText(sess.phase, w && w.ten) : caught ? note : '' };
+  }
+  LGT.fishing = { open, close, cast: castQuick, tap: pressTap, keep, release, status, get state() { return st; }, get session() { return sess; } };
   return LGT.fishing;
 }
