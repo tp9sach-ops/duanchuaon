@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import '../js/world/placements.js';
-import { BOTTOM_MENU, ACTIONS, TOP_ICONS, pressResult, soonText, ariaLabel, isReady, mapEntries, formatCount, createToastState, HELP_TEXT, OUTSIDE_TEXT } from '../js/ui/menuLogic.js';
+import { BOTTOM_MENU, ACTIONS, TOP_ICONS, pressResult, soonText, ariaLabel, isReady, mapEntries, formatCount, createToastState, HELP_TEXT, OUTSIDE_TEXT, captionOf, CAPTION_MAX, LONG_PRESS_MS } from '../js/ui/menuLogic.js';
 import { SPOTS } from '../js/world/spots.js';
 
 test('menu dưới đúng 9 mục như ảnh mẫu, id không trùng', () => {
@@ -56,4 +56,15 @@ test('toast: dòng mới thay dòng cũ, hết hạn thì mất, rỗng bị b�
   t.push('   ', 3000, 0); assert.equal(t.get(0), null);
   assert.equal(t.push('x'.repeat(300), 3000, 0).text.length, 140);
   assert.ok(HELP_TEXT.length > 20);
+});
+
+test('chữ nhãn nút tròn phải-trên (Phiên 69): có chữ, ngắn, không trùng, không đè nhau', () => {
+  const caps = TOP_ICONS.map(captionOf);
+  for (const c of caps) { assert.ok(c.length > 0 && c.length <= CAPTION_MAX, c); }
+  assert.equal(new Set(caps).size, caps.length);
+  assert.equal(captionOf(TOP_ICONS.find((a) => a.id === 'den')), 'Đèn');
+  assert.equal(captionOf(TOP_ICONS.find((a) => a.id === 'cauca')), 'Câu cá');
+  assert.equal(captionOf({ label: 'Một nhãn rất là dài' }).length, CAPTION_MAX);
+  assert.equal(captionOf(null), '');
+  assert.ok(LONG_PRESS_MS >= 300 && LONG_PRESS_MS <= 700);
 });
