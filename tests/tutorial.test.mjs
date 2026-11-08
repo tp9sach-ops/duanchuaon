@@ -19,7 +19,7 @@ const checkGo = (g, where) => {
 };
 
 test('chủ đề: đủ cách chơi, kiếm sen, đổi lá, xây dựng, phóng sinh; mọi chỗ đi tới là có thật', () => {
-  assert.deepEqual(TOPICS.map((t) => t.id), ['batdau', 'kiemsen', 'doila', 'xaydung', 'phongsinh']);
+  assert.deepEqual(TOPICS.map((t) => t.id), ['batdau', 'kiemsen', 'doila', 'xaydung', 'phongsinh', 'nutphai', 'sucmanh', 'yeuquai', 'lotrinh']);
   for (const t of TOPICS) {
     assert.ok(t.ten && t.moTa && t.steps.length >= 2, t.id);
     t.steps.forEach((s, i) => { assert.ok(typeof s.text === 'string' && s.text.length > 20, `${t.id}#${i}`); checkGo(s.go, `${t.id}#${i}`); });
@@ -33,9 +33,19 @@ test('chữ hướng dẫn dùng đúng con số của luật (đổi giá ở m
   assert.ok(/Nhà lầu 150 lá/.test(all) && /Villa hồ bơi 900 lá/.test(all));
 });
 
-test('nội thất được ghi rõ là chưa dùng được; phóng sinh đã dùng được (không còn bước "sắp có")', () => {
+test('nội thất đã dùng được; mời tiệc còn "sắp có"; phóng sinh không còn bước "sắp có"', () => {
   assert.ok(!topicById('phongsinh').steps.some((s) => s.soon));
-  assert.ok(topicById('xaydung').steps.some((s) => s.soon && /nội thất/.test(s.text)));
+  assert.ok(topicById('xaydung').steps.some((s) => !s.soon && /Cửa hàng/.test(s.text)));
+  assert.ok(topicById('xaydung').steps.some((s) => s.soon && /tiệc/.test(s.text)));
+  assert.ok(/Cầu Gỗ Bồ Đề giá 50 hạt sen/.test(topicById('phongsinh').steps.map((s) => s.text).join(' ')), 'giá cầu gỗ đúng 50 hạt sen');
+});
+test('chủ đề mới: nút góc phải, sức mạnh, yêu quái, lộ trình dùng đúng con số của luật', () => {
+  const t = (id) => topicById(id).steps.map((s) => s.text).join(' ');
+  assert.ok(/Khiêng/.test(t('nutphai')) && /Ném đá/.test(t('nutphai')) && /Túi đồ/.test(t('nutphai')));
+  assert.ok(/Thùng gỗ 6 kg/.test(t('sucmanh')) && /Khúc gỗ lim 200 kg/.test(t('sucmanh')) && /120 cho 200 kg/.test(t("sucmanh")));
+  assert.ok(/20:00/.test(t('yeuquai')) && /90 phút/.test(t('yeuquai')) && /60 điểm/.test(t('yeuquai')) && /3 sức mạnh/.test(t('yeuquai')));
+  assert.ok(topicById('sucmanh').steps.some((s) => s.soon) && topicById('yeuquai').steps.some((s) => s.soon), 'phần mạng ghi rõ sắp có');
+  assert.ok(/Lộ trình/.test(t('lotrinh')));
 });
 
 test('gợi ý kế tiếp đi đúng chuỗi: kiếm sen → đổi lá → mua đất → nâng nhà → vào nhà', () => {

@@ -68,7 +68,7 @@ export function initTutorial(hud, { toast = () => {} } = {}) {
 
   // lần đầu: nhắc nhẹ có sổ tay (sau lời chào), không chặn gì
   let seen = false; try { seen = localStorage.getItem(KEY) === '1'; } catch (_) { /* bỏ qua */ }
-  if (!seen) setTimeout(() => { if (box.hidden) toast('Mới chơi? Bấm nút “?” góc phải-trên để xem cách chơi, đổi lá bồ đề, xây nhà.', 8000); }, 16000);
+  if (!seen) setTimeout(() => { if (box.hidden) toast('Mới chơi? Bấm nút “?” góc phải-trên để xem cách chơi, các nút góc phải-dưới, khiêng đồ, yêu quái hằng tháng, đổi lá bồ đề, xây nhà.', 8000); }, 16000);
 
   LGT.tutorial = { goTo: go, open, close, toggle: () => (box.hidden ? open() : close()), showAdvice: () => open(), advice, get isOpen() { return !box.hidden; } };
   return LGT.tutorial;
