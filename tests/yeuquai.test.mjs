@@ -110,10 +110,10 @@ test('nối dây: initYeuQuai trong hudMenu, cảnh 3D, thanh máu, gửi thư�
   assert.match(m, /addLa: gain/); assert.match(c, /bonus: LGT\.yq \? LGT\.yq\.bonus : 0/);
 });
 
-test('hai khung giờ mỗi tháng: 03:00 trung bình, 20:00 cao, cùng ngày, mỗi khung 90 phút', () => {
+test('hai khung giờ mỗi tháng: 15:00 trung bình, 20:00 cao, cùng ngày, mỗi khung 90 phút', () => {
   const [a, b] = monthEvents(2026, 11);
   assert.equal(a.diff, 'trung'); assert.equal(b.diff, 'cao'); assert.equal(a.day, b.day);
-  assert.equal(new Date(a.start + 7 * 3600e3).getUTCHours(), 3); assert.equal(new Date(b.start + 7 * 3600e3).getUTCHours(), 20);
+  assert.equal(new Date(a.start + 7 * 3600e3).getUTCHours(), 15); assert.equal(new Date(b.start + 7 * 3600e3).getUTCHours(), 20);
   assert.equal(a.end - a.start, 90 * 60000); assert.ok(a.end < b.start);
   assert.equal(eventAt(a.start + 1000).key, a.key); assert.equal(eventAt(b.start + 1000).key, b.key);
   assert.equal(eventAt(a.end + 1000).key, b.key, 'giữa hai khung: chỉ khung sau');
@@ -125,5 +125,5 @@ test('độ khó cao: máu nhiều, đánh đau hơn, gồng ngắn hơn, rơi n
   assert.ok(lootDrops2(0, 0, 1, () => 0.5, 'cao').length > lootDrops2(0, 0, 1, () => 0.5, 'trung').length);
   assert.ok(rewardFor2(1, 'cao').xp > rewardFor2(1, 'trung').xp); assert.equal(rewardFor2(0, 'cao').xp, 0);
   assert.equal(createBoss('da', {}).diff, 'trung'); assert.equal(createBoss('da', { diff: 'xx' }).diff, 'trung');
-  assert.ok(DIFF.cao.hour === 20 && DIFF.trung.hour === 3);
+  assert.ok(DIFF.cao.hour === 20 && DIFF.trung.hour === 15);
 });

@@ -17,11 +17,11 @@ export const YQ_ORDER = ['da', 'nuoc', 'lua'];
 /** Bán kính các đòn diện rộng (m). */
 export const AOE = { slam: 6.5, ringIn: 3, ringOut: 10, burst: 3.5, burstN: 3 };
 
-// ---- lịch: mỗi tháng (giờ Việt Nam, UTC+7) hai khung giờ trong CÙNG MỘT NGÀY cố định (5..25): 03:00 độ khó TRUNG BÌNH, 20:00 độ khó CAO (ptg chốt 08/11). Mỗi khung kéo dài 90 phút và thu phục được một lần.
+// ---- lịch: mỗi tháng (giờ Việt Nam, UTC+7) hai khung giờ trong CÙNG MỘT NGÀY cố định (5..25): 15:00 độ khó TRUNG BÌNH, 20:00 độ khó CAO (ptg chốt 08/11). Mỗi khung kéo dài 90 phút và thu phục được một lần.
 export const VN_OFFSET_MS = 7 * 3600e3, EVENT_HOUR = 20, EVENT_MIN = 90;
 /** Độ khó theo khung giờ: hp/dmg/windup/cd là HỆ SỐ nhân; loot = hệ số số túi lá rơi; xp/str = thưởng thu phục. QUY ƯỚC TẠM chờ ptg duyệt. */
 export const DIFF = {
-  trung: { id: 'trung', ten: 'Trung bình', hour: 3, hp: 1, dmg: 1, windup: 1, cd: 1, loot: 1, xp: 60, str: 3 },
+  trung: { id: 'trung', ten: 'Trung bình', hour: 15, hp: 1, dmg: 1, windup: 1, cd: 1, loot: 1, xp: 60, str: 3 },
   cao: { id: 'cao', ten: 'Cao', hour: 20, hp: 1.6, dmg: 1.35, windup: 0.8, cd: 0.75, loot: 1.5, xp: 100, str: 5 },
 };
 export const SLOT_ORDER = ['trung', 'cao'];
