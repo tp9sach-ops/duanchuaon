@@ -64,6 +64,7 @@ Cách dùng: làm mục [ ] đầu tiên, xong báo ptg, CHỜ "tiếp tục". L
 - Phiên 58: kiểm lại repo thật (657/657, import khớp), `pages.yml` chép thêm `chan-doan.html`, bổ sung nhật ký PROMPT.md. Các việc còn lại đều cần ptg quyết (xem docs/PHIEN58.md). Mục 2.3 (file lạc) vẫn chờ ptg.
 - Phiên 59 (ƯU TIÊN CẢNH): đã có Đại Phật khắc vách đá. Còn: rừng thông dày/đẹp hơn, sông + hồ, thêm kiến trúc; rồi Suối Trong + cá 3D ao riêng, trang Tu tập/NPC trong Lộ trình, Xếp hạng, bơi–lặn. docs/PHIEN59.md.
 - Phiên 60: nhiệm vụ làm lại thành 7 chương dẫn đi hết mọi nơi (docs/PHIEN60.md). npm test 662/662.
+- Phiên 61: rừng thông dày (docs/PHIEN61.md). Còn: sông + hồ, kiến trúc, Suối Trong + cá 3D, Tu tập/NPC trong Lộ trình, Xếp hạng, bơi–lặn.
 
 ## Việc của ptg
 - Tải bản Phiên 46 lên GitHub (nếu chưa), mở trang thật và thử: nút "Câu cá" cụm phải-trên, nút nổi "Câu cá" khi đứng sát nước, mua cầu, thả, bấm khi hoa sen nở, thu cá, phóng sinh.

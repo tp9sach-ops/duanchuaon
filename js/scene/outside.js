@@ -266,10 +266,62 @@ function buildForestGlade(g) {
   for (const [x, z] of [[-96, 80], [-95, 98], [-110, 100], [-112, 80], [-93, 104]]) cyl(0.5, 0.55, 0.5, bark, x, 0.25, z, g, 8);
 }
 
+// ---- Rừng thông dày (Phiên 60): thông nhiều tầng đủ cỡ + vài cây khổng lồ, đá phủ rêu, dương xỉ, thân cây đổ, sương thấp, đèn đá dọc đường mòn.
+// Chỉ là cảnh để nhìn (ngoài vùng đi bộ đã là vật cản từ trước); tránh bãi rừng, miếu, cổ thụ, đường làng. Trả { update(t) } cho sương.
+function buildPineWoods(g) {
+  const rnd = mulberry32(2611), pines = [], rocks = [], ferns = [], logs = [];
+  const inWalk = (x, z, m) => OUT_WALKS.some((w) => x > w.x0 - m && x < w.x1 + m && z > w.z0 - m && z < w.z1 + m);
+  const clear = (x, z, m = 3) => inWalk(x, z, m) || (Math.abs(x) < 34 && z > 56 && z < 165) || Math.hypot(x - CO_THU.x, z - CO_THU.z) < 6 || (x > MIEU.x0 - 3 && x < MIEU.x1 + 3 && z > MIEU.z0 - 3 && z < MIEU.z1 + 3);
+  // thông: vùng Tây rộng, dày nhất quanh bãi rừng
+  for (let i = 0, n = 0; i < 4000 && n < 340; i++) {
+    const near = rnd() < 0.45, x = near ? -150 + rnd() * 70 : -165 + rnd() * 125, z = near ? 55 + rnd() * 75 : 50 + rnd() * 140;
+    if (clear(x, z)) continue;
+    const giant = rnd() < 0.12, sc = giant ? 2.3 + rnd() * 0.9 : 0.9 + rnd() * 1.2;
+    pines.push({ x, z, s: sc, c: rnd() }); n++;
+  }
+  // đá rêu + dương xỉ rải quanh bãi rừng và hai bên đường mòn
+  for (let i = 0, n = 0; i < 1500 && n < 70; i++) {
+    const x = -150 + rnd() * 138, z = 66 + rnd() * 40; if (clear(x, z, 1.2) || (z > 80 && z < 98 && x > -92)) continue;
+    rocks.push({ x, z, s: 0.5 + rnd() * 1.1 }); n++;
+  }
+  for (let i = 0, n = 0; i < 2500 && n < 170; i++) {
+    const x = -140 + rnd() * 126, z = 66 + rnd() * 44; if (clear(x, z, 0.8)) continue;
+    for (let k = 0; k < 3; k++) ferns.push({ x: x + (rnd() - 0.5) * 1.2, z: z + (rnd() - 0.5) * 1.2, s: 0.6 + rnd() * 0.7 });
+    n++;
+  }
+  for (let i = 0, n = 0; i < 400 && n < 7; i++) { const x = -135 + rnd() * 100, z = 70 + rnd() * 34; if (clear(x, z, 1.5)) continue; logs.push({ x, z, ry: rnd() * 3.1 }); n++; }
+  const dummy = new THREE.Object3D(), col = new THREE.Color();
+  const inst = (geo, mat, list, shadow, tint) => {
+    const m = new THREE.InstancedMesh(geo, mat, Math.max(1, list.length));
+    list.forEach((t, i) => { dummy.position.set(t.x, 0, t.z); dummy.scale.set(t.s, t.s * (0.9 + (i % 5) * 0.05), t.s); dummy.rotation.y = i * 1.7; dummy.updateMatrix(); m.setMatrixAt(i, dummy.matrix); if (tint) { col.setHex(tint[(i + ((t.c || 0) * 7 | 0)) % tint.length]); m.setColorAt(i, col); } });
+    m.count = list.length; m.castShadow = shadow; m.receiveShadow = false; g.add(m); return m;
+  };
+  const trunk = new THREE.CylinderGeometry(0.3, 0.46, 3.2, 6); trunk.translate(0, 1.6, 0);
+  const c1 = new THREE.ConeGeometry(2.5, 4.2, 8); c1.translate(0, 4.4, 0);
+  const c2 = new THREE.ConeGeometry(2.0, 3.5, 8); c2.translate(0, 6.8, 0);
+  const c3 = new THREE.ConeGeometry(1.35, 3.1, 8); c3.translate(0, 9.0, 0);
+  const white = flat(0xffffff);   // màu thật lấy từ màu từng cây (setColorAt) để mỗi cây một sắc xanh khác nhau
+  inst(trunk, flat(0x5a3d26), pines, true);
+  inst(c1, white, pines, true, [0x2b6338, 0x2f6b3c, 0x275a34, 0x336f40]); inst(c2, white, pines, false, [0x347543, 0x3a7d46, 0x2f6b3c, 0x3d8248]); inst(c3, white, pines, false, [0x3d8248, 0x448a50, 0x38784a]);
+  inst(new THREE.IcosahedronGeometry(1, 0), flat(0x6f7a68), rocks, true, [0x6f7a68, 0x7b8573, 0x626d5c]);
+  const moss = new THREE.IcosahedronGeometry(1, 0); moss.scale(0.9, 0.35, 0.9); moss.translate(0, 0.78, 0); inst(moss, flat(0x4f8a3f), rocks, false);   // lớp rêu phủ đỉnh đá
+  const fern = new THREE.ConeGeometry(0.55, 1.1, 5); fern.translate(0, 0.55, 0); inst(fern, flat(0x3f8a3a), ferns, false, [0x3f8a3a, 0x4a9a44, 0x357d35]);
+  for (const l of logs) { const o = cyl(0.42, 0.5, 4.2, flat(0x5a3d26), l.x, 0.45, l.z, g, 7); o.rotation.z = Math.PI / 2; o.rotation.y = l.ry; o.castShadow = true; }
+  // đèn đá dọc đường mòn rừng (mép phía Bắc, ngoài vùng đi bộ), sáng hơn về đêm
+  const stone = std(0x9a9a98), lamp = std(0xffd08a, { emissive: 0xffa040, emissiveIntensity: 0.35 }); lamp.userData.nightGlow = { day: 0.35, night: 2.2 };
+  for (let x = -26; x > -92; x -= 11) { cyl(0.2, 0.3, 1.1, stone, x, 0.55, 83.2, g, 6); box(0.5, 0.5, 0.5, lamp, x, 1.35, 83.2, g); const cap = new THREE.Mesh(new THREE.ConeGeometry(0.5, 0.35, 4), stone); cap.rotation.y = Math.PI / 4; cap.position.set(x, 1.78, 83.2); g.add(cap); }
+  // sương thấp quanh bãi rừng và đường mòn
+  let dot = null;
+  if (typeof document !== 'undefined') dot = new THREE.CanvasTexture((() => { const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d'), gr = x.createRadialGradient(32, 32, 2, 32, 32, 30); gr.addColorStop(0, 'rgba(235,245,240,.5)'); gr.addColorStop(1, 'rgba(235,245,240,0)'); x.fillStyle = gr; x.fillRect(0, 0, 64, 64); return c; })());
+  const fog = [];
+  if (dot) for (let i = 0; i < 18; i++) { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: dot, transparent: true, depthWrite: false, opacity: 0.22 })); sp.scale.setScalar(9 + rnd() * 6); sp.position.set(i < 11 ? -118 + rnd() * 34 : -90 + rnd() * 70, 0.9 + rnd() * 1.4, i < 11 ? 72 + rnd() * 34 : 82 + rnd() * 14); sp.userData = { y0: sp.position.y, ph: rnd() * 6.28 }; g.add(sp); fog.push(sp); }
+  return { update(t) { fog.forEach((s, i) => { s.position.y = s.userData.y0 + Math.sin(t * 0.5 + s.userData.ph) * 0.35; s.material.opacity = 0.16 + 0.08 * Math.sin(t * 0.4 + i); }); } };
+}
+
 export function buildOutside() {
   const group = new THREE.Group();
   buildGround(group); buildStreet(group); buildVillageGate(group); buildHouses(group); lamps(group); buildFences(group); buildDecor(group); buildFestoons(group); buildMarket(group); buildForest(group); mountains(group);
-  const wf = buildWaterfall(group); buildForestGlade(group); group.add(buildDaiPhat());
+  const wf = buildWaterfall(group); buildForestGlade(group); group.add(buildDaiPhat()); const pw = buildPineWoods(group);
   group.add(buildStore9Sach()); group.add(buildTachHoa()); group.add(buildPhoneShop()); group.add(buildElectronicsStore()); group.add(buildJewelryStore());   // Cửa hàng 9 Sạch (nhà phố mặt đường làng, bên phải)
   // đường mòn đất (Đông, Tây) và hai bãi
   const dt = dirtTex(); dt.repeat.set(30, 3);
@@ -277,6 +329,7 @@ export function buildOutside() {
   return {
     group,
     update(t) {
+      pw.update(t);
       wf.ft.offset.y = -t * 0.55;
       wf.mist.forEach((s, i) => { s.position.y = s.userData.y0 + Math.sin(t * 0.8 + s.userData.ph) * 0.7; s.material.opacity = 0.35 + 0.2 * Math.sin(t * 0.6 + i); });
     },
