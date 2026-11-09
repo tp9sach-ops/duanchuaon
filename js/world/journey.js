@@ -8,6 +8,7 @@ import { HOUSE_LEVELS } from './land.js';
 import { PLACES } from './outside.js';
 import { TIERS } from './strength.js';
 import { DIFF, SLOT_ORDER, EVENT_MIN } from './yeuquai.js';
+import { NPCS } from './npc.js';
 
 const isObj = (o) => o && typeof o === 'object' && !Array.isArray(o);
 const num = (x) => (Number.isFinite(+x) ? Math.max(0, Math.floor(+x)) : 0);
@@ -92,6 +93,32 @@ export function pageNhaCua({ prog = null, land = null, furni = null } = {}) {
   return mk('nhacua', 'Đất · Nhà · Tiệc', 'Từ mảnh đất đầu tiên tới căn nhà đầy đủ nội thất.', tiles);
 }
 
+/** Trang 6 — Tu tập: các việc tu hằng ngày trong chùa. Ô đã làm khi tổng số lần ghi nhận (prog.tot) > 0. */
+const TU_TAP = [
+  { key: 'nhang', icon: '🪔', ten: 'Thắp nhang', quest: 'm-nhang', how: ['Mở “Dâng lễ” ở thanh dưới màn hình và bấm thắp nén nhang.', 'Thắp đủ 21 nén có nhiệm vụ riêng.'], unit: 'nén' },
+  { key: 'bow', icon: '🙏', ten: 'Lạy Phật', quest: 'n-lay', how: ['Vào chánh điện, đứng trước tượng Phật lớn.', 'Bấm “Lạy Phật”; mỗi ngày lạy ba lạy có thưởng.'], unit: 'lạy' },
+  { key: 'kinh', icon: '📿', ten: 'Tụng kinh', quest: 'm-kinh', how: ['Trong chánh điện bấm “Tụng kinh”.', 'Gõ mõ theo nhịp tới hết một thời; đủ 5 thời có nhiệm vụ riêng.'], unit: 'thời' },
+  { key: 'thien', icon: '🧘', ten: 'Ngồi thiền', quest: 'n-thien', how: ['Trong chánh điện bấm “Thiền”.', 'Khi đang thiền, người khác không ném bạn được.'], unit: 'lần' },
+  { key: 'niem', icon: '📿', ten: 'Lần tràng hạt', quest: 'm-niem', how: ['Bấm “Tràng hạt” rồi lần đủ 108 hạt một vòng.'], unit: 'vòng' },
+  { key: 'den', icon: '🏮', ten: 'Thả đèn nguyện', quest: 'm-den', how: ['Mở “Đèn nguyện”, viết điều bạn nguyện rồi thả đèn.'], unit: 'ngọn' },
+  { key: 'loc', icon: '🌼', ten: 'Nhận lộc hoa sen vàng', quest: 'm-loc', how: ['Tìm hoa sen vàng đang nở trong chùa (có chấm sáng trên bản đồ nhỏ) rồi đứng gần để nhận lộc.'], unit: 'lần' },
+  { key: 'doila', icon: '🍃', ten: 'Đổi lá bồ đề', quest: 'm-doila', how: ['Gặp Thầy Tri khách ở phía Đông chùa.', 'Đổi hạt sen lấy lá bồ đề (10 hạt = 1 lá).'], unit: 'lần' },
+];
+export function pageTuTap({ prog = null } = {}) {
+  const tiles = TU_TAP.map((t) => { const n = tot(prog, t.key); return { id: 'tt-' + t.key, icon: t.icon, ten: t.ten, mo: n > 0 ? `Đã làm ${n} ${t.unit}` : 'Chưa làm', done: n > 0, how: t.how.slice(), quest: t.quest, act: null }; });
+  return mk('tutap', 'Tu tập', 'Những việc tu hằng ngày trong chùa: nhang, lạy, kinh, thiền, đèn nguyện.', tiles);
+}
+
+/** Trang 7 — Dân làng: từng người trong và ngoài chùa (chỉ các người có hội thoại, không tính điểm cảnh). Đã gặp = đã trò chuyện (prog.seen.npc). */
+export function pageNguoi({ prog = null } = {}) {
+  const seen = new Set((prog && isObj(prog.seen) && Array.isArray(prog.seen.npc)) ? prog.seen.npc : []);
+  const tiles = NPCS.filter((n) => !n.act).map((n) => {
+    const done = seen.has(n.id), where = n.z < 40 ? 'trong chùa' : n.z < 150 ? 'ngoài làng' : 'khu nhà ở';
+    return { id: 'ng-' + n.id, icon: '🧑', ten: done ? n.ten : 'Người chưa quen', mo: done ? 'Đã trò chuyện' : 'Chưa gặp', done, how: [`Người này ở ${where}.`, 'Bấm vào nhân vật để trò chuyện, hoặc dùng nút “Dẫn đường”.'], quest: null, act: null, secret: !done, real: n.ten };
+  });
+  return mk('nguoi', 'Dân làng', 'Làm quen với mọi người trong và ngoài chùa.', tiles);
+}
+
 /** Trang 5 — Sức mạnh · Yêu quái: các bậc sức mạnh (khiêng/ném vật nặng) và hai khung giờ yêu quái hằng tháng. ctx.str = sức mạnh hiện tại; ctx.yq = { kills, bonus }. */
 export function pageSucManh(ctx = {}) {
   const { str = 0, yq = null } = isObj(ctx) ? ctx : {}, s = num(str), y = isObj(yq) ? yq : {}, tiles = [];
@@ -106,5 +133,5 @@ function mk(id, ten, mo, tiles) { return { id, ten, mo, tiles, total: tiles.filt
 /** Dựng toàn bộ các trang. ctx lạ/thiếu → trang vẫn dựng được (mọi ô chưa làm). */
 export function buildJourney(ctx = {}) {
   const c = isObj(ctx) ? ctx : {};
-  return [pageKhinh(c), pageKham(c), pageGieoDuyen(c), pageNhaCua(c), pageSucManh(c)];
+  return [pageKhinh(c), pageKham(c), pageGieoDuyen(c), pageNhaCua(c), pageSucManh(c), pageTuTap(c), pageNguoi(c)];
 }

@@ -2,14 +2,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { pageSucManh, buildJourney, pageKhinh, pageKham, pageGieoDuyen, pageNhaCua, PLACE_HINT } from '../js/world/journey.js';
+import { pageTuTap, pageNguoi, pageSucManh, buildJourney, pageKhinh, pageKham, pageGieoDuyen, pageNhaCua, PLACE_HINT } from '../js/world/journey.js';
 import { PLACES } from '../js/world/outside.js';
 import { SPECIES } from '../js/world/fishing.js';
 import { QUESTS } from '../js/world/quests.js';
 
 test('4 trang, id ô không trùng, ctx rỗng/hỏng vẫn dựng được và chưa ô nào xong', () => {
   for (const c of [undefined, null, 5, 'x', {}, { prog: 7, fish: [], land: 'a', furni: 3 }]) {
-    const p = buildJourney(c); assert.deepEqual(p.map((x) => x.id), ['khinh', 'kham', 'gieoduyen', 'nhacua', 'sucmanh']);
+    const p = buildJourney(c); assert.deepEqual(p.map((x) => x.id), ['khinh', 'kham', 'gieoduyen', 'nhacua', 'sucmanh', 'tutap', 'nguoi']);
     const ids = p.flatMap((x) => x.tiles.map((t) => t.id)); assert.equal(ids.length, new Set(ids).size); assert.equal(p.reduce((a, x) => a + x.done, 0), 0);
   }
 });
@@ -50,4 +50,12 @@ test('trang Sức mạnh · Yêu quái: bậc theo sức mạnh, thu phục + s�
   assert.ok(p1.tiles.find((t) => t.id === 'sm-yq-thu').done && p1.tiles.find((t) => t.id === 'sm-yq-bonus').done);
   assert.match(p1.tiles.find((t) => t.id === 'sm-yq-thu').how[0], /15:00.*20:00/);
   assert.equal(pageSucManh(null).tiles.length, 6);
+});
+
+test('trang Tu tập: ô làm xong khi tổng số lần > 0, mỗi ô có nhiệm vụ dẫn đường; trang Dân làng: chỉ người có hội thoại, ẩn tên tới khi trò chuyện', () => {
+  const p0 = pageTuTap({}); assert.equal(p0.done, 0); assert.equal(p0.tiles.length, 8); assert.ok(p0.tiles.every((t) => t.quest && t.how.length));
+  const p1 = pageTuTap({ prog: { tot: { nhang: 3, kinh: 1 } } }); assert.equal(p1.done, 2); assert.match(p1.tiles[0].mo, /3 nén/);
+  const n0 = pageNguoi({}); assert.ok(n0.total >= 10 && n0.done === 0 && n0.tiles.every((t) => t.secret && t.ten === 'Người chưa quen'));
+  const n1 = pageNguoi({ prog: { seen: { npc: ['truru', 'embe'] } } }); assert.equal(n1.done, 2); assert.equal(n1.tiles.find((t) => t.id === 'ng-truru').ten, 'Thầy Trụ trì');
+  assert.ok(!n1.tiles.some((t) => t.id === 'ng-gieng' || t.id === 'ng-thacnuoc'), 'điểm cảnh không phải người');
 });
