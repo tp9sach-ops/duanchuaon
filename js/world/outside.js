@@ -13,6 +13,8 @@ export const OUT_WALKS = [
   { id: 'bai-thac', x0: 84, x1: 112, z0: 86, z1: 122 },         // bãi dưới thác
   { id: 'duong-rung', x0: -100, x1: -12, z0: 84, z1: 94 },      // đường mòn vào rừng thông (rẽ trái)
   { id: 'bai-rung', x0: -118, x1: -90, z0: 72, z1: 108 },       // bãi trong rừng thông
+  { id: 'duong-thap', x0: 59, x1: 65, z0: 92, z1: 100 },        // Phiên 82: lối từ đường mòn thác lên đồi Bảo tháp (rẽ trái ở giữa đường mòn)
+  { id: 'san-thap', x0: 50, x1: 74, z0: 68, z1: 93 },           // Phiên 82: sân lát đá quanh Bảo tháp
   ...LAND_WALKS,                                                 // Phiên 36: đường xuống xóm + khu dân cư (js/world/land.js)
 ];
 
@@ -40,6 +42,14 @@ export const DAI_PHAT = {
   bac: { x0: 110, x1: 113.7, z0: 113, z1: 121 },
   den: [{ x: 110.6, z: 112.5, r: 0.35 }, { x: 110.6, z: 121.5, r: 0.35 }],
   stand: { x: 108.7, z: 120.9 },
+};
+
+/** Bảo tháp 7 tầng trên đồi (Phiên 82, mục "kiến trúc thêm"): tháp bát giác giữa sân lát đá, bốn đèn đá ở bốn góc phía trước. Thân tháp là vật cản tròn r `r` (người chơi đi quanh, không vào trong).
+ *  `stand` = chỗ đứng chiêm bái (phía Nam, nhìn lên tháp; đi tới được, đã kiểm bằng test). Cảnh 3D: js/scene/baothap.js (dựng từ chính các số này). */
+export const BAO_THAP = {
+  id: 'baothap', cx: 62, cz: 79, r: 3.5, tang: 7, h: 21.9,
+  den: [{ x: 56.8, z: 84.6, r: 0.4 }, { x: 67.2, z: 84.6, r: 0.4 }, { x: 56.8, z: 73.4, r: 0.4 }, { x: 67.2, z: 73.4, r: 0.4 }],
+  stand: { x: 62, z: 84.6 },
 };
 
 /** Cửa hàng 9 Sạch (nhà phố mặt tiền bên phải đường làng, quay mặt về phía -x ra đường). Dữ liệu thuần; cảnh 3D ở js/scene/store9sach.js.
@@ -125,7 +135,7 @@ export const PLACES = [
   { id: 'trathat', ten: 'Trà thất', x: -64, z: 12, r: 7 }, { id: 'vuonthien', ten: 'Vườn thiền', x: -62, z: -20, r: 8 },
   { id: 'hoca', ten: 'Hồ cá', x: 52, z: 10, r: 8 }, { id: 'quanam', ten: 'Quan Âm đài', x: 0, z: -59, r: 7 },
   { id: 'lang', ten: 'Đường làng', x: 0, z: 88, r: 14 }, { id: 'cho', ten: 'Chợ làng', x: 0, z: 128, r: 14 },
-  { id: 'daiphat', ten: 'Đại Phật vách đá', x: 108.7, z: 120.5, r: 5 }, { id: 'thuyta', ten: 'Thủy tạ Hồ Rừng', x: -112, z: 102, r: 3.2 }, { id: 'suoitrong', ten: 'Suối Trong', x: 101.8, z: 112.7, r: 3.2 },
+  { id: 'daiphat', ten: 'Đại Phật vách đá', x: 108.7, z: 120.5, r: 5 }, { id: 'thuyta', ten: 'Thủy tạ Hồ Rừng', x: -112, z: 102, r: 3.2 }, { id: 'baothap', ten: 'Bảo tháp trên đồi', x: 62, z: 84.6, r: 3.5 }, { id: 'suoitrong', ten: 'Suối Trong', x: 101.8, z: 112.7, r: 3.2 },
   { id: 'rung', ten: 'Rừng thông', x: -98, z: 89, r: 9 }, { id: 'thacnuoc', ten: 'Thác nước', x: 95, z: 104, r: 7 },
   { id: 'dienmaylamsen', ten: 'Điện Máy Lam Sen', x: -15.5, z: 70, r: 7 }, { id: 'kimhoanngoclan', ten: 'Kim Hoàn Ngọc Lan', x: 15.5, z: 131.5, r: 6 },
   { id: 'didongsenvang', ten: 'Di Động Sen Vàng', x: -15.5, z: 112, r: 6 },
@@ -157,6 +167,7 @@ export function registerOutside() {
   STALLS.forEach((s) => addRect({ x0: s.x0, x1: s.x1, z0: s.z0, z1: s.z1 }));
   addRect(DINH_NGHI); addRect(MIEU);
   addRect(DAI_PHAT.bac); DAI_PHAT.den.forEach((c) => addCircle({ x: c.x, z: c.z, r: c.r }));
+  addCircle({ x: BAO_THAP.cx, z: BAO_THAP.cz, r: BAO_THAP.r }); BAO_THAP.den.forEach((c) => addCircle({ x: c.x, z: c.z, r: c.r }));   // Phiên 82: Bảo tháp + 4 đèn đá
   // Cửa hàng 9 Sạch: sân trước đi được; thân nhà và đồ trước cửa là vật cản
   addWalk(STORE_9SACH.san); addRect(STORE_9SACH.than); Object.values(STORE_9SACH.props).forEach((c) => addCircle({ x: c.x, z: c.z, r: c.r }));
   addWalk(STORE_DIDONG.san); addRect(STORE_DIDONG.than); Object.values(STORE_DIDONG.props).forEach((c) => addCircle({ x: c.x, z: c.z, r: c.r }));

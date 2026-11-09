@@ -81,3 +81,6 @@ Cách dùng: làm mục [ ] đầu tiên, xong báo ptg, CHỜ "tiếp tục". L
 - Tải bản Phiên 46 lên GitHub (nếu chưa), mở trang thật và thử: nút "Câu cá" cụm phải-trên, nút nổi "Câu cá" khi đứng sát nước, mua cầu, thả, bấm khi hoa sen nở, thu cá, phóng sinh.
 - Trả lời: "quả cầu" có đúng là cầu quăng xuống nước? Có tặng 1 cầu gỗ cho người mới? Duyệt số tạm câu cá (xem PHIEN44.md).
 - Pages: Settings → Pages → Source = "GitHub Actions"?
+
+- Phiên 81: hạ tầng ZONE — lõi logic xong (va chạm theo zone, ZoneManager, 13 test), CHƯA nối vào game (docs/PHIEN81.md). `npm test` 775/775.
+- Phiên 82: kiến trúc thêm — Bảo tháp 7 tầng trên đồi (đường mòn thác, phía Bắc), nhiệm vụ `v-baothap` (docs/PHIEN82.md). Chưa nhìn trên trình duyệt thật. `npm test` 776/776.

@@ -43,6 +43,7 @@ export const QUESTS = [
   { id: 'v-kimhoanngoclan', loai: 'mot', ten: 'Ghé Kim Hoàn Ngọc Lan', mo: 'Nhà phố cuối đường làng, gần chợ.', dk: { key: 'visit:kimhoanngoclan', n: 1 }, xp: 12, sen: 1 },
   { id: 'v-suoitrong', loai: 'mot', ten: 'Ghé Suối Trong', mo: 'Cuối đường mòn thác nước, bãi bên phải: dòng suối chảy ra từ hồ thác, bờ Đông cầu đá; đứng sát mép nước là câu được.', dk: { key: 'visit:suoitrong', n: 1 }, xp: 10, sen: 1 },
   { id: 'v-thuyta', loai: 'mot', ten: 'Ngắm hồ ở Thủy tạ', mo: 'Trong bãi rừng thông, bên Hồ Rừng: đi theo lối gỗ ra nhà thủy tạ giữa hồ.', dk: { key: 'visit:thuyta', n: 1 }, xp: 10, sen: 1 },
+  { id: 'v-baothap', loai: 'mot', ten: 'Lên đồi chiêm bái Bảo tháp', mo: 'Giữa đường mòn thác, rẽ lên lối đá phía Bắc: bảo tháp bảy tầng trên đồi.', dk: { key: 'visit:baothap', n: 1 }, xp: 12, sen: 1 },
   { id: 'v-daiphat', loai: 'mot', ten: 'Chiêm bái Đại Phật vách đá', mo: 'Cuối đường mòn thác nước, bãi bên phải: tượng Phật lớn khắc vào vách đá.', dk: { key: 'visit:daiphat', n: 1 }, xp: 12, sen: 1 },
   { id: 'm-dao', loai: 'mot', ten: 'Dạo khắp nơi', mo: 'Đặt chân tới 8 nơi khác nhau (sân, vườn, hồ, làng, rừng, thác...).', dk: { key: 'visit', n: 8, distinct: true }, xp: 60, sen: 5 },
   { id: 'm-den', loai: 'mot', ten: 'Thả ngọn đèn nguyện đầu tiên', mo: 'Mở "Đèn nguyện" và viết điều bạn nguyện.', dk: { key: 'den', n: 1 }, xp: 25, sen: 2 },

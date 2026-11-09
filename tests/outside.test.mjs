@@ -21,7 +21,7 @@ test('ngoài chùa: mọi vùng đi bộ nối liền với chỗ xuất hiện 
 });
 
 test('ngoài chùa: ngoài vùng đi bộ là chặn (rừng, nhà dân, sườn núi chỉ để nhìn); mặt thác và hồ chân thác cũng chặn', () => {
-  for (const [x, z] of [[-60, 120], [60, 70], [150, 104], [70, 170], [-20, 100], [60, 120]]) assert.equal(blocked(x, z), true, `(${x},${z})`);
+  for (const [x, z] of [[-60, 120], [40, 70], [150, 104], [70, 170], [-20, 100], [60, 120]]) assert.equal(blocked(x, z), true, `(${x},${z})`);
   assert.equal(blocked(THAC.pool.x, THAC.pool.z), true, 'hồ chân thác'); assert.equal(blocked(THAC.pool.x + THAC.pool.r - 0.5, THAC.pool.z), true);
 });
 
@@ -130,4 +130,28 @@ test('Đại Phật vách đá (Phiên 58): có trong PLACES, chỗ đứng ng�
   assert.ok(DAI_PHAT.face > 112, 'ngách nằm ngoài mép bãi thác (x1 = 112)');
   assert.equal(blocked(DAI_PHAT.face + 1, DAI_PHAT.z), true, 'trong vách đá là chặn');
   assert.ok(DAI_PHAT.z - DAI_PHAT.w / 2 > 104 + 6.4 / 2, 'tượng nằm cách dải nước thác (z=104, rộng 6,4 m)');
+});
+
+test('Bảo tháp trên đồi (Phiên 82): đi tới được từ chỗ xuất hiện, thân tháp + 4 đèn đá chặn, sân nằm ngoài sông/đình/thác, lối rẽ từ đường mòn thác', async () => {
+  const { BAO_THAP, OUT_WALKS, DINH_NGHI, THAC } = await import('../js/world/outside.js');
+  const { RIVER } = await import('../js/world/river.js');
+  assert.ok(placeById('baothap'), 'có nơi baothap');
+  const s = BAO_THAP.stand;
+  assert.equal(blocked(s.x, s.z), false, 'chỗ chiêm bái không bị chặn');
+  assert.ok(has(s.x, s.z), 'chỗ chiêm bái đi tới được từ chỗ xuất hiện (qua đường mòn thác → lối đá → sân)');
+  assert.ok(placesAt(s).includes('baothap'), 'đứng ở chỗ chiêm bái thì tính là đã ghé');
+  assert.equal(blocked(BAO_THAP.cx, BAO_THAP.cz), true, 'thân tháp chặn');
+  assert.equal(blocked(BAO_THAP.cx + BAO_THAP.r - 0.2, BAO_THAP.cz), true, 'mép thân tháp chặn');
+  assert.equal(blocked(BAO_THAP.cx + BAO_THAP.r + 0.8, BAO_THAP.cz), false, 'đi vòng quanh tháp được');
+  for (const l of BAO_THAP.den) assert.equal(blocked(l.x, l.z), true, 'đèn đá chặn');
+  // đi vòng quanh tháp: bốn điểm quanh tháp đều tới được
+  for (const [dx, dz] of [[0, -5.2], [5.2, 0], [-5.2, 0], [0, 5.2]]) assert.ok(has(BAO_THAP.cx + dx, BAO_THAP.cz + dz), 'vòng quanh tháp (' + dx + ',' + dz + ')');
+  const san = OUT_WALKS.find((w) => w.id === 'san-thap'), lo = OUT_WALKS.find((w) => w.id === 'duong-thap'), thac = OUT_WALKS.find((w) => w.id === 'duong-thac');
+  assert.ok(san && lo && thac, 'đủ ba vùng đi bộ');
+  assert.ok(BAO_THAP.cx - BAO_THAP.r > san.x0 + 2 && BAO_THAP.cx + BAO_THAP.r < san.x1 - 2 && BAO_THAP.cz - BAO_THAP.r > san.z0 + 2, 'thân tháp nằm gọn trong sân, chừa lối đi quanh');
+  assert.ok(lo.z0 <= san.z1 && lo.z1 >= thac.z0 && lo.x0 >= thac.x0 && lo.x1 <= thac.x1, 'lối đá nối liền sân với đường mòn thác');
+  // không đè sông, đình nghỉ chân, hồ thác
+  for (const [x, z] of RIVER.pts) assert.ok(x < san.x0 - 1 || x > san.x1 + 1 || z > san.z1 + 1 || z < san.z0 - 1, 'sông không cắt sân tháp');
+  assert.ok(DINH_NGHI.x0 > san.x1, 'sân không đè đình nghỉ chân'); assert.ok(THAC.pool.x - THAC.pool.r > san.x1, 'sân cách hồ thác');
+  assert.ok(BAO_THAP.den.every((l) => l.x > san.x0 && l.x < san.x1 && l.z > san.z0 && l.z < san.z1), 'đèn đá nằm trong sân');
 });

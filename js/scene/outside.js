@@ -10,6 +10,7 @@ import { buildPhoneShop } from './didong.js';
 import { buildElectronicsStore } from './dienmay.js';
 import { buildJewelryStore } from './kimhoan.js';
 import { buildDaiPhat } from './daiphat.js';
+import { buildBaoThap } from './baothap.js';
 import { buildRiver } from './river.js';
 
 const std = (c, o = {}) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.85, ...o });
@@ -197,7 +198,7 @@ function buildForest(g) {
   }
   // thêm hai hàng thông dọc đường mòn rừng (Tây) và cây lá rộng dọc đường mòn thác (Đông)
   for (let x = -96; x < -14; x += 5) { pines.push({ x: x + rnd() * 2, z: 80.5 + rnd() * 1.5, s: 1 + rnd() * 0.6 }); pines.push({ x: x + rnd() * 2, z: 97.5 + rnd() * 1.5, s: 1 + rnd() * 0.6 }); }
-  for (let x = 18; x < 92; x += 5.5) { broads.push({ x: x + rnd() * 2, z: 95.5 + rnd() * 1.2, s: 1 + rnd() * 0.5 }); broads.push({ x: x + rnd() * 2, z: 112 + rnd() * 1.5, s: 1 + rnd() * 0.5 }); }
+  for (let x = 18; x < 92; x += 5.5) { const a = { x: x + rnd() * 2, z: 95.5 + rnd() * 1.2, s: 1 + rnd() * 0.5 }; if (!(a.x > 56.5 && a.x < 67.5)) broads.push(a); broads.push({ x: x + rnd() * 2, z: 112 + rnd() * 1.5, s: 1 + rnd() * 0.5 }); }   // Phiên 82: chừa lối lên đồi Bảo tháp (x 59–65)
   const dummy = new THREE.Object3D();
   const trunkG = new THREE.CylinderGeometry(0.28, 0.4, 2.4, 6); trunkG.translate(0, 1.2, 0);
   const coneG = new THREE.ConeGeometry(2.1, 4.4, 7); coneG.translate(0, 4.6, 0);
@@ -322,7 +323,7 @@ function buildPineWoods(g) {
 export function buildOutside() {
   const group = new THREE.Group();
   buildGround(group); buildStreet(group); buildVillageGate(group); buildHouses(group); lamps(group); buildFences(group); buildDecor(group); buildFestoons(group); buildMarket(group); buildForest(group); mountains(group);
-  const wf = buildWaterfall(group); buildForestGlade(group); group.add(buildDaiPhat()); group.add(buildRiver()); const pw = buildPineWoods(group);
+  const wf = buildWaterfall(group); buildForestGlade(group); group.add(buildDaiPhat()); group.add(buildBaoThap()); group.add(buildRiver()); const pw = buildPineWoods(group);
   group.add(buildStore9Sach()); group.add(buildTachHoa()); group.add(buildPhoneShop()); group.add(buildElectronicsStore()); group.add(buildJewelryStore());   // Cửa hàng 9 Sạch (nhà phố mặt đường làng, bên phải)
   // đường mòn đất (Đông, Tây) và hai bãi
   const dt = dirtTex(); dt.repeat.set(30, 3);
