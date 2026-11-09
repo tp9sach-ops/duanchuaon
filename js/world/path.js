@@ -1,6 +1,6 @@
 // Tìm đường cho bấm-để-đi và "đi tới chương" (Phiên 12b). Thuần hàm, có test: A* trên lưới 0,5 m dùng blocked/canStep của layout.js,
 // chừa một khoảng sát tường (0,3 m) rồi làm thẳng đường (bỏ điểm thừa nếu đi thẳng được). Trả danh sách điểm {x,z} hoặc null.
-import { blocked, canStep, CIRCLES, RECTS } from './layout.js';
+import { blocked, canStep, CIRCLES, RECTS, activeZoneId, zoneRevision } from './layout.js';
 
 const S = 0.5, CLEAR = 0.7, X0 = -130, Z0 = -80, W = 520, H = 600;     // lưới phủ khuôn viên + đường làng, rừng, thác ngoài cổng, khu dân cư (−130…130; −80…220)
 const SQ2 = Math.SQRT2;
@@ -20,7 +20,7 @@ export const free = (x, z) => !blocked(x, z) && !nearObstacle(x, z) && NB.every(
 // Bộ nhớ đệm theo ô lưới (A* hỏi mỗi ô nhiều lần); tự làm mới nếu có vật cản mới được thêm vào layout.js
 let cache = null, cacheKey = '';
 function freeCell(i, j) {
-  const key = CIRCLES.length + ':' + RECTS.length;
+  const key = activeZoneId() + zoneRevision() + ':' + CIRCLES.length + ':' + RECTS.length;   // Phiên 81: đổi zone là làm mới đệm
   if (!cache || key !== cacheKey) { cache = new Uint8Array(W * H); cacheKey = key; }
   const k = i + j * W; let v = cache[k];
   if (!v) { v = free(X0 + i * S, Z0 + j * S) ? 1 : 2; cache[k] = v; }

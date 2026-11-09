@@ -53,8 +53,53 @@ export const bridgeAt = (x, z) => { for (const w of WATERS) for (const b of w.br
 const inRect = (x, z, r) => x >= r.x0 && x <= r.x1 && z >= r.z0 && z <= r.z1;
 const inGateOpening = (x) => GATE.openings.some(([a, b]) => x >= a && x <= b);
 
-/** Vùng của điểm: 'ground' | 'step' | 'plat' (sàn chính điện). */
+// ---- VA CHẠM THEO ZONE (Phiên 81) -------------------------------------------------------------------------------------------------------------------
+// Trước đây mọi vật cản nằm trong MỘT bộ mảng toàn cục. Nay mỗi zone có bộ riêng: chỉ zone đang chạy nằm trong CIRCLES/RECTS/WALKS/WATERS,
+// zone khác được cất vào kho. Các mảng được đổi NỘI DUNG TẠI CHỖ (không đổi đối tượng) nên mọi module đã import CIRCLES/RECTS vẫn đúng.
+// Zone 'chua' (hub, chùa Diệu Giang) là mặc định: mọi addCircle/addRect gọi lúc import đều rơi vào đó, nên hành vi cũ giữ nguyên.
+// Zone khác: defineZone(id, { bounds: {x0,x1,z0,z1}, terrain?: (x,z)=>bool chặn thêm, groundY?: (x,z)=>độ cao }). Ngoài bounds là bị chặn; không có chính điện/ao/cổng của hub.
+export const HUB = 'chua';
+const zoneStore = new Map();      // id -> { circles, rects, walks, waters } của zone ĐANG KHÔNG chạy
+const zoneDefs = new Map();       // id -> định nghĩa địa hình (zone khác hub)
+let activeZone = HUB, layoutRev = 0;
+/** Zone đang chạy. */
+export const activeZoneId = () => activeZone;
+/** Số lần đổi zone (để bộ nhớ đệm tìm đường biết làm mới). */
+export const zoneRevision = () => layoutRev;
+export function defineZone(id, def = {}) {
+  if (!id || id === HUB) throw new Error('Không định nghĩa lại zone hub: ' + id);
+  const b = def.bounds;
+  if (!b || ![b.x0, b.x1, b.z0, b.z1].every(Number.isFinite) || b.x0 >= b.x1 || b.z0 >= b.z1) throw new Error('Zone ' + id + ' cần bounds {x0,x1,z0,z1} hợp lệ');
+  zoneDefs.set(id, def);
+  if (!zoneStore.has(id)) zoneStore.set(id, { circles: [], rects: [], walks: [], waters: [] });
+}
+export const hasZone = (id) => id === HUB || zoneDefs.has(id);
+/** Chuyển zone đang chạy: cất vật cản của zone cũ, nạp vật cản của zone mới. Trả true nếu có đổi. */
+export function activateZone(id) {
+  if (id === activeZone) return false;
+  if (!hasZone(id)) throw new Error('Zone chưa định nghĩa: ' + id);
+  zoneStore.set(activeZone, { circles: CIRCLES.splice(0), rects: RECTS.splice(0), walks: WALKS.splice(0), waters: WATERS.splice(0) });
+  const s = zoneStore.get(id) || { circles: [], rects: [], walks: [], waters: [] };
+  for (const c of s.circles) CIRCLES.push(c);
+  for (const r of s.rects) RECTS.push(r);
+  for (const w of s.walks) WALKS.push(w);
+  for (const w of s.waters) WATERS.push(w);
+  zoneStore.delete(id);
+  activeZone = id; layoutRev++;
+  return true;
+}
+/** Thêm vật cản vào một zone KHÔNG chạy (dựng zone trước khi vào). Zone đang chạy thì dùng addCircle/addRect. */
+export function addToZone(id, kind, item) {
+  if (id === activeZone) { ({ circle: addCircle, rect: addRect, walk: addWalk, water: addWater })[kind](item); return; }
+  if (!hasZone(id)) throw new Error('Zone chưa định nghĩa: ' + id);
+  const s = zoneStore.get(id) || { circles: [], rects: [], walks: [], waters: [] }; zoneStore.set(id, s);
+  s[({ circle: 'circles', rect: 'rects', walk: 'walks', water: 'waters' })[kind]].push(item);
+}
+const zoneDef = () => (activeZone === HUB ? null : zoneDefs.get(activeZone));
+
+/** Vùng của điểm: 'ground' | 'step' | 'plat' (sàn chính điện). Zone khác hub chỉ có 'ground'. */
 export function region(x, z) {
+  if (activeZone !== HUB) return 'ground';
   const s = HALL.step;
   if (Math.abs(x) <= s.x && z <= s.z1 && z >= HALL.platZ1) return 'step';
   if (Math.abs(x) <= HALL.platX - 0.5 && z >= HALL.platZ0 && z <= HALL.platZ1) return 'plat';
@@ -63,6 +108,7 @@ export function region(x, z) {
 
 /** Độ cao mặt đi tại (x, z): sàn chính điện, mặt từng bậc thềm (bậc rời), cầu đá qua ao, cầu/đảo của hồ thêm. */
 export function groundY(x, z) {
+  const zd = zoneDef(); if (zd) return zd.groundY ? zd.groundY(x, z) : 0;
   const r = region(x, z), s = HALL.step;
   if (r === 'plat') return HALL.h;
   if (r === 'step') { const i = Math.max(0, Math.min(STAIRS.n - 1, Math.floor((s.z1 - z) / STAIRS.run))); return (i + 1) * HALL.h / STAIRS.n; }
@@ -73,6 +119,7 @@ export function groundY(x, z) {
 
 /** Khối đặc của chính điện (tường bên, tường hậu, khối đá nền). y = độ cao điểm xét: khối đá nền chỉ chặn khi y thấp hơn mặt nền (camera bay cao hơn thì không bị chặn). */
 function hallSolid(x, z, y) {
+  if (activeZone !== HUB) return false;
   const r = region(x, z);
   if (r === 'plat') {
     if (z >= HALL.wallZ0 - 0.1 && z <= HALL.wallZ1 && Math.abs(x) > HALL.wallX) return true;
@@ -91,6 +138,13 @@ export function solidAt(x, z, y = 1.6) {
 
 /** Phần chặn do ĐỊA HÌNH (ranh giới, ao, hồ, tường và nền chính điện), chưa tính vật cản tròn/chữ nhật. */
 function terrainBlocked(x, z) {
+  const zd = zoneDef();
+  if (zd) {   // zone khác hub: chỉ có bounds + địa hình riêng + hồ riêng (không có ranh giới/ao/cổng của chùa)
+    if (!inRect(x, z, zd.bounds)) return true;
+    if (zd.terrain && zd.terrain(x, z)) return true;
+    for (const w of WATERS) if (Math.hypot(x - w.x, z - w.z) < w.r && !bridgeAt(x, z)) return true;
+    return false;
+  }
   // Ranh giới: trong sân, hoặc đường ngoài cổng
   const inside = Math.abs(x) <= BOUNDS.xMax && z >= BOUNDS.zMin && z <= GATE.z - 1.8;
   const outside = (Math.abs(x) <= 14 && z >= GATE.z + 2.4 && z <= 62) || WALKS.some((w) => inRect(x, z, w));
