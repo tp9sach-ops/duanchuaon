@@ -17,7 +17,7 @@ export function createRoomClient(deps) {
   const { call, getSelf, makeAvatar, scene, onOnline = () => {}, pageId } = deps;
   const schedule = deps.schedule || ((fn, ms) => setTimeout(fn, ms)), cancel = deps.cancel || ((h) => clearTimeout(h));
   const remotes = createRemotes(), views = new Map();       // id → { av, key }
-  let cursor = 0, first = true, pendingSay = '', timer = null, running = false, active = true, fails = 0, busy = false, lastCount = 1, hiddenMs = 9000;
+  let lastRoom = null, cursor = 0, first = true, pendingSay = '', timer = null, running = false, active = true, fails = 0, busy = false, lastCount = 1, hiddenMs = 9000;
   const API = { pageId };
 
   function viewFor(p) {
@@ -45,8 +45,11 @@ export function createRoomClient(deps) {
     try {
       const me = getSelf();
       if (!me) { wait = 500; return; }                      // chưa vào chùa (đang ở màn nhập tên)
+      const rn = deps.roomOf ? deps.roomOf(ROOM_CFG.room) : ROOM_CFG.room;     // tên phòng theo zone hiện tại (hub = 'main', như cũ)
+      if (lastRoom !== null && rn !== lastRoom) API.reset();                  // sang zone khác: quên người + lời nhắn của zone cũ
+      lastRoom = rn;
       const say = pendingSay; pendingSay = '';
-      const res = await call({ action: 'sync', room: ROOM_CFG.room, id: pageId, n: me.n, c: me.c, h: me.h, x: me.x, y: me.y, z: me.z, r: me.r, s: me.s, since: cursor, say });
+      const res = await call({ action: 'sync', room: rn, id: pageId, n: me.n, c: me.c, h: me.h, x: me.x, y: me.y, z: me.z, r: me.r, s: me.s, since: cursor, say });
       if (res && res.ok) {
         fails = 0; remotes.ingest(res.players, pageId);
         lastCount = Math.max(1, Number(res.count) || remotes.size + 1); onOnline(lastCount);

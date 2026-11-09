@@ -15,6 +15,7 @@ import { initVision } from './ui/vision.js';
 import { initStage } from './ui/stage.js';
 import { initHud } from './ui/hud.js';
 import { initRoom } from './net/room.js';
+import { initZones } from './world/zoneRuntime.js';
 import { isNpcSpot } from './world/spots.js';
 import { isDonateSpot } from './world/donate.js';
 import { initWind } from './scene/wind.js';
@@ -83,6 +84,7 @@ async function boot() {
   stage = initAll(created.rail);
   try { initWind(created.scene); } catch (e) { console.warn('[Diệu Giang Tự] Gió lỗi:', e && e.message); }   // cây lung lay; lỗi thì cây đứng yên
   try { initHud(); } catch (e) { console.warn('[Diệu Giang Tự] HUD lỗi:', e && e.message); }   // màn vào cửa + HUD; lỗi thì giữ giao diện cũ
+  try { initZones(localStorage, () => (window.LGT && window.LGT.world ? window.LGT.world.pos : null)); } catch (e) { console.warn('[Diệu Giang Tự] Khu vực lỗi:', e && e.message); }
   try { initRoom(); } catch (e) { console.warn('[Diệu Giang Tự] Đa người lỗi:', e && e.message); }   // thấy người khác trong chùa; lỗi thì vẫn chơi một mình
   // Phòng khi onProgress(1) không tới (tab nền): vẫn mở trang sau 6s
   setTimeout(hidePre, 6000);

@@ -39,7 +39,7 @@ export function initRoom() {
     el.textContent = n == null ? 'Chùa đang đông, chưa vào được' : (roomName ? roomName + ' · ' : '') + n + ' đang online';
   };
   client = createRoomClient({
-    call: manager.call, scene, pageId: newId(), onOnline: setOnline,
+    call: manager.call, scene, pageId: newId(), roomOf: (base) => (LGT.zones ? LGT.zones.roomKey(base) : base), onOnline: setOnline,
     onChat: (c) => document.dispatchEvent(new CustomEvent('lgt:chat', { detail: { name: c.name, text: c.text, mine: false } })),
     makeAvatar: (p) => createAvatar({ name: p.name, color: p.color, hair: p.hair, mine: false }),
     getSelf() {
