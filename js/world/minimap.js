@@ -5,7 +5,14 @@ import { PLACES, OUT_WALKS, THAC, STORE_9SACH, STORE_TACHHOA } from './outside.j
 import { NPCS } from './npc.js';
 import { PLACE_STAND } from './questGuide.js';
 import { POND } from './layout.js';
+import { HUB_ID } from './zones.js';
 import { plotById, houseLevel } from './land.js';
+
+/** Bản đồ này CHỈ vẽ zone hub (chùa + làng). Đứng ở zone khác thì ẩn bản đồ để không chỉ sai chỗ (Phiên 86). `zones` = LGT.zones (có thể chưa có). */
+export function mapAvailable(zones) {
+  const cur = zones && zones.current;
+  return typeof cur !== 'string' || cur === HUB_ID;
+}
 
 /** Khung thế giới hiển thị trên bản đồ (m). Phủ cả Quan Âm đài (z≈-63), khu nhà ở (z≈210), rừng thông (x≈-118), thác (x≈114). */
 export const WORLD_BOX = { x0: -125, x1: 122, z0: -70, z1: 216 };
