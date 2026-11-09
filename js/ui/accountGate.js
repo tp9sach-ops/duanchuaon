@@ -1,6 +1,8 @@
 // Màn vào cửa có tài khoản (Phiên 53): tạo nhân vật / đăng nhập / đặt mật khẩu cho nhân vật cũ / "chào mừng trở lại".
 // Logic quyết định chế độ + chữ nằm ở js/engines/account.js (có test); file này chỉ nối DOM với client (js/net/accountClient.js).
+// Sửa lỗi "không vào được game" trong khung nhúng: confirm() bị chặn (thiếu allow-modals) nên đăng nhập im lặng dừng → dùng askConfirm (hộp trong trang).
 import { MODE_UI, entryMode, signupMode, validateEntry, errMsg, isNetworkError } from '../engines/account.js';
+import { askConfirm } from './dialog.js';
 
 const AUTO_KEY = 'lgt.autoEnter';   // sessionStorage: vừa đăng nhập xong và trang tải lại → tự vào chùa, khỏi bấm thêm
 
@@ -49,7 +51,7 @@ export function initAccountGate({ form, nameIn, client, hasLegacy, getDraft, onE
   async function doLogin(f) {
     const r = await client.login(f);
     if (!r.ok) { showErr(r.error, { name: f.name, field: 'pw', detail: r.detail }); if (isNetworkError(r.error)) temp.hidden = false; return; }
-    if (client.hasProgress() && !confirm('Máy này đang có dữ liệu chơi chưa gắn với tài khoản. Đăng nhập “' + r.res.name + '” sẽ THAY dữ liệu trên máy này bằng dữ liệu đã lưu của nhân vật đó. Tiếp tục?')) return;
+    if (client.hasProgress() && !(await askConfirm('Máy này đang có dữ liệu chơi chưa gắn với tài khoản. Đăng nhập “' + r.res.name + '” sẽ THAY dữ liệu trên máy này bằng dữ liệu đã lưu của nhân vật đó. Tiếp tục?', { ok: 'Tiếp tục', cancel: 'Hủy' }))) return;
     client.adopt(r.res);
     try { sessionStorage.setItem(AUTO_KEY, '1'); } catch (_) { /* bỏ qua */ }
     location.reload();   // các phần của game đọc dữ liệu lúc khởi động → tải lại để nạp đúng nhân vật
@@ -74,12 +76,12 @@ export function initAccountGate({ form, nameIn, client, hasLegacy, getDraft, onE
   }
   async function doLogout() {
     if (busy || !client) return;
-    if (!confirm('Đăng xuất nhân vật này khỏi máy? Dữ liệu trên máy sẽ được xóa (dữ liệu đã lưu trên tài khoản vẫn còn).')) return;
+    if (!(await askConfirm('Đăng xuất nhân vật này khỏi máy? Dữ liệu trên máy sẽ được xóa (dữ liệu đã lưu trên tài khoản vẫn còn).', { ok: 'Đăng xuất', cancel: 'Hủy' }))) return;
     setBusy(true);
     try {
       let r = await client.logout();
       if (!r.ok && r.error === 'unsynced') {
-        if (!confirm('Chưa lưu được tiến trình mới nhất lên máy chủ (có thể đang mất mạng). Đăng xuất bây giờ thì phần chưa lưu sẽ mất. Vẫn đăng xuất?')) return;
+        if (!(await askConfirm('Chưa lưu được tiến trình mới nhất lên máy chủ (có thể đang mất mạng). Đăng xuất bây giờ thì phần chưa lưu sẽ mất. Vẫn đăng xuất?', { ok: 'Vẫn đăng xuất', cancel: 'Hủy' }))) return;
         r = await client.logout({ force: true });
       }
       location.reload();
