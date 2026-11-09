@@ -12,6 +12,7 @@ import { buildJewelryStore } from './kimhoan.js';
 import { buildDaiPhat } from './daiphat.js';
 import { buildBaoThap } from './baothap.js';
 import { buildRiver } from './river.js';
+import { CLIFF_FLAT } from '../world/daiphatPanel.js';
 
 const std = (c, o = {}) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.85, ...o });
 const flat = (c, o = {}) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.95, flatShading: true, ...o });
@@ -225,8 +226,11 @@ function buildWaterfall(g) {
   const cg = new THREE.BoxGeometry(26, THAC.h, 46, 6, 9, 10), pos = cg.attributes.position;
   for (let i = 0; i < pos.count; i++) {
     const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i), onFront = x < -12.9;
-    if (y < -THAC.h / 2 + 0.1) continue;
-    const n = (rnd() - 0.5) * 3.2; pos.setX(i, x + (onFront ? Math.abs(n) : n)); pos.setZ(i, z + (rnd() - 0.5) * 2.5); if (y > THAC.h / 2 - 0.1) pos.setY(i, y + rnd() * 3);
+    // Phiên 83: mặt trước vách từ z địa phương > 4,5 (thế giới z > 108,5) được LÀM PHẲNG tại CLIFF_FLAT.xLocal để gắn tấm Đại Phật (js/scene/daiphat.js); giữ nguyên số lần gọi rnd() để phần vách còn lại không đổi
+    const flatFront = onFront && z > 4.5;
+    if (y < -THAC.h / 2 + 0.1) { if (flatFront) pos.setX(i, CLIFF_FLAT.xLocal); continue; }
+    const n = (rnd() - 0.5) * 3.2, rz = (rnd() - 0.5) * 2.5;
+    pos.setX(i, flatFront ? CLIFF_FLAT.xLocal : x + (onFront ? Math.abs(n) : n)); pos.setZ(i, flatFront ? z : z + rz); if (y > THAC.h / 2 - 0.1) pos.setY(i, y + rnd() * 3);
   }
   cg.computeVertexNormals();
   const cliff = new THREE.Mesh(cg, flat(0x8a8176)); cliff.position.set(cx + 13, THAC.h / 2, THAC.fallZ); g.add(cliff);
