@@ -12,6 +12,9 @@ export const RIVER = {
 /** Hồ Rừng: hồ nhỏ ở bãi rừng thông (Tây), nằm trong vùng đi bộ để đứng ngắm / (sau này) câu cá. */
 export const LAKE = { id: 'horung', ten: 'Hồ Rừng', x: -112, z: 102, r: 4.5 };
 
+/** Suối Trong (Phiên 76): đoạn sông gần hồ thác, bờ Đông bãi thác — nước thứ 4 câu được (js/world/fishing.js). Hình tròn nhỏ đặt đúng giữa dòng để quăng cầu rơi vào sông. */
+export const SUOI = { id: 'suoitrong', ten: 'Suối Trong', x: 99.2, z: 112.7, r: 2 };
+
 /** Nhà Thủy tạ Hồ Rừng (Phiên 75): sàn gỗ nhô ra giữa hồ + lối đi gỗ từ bờ Đông; 4 trụ mái (vật cản nhỏ), mái ngói. Đứng trên sàn ngắm hồ = "đã ghé" nơi 'thuyta'. */
 export const THUY_TA = {
   deck: { x0: -114.2, x1: -109.8, z0: 99.8, z1: 104.2, y: 0.4 },

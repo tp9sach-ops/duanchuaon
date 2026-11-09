@@ -3,7 +3,7 @@
 import { FISH_WATERS, waterById } from './fishing.js';
 
 /** Độ cao mặt nước để đặt vật nổi (mét). Chưa kiểm bằng mắt trên cảnh thật: chỉnh ở đây nếu cầu chìm / lơ lửng. */
-export const WATER_Y = { hoca: 0.1, aosen: 0.06, hothac: 0.1 };
+export const WATER_Y = { hoca: 0.1, aosen: 0.06, hothac: 0.1, suoitrong: 0.15 };
 export const waterY = (id) => (WATER_Y[id] !== undefined ? WATER_Y[id] : 0.08);
 /** Quả cầu bay từ tay người xuống nước trong chừng này giây (kể từ sess.t = 0). */
 export const FLIGHT = 0.6;

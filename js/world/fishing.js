@@ -8,6 +8,7 @@
 import { POND } from './layout.js';
 import { KOI } from './landscape.js';
 import { THAC } from './outside.js';
+import { SUOI } from './river.js';
 
 /** Năm loại quả cầu. gia = giá (đơn vị theo `don`: 'la' = lá bồ đề — mặc định; 'sen' = hạt sen. Phiên 57: Cầu Gỗ bán bằng 50 HẠT SEN = 5 lá); ben = số lần quăng trước khi nứt; may = hệ số nhân cơ hội gặp loài hiếm; cua = giây hoa sen hiện (0,5 giây ở loại đầu). */
 export const ORBS = [
@@ -45,7 +46,13 @@ export const SPECIES = [
   { id: 'ruavang', ten: 'Rùa vàng', loai: 'rua', hiem: true, w: 5 },
   { id: 'babahoa', ten: 'Ba ba hoa', loai: 'baba', hiem: true, w: 3 },
   { id: 'mucnang', ten: 'Mực nang', loai: 'muc', hiem: true, w: 3 },
+  // Loài RIÊNG của Suối Trong (nuoc = chỉ gặp ở các nước này; loài không có `nuoc` gặp ở mọi nước, kể cả suối)
+  { id: 'bongsuoi', ten: 'Cá bống suối', loai: 'ca', hiem: false, w: 26, nuoc: ['suoitrong'] },
+  { id: 'chachsuoi', ten: 'Cá chạch suối', loai: 'ca', hiem: false, w: 18, nuoc: ['suoitrong'] },
+  { id: 'caleng', ten: 'Cá lăng', loai: 'ca', hiem: true, w: 6, nuoc: ['suoitrong'] },
 ];
+/** Loài có thể gặp ở nước `waterId` (không truyền = tất cả loài không giới hạn nước). */
+export const speciesFor = (waterId) => SPECIES.filter((s) => !s.nuoc || (waterId && s.nuoc.includes(waterId)));
 export const speciesById = (id) => SPECIES.find((s) => s.id === id) || null;
 
 /** Nước câu được: hồ cá (Đông), ao sen trước chánh điện, hồ chân thác. (Đề xuất thêm "Suối Trong" ở phiên sau.) */
@@ -53,6 +60,7 @@ export const FISH_WATERS = [
   { id: 'hoca', ten: 'Hồ cá', x: KOI.x, z: KOI.z, r: KOI.r },
   { id: 'aosen', ten: 'Ao sen', x: POND.x, z: POND.z, r: POND.r },
   { id: 'hothac', ten: 'Hồ thác', x: THAC.pool.x, z: THAC.pool.z, r: THAC.pool.r },
+  { id: 'suoitrong', ten: SUOI.ten, x: SUOI.x, z: SUOI.z, r: SUOI.r },
 ];
 export const waterById = (id) => FISH_WATERS.find((w) => w.id === id) || null;
 /** Mặt nước gần điểm (x, z) nhất mà người đứng cách mép ≤ `margin` mét (đứng trên cầu/bờ đều được); không có thì null. */
@@ -147,18 +155,19 @@ export function currentOrb(st) {
 }
 
 /** Cơ hội gặp loài hiếm (0..1) với quả cầu `orb`. */
-export function rareChance(orb) {
-  let c = 0, r = 0; for (const s of SPECIES) { if (s.hiem) r += s.w * orb.may; else c += s.w; }
+export function rareChance(orb, waterId = '') {
+  let c = 0, r = 0; for (const s of speciesFor(waterId || '-')) { if (s.hiem) r += s.w * orb.may; else c += s.w; }
   return r / (c + r);
 }
 /** Cơ hội con cá thuộc cỡ lớn (cầu tốt thì dễ lớn hơn). */
 export const bigChance = (orb) => Math.min(0.6, 0.25 + 0.07 * ORBS.findIndex((o) => o.id === orb.id));
 
 /** Bốc một con cá theo quả cầu. rng() trả [0,1). Trả { sp, lon }. */
-export function rollCatch(orb, rng = Math.random) {
-  let total = 0; for (const s of SPECIES) total += s.w * (s.hiem ? orb.may : 1);
-  let x = rng() * total, pick = SPECIES[SPECIES.length - 1];
-  for (const s of SPECIES) { x -= s.w * (s.hiem ? orb.may : 1); if (x < 0) { pick = s; break; } }
+export function rollCatch(orb, rng = Math.random, waterId = '') {
+  const list = speciesFor(waterId || '-');   // không rõ nước: chỉ các loài chung
+  let total = 0; for (const s of list) total += s.w * (s.hiem ? orb.may : 1);
+  let x = rng() * total, pick = list[list.length - 1];
+  for (const s of list) { x -= s.w * (s.hiem ? orb.may : 1); if (x < 0) { pick = s; break; } }
   return { sp: pick.id, lon: rng() < bigChance(orb) };
 }
 
@@ -178,7 +187,7 @@ export function startCast(st, waterId, rng = Math.random) {
   const count = 1 + Math.floor(rng() * 3), nibbles = []; let t = T_SHADOW;
   for (let i = 0; i < count; i++) { t += i === 0 ? between(rng, 0.8, 1.8) : between(rng, 0.7, 1.5); nibbles.push(t); }
   const tBite = t + between(rng, 0.8, 1.6);
-  const sess = { water: waterId, orb: cur.orb.id, t: 0, phase: 'wait', tShadow: T_SHADOW, nibbles, tBite, tEnd: tBite + cur.orb.cua, fish: rollCatch(cur.orb, rng), over: false, outcome: null };
+  const sess = { water: waterId, orb: cur.orb.id, t: 0, phase: 'wait', tShadow: T_SHADOW, nibbles, tBite, tEnd: tBite + cur.orb.cua, fish: rollCatch(cur.orb, rng, waterId), over: false, outcome: null };
   return { ok: true, reason: '', state: n, sess };
 }
 

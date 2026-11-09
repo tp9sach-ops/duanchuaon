@@ -25,7 +25,7 @@ test('ao cá riêng gồm cá, rùa, ba ba, mực; có cả loài thường và 
 });
 
 test('nước câu: hồ cá, ao sen, hồ thác; đứng gần mép (≤3,2 m) mới quăng được', () => {
-  assert.deepEqual(FISH_WATERS.map((w) => w.id), ['hoca', 'aosen', 'hothac']);
+  assert.deepEqual(FISH_WATERS.map((w) => w.id), ['hoca', 'aosen', 'hothac', 'suoitrong']);
   assert.equal(nearWater(KOI.x, KOI.z).id, 'hoca'); assert.equal(nearWater(POND.x, POND.z + POND.r + 1).id, 'aosen'); assert.equal(nearWater(THAC.pool.x - THAC.pool.r - 2, THAC.pool.z).id, 'hothac');
   assert.equal(nearWater(KOI.x + KOI.r + 3.1, KOI.z).id, 'hoca'); assert.equal(nearWater(KOI.x + KOI.r + 3.5, KOI.z), null); assert.equal(nearWater(0, 200), null);
   assert.equal(waterById('xxx'), null);
@@ -90,7 +90,7 @@ test('cầu tốt hơn → cửa sổ dài hơn và dễ gặp loài hiếm/cỡ
   assert.ok(Math.abs(h[0] - rareChance(ORBS[0])) < 0.03); assert.ok(Math.abs(h[4] - rareChance(ORBS[4])) < 0.03);
   assert.ok(rareChance(ORBS[0]) < 0.25 && rareChance(ORBS[4]) > 0.4 && rareChance(ORBS[4]) < 0.8);
   assert.ok(share(ORBS[4], 'lon') > share(ORBS[0], 'lon')); assert.ok(bigChance(ORBS[4]) <= 0.6 && bigChance(ORBS[0]) === 0.25);
-  const seen = new Set(); const r = rngSeed(11); for (let i = 0; i < 6000; i++) seen.add(rollCatch(ORBS[4], r).sp); assert.equal(seen.size, SPECIES.length, 'loài nào cũng có thể gặp');
+  const seen = new Set(); const r = rngSeed(11); for (let i = 0; i < 6000; i++) seen.add(rollCatch(ORBS[4], r).sp); assert.equal(seen.size, SPECIES.filter((s) => !s.nuoc).length, 'loài nào cũng có thể gặp');
 });
 
 test('thu cá vào ao riêng: có uid riêng, tối đa 30 con, đầy thì báo; thống kê đúng', () => {
@@ -206,4 +206,18 @@ test('sổ sưu tầm: câu/giữ/phóng sinh được loài nào thì ghi loài
   const b = noteCaught(s0, { sp: 'chep' }); assert.equal(b.dex.chep, 1); assert.deepEqual(s0.dex, {});
   assert.deepEqual(noteCaught(s0, { sp: 'khongco' }).dex, {}); assert.deepEqual(noteCaught(s0).dex, {});
   const r = releaseCaught(b, { sp: 'chep', lon: false }); assert.equal(r.state.dex.chep, 2);
+});
+
+import { speciesFor } from '../js/world/fishing.js';
+import { SUOI } from '../js/world/river.js';
+test('Suối Trong: nước thứ 4, đứng bờ Đông câu được; loài riêng chỉ ở suối, loài chung ở mọi nước', () => {
+  assert.ok(waterById('suoitrong') && FISH_WATERS.length === 4); assert.equal(nearWater(SUOI.x + 2.3, SUOI.z).id, 'suoitrong');
+  const riêng = SPECIES.filter((s) => s.nuoc).map((s) => s.id); assert.deepEqual(riêng.sort(), ['bongsuoi', 'caleng', 'chachsuoi']);
+  for (const w of ['hoca', 'aosen', 'hothac', '']) assert.ok(!speciesFor(w).some((s) => s.nuoc), 'loài suối lọt ra ' + w);
+  assert.ok(speciesFor('suoitrong').some((s) => s.id === 'bongsuoi') && speciesFor('suoitrong').some((s) => s.id === 'chep'));
+  const seenSuoi = new Set(), seenAo = new Set(); let r = rngSeed(5);
+  for (let i = 0; i < 8000; i++) { seenSuoi.add(rollCatch(ORBS[4], r, 'suoitrong').sp); seenAo.add(rollCatch(ORBS[4], r, 'aosen').sp); }
+  assert.equal(seenSuoi.size, speciesFor('suoitrong').length); assert.equal(seenAo.size, speciesFor('aosen').length);
+  assert.ok(['bongsuoi', 'chachsuoi', 'caleng'].every((id) => seenSuoi.has(id)) && !['bongsuoi', 'chachsuoi', 'caleng'].some((id) => seenAo.has(id)));
+  const st = loadFish(null), b = buyOrb(st, { la: 0, sen: 100 }, 'go'); assert.equal(b.ok, true); const c = startCast(b.state, 'suoitrong', rngSeed(3)); assert.equal(c.ok, true); assert.ok(speciesFor('suoitrong').some((s) => s.id === c.sess.fish.sp));
 });
