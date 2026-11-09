@@ -35,7 +35,7 @@ export const EXTRA_POIS = [
   { id: 'xom', ten: 'Khu nhà ở (xóm)', x: 0, z: 185, stand: { x: 0, z: 184 }, kind: 'place' },
 ];
 /** Nhãn ngắn cho bản đồ nhỏ (chỗ hẹp). */
-const SHORT = { sanchua: 'Sân chùa', chanhdien: 'Chánh điện', nhato: 'Nhà Tổ', gacchuong: 'Gác chuông', trathat: 'Trà thất', vuonthien: 'Vườn thiền', hoca: 'Hồ cá', quanam: 'Quan Âm', lang: 'Đường làng', cho: 'Chợ', rung: 'Rừng thông', thacnuoc: 'Thác', daiphat: 'Đại Phật', dienmaylamsen: 'Điện máy', kimhoanngoclan: 'Kim hoàn', didongsenvang: 'Di động', cuahang9sach: '9 Sạch', tachhoa: 'Tách Hoa', xom: 'Xóm' };
+const SHORT = { sanchua: 'Sân chùa', chanhdien: 'Chánh điện', nhato: 'Nhà Tổ', gacchuong: 'Gác chuông', trathat: 'Trà thất', vuonthien: 'Vườn thiền', hoca: 'Hồ cá', quanam: 'Quan Âm', lang: 'Đường làng', cho: 'Chợ', rung: 'Rừng thông', thacnuoc: 'Thác', daiphat: 'Đại Phật', thuyta: 'Thủy tạ', dienmaylamsen: 'Điện máy', kimhoanngoclan: 'Kim hoàn', didongsenvang: 'Di động', cuahang9sach: '9 Sạch', tachhoa: 'Tách Hoa', xom: 'Xóm' };
 const NPC_SHORT = { nvdidong: 'NV Di Động', nvdienmay: 'NV Điện máy', nvkimhoan: 'NV Kim hoàn' };
 export const shortName = (m) => { const t = SHORT[m.id] || NPC_SHORT[m.id] || m.ten; return t.length > 16 ? t.slice(0, 15) + '…' : t; };
 

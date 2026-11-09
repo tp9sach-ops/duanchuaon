@@ -1,7 +1,7 @@
 // Sông Thác + cầu đá + Hồ Rừng (Phiên 74). Dựng từ js/world/river.js (cùng nguồn với va chạm). Trả THREE.Group; không cần cập nhật theo khung hình.
 import * as THREE from 'three';
 import { mulberry32 } from '../util.js';
-import { RIVER, LAKE, smooth, ribbonStrip } from '../world/river.js';
+import { RIVER, LAKE, THUY_TA, smooth, ribbonStrip } from '../world/river.js';
 
 const std = (c, o = {}) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.95, ...o });
 
@@ -42,5 +42,22 @@ export function buildRiver() {
   const padGeo = new THREE.CircleGeometry(0.55, 10), padMat = new THREE.MeshStandardMaterial({ color: 0x4f9a4a, roughness: 0.8, side: THREE.DoubleSide });
   for (let i = 0; i < 14; i++) { const a = rnd() * 6.28, d = rnd() * (LAKE.r - 1.2), p = new THREE.Mesh(padGeo, padMat); p.rotation.x = -Math.PI / 2; p.position.set(LAKE.x + Math.cos(a) * d, 0.17, LAKE.z + Math.sin(a) * d); g.add(p); }
   for (let i = 0; i < 16; i++) { const a = (i / 16) * 6.28 + rnd() * 0.3, m = new THREE.Mesh(rockGeo, rockMat), sc = 0.4 + rnd() * 0.5; m.scale.set(sc * 1.3, sc * 0.7, sc); m.position.set(LAKE.x + Math.cos(a) * (LAKE.r + 1.3), 0.15, LAKE.z + Math.sin(a) * (LAKE.r + 1.3)); g.add(m); }
+  buildThuyTa(g);
   return g;
+}
+
+/** Nhà thủy tạ: sàn + lối gỗ nhô ra hồ, 4 trụ sơn đỏ, mái ngói bốn góc, đèn lồng, ghế dài. Kích thước lấy từ THUY_TA (cùng nguồn va chạm). */
+function buildThuyTa(g) {
+  const wood = std(0x8a5a36), red = std(0x8e2f26), tile = std(0x5b4038), d = THUY_TA.deck, p = THUY_TA.pier;
+  const box = (x0, x1, z0, z1, y, h, mat) => { const m = new THREE.Mesh(new THREE.BoxGeometry(x1 - x0, h, z1 - z0), mat); m.position.set((x0 + x1) / 2, y, (z0 + z1) / 2); g.add(m); return m; };
+  box(d.x0, d.x1, d.z0, d.z1, d.y - 0.12, 0.24, wood); box(p.x0, p.x1, p.z0, p.z1, p.y - 0.12, 0.24, wood);
+  const cx = (d.x0 + d.x1) / 2, cz = (d.z0 + d.z1) / 2;
+  for (const [x, z] of THUY_TA.posts) { const c = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.2, 3.1, 10), red); c.position.set(x, d.y + 1.55, z); g.add(c); }
+  // thành thấp ba phía (chừa phía Đông cho lối vào)
+  box(d.x0 + 0.1, d.x0 + 0.25, d.z0 + 0.3, d.z1 - 0.3, d.y + 0.55, 0.12, red); box(d.x0 + 0.3, d.x1 - 0.3, d.z0 + 0.1, d.z0 + 0.25, d.y + 0.55, 0.12, red); box(d.x0 + 0.3, d.x1 - 0.3, d.z1 - 0.25, d.z1 - 0.1, d.y + 0.55, 0.12, red);
+  box(d.x0 + 0.1, d.x1 - 0.1, d.z0 - 0.1, d.z1 + 0.1, d.y + 3.2, 0.18, red);   // xà ngang trên các trụ
+  const roof = new THREE.Mesh(new THREE.ConeGeometry(3.9, 1.7, 4), tile); roof.rotation.y = Math.PI / 4; roof.position.set(cx, d.y + 4.15, cz); g.add(roof);
+  const ridge = new THREE.Mesh(new THREE.SphereGeometry(0.22, 8, 6), red); ridge.position.set(cx, d.y + 5.1, cz); g.add(ridge);
+  const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.22, 10, 8), new THREE.MeshBasicMaterial({ color: 0xffb347 })); lamp.position.set(cx, d.y + 2.7, cz); g.add(lamp);
+  box(d.x0 + 0.5, d.x0 + 1.0, cz - 1.0, cz + 1.0, d.y + 0.35, 0.1, wood);   // ghế dài sát thành Tây
 }

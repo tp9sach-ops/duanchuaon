@@ -41,6 +41,7 @@ export const QUESTS = [
   { id: 'v-dienmaylamsen', loai: 'mot', ten: 'Ghé Điện Máy Lam Sen', mo: 'Nhà phố bên trái đường làng, đoạn gần cổng làng.', dk: { key: 'visit:dienmaylamsen', n: 1 }, xp: 12, sen: 1 },
   { id: 'v-didongsenvang', loai: 'mot', ten: 'Ghé tiệm Di Động Sen Vàng', mo: 'Nhà phố bên trái đường làng, xa hơn về phía chợ.', dk: { key: 'visit:didongsenvang', n: 1 }, xp: 12, sen: 1 },
   { id: 'v-kimhoanngoclan', loai: 'mot', ten: 'Ghé Kim Hoàn Ngọc Lan', mo: 'Nhà phố cuối đường làng, gần chợ.', dk: { key: 'visit:kimhoanngoclan', n: 1 }, xp: 12, sen: 1 },
+  { id: 'v-thuyta', loai: 'mot', ten: 'Ngắm hồ ở Thủy tạ', mo: 'Trong bãi rừng thông, bên Hồ Rừng: đi theo lối gỗ ra nhà thủy tạ giữa hồ.', dk: { key: 'visit:thuyta', n: 1 }, xp: 10, sen: 1 },
   { id: 'v-daiphat', loai: 'mot', ten: 'Chiêm bái Đại Phật vách đá', mo: 'Cuối đường mòn thác nước, bãi bên phải: tượng Phật lớn khắc vào vách đá.', dk: { key: 'visit:daiphat', n: 1 }, xp: 12, sen: 1 },
   { id: 'm-dao', loai: 'mot', ten: 'Dạo khắp nơi', mo: 'Đặt chân tới 8 nơi khác nhau (sân, vườn, hồ, làng, rừng, thác...).', dk: { key: 'visit', n: 8, distinct: true }, xp: 60, sen: 5 },
   { id: 'm-den', loai: 'mot', ten: 'Thả ngọn đèn nguyện đầu tiên', mo: 'Mở "Đèn nguyện" và viết điều bạn nguyện.', dk: { key: 'den', n: 1 }, xp: 25, sen: 2 },

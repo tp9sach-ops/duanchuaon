@@ -32,7 +32,7 @@ test('hai đầu cầu không vướng tảng đá; cầu nằm trong vùng đi 
 });
 test('Hồ Rừng: nằm trong bãi rừng, chặn ở giữa, đi tới mép được, không đè miếu/cổ thụ', () => {
   assert.ok(walkable(LAKE.x - LAKE.r, LAKE.z) || walkable(LAKE.x + LAKE.r, LAKE.z));
-  assert.equal(blocked(LAKE.x, LAKE.z), true); assert.equal(blocked(LAKE.x + LAKE.r + 1.2, LAKE.z), false);
+  assert.equal(blocked(LAKE.x, LAKE.z - 3.8), true, 'mặt hồ (ngoài sàn) bị chặn'); assert.equal(blocked(LAKE.x + LAKE.r + 1.2, LAKE.z + 4), false);
   assert.ok(Math.hypot(LAKE.x + 106, LAKE.z - 90) > LAKE.r + 2.2 + 1, 'cách cổ thụ'); assert.ok(WATERS.some((w) => w.x === LAKE.x && w.r === LAKE.r));
 });
 
@@ -42,4 +42,19 @@ test('smooth giữ hai đầu; ribbonStrip có 2 đỉnh mỗi điểm, chỉ s�
   const { verts, idx } = ribbonStrip(s, RIVER.hw); assert.equal(verts.length, s.length * 2); assert.equal(idx.length, (s.length - 1) * 6);
   assert.ok(idx.every((i) => i >= 0 && i < verts.length));
   for (let i = 0; i < verts.length; i += 2) assert.ok(Math.abs(Math.hypot(verts[i][0] - verts[i + 1][0], verts[i][1] - verts[i + 1][1]) - 2 * RIVER.hw) < 1e-9);
+});
+
+import { THUY_TA } from '../js/world/river.js';
+import { placesAt, placeById } from '../js/world/outside.js';
+test('Thủy tạ: đi từ bờ Đông theo lối gỗ ra sàn được, mặt sàn cao 0,4; trụ chặn; vùng nước cạnh sàn vẫn chặn; tính là đã ghé', () => {
+  const { deck: d, pier: p, stand } = THUY_TA, zc = (p.z0 + p.z1) / 2;
+  assert.equal(blocked(p.x1 + 0.4, zc), false, 'bờ Đông đầu lối gỗ');
+  let x = p.x1 + 0.4; for (; x > stand.x; x -= 0.2) if (!canStep(x, zc, x - 0.2, zc)) break;
+  assert.ok(x <= stand.x + 0.01, 'đi tới giữa sàn bị kẹt tại x=' + x);
+  assert.equal(groundY(stand.x, stand.z), d.y); assert.equal(groundY(p.x0 + 1, zc), p.y);
+  for (const [px, pz] of THUY_TA.posts) assert.equal(blocked(px, pz), true, 'trụ ' + px + ',' + pz);
+  assert.equal(blocked(stand.x, stand.z), false, 'giữa sàn đứng được');
+  assert.equal(blocked(d.x0 - 0.8, stand.z), true, 'ngoài mép sàn phía Tây là nước');
+  assert.equal(blocked(p.x0 + 0.5, p.z1 + 0.8), true, 'cạnh lối gỗ là nước');
+  assert.ok(placeById('thuyta') && placesAt(stand).includes('thuyta'));
 });

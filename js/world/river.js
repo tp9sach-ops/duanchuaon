@@ -1,6 +1,6 @@
 // Sông + hồ (Phiên 74, ptg yêu cầu 09/11): dòng sông chảy ra từ hồ chân thác về phía Tây-Nam, có cầu đá bắc qua ở bãi thác; hồ nhỏ trong bãi rừng thông.
 // LOGIC THUẦN: tọa độ + vật cản (nước = chuỗi hình tròn trong layout.WATERS, đi được trên cầu). Cảnh 3D: js/scene/river.js. Test: tests/river.test.mjs.
-import { addWater } from './layout.js';
+import { addWater, addCircle } from './layout.js';
 
 /** Sông Thác: đường gấp khúc [x, z] bắt đầu ở mép hồ thác (hồ tâm 106,104 r7,5), hw = nửa bề rộng. Đoạn đầu nằm trong bãi thác (đi được), phần sau chảy ra xa (chỉ để ngắm). */
 export const RIVER = {
@@ -11,6 +11,13 @@ export const RIVER = {
 };
 /** Hồ Rừng: hồ nhỏ ở bãi rừng thông (Tây), nằm trong vùng đi bộ để đứng ngắm / (sau này) câu cá. */
 export const LAKE = { id: 'horung', ten: 'Hồ Rừng', x: -112, z: 102, r: 4.5 };
+
+/** Nhà Thủy tạ Hồ Rừng (Phiên 75): sàn gỗ nhô ra giữa hồ + lối đi gỗ từ bờ Đông; 4 trụ mái (vật cản nhỏ), mái ngói. Đứng trên sàn ngắm hồ = "đã ghé" nơi 'thuyta'. */
+export const THUY_TA = {
+  deck: { x0: -114.2, x1: -109.8, z0: 99.8, z1: 104.2, y: 0.4 },
+  pier: { x0: -109.8, x1: -106.6, z0: 101, z1: 103, y: 0.4 },
+  posts: [[-113.6, 100.4], [-110.4, 100.4], [-113.6, 103.6], [-110.4, 103.6]], postR: 0.25, stand: { x: -112, z: 102 },
+};
 
 /** Các hình tròn nước dọc sông (cách nhau ≤ step, phủ kín dải rộng 2·hw). */
 export function riverCircles(R = RIVER) {
@@ -44,5 +51,6 @@ export function registerRiver() {
   // cầu gắn vào hình tròn gần giữa cầu nhất (bridgeAt xét mọi hồ nên một chỗ gắn là đủ)
   let bi = 0, bd = Infinity; cs.forEach((c, i) => { const d = Math.hypot(c.x - (b.x0 + b.x1) / 2, c.z - (b.z0 + b.z1) / 2); if (d < bd) { bd = d; bi = i; } });
   cs.forEach((c, i) => addWater({ x: c.x, z: c.z, r: c.r, bridges: i === bi ? [{ ...b }] : [] }));
-  addWater({ x: LAKE.x, z: LAKE.z, r: LAKE.r, bridges: [] });
+  addWater({ x: LAKE.x, z: LAKE.z, r: LAKE.r, bridges: [{ ...THUY_TA.deck }, { ...THUY_TA.pier }] });   // sàn + lối gỗ thủy tạ: đi được trên mặt hồ
+  THUY_TA.posts.forEach(([x, z]) => addCircle({ x, z, r: THUY_TA.postR }));
 }

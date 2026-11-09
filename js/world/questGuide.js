@@ -12,7 +12,7 @@ import { isStoryQuest, storyRows, emptyStory, WATER_SPOT } from './story.js';
 export const PLACE_STAND = {
   sanchua: { x: 0, z: 6 }, chanhdien: { x: 0, z: -30 }, nhato: { x: -38, z: -20 }, gacchuong: { x: 21.8, z: -3 },
   trathat: { x: -64, z: 12 }, vuonthien: { x: -62, z: -20 }, hoca: { x: 52, z: 10 }, quanam: { x: 0, z: -59 },
-  lang: { x: 0, z: 88 }, cho: { x: 0, z: 128 }, rung: { x: -98, z: 89 }, thacnuoc: { x: 95, z: 104 }, daiphat: { x: 108.7, z: 120.9 },
+  lang: { x: 0, z: 88 }, cho: { x: 0, z: 128 }, rung: { x: -98, z: 89 }, thacnuoc: { x: 95, z: 104 }, daiphat: { x: 108.7, z: 120.9 }, thuyta: { x: -112, z: 102 },
   dienmaylamsen: { x: -15.5, z: 70 }, kimhoanngoclan: { x: 15.5, z: 131.5 }, didongsenvang: { x: -15.5, z: 112 },
 };
 
