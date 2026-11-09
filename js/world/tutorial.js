@@ -50,7 +50,7 @@ export const TOPICS = [
       { text: 'Hồ cá chép nằm ở phía Đông sân chùa (đi theo hành lang, qua Gác chuông). Ao sen trước chánh điện, hồ chân thác và Suối Trong (bờ sông cạnh bãi thác, có cá bống, cá chạch, cá lăng riêng) cũng câu được: chỉ cần đứng sát mép nước.', go: place('hoca') },
       { text: `Bấm biểu tượng “Câu cá” (cụm nút tròn góc phải-trên). Đứng sát mép nước thì có sẵn nút “Thả cầu” (hoặc “Mua cầu” nếu bạn chưa có cầu) ở góc phải-dưới. Vào tab “Quả cầu” mua quả đầu tiên: ${ORBS[0].ten} giá ${ORBS[0].gia} hạt sen; các cầu tốt hơn mua bằng lá bồ đề. Cầu càng đắt càng bền, càng dễ gặp cá hiếm.`, go: tap('cauca') },
       { text: 'Bấm “Thả cầu” (nút góc phải-dưới), đợi hoa sen nở (chỉ khoảng nửa giây) rồi bấm nút “Bấm!” hiện ngay chỗ đó (hoặc phím Space / Enter). Bấm sớm quá cá giật mình, bấm trễ cá bơi mất. Mỗi lần thả tốn 1 độ bền của cầu; cầu nứt thì sửa bằng 1/5 giá.' },
-      { text: `Câu được cá thì bấm “Thu cá” (nuôi ở ao riêng, tối đa ${POND_MAX} con) hoặc “Phóng sinh” (nút “Phóng sinh”, thả về nước, nhận 1 đến 3 hạt sen; mỗi ngày tối đa 10 lần có thưởng). Cá trong tab “Ao cá” phóng sinh được bất cứ lúc nào.` },
+      { text: `Câu được cá thì bấm “Thu cá” (nuôi ở ao riêng, tối đa ${POND_MAX} con; cá bơi thật trong Hồ Rừng ở bãi rừng thông, chỉ bạn nhìn thấy) hoặc “Phóng sinh” (nút “Phóng sinh”, thả về nước, nhận 1 đến 3 hạt sen; mỗi ngày tối đa 10 lần có thưởng). Cá trong tab “Ao cá” phóng sinh được bất cứ lúc nào.` },
       { text: 'Trên mặt nước bạn sẽ thấy quả cầu bay xuống, vòng sóng lan ra, bóng cá lượn quanh cầu rồi hoa sen hồng nở: đó là lúc bấm “Bấm!”.' },
     ] },
 ];
