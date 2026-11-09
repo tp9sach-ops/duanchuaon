@@ -1,6 +1,6 @@
 // Bản đồ mini (góc trái-trên, dưới nút/đang online) + bản đồ lớn (bấm vào bản đồ nhỏ, nút "Bản đồ chùa" hoặc phím M). Phiên 39.
 // Logic ở js/world/minimap.js (có test). Vẽ bằng canvas 2D; mọi chữ qua textContent. Bấm một nơi hoặc một người trên bản đồ lớn → "Dẫn tôi tới" (LGT.world.goTo / walkTo).
-import { WORLD_BOX, worldToMap, mapHeight, buildMarkers, terrain, hitTest, describeFrom, shortName, LEGEND } from '../world/minimap.js';
+import { WORLD_BOX, worldToMap, mapHeight, buildMarkers, terrain, hitTest, describeFrom, shortName, LEGEND, mapAvailable } from '../world/minimap.js';
 
 const KEY = 'lgt.mm';
 const COLOR = { place: '#d9b25f', store: '#4aa58a', npc: '#f4efe2', house: '#ff9a52', loc: '#ffe27a', target: '#ff5a4d', me: '#6ee7ff' };
@@ -95,6 +95,9 @@ export function initMinimap(hud, { toast = () => {}, onList = null, onHelp = nul
   }
   function tick() {
     if (document.hidden || hud.hidden) return;
+    const onHub = mapAvailable(LGT.zones);                      // zone khác chưa có bản đồ: ẩn, đóng bản đồ lớn
+    mm.style.display = onHub ? '' : 'none';
+    if (!onHub) { if (!big.hidden) closeBig(); return; }
     refreshMarkers(false);
     const me = playerPos();
     if (goal && me && Math.hypot(me.x - goal.x, me.z - goal.z) < 3) { goal = null; refreshMarkers(true); }   // tới nơi thì bỏ dấu đích
@@ -145,7 +148,7 @@ export function initMinimap(hud, { toast = () => {}, onList = null, onHelp = nul
   big.addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.stopPropagation(); closeBig(); } });
   addEventListener('keydown', (e) => {
     const t = e.target; if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
-    if ((e.key === 'm' || e.key === 'M') && !e.ctrlKey && !e.metaKey && !e.altKey && !LGT.panelOpen) toggleBig();
+    if ((e.key === 'm' || e.key === 'M') && !e.ctrlKey && !e.metaKey && !e.altKey && !LGT.panelOpen && mapAvailable(LGT.zones)) toggleBig();
   });
 
   setInterval(tick, 250); tick();
