@@ -204,6 +204,8 @@ Việc ptg làm song song (không chặn các phiên trên): bật Pages (Settin
 
 - **2026-11-09 (Phiên 70):** Gp nói "tiếp tục". Làm 1 mục nhỏ: màn hướng dẫn lần đầu 3 bước có mũi tên (`js/world/coach.js` logic + `tests/coach.test.mjs`, `js/ui/coach.js`, `css/coach.css`, nối ở `hudMenu.js`; chỉ người mới thấy, bỏ qua được, nhớ `lgt.coach`), `docs/PHIEN70.md`. **Quy tắc giữ nguyên:** làm từng mục nhỏ, xong báo, chờ "tiếp tục"; cuối mỗi phiên cập nhật mục này + `docs/PHIENxx.md` và gửi prompt bàn giao chi tiết.
 
+- **2026-11-09 (Phiên 80):** Gp gửi ảnh QR VietinBank + MoMo và yêu cầu: **thùng công đức ở chánh điện** có 2 cách (bấm → quét QR, **ưu tiên MoMo**; bấm → hiện số tài khoản để sao chép); **donate xong nhận hạt sen trong 24 giờ**; rồi làm tiếp phần còn lại. Làm 1 mục: thùng công đức (`js/scene/thungcongduc.js`, `js/world/donate.js`, `js/engines/donate.js`, `js/ui/donate.js`, `css/donate.css`, `gas/Donations.gs`, `assets/qr-*.jpg`, `docs/PHIEN80.md`). Quy ước TẠM tôi đặt, Gp chưa chốt: 1.000đ = 1 hạt sen, tối thiểu 10.000đ, duyệt thủ công trong sheet Donations. **Quy tắc giữ nguyên:** làm từng mục nhỏ, xong báo, chờ Gp nói "tiếp tục".
+
 ## 8. PROMPT KHỞI ĐỘNG PHIÊN MỚI (dán nguyên văn)
 
 ```

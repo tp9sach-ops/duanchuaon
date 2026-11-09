@@ -14,6 +14,8 @@ var SHEETS = {
   Readings: ['readingId', 'profileId', 'loai', 'ketQuaJSON', 'diem', 'ngayTao'],
   Incense:  ['userKey', 'soNhangThap', 'chuoiNgay', 'lanCuoi', 'loiNguyen'],
   Prayers:  ['id', 'userKey', 'noiDung', 'congKhai', 'ngay'],
+  // Thùng công đức (Donations.gs, Phiên 80): trangThai cho|ok|tuchoi do người duyệt đổi; daNhan=TRUE khi game đã cộng hạt sen
+  Donations: ['id', 'userKey', 'maSo', 'ten', 'soTien', 'kenh', 'loiNhan', 'ngayGui', 'trangThai', 'soTienXN', 'sen', 'daNhan', 'ngayDuyet'],
   Scriptures: ['id', 'ten', 'nguon', 'urlAudio', 'thoiLuong', 'loai'],
   Logs:     ['thoiGian', 'hanhDong', 'ghiChu'],
   // Tài khoản nhân vật + bản lưu dữ liệu game (Accounts.gs, Phiên 53). Cột d1..d4 = bản lưu chia 4 ô.
@@ -30,6 +32,7 @@ function setup() {
     var sh = ss.getSheetByName(name) || ss.insertSheet(name);
     if (sh.getLastRow() === 0) sh.appendRow(SHEETS[name]);
     textFormat_(sh);
+    if (name === 'Donations') donFormat_(sh);
   });
   Logger.log('Spreadsheet: ' + ss.getUrl());
 }
@@ -59,6 +62,9 @@ function route_(req) {
     case 'analyzeFace':  return json_(analyzeImage_(req, 'face'));
     case 'addPrayer':    return json_(addPrayer_(req));      // Prayers.gs
     case 'listPrayers':  return json_(listPrayers_());
+    case 'donClaim':     return json_(donClaim_(req));       // Donations.gs (thùng công đức)
+    case 'donCheck':     return json_(donCheck_(req));
+    case 'donAck':       return json_(donAck_(req));
     case 'sync':         return json_(roomSync_(req));       // Room.gs (đa người)
     case 'yq':           return json_(yqSync_(req));         // Yq.gs (yêu quái đánh chung)
     case 'thr':          return json_(thrSync_(req));        // Throw.gs (ném người chơi khác)

@@ -8,6 +8,7 @@ import { initQuest } from './quest.js';
 import { initGuide } from './guide.js';
 import { initStory } from './story.js';
 import { initMerit } from './merit.js';
+import { initDonate } from './donate.js';
 import { DEN_MERIT } from '../engines/den.js';
 import { initLand } from './land.js';
 import { initHouse } from './house.js';
@@ -119,6 +120,7 @@ export function initHudMenu(hud) {
   const practice = initPractice(hud, { toast, addMerit });
   const den = initDen(hud, { toast, addMerit });
   initNpc({ toast, addMerit });
+  try { initDonate(hud, { toast, addMerit }); } catch (e) { console.warn('[Diệu Giang Tự] Thùng công đức lỗi:', e && e.message); }   // Phiên 80: thùng công đức ở chánh điện
   const chat = initChat(hud, { toast });
   const quest = initQuest(hud, { toast, addMerit, pillHost: root.querySelector('.hm-wallet') });   // nhiệm vụ + cấp độ (Phiên 17)
   try { initGuide(hud, { toast }); } catch (e) { console.warn('[Diệu Giang Tự] Dẫn đường lỗi:', e && e.message); }   // dẫn đường nhiệm vụ (Phiên 18)

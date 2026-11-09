@@ -43,7 +43,7 @@ Cách dùng: làm mục [ ] đầu tiên, xong báo ptg, CHỜ "tiếp tục". L
 ## Giai đoạn 6 — Xã hội và máy chủ
 [ ] 6.1 Tham quan nhà người khác + tiệc + lưu nhà lên Firebase: CHƯA có (không thấy `houses/` trong firebase/database.rules.json hay mã).
 [ ] 6.2 Máy chủ xác nhận lá/đất/nâng nhà: CHƯA có.
-[ ] 6.3 MoMo — chỉ khi ptg có tài khoản thương mại. Chờ ptg.
+[x] 6.3 Thùng công đức (QR MoMo/VietinBank + sao chép số tài khoản + hạt sen sau khi Gp duyệt trong 24 giờ): ĐÃ LÀM Ở PHIÊN 80 (docs/PHIEN80.md). Không dùng cổng thanh toán thương mại; duyệt thủ công trong sheet Donations. CẦN Gp cập nhật GAS + duyệt tỉ lệ 1.000đ = 1 hạt sen.
 
 ## Giai đoạn 7 — Tồn đọng cũ
 [ ] 7.1 Nhạc thư viện O2 (3 tệp CC rõ giấy phép + ghi công).

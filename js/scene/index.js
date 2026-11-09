@@ -8,6 +8,7 @@ import { clamp, damp, isCoarse, prefersReduced } from '../util.js';
 import { softDot } from './textures.js';
 import { makeMaterials, buildTamQuan, buildBellTower, buildCenser } from './temple.js';
 import { buildChanhDien } from './chanhdien.js';
+import { buildThungCongDuc } from './thungcongduc.js';
 import { buildProps } from './props.js';
 import { buildGarden } from './garden.js';
 import { buildHouses } from './nhato.js';
@@ -88,6 +89,7 @@ export function createScene(canvas, { onProgress, onPick, onArrive } = {}) {
   // --- kiến trúc (hướng chính về +z, camera nhìn từ +z)
   const tam = buildTamQuan(); tam.position.set(0, 0, 34);
   const chanh = buildChanhDien();   // tọa độ thế giới (dựng theo layout.js)
+  const thung = buildThungCongDuc(); chanh.group.add(thung.group);   // Phiên 80: thùng công đức ở chánh điện
   const tower = buildBellTower(); tower.group.position.set(28, 0, -4); tower.group.rotation.y = -0.25;
   const censer = buildCenser(); censer.group.position.set(0, 0, -8);
   scene.add(shade(tam), chanh.group, shade(tower.group), shade(censer.group), shade(buildProps()), shade(buildGarden()), shade(buildHouses()), shade(buildCushions())); onProgress?.(0.55);
@@ -278,7 +280,7 @@ export function createScene(canvas, { onProgress, onPick, onArrive } = {}) {
     sky.rotation.y = t * 0.004;
     if (!reduce) {
       if (!DAY || fireflies.obj.visible) fireflies.update(t, dt); petals.update(t, dt); smoke.update(t, dt);
-      pond.update(t); chanh.update(t, camera);
+      pond.update(t); chanh.update(t, camera); thung.update(t);
       tower.bell.rotation.z = Math.sin(t * 0.6) * 0.012;
       censer.embers.forEach((e, i) => { e.material.color.setRGB(1, 0.25 + 0.2 * Math.sin(t * 3 + i), 0.12); });
       warm1.intensity *= 0.97 + 0.06 * Math.sin(t * 7.3) * Math.sin(t * 3.1);

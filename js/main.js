@@ -16,6 +16,7 @@ import { initStage } from './ui/stage.js';
 import { initHud } from './ui/hud.js';
 import { initRoom } from './net/room.js';
 import { isNpcSpot } from './world/spots.js';
+import { isDonateSpot } from './world/donate.js';
 import { initWind } from './scene/wind.js';
 import { initViewport } from './ui/viewport.js';
 import { initAccount } from './net/account.js';
@@ -71,7 +72,7 @@ async function boot() {
     created = createScene(document.getElementById('gl'), {
       onProgress: (v) => { setProgress(0.1 + v * 0.9); if (v >= 1) setTimeout(hidePre, 350); },
       onPick: (id) => stage && stage.go(id),          // bấm điểm sáng/vật 3D: đi tới rồi mới mở
-      onArrive: (id) => (isNpcSpot(id) ? window.LGT.onNpc && window.LGT.onNpc(id) : stage && stage.open(id)),      // nhân vật tới nơi: mở bảng của chương, hoặc NPC nói chuyện
+      onArrive: (id) => (isDonateSpot(id) ? window.LGT.onDonate && window.LGT.onDonate() : isNpcSpot(id) ? window.LGT.onNpc && window.LGT.onNpc(id) : stage && stage.open(id)),      // nhân vật tới nơi: mở bảng của chương, hoặc NPC nói chuyện
     });
   } catch (e) { return fallback(e && e.message); }
 

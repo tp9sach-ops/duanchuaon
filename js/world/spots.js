@@ -4,6 +4,7 @@
 import { BUILDINGS, buildingFront } from './placements.js';
 import { facingOf } from './worldLogic.js';
 import { TALKERS, npcSpot } from './npc.js';
+import { DONATE_SPOT } from './donate.js';
 
 const nhaTo = BUILDINGS.find((b) => b.id === 'nhato');
 
@@ -22,7 +23,7 @@ export const SPOTS = [
 
 /** Spot của các NPC (bấm vào NPC → đi tới → thưa chuyện). Không nằm trong SPOTS để không hiện ở nhãn nổi / bản đồ chương. */
 export const NPC_SPOTS = TALKERS.map(npcSpot);
-const ALL_SPOTS = [...SPOTS, ...NPC_SPOTS];
+const ALL_SPOTS = [...SPOTS, ...NPC_SPOTS, DONATE_SPOT];   // Phiên 80: thêm Thùng công đức (bấm → đi tới → mở bảng công đức, LGT.onDonate)
 export const isNpcSpot = (id) => NPC_SPOTS.some((s) => s.id === id);
 export const spotById = (id) => ALL_SPOTS.find((s) => s.id === id) || null;
 /** Khoảng cách ngang từ p = {x,z} tới điểm đứng của spot. */
