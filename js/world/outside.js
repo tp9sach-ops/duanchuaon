@@ -125,7 +125,7 @@ export const PLACES = [
   { id: 'trathat', ten: 'Trà thất', x: -64, z: 12, r: 7 }, { id: 'vuonthien', ten: 'Vườn thiền', x: -62, z: -20, r: 8 },
   { id: 'hoca', ten: 'Hồ cá', x: 52, z: 10, r: 8 }, { id: 'quanam', ten: 'Quan Âm đài', x: 0, z: -59, r: 7 },
   { id: 'lang', ten: 'Đường làng', x: 0, z: 88, r: 14 }, { id: 'cho', ten: 'Chợ làng', x: 0, z: 128, r: 14 },
-  { id: 'daiphat', ten: 'Đại Phật vách đá', x: 108.7, z: 120.5, r: 5 }, { id: 'thuyta', ten: 'Thủy tạ Hồ Rừng', x: -112, z: 102, r: 3.2 },
+  { id: 'daiphat', ten: 'Đại Phật vách đá', x: 108.7, z: 120.5, r: 5 }, { id: 'thuyta', ten: 'Thủy tạ Hồ Rừng', x: -112, z: 102, r: 3.2 }, { id: 'suoitrong', ten: 'Suối Trong', x: 101.8, z: 112.7, r: 3.2 },
   { id: 'rung', ten: 'Rừng thông', x: -98, z: 89, r: 9 }, { id: 'thacnuoc', ten: 'Thác nước', x: 95, z: 104, r: 7 },
   { id: 'dienmaylamsen', ten: 'Điện Máy Lam Sen', x: -15.5, z: 70, r: 7 }, { id: 'kimhoanngoclan', ten: 'Kim Hoàn Ngọc Lan', x: 15.5, z: 131.5, r: 6 },
   { id: 'didongsenvang', ten: 'Di Động Sen Vàng', x: -15.5, z: 112, r: 6 },

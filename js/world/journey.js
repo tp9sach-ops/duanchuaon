@@ -27,6 +27,7 @@ export const PLACE_HINT = {
   cho: 'Cuối đường làng, quanh gốc đa có các quầy hàng.',
   rung: 'Ngã ba đường làng, rẽ trái theo đường mòn vào rừng thông.',
   thacnuoc: 'Ngã ba đường làng, rẽ phải theo đường mòn tới thác nước.',
+  suoitrong: 'Bãi thác nước: dòng suối chảy ra từ hồ chân thác, bờ Đông cây cầu đá. Đứng sát mép suối rồi bấm “Thả cầu” để câu cá bống, cá chạch, cá lăng.',
   thuyta: 'Trong bãi rừng thông (rẽ trái ở đường làng), đi vòng bờ Hồ Rừng rồi theo lối gỗ ra nhà thủy tạ.',
   daiphat: 'Cuối đường mòn thác nước, bãi bên phải: tượng Phật lớn khắc vào vách đá.',
   dienmaylamsen: 'Nhà phố bên trái đường làng, đoạn gần cổng làng.',
@@ -34,8 +35,8 @@ export const PLACE_HINT = {
   didongsenvang: 'Nhà phố bên trái đường làng, xa hơn nữa về phía chợ.',
 };
 /** Nhiệm vụ có nút “Dẫn đường” cho từng nơi (id nhiệm vụ trong js/world/quests.js). */
-export const PLACE_QUEST = { lang: 'm-lang', thacnuoc: 'm-thac', rung: 'm-rung', ...Object.fromEntries(['chanhdien', 'quanam', 'nhato', 'vuonthien', 'trathat', 'gacchuong', 'hoca', 'cho', 'dienmaylamsen', 'didongsenvang', 'kimhoanngoclan', 'daiphat', 'thuyta'].map((id) => [id, 'v-' + id])) };
-const ICON = { sanchua: '⛩️', chanhdien: '🛕', nhato: '🏯', gacchuong: '🔔', trathat: '🍵', vuonthien: '🧘', hoca: '🐟', quanam: '🪷', lang: '🏘️', cho: '🧺', rung: '🌲', thacnuoc: '💧', daiphat: '🗿', thuyta: '🏮', dienmaylamsen: '🔌', kimhoanngoclan: '💍', didongsenvang: '📱' };
+export const PLACE_QUEST = { lang: 'm-lang', thacnuoc: 'm-thac', rung: 'm-rung', ...Object.fromEntries(['chanhdien', 'quanam', 'nhato', 'vuonthien', 'trathat', 'gacchuong', 'hoca', 'cho', 'dienmaylamsen', 'didongsenvang', 'kimhoanngoclan', 'daiphat', 'thuyta', 'suoitrong'].map((id) => [id, 'v-' + id])) };
+const ICON = { sanchua: '⛩️', chanhdien: '🛕', nhato: '🏯', gacchuong: '🔔', trathat: '🍵', vuonthien: '🧘', hoca: '🐟', quanam: '🪷', lang: '🏘️', cho: '🧺', rung: '🌲', thacnuoc: '💧', daiphat: '🗿', thuyta: '🏮', suoitrong: '🎣', dienmaylamsen: '🔌', kimhoanngoclan: '💍', didongsenvang: '📱' };
 
 const seenVisit = (prog) => new Set((prog && isObj(prog.seen) && Array.isArray(prog.seen.visit)) ? prog.seen.visit : []);
 const tot = (prog, k) => num(prog && prog.tot && prog.tot[k]);

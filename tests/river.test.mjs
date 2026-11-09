@@ -58,3 +58,10 @@ test('Thủy tạ: đi từ bờ Đông theo lối gỗ ra sàn được, mặt 
   assert.equal(blocked(p.x0 + 0.5, p.z1 + 0.8), true, 'cạnh lối gỗ là nước');
   assert.ok(placeById('thuyta') && placesAt(stand).includes('thuyta'));
 });
+
+import { nearWater } from '../js/world/fishing.js';
+test('Suối Trong là nơi để ghé: đứng ở bờ Đông được, tính là đã ghé, và đứng đó câu được ở suối', () => {
+  const p = placeById('suoitrong'); assert.ok(p); assert.equal(blocked(p.x, p.z), false);
+  assert.ok(placesAt({ x: p.x, z: p.z }).includes('suoitrong')); assert.equal(nearWater(p.x, p.z).id, 'suoitrong');
+  assert.ok(walkable(p.x, p.z));
+});
