@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { WORLD_BOX, worldToMap, mapToWorld, mapHeight, buildMarkers, terrain, hitTest, describeFrom, houseMarker, EXTRA_POIS, shortName, LEGEND } from '../js/world/minimap.js';
+import { WORLD_BOX, worldToMap, mapToWorld, mapHeight, buildMarkers, terrain, hitTest, describeFrom, houseMarker, EXTRA_POIS, shortName, LEGEND, mapAvailable } from '../js/world/minimap.js';
 import { NPCS } from '../js/world/npc.js';
 import { PLACES } from '../js/world/outside.js';
 import { SPAWN } from '../js/world/layout.js';
@@ -66,4 +66,12 @@ test('mô tả hướng và khoảng cách bằng tiếng Việt', () => {
 
 test('hình nền: có đường đi, khuôn viên và nước', () => {
   const t = terrain(); assert.ok(t.walks.length >= 7 && t.waters.length > 3 && t.compound.x1 > t.compound.x0);
+});
+
+test('bản đồ chỉ hiện ở zone hub (Phiên 86)', () => {
+  assert.equal(mapAvailable(undefined), true);                 // chưa có ZoneManager: như cũ
+  assert.equal(mapAvailable({}), true);
+  assert.equal(mapAvailable({ current: 'chua' }), true);       // hub
+  assert.equal(mapAvailable({ current: 'sương-mù' }), false);  // zone khác: ẩn
+  assert.equal(mapAvailable({ current: 123 }), true);          // dữ liệu lạ không làm mất bản đồ
 });
