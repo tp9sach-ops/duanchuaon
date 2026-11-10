@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { villageTileTexture } from './textures.js';
 import { PLOTS, LAND_WALKS, LANE_Z, LOT_W, LOT_D, HOUSE_LEVELS, houseLevel, houseRect, plotById } from '../world/land.js';
+import { houseGlbClone, onHouseGlb, HOUSE_GLB } from './houseGlb.js';
 
 const std = (c, o = {}) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.85, ...o });
 const SANS = '700 40px "Be Vietnam Pro", "Noto Sans", system-ui, sans-serif';
@@ -94,9 +95,9 @@ function mansion(hw, hd) {
   g.add(pot(-1.7, hd + 0.4), pot(1.7, hd + 0.4, 0x5a9a3a));
   return g;
 }
-/** Nhà hoa viên: nhà lầu + vườn trước nhà (hàng rào, lối đá, cổng vòm hoa, đèn, luống hoa, cây). */
-function gardenHouse(hw, hd) {
-  const g = mansion(hw, hd), grass = smat(0x5f9a4a), fence = smat(0xf3ead4), leaf = smat(0x3f8a3a), trunk = smat(0x6a4a2a), hedge = smat(0x357a35);
+/** Nhà hoa viên: nhà lầu + vườn trước nhà (hàng rào, lối đá, cổng vòm hoa, đèn, luống hoa, cây). withHouse = false: chỉ dựng phần vườn (thân nhà lấy từ mô hình GLB). */
+function gardenHouse(hw, hd, withHouse = true) {
+  const g = withHouse ? mansion(hw, hd) : new THREE.Group(), grass = smat(0x5f9a4a), fence = smat(0xf3ead4), leaf = smat(0x3f8a3a), trunk = smat(0x6a4a2a), hedge = smat(0x357a35);
   const gz0 = hd + 1.4, gz1 = hd + 3.6, gw = hw * 2 - 0.2, zm = (gz0 + gz1) / 2;
   const lawn = new THREE.Mesh(new THREE.PlaneGeometry(gw, gz1 - gz0), grass); lawn.rotation.x = -Math.PI / 2; lawn.position.set(0, 0.06, zm); lawn.receiveShadow = true; g.add(lawn);
   for (const x of [-gw / 2, gw / 2]) g.add(box(0.06, 0.55, gz1 - gz0, fence, x, 0.3, zm));
@@ -164,12 +165,26 @@ function mergeStatic(root) {
   } catch (e) { return root; }
 }
 
-/** Mô hình nhà theo cấp lv, quay mặt ra đường (face = +1 hướng +z; −1 hướng −z). Gốc ở tâm thân nhà. */
+/**
+ * Mô hình nhà theo cấp lv, quay mặt ra đường (face = +1 hướng +z; −1 hướng −z). Gốc ở tâm thân nhà.
+ * Cấp 1 (Nhà lầu) và cấp 2 (Nhà hoa viên) dùng mô hình GLB (js/scene/houseGlb.js); chưa nạp xong thì tạm hiện nhà lầu dựng bằng mã rồi tự đổi sang GLB.
+ */
 export function houseModel(lv, face) {
   const L = houseLevel(lv);
   if (L.lv === 0) return mergeStatic(hut(face));
-  const g = new THREE.Group(); g.add(mergeStatic(L.lv === 1 ? mansion(L.hw, L.hd) : L.lv === 2 ? gardenHouse(L.hw, L.hd) : villa(L.hw, L.hd)));
-  g.rotation.y = face > 0 ? 0 : Math.PI; return g;
+  const g = new THREE.Group(); g.rotation.y = face > 0 ? 0 : Math.PI;
+  if (!HOUSE_GLB[L.lv]) { g.add(mergeStatic(L.lv === 2 ? gardenHouse(L.hw, L.hd) : villa(L.hw, L.hd))); return g; }
+  if (L.lv === 2) g.add(mergeStatic(gardenHouse(L.hw, L.hd, false)));   // vườn dựng bằng mã
+  const glb = houseGlbClone(L.lv);
+  if (glb) { g.add(glb); return g; }
+  const holder = new THREE.Group(); holder.add(mergeStatic(mansion(L.hw, L.hd))); g.add(holder);   // tạm bằng nhà lầu dựng bằng mã
+  onHouseGlb(L.lv, (ok) => {
+    if (!ok || !g.parent) return;
+    const c = houseGlbClone(L.lv); if (!c) return;
+    for (const o of [...holder.children]) { holder.remove(o); o.traverse((m) => { if (m.geometry && !m.geometry.userData.shared) m.geometry.dispose(); }); }
+    g.remove(holder); g.add(c);
+  });
+  return g;
 }
 
 /** Dựng khu dân cư. Trả { group, refresh(land, reg, ownerName), plotPose(id) }. */
