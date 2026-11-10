@@ -4,7 +4,7 @@ import { lootDrops, rngSeed } from './yeuquai.js';
 
 export const COOP_POLL_MS = 2500;
 /** Key gửi máy chủ hợp lệ (chế độ thử ?yq= dùng key 'thu-…' → không nối mạng). */
-export const coopKeyOk = (k) => /^\d{4}-\d{2}-(trung|cao)$/.test(String(k || ''));
+export const coopKeyOk = (k) => /^\d{4}-\d{2}(-\d{2})?-(trung|cao|trua|chieu|toi)$/.test(String(k || ''));
 
 /** Gói yêu cầu gửi máy chủ. dealt = TỔNG sát thương mình đã gây; claim = các túi mình vừa chạm. */
 export function buildReq({ pageId, key, boss, dealt, claim = [] }) {

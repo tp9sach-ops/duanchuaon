@@ -1,4 +1,4 @@
-// Yêu quái xuất hiện MỖI THÁNG MỘT LẦN (Phiên 64). LOGIC THUẦN (không DOM, không three.js, có test): tests/yeuquai.test.mjs. Giao diện: js/ui/yeuquai.js; cảnh 3D: js/scene/yeuquai.js.
+// Yêu quái xuất hiện MỖI NGÀY 3 LẦN: 12:00, 16:00, 20:00 giờ VN (đổi từ lịch mỗi tháng một lần của Phiên 64). LOGIC THUẦN (không DOM, không three.js, có test): tests/yeuquai.test.mjs. Giao diện: js/ui/yeuquai.js; cảnh 3D: js/scene/yeuquai.js.
 // Luật ptg chốt 08/11: yêu quái đá / nước / lửa; người chơi dùng ném đá + thương để bảo vệ dân làng; yêu quái GỒNG CHIÊU rồi đánh DIỆN RỘNG, ai không né được bị mất máu
 // (cấp càng cao mất càng ít); hết máu → hồi sinh ở cửa chùa; nhiều người đánh chung; thu phục xong rơi lá bồ đề, ai nhanh tay nhặt được; yêu quái bị ném (người đủ mạnh) thì mất máu.
 // Mọi con số (máu, sát thương, thời gian) là QUY ƯỚC TẠM chờ ptg duyệt. Phần đồng bộ nhiều người qua máy chủ CHƯA nối (xem docs/PHIEN64.md): mỗi máy tự mô phỏng cùng một lịch tháng.
@@ -17,36 +17,50 @@ export const YQ_ORDER = ['da', 'nuoc', 'lua'];
 /** Bán kính các đòn diện rộng (m). */
 export const AOE = { slam: 6.5, ringIn: 3, ringOut: 10, burst: 3.5, burstN: 3 };
 
-// ---- lịch: mỗi tháng (giờ Việt Nam, UTC+7) hai khung giờ trong CÙNG MỘT NGÀY cố định (5..25): 15:00 độ khó TRUNG BÌNH, 20:00 độ khó CAO (ptg chốt 08/11). Mỗi khung kéo dài 90 phút và thu phục được một lần.
+// ---- lịch: MỖI NGÀY (giờ Việt Nam, UTC+7) ba khung giờ: 12:00 và 16:00 độ khó TRUNG BÌNH, 20:00 độ khó CAO. Mỗi khung kéo dài 90 phút và thu phục được một lần.
 export const VN_OFFSET_MS = 7 * 3600e3, EVENT_HOUR = 20, EVENT_MIN = 90;
 /** Độ khó theo khung giờ: hp/dmg/windup/cd là HỆ SỐ nhân; loot = hệ số số túi lá rơi; xp/str = thưởng thu phục. QUY ƯỚC TẠM chờ ptg duyệt. */
 export const DIFF = {
-  trung: { id: 'trung', ten: 'Trung bình', hour: 15, hp: 1, dmg: 1, windup: 1, cd: 1, loot: 1, xp: 60, str: 3 },
-  cao: { id: 'cao', ten: 'Cao', hour: 20, hp: 1.6, dmg: 1.35, windup: 0.8, cd: 0.75, loot: 1.5, xp: 100, str: 5 },
+  trung: { id: 'trung', ten: 'Trung bình', hp: 1, dmg: 1, windup: 1, cd: 1, loot: 1, xp: 60, str: 3 },
+  cao: { id: 'cao', ten: 'Cao', hp: 1.6, dmg: 1.35, windup: 0.8, cd: 0.75, loot: 1.5, xp: 100, str: 5 },
 };
-export const SLOT_ORDER = ['trung', 'cao'];
-const hash = (n) => { n = (n ^ 61) ^ (n >>> 16); n = (n + (n << 3)) | 0; n ^= n >>> 4; n = Math.imul(n, 0x27d4eb2d); n ^= n >>> 15; return n >>> 0; };
-/** Sự kiện của tháng (month 1..12). Cùng năm-tháng luôn cho cùng kết quả ở mọi máy. */
-export function monthEvents(year, month) {
-  const y = Math.floor(num(year, 2026)), m = clamp(Math.floor(num(month, 1)), 1, 12), idx = y * 12 + m, day = 5 + (hash(idx) % 21);
-  return SLOT_ORDER.map((slot, i) => {
-    const d = DIFF[slot], start = Date.UTC(y, m - 1, day, d.hour - 7, 0, 0);   // 03:00 giờ VN = 20:00 UTC hôm trước (Date.UTC tự lùi ngày)
-    return { key: `${y}-${String(m).padStart(2, '0')}-${slot}`, year: y, month: m, day, slot, diff: slot, type: YQ_ORDER[(idx + i) % 3], start, end: start + EVENT_MIN * 60000 };
+/** Ba khung giờ mỗi NGÀY (giờ VN): 12:00 và 16:00 độ khó trung bình, 20:00 độ khó cao. QUY ƯỚC TẠM chờ ptg duyệt. */
+export const SLOTS = [
+  { id: 'trua', hour: 12, diff: 'trung' },
+  { id: 'chieu', hour: 16, diff: 'trung' },
+  { id: 'toi', hour: 20, diff: 'cao' },
+];
+export const SLOT_ORDER = SLOTS.map((s) => s.id);
+const pad2 = (n) => String(n).padStart(2, '0'), DAY_MS = 86400e3;
+const daysIn = (y, m) => new Date(Date.UTC(y, m, 0)).getUTCDate();
+/** Sự kiện của MỘT ngày (year, month 1..12, day 1..31 theo lịch giờ VN). Cùng ngày luôn cho cùng kết quả ở mọi máy. Loại quái xoay theo ngày nên mỗi ngày đủ ba loại. */
+export function dayEvents(year, month, day) {
+  const y = Math.floor(num(year, 2026)), m = clamp(Math.floor(num(month, 1)), 1, 12), dd = clamp(Math.floor(num(day, 1)), 1, daysIn(y, m));
+  const dayIdx = Math.floor(Date.UTC(y, m - 1, dd) / DAY_MS);
+  return SLOTS.map((s, i) => {
+    const start = Date.UTC(y, m - 1, dd, s.hour - 7, 0, 0);   // giờ VN trừ 7 = giờ UTC
+    return { key: `${y}-${pad2(m)}-${pad2(dd)}-${s.id}`, year: y, month: m, day: dd, slot: s.id, diff: s.diff, type: YQ_ORDER[(dayIdx + i) % 3], start, end: start + EVENT_MIN * 60000 };
   });
 }
-/** Sự kiện 20:00 (độ khó cao) của tháng — tương thích tên cũ. */
-export const monthEvent = (year, month) => monthEvents(year, month)[1];
-/** Sự kiện đang diễn ra tại `now`; không có thì sự kiện kế tiếp trong tháng (giờ VN), hết thì sự kiện cuối tháng. */
+/** Mọi sự kiện của tháng theo thứ tự thời gian (giữ tên cũ để nơi khác còn gọi được). */
+export function monthEvents(year, month) {
+  const y = Math.floor(num(year, 2026)), m = clamp(Math.floor(num(month, 1)), 1, 12), out = [];
+  for (let d = 1; d <= daysIn(y, m); d++) out.push(...dayEvents(y, m, d));
+  return out;
+}
+/** Sự kiện 20:00 (độ khó cao) của một ngày (mặc định ngày 1) — giữ tên cũ. */
+export const monthEvent = (year, month, day = 1) => dayEvents(year, month, day)[SLOTS.length - 1];
+/** Sự kiện đang diễn ra tại `now`; không có thì sự kiện kế tiếp trong NGÀY (giờ VN), hết ngày thì sự kiện cuối ngày. */
 export function eventAt(now) {
-  const n = num(now, Date.now()), d = new Date(n + VN_OFFSET_MS), list = monthEvents(d.getUTCFullYear(), d.getUTCMonth() + 1);
+  const n = num(now, Date.now()), d = new Date(n + VN_OFFSET_MS), list = dayEvents(d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate());
   return list.find((e) => n >= e.start && n < e.end) || list.find((e) => n < e.start) || list[list.length - 1];
 }
 /** Trạng thái theo thời gian: 'before' | 'live' | 'after', kèm số giây còn lại. */
 export function eventPhase(ev, now) { const n = num(now, Date.now()); return n < ev.start ? { phase: 'before', secs: Math.ceil((ev.start - n) / 1000) } : n < ev.end ? { phase: 'live', secs: Math.ceil((ev.end - n) / 1000) } : { phase: 'after', secs: 0 }; }
-/** Sự kiện kế tiếp chưa kết thúc (tháng này nếu chưa hết giờ, không thì tháng sau). */
+/** Sự kiện kế tiếp chưa kết thúc (hôm nay nếu còn, không thì khung 12:00 ngày mai). */
 export function nextEvent(now) {
   const n = num(now, Date.now()), e = eventAt(n); if (n < e.end) return e;
-  const d = new Date(n + VN_OFFSET_MS), y = d.getUTCFullYear(), m = d.getUTCMonth() + 1; return (m === 12 ? monthEvents(y + 1, 1) : monthEvents(y, m + 1))[0];
+  const t = new Date(n + VN_OFFSET_MS + DAY_MS); return dayEvents(t.getUTCFullYear(), t.getUTCMonth() + 1, t.getUTCDate())[0];
 }
 
 // ---- người chơi
@@ -161,7 +175,8 @@ export const emptyYq = () => ({ v: 1, done: {}, kills: 0, bonus: 0, deaths: 0 })
 export function loadYq(raw) {
   let o = raw; if (typeof raw === 'string') { try { o = JSON.parse(raw); } catch (_) { o = null; } }
   const s = emptyYq(); if (!isObj(o)) return s;
-  if (isObj(o.done)) for (const k of Object.keys(o.done)) if (/^\d{4}-\d{2}(-(trung|cao))?$/.test(k) && o.done[k] === true) s.done[k] = true;
+  if (isObj(o.done)) for (const k of Object.keys(o.done)) if (/^\d{4}-\d{2}(-\d{2}-(trua|chieu|toi)|-(trung|cao))?$/.test(k) && o.done[k] === true) s.done[k] = true;
+  { const ks = Object.keys(s.done).sort(); for (const k of ks.slice(0, Math.max(0, ks.length - 300))) delete s.done[k]; }
   s.kills = clamp(Math.floor(num(o.kills)), 0, 1e6); s.bonus = clamp(Math.floor(num(o.bonus)), 0, 100); s.deaths = clamp(Math.floor(num(o.deaths)), 0, 1e6);
   return s;
 }
