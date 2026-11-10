@@ -18,6 +18,7 @@ export function initNpc({ toast, addMerit }) {
     }
     if (id === 'trikhach' && LGT.merit && !story) setTimeout(() => LGT.merit.open(), 700);   // Thầy Tri khách giữ việc đổi lá bồ đề (Phiên 35)
     if (id === 'bacphuong' && LGT.land && !story) setTimeout(() => LGT.land.open(), 700);   // Bác Tư khu phố: đất ở + đổi xóm xem (Phiên 36)
+    if (id === 'nvdienmay' && LGT.board && !story) setTimeout(() => LGT.board.shop(), 900);   // Nhân viên Điện Máy Lam Sen bán ván trượt (Phiên 92)
     if (LGT.act) LGT.act(r.npc.act ? 'visit' : 'npc', id);   // nhiệm vụ: trò chuyện / ghé điểm cảnh
     if (r.reward) { addMerit(r.reward); setTimeout(() => toast(`${r.npc.ten} tặng bạn ${r.reward} hạt sen hôm nay.`, 3500), 2500); }
   };

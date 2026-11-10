@@ -250,7 +250,7 @@ export function createWorld({ scene, camera, canvas, coarse = false, LGT = windo
     } else { nav.clear(); arrival.cancel(); showHint(null); }
     if (!nav.active) mark.visible = false;
     if (v) {
-      const r = walkStep(P, v, dt, spd * (v.mag ?? 1) * (LGT.swim ? LGT.swim.speedMul : 1));
+      const r = walkStep(P, v, dt, spd * (v.mag ?? 1) * (LGT.swim ? LGT.swim.speedMul : 1) * (LGT.board ? LGT.board.speedMul : 1));   // Phiên 92: đứng trên ván trượt → ×2
       speedNow = damp(speedNow, r.moved / Math.max(dt, 1e-4), 12, dt); P.x = r.x; P.z = r.z; P.y = damp(P.y, r.y, 14, dt);
       if (r.moved > 1e-4) avatar.setFacing(facingOf(v.x, v.z));
     } else { speedNow = damp(speedNow, 0, 14, dt); P.y = damp(P.y, walkStep(P, { x: 0, z: 0 }, dt, 0).y, 14, dt); }
@@ -262,7 +262,7 @@ export function createWorld({ scene, camera, canvas, coarse = false, LGT = windo
       if (act.step(P) === 'seated') { nav.clear(); mark.visible = false; P.x = act.seat.x; P.z = act.seat.z; }
       else if (!nav.active && !v) act.cancelWalk();
     }
-    avatar.setState(speedNow > 0.4 ? 'walk' : 'idle', speedNow);
+    avatar.setState(speedNow > 0.4 && !(LGT.board && LGT.board.on) ? 'walk' : 'idle', speedNow);   // trên ván trượt: đứng yên, không bước chân
     avatar.group.position.set(P.x, P.y, P.z); avatar.update(dt);
     if (mark.visible) { const s = 1 + 0.12 * Math.sin(performance.now() / 160); mark.scale.set(s, s, s); mark.position.y = P.y + 0.06; }
     camStep(dt);

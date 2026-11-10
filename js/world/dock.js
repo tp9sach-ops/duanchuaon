@@ -4,6 +4,7 @@ import { orbById, speciesById, ORBS } from './fishing.js';
 import { furnitureById } from './furniture.js';
 import { houseLevel } from './land.js';
 import { KHINH_TEN, MAX_BAC } from './skills.js';
+import { BOARD } from './board.js';
 
 const isObj = (o) => o && typeof o === 'object' && !Array.isArray(o);
 const num = (x) => (Number.isFinite(+x) ? Math.max(0, Math.floor(+x)) : 0);
@@ -17,6 +18,7 @@ export const HINTS = {
   nhay: 'Bấm “Nhảy” để bay lên (Khinh thân).',
   kynang: 'Bạn đủ điều kiện luyện bậc kế — bấm vào đây.',
   tui: 'Túi đồ: xem bạn đang có những gì.',
+  vantruot: 'Bấm “Lên ván” để đứng lên ván trượt — đi nhanh gấp đôi (vào nhà hoặc xuống nước thì tự xuống ván).',
   nemnpc: 'Có người dân ở gần — bấm “Ném NPC” để nhấc họ lên ném thẳng trước mặt (họ rơi an toàn rồi tự quay về; không ném trong chùa).',
   khiengnguoi: 'Có người ở gần — bấm “Khiêng người” để nhấc họ lên vai (chỉ khiêng được người cấp và sức mạnh nhỏ hơn bạn; không khiêng trong chùa). Khiêng 2 giây rồi ném đi.',
   nemnguoi: 'Bấm “Ném” để ném người đang trên vai ra phía trước mặt (không bấm thì sau 2 giây tự ném). “Thả xuống” để đặt họ xuống, không mất hạt sen.',
@@ -27,7 +29,7 @@ export const HINTS = {
   lan: 'Bấm “Lặn” để lặn xuống nhặt ngọc trai (+1 hạt sen/viên). Hơi thở có hạn — hết hơi sẽ tự nổi lên.',
   nemyq: 'Bạn đủ mạnh để nhấc cả yêu quái lên ném!',
 };
-const HINT_ORDER = ['lan', 'tap', 'da', 'thuong', 'nemyq', 'cast', 'thu', 'nem', 'khieng', 'khiengnguoi', 'nemnguoi', 'nemnpc', 'thietdau', 'nhay', 'kynang', 'tui'];
+const HINT_ORDER = ['lan', 'tap', 'da', 'thuong', 'nemyq', 'cast', 'thu', 'nem', 'khieng', 'khiengnguoi', 'nemnguoi', 'nemnpc', 'thietdau', 'nhay', 'kynang', 'vantruot', 'tui'];
 
 /**
  * Các nút cần hiện, xếp từ DƯỚI lên (nút đầu = gần ngón cái nhất).
@@ -57,6 +59,8 @@ export function dockButtons(c = {}) {
   if (yq.active) { if (num(k.khinh) > 0) out.push({ id: 'nhay', label: 'Nhảy' }); return out; }   // đang đánh yêu quái: chỉ giữ Ném đá / Thương / Ném yêu quái / Nhảy — ẩn Kỹ năng, Túi đồ, Nhảy mờ cho đỡ vướng
   if (num(k.khinh) > 0) { out.push({ id: 'nhay', label: 'Nhảy', big: !k.water }); out.push({ id: 'kynang', label: 'Kỹ năng', hot: !!k.canTrain }); }
   else out.push({ id: 'nhay', label: 'Nhảy', locked: true });   // chưa mở Khinh thân: vẫn hiện nút mờ, bấm vào được chỉ cách mở (người mới không phải đoán)
+  const bd = isObj(k.board) ? k.board : {};
+  if (bd.own && !k.inHouse) out.push({ id: 'vantruot', label: bd.on ? 'Xuống ván' : 'Lên ván', hot: !!bd.on });   // Phiên 92: có ván trượt thì có nút lên/xuống ván
   out.push({ id: 'tui', label: 'Túi đồ' });
   return out;
 }
@@ -92,6 +96,6 @@ export function bagSections(ctx = {}) {
   const fRows = Object.keys(owned).filter((id) => furnitureById(id) && num(owned[id]) > 0).map((id) => ({ ten: furnitureById(id).ten, mo: `× ${num(owned[id])} (đã đặt ${placed.filter((p) => p && p.id === id).length})` }));
   S.push({ title: 'Nội thất', rows: fRows.length ? fRows : [{ ten: 'Chưa có món nào', mo: 'Mua ở “Cửa hàng” khi đang ở trong nhà' }] });
   const kb = Math.min(MAX_BAC, num(c.khinh)), own = isObj(c.land) && isObj(c.land.own) ? c.land.own : null;
-  S.push({ title: 'Thân pháp & nhà', rows: [{ ten: 'Sức mạnh', mo: c.strength ? `${num(c.strength.value)} · ${String(c.strength.tier || '')} · khiêng tối đa ${num(c.strength.limit)} kg` : 'chưa có' }, { ten: 'Khinh thân', mo: kb > 0 ? `bậc ${kb}/${MAX_BAC} · ${KHINH_TEN[kb]}` : 'chưa mở' }, { ten: 'Nhà', mo: own ? houseLevel(own.lv).ten : 'chưa có đất' }] });
+  S.push({ title: 'Thân pháp & nhà', rows: [{ ten: 'Sức mạnh', mo: c.strength ? `${num(c.strength.value)} · ${String(c.strength.tier || '')} · khiêng tối đa ${num(c.strength.limit)} kg` : 'chưa có' }, { ten: 'Khinh thân', mo: kb > 0 ? `bậc ${kb}/${MAX_BAC} · ${KHINH_TEN[kb]}` : 'chưa mở' }, { ten: 'Nhà', mo: own ? houseLevel(own.lv).ten : 'chưa có đất' }, { ten: BOARD.ten, mo: isObj(c.board) && c.board.own ? (c.board.on ? 'đang đứng trên ván · đi nhanh gấp đôi' : 'đã có · bấm “Lên ván” để dùng') : `chưa có — ${BOARD.gia} hạt sen ở Điện Máy Lam Sen` }] });
   return S;
 }

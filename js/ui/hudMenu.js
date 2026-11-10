@@ -21,6 +21,7 @@ import { initThrowPlayer } from './throwPlayer.js';
 import { initNpcThrow } from './npcThrow.js';
 import { initThietDau } from './thietDau.js';
 import { initSwim } from './swim.js';
+import { initBoard } from './board.js';
 import { initBag } from './bag.js';
 import { initEdit } from './editmode.js';
 import { initSkill } from './skill.js';
@@ -143,6 +144,7 @@ export function initHudMenu(hud) {
   try { initNpcThrow({ toast }); } catch (e) { console.warn('[Diệu Giang Tự] Ném NPC lỗi:', e && e.message); }   // Phiên 89
   try { initThrowPlayer({ toast }); } catch (e) { console.warn('[Diệu Giang Tự] Ném người lỗi:', e && e.message); }   // Phiên 72: ném người chơi khác qua mạng
   try { initSwim({ toast, addSen: addMerit }); } catch (e) { console.warn('[Diệu Giang Tự] Bơi lặn lỗi:', e && e.message); }   // Phiên 87: bơi, lặn, ngọc trai
+  try { initBoard({ toast }); } catch (e) { console.warn('[Diệu Giang Tự] Ván trượt lỗi:', e && e.message); }   // Phiên 92: mua ván trượt ở Điện Máy Lam Sen, đứng lên ván đi nhanh gấp đôi
   try { initYeuQuai(hud, { toast }); } catch (e) { console.warn('[Diệu Giang Tự] Yêu quái lỗi:', e && e.message); }   // Phiên 64: yêu quái mỗi tháng một lần
   try { initDock(hud, { toast }); } catch (e) { console.warn('[Diệu Giang Tự] Cụm nút lỗi:', e && e.message); }   // Phiên 62: cụm nút thao tác góc phải-dưới
 
