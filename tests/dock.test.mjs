@@ -85,13 +85,18 @@ test('đang đánh yêu quái: chỉ còn Ném đá/Thương/(Ném yêu quái)/N
   assert.deepEqual(c, ['da', 'thuong'], 'chưa mở Khinh thân: không hiện Nhảy mờ khi đang đánh');
 });
 
-test('có người chơi khác ở gần → nút Ném người (sau Khiêng, ẩn khi đánh yêu quái/đang khiêng)', () => {
+test('có người chơi khác ở gần → nút Khiêng người (ẩn khi đánh yêu quái/đang khiêng vật); đang khiêng người → chỉ Ném / Thả xuống', () => {
   const ids = (c) => dockButtons({ free: true, khinh: 1, ...c }).map((x) => x.id);
-  assert.ok(ids({ ply: { near: 'An' } }).includes('nemnguoi'));
-  assert.ok(!ids({ ply: { near: '' } }).includes('nemnguoi'));
-  assert.ok(!ids({ ply: { near: 'An' }, yq: { active: true } }).includes('nemnguoi'));
-  assert.ok(!ids({ ply: { near: 'An' }, carry: { holding: true } }).includes('nemnguoi'));
-  const b = dockButtons({ free: true, khinh: 1, ply: { near: 'An' } }); assert.equal(b.find((x) => x.id === 'nemnguoi').say, 'Gần: An');
+  assert.ok(ids({ ply: { near: 'An' } }).includes('khiengnguoi'));
+  assert.ok(!ids({ ply: { near: 'An' } }).includes('nemnguoi'), 'chưa khiêng thì chưa có nút Ném');
+  assert.ok(!ids({ ply: { near: '' } }).includes('khiengnguoi'));
+  assert.ok(!ids({ ply: { near: 'An' }, yq: { active: true } }).includes('khiengnguoi'));
+  assert.ok(!ids({ ply: { near: 'An' }, carry: { holding: true } }).includes('khiengnguoi'));
+  const b = dockButtons({ free: true, khinh: 1, ply: { near: 'An' } }); assert.equal(b.find((x) => x.id === 'khiengnguoi').say, 'Gần: An');
+  const h = dockButtons({ free: true, khinh: 1, water: true, ply: { near: 'An', holding: true, heldName: 'An', left: 2 } });
+  assert.deepEqual(h.map((x) => x.id), ['nemnguoi', 'thanguoi'], 'đang khiêng người: chỉ Ném / Thả xuống');
+  assert.equal(h[0].label, 'Ném'); assert.equal(h[0].big, true); assert.match(h[0].say, /Đang khiêng An · tự ném sau 2 giây/);
+  assert.equal(dockButtons({ free: false, ply: { holding: true, heldName: 'An', left: 1 } }).length, 0, 'đang ngồi/bị khiêng (free=false): không có nút');
 });
 
 test('bơi/lặn: chỉ còn nút Lặn↔Nổi lên + Túi đồ; trên cạn không có', () => {

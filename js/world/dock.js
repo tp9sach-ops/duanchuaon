@@ -18,7 +18,8 @@ export const HINTS = {
   kynang: 'Bạn đủ điều kiện luyện bậc kế — bấm vào đây.',
   tui: 'Túi đồ: xem bạn đang có những gì.',
   nemnpc: 'Có người dân ở gần — bấm “Ném NPC” để nhấc họ lên ném thẳng trước mặt (họ rơi an toàn rồi tự quay về; không ném trong chùa).',
-  nemnguoi: 'Có người ở gần — bấm “Ném người” để nhấc họ lên ném (chỉ ném được người cấp và sức mạnh nhỏ hơn bạn; không ném trong chùa).',
+  khiengnguoi: 'Có người ở gần — bấm “Khiêng người” để nhấc họ lên vai (chỉ khiêng được người cấp và sức mạnh nhỏ hơn bạn; không khiêng trong chùa). Khiêng 2 giây rồi ném đi.',
+  nemnguoi: 'Bấm “Ném” để ném người đang trên vai ra phía trước mặt (không bấm thì sau 2 giây tự ném). “Thả xuống” để đặt họ xuống, không mất hạt sen.',
   khieng: 'Có vật khiêng được ngay đây — bấm “Khiêng”. Vật nặng cần sức mạnh cao hơn.',
   nem: 'Bấm “Ném” để ném vật ra phía trước mặt.',
   da: 'Bấm “Ném đá” khi yêu quái còn xa. Khi nó gồng (vùng đỏ trên đất), chạy ra ngoài vùng đỏ!',
@@ -26,7 +27,7 @@ export const HINTS = {
   lan: 'Bấm “Lặn” để lặn xuống nhặt ngọc trai (+1 hạt sen/viên). Hơi thở có hạn — hết hơi sẽ tự nổi lên.',
   nemyq: 'Bạn đủ mạnh để nhấc cả yêu quái lên ném!',
 };
-const HINT_ORDER = ['lan', 'tap', 'da', 'thuong', 'nemyq', 'cast', 'thu', 'nem', 'khieng', 'nemnguoi', 'nemnpc', 'thietdau', 'nhay', 'kynang', 'tui'];
+const HINT_ORDER = ['lan', 'tap', 'da', 'thuong', 'nemyq', 'cast', 'thu', 'nem', 'khieng', 'khiengnguoi', 'nemnguoi', 'nemnpc', 'thietdau', 'nhay', 'kynang', 'tui'];
 
 /**
  * Các nút cần hiện, xếp từ DƯỚI lên (nút đầu = gần ngón cái nhất).
@@ -42,9 +43,10 @@ export function dockButtons(c = {}) {
   if (sw.mode === 'swim' || sw.mode === 'dive') return [{ id: 'lan', label: sw.mode === 'dive' ? 'Nổi lên' : 'Lặn', big: true, say: sw.say ? String(sw.say) : '' }, { id: 'tui', label: 'Túi đồ' }];   // đang bơi/lặn: chỉ Lặn↔Nổi lên + Túi đồ (không câu/khiêng/nhảy dưới nước)
   const cr = isObj(k.carry) ? k.carry : {};
   if (cr.holding) return [{ id: 'nem', label: 'Ném', big: true, say: cr.heldName ? `Đang khiêng: ${cr.heldName}` : '' }, { id: 'ha', label: 'Đặt xuống' }];   // tay đang khiêng vật: chỉ Ném / Đặt xuống
-  if (cr.near) out.push({ id: 'khieng', label: 'Khiêng', big: true, say: `Gần: ${cr.near}` });
   const pl = isObj(k.ply) ? k.ply : {};
-  if (pl.near && !(isObj(k.yq) && k.yq.active)) out.push({ id: 'nemnguoi', label: 'Ném người', say: `Gần: ${pl.near}` });
+  if (pl.holding) return [{ id: 'nemnguoi', label: 'Ném', big: true, hot: true, say: `Đang khiêng ${String(pl.heldName || 'một người')}${num(pl.left) > 0 ? ` · tự ném sau ${num(pl.left)} giây` : ''}` }, { id: 'thanguoi', label: 'Thả xuống' }];   // Phiên 91: người đang trên vai: chỉ Ném / Thả xuống
+  if (cr.near) out.push({ id: 'khieng', label: 'Khiêng', big: true, say: `Gần: ${cr.near}` });
+  if (pl.near && !(isObj(k.yq) && k.yq.active)) out.push({ id: 'khiengnguoi', label: 'Khiêng người', say: `Gần: ${pl.near}` });
   const np = isObj(k.npc) ? k.npc : {};
   if (np.near && !pl.near && !(isObj(k.yq) && k.yq.active)) out.push({ id: 'nemnpc', label: 'Ném NPC', say: `Gần: ${np.near}` });   // Phiên 89
   const yq = isObj(k.yq) ? k.yq : {};

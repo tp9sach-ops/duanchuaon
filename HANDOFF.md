@@ -1,6 +1,8 @@
 # HANDOFF — Web tâm linh "DIỆU GIANG TỰ" (chùa Việt 3D) — tên cũ: Linh Giang Tự (Phiên 5 đổi tên theo ptg)
 
-> **Cập nhật Phiên 80 (2026-11-09): THÙNG CÔNG ĐỨC ở chánh điện (QR MoMo ưu tiên + số tài khoản sao chép + hạt sen trong 24 giờ) — ĐỌC `docs/PHIEN80.md` TRƯỚC (có mục "Gp phải làm": cập nhật GAS + duyệt sheet Donations). `sw.js` = `dgt-v86`. Phiên 71–79 xem `docs/PHIEN71.md` … `PHIEN79.md`.**
+> **Cập nhật Phiên 91 (2026-11-10): Gp giao 3 việc làm TỪNG MỤC (1 khiêng người chơi 2 giây rồi ném · 2 kỹ năng cầm côn chém ra khí · 3 độ mượt/di chuyển/lag). MỤC 1 ĐÃ XONG (nút Khiêng người → Ném / Thả xuống, tự ném sau 2 s) — ĐỌC `docs/PHIEN91.md` TRƯỚC (có mục "Gp phải làm": cập nhật `gas/Throw.gs` + Deploy New version). MỤC 2 và 3 CHƯA LÀM, chờ Gp bấm "tiếp tục". `npm test` 824/824, `sw.js` = `dgt-v97`. Phiên 81–90 xem `docs/PHIEN81.md` … `PHIEN90.md`.**
+
+> **(cũ) Cập nhật Phiên 80 (2026-11-09): THÙNG CÔNG ĐỨC ở chánh điện (QR MoMo ưu tiên + số tài khoản sao chép + hạt sen trong 24 giờ) — ĐỌC `docs/PHIEN80.md` TRƯỚC (có mục "Gp phải làm": cập nhật GAS + duyệt sheet Donations). `sw.js` = `dgt-v86`. Phiên 71–79 xem `docs/PHIEN71.md` … `PHIEN79.md`.**
 
 > **(cũ) Cập nhật Phiên 70 (2026-11-09): mã thật đang ở Phiên 70 (Phiên 55–69 xem `docs/PHIEN55.md` … `PHIEN70.md`; HANDOFF này chỉ chi tiết tới Phiên 36 và 54). ĐỌC `docs/PHIEN70.md` (mục "Chưa làm" + prompt khởi động) TRƯỚC. `npm test` 715/715, `sw.js` = `dgt-v75`.**
 

@@ -42,6 +42,7 @@ export function initRoom() {
     call: manager.call, scene, pageId: newId(), roomOf: (base) => (LGT.zones ? LGT.zones.roomKey(base) : base), onOnline: setOnline,
     onChat: (c) => document.dispatchEvent(new CustomEvent('lgt:chat', { detail: { name: c.name, text: c.text, mine: false } })),
     makeAvatar: (p) => createAvatar({ name: p.name, color: p.color, hair: p.hair, mine: false }),
+    selfPose: () => { const p = W.pos; return { x: p.x, y: p.y, z: p.z, r: W.avatar.group.rotation.y }; },     // Phiên 91: vị trí vai của mình để đặt người đang khiêng
     getSelf() {
       const b = document.body.classList;
       if (!b.contains('world-mode') || b.contains('entering')) return null;      // còn ở màn nhập tên
@@ -58,6 +59,6 @@ export function initRoom() {
   client.start();
 
   // LGT.room.say('...'): gửi lời nhắn (giao diện chat là Phiên 15b); bong bóng của mình hiện ngay.
-  LGT.room = { id: client.pageId, players: () => client.players(), get count() { return client.count; }, name: () => { try { return loadProfile(localStorage).name; } catch (_) { return 'Khách'; } }, say(text) { const t = client.say(text); if (t && W.avatar.say) W.avatar.say(t); if (t) document.dispatchEvent(new CustomEvent('lgt:chat', { detail: { name: 'Bạn', text: t, mine: true } })); return t; }, get count() { return client.count; }, get remoteCount() { return client.remoteCount; } };
+  LGT.room = { id: client.pageId, players: () => client.players(), hold: (id) => client.hold(id), toss: (id, to) => client.toss(id, to), get count() { return client.count; }, name: () => { try { return loadProfile(localStorage).name; } catch (_) { return 'Khách'; } }, say(text) { const t = client.say(text); if (t && W.avatar.say) W.avatar.say(t); if (t) document.dispatchEvent(new CustomEvent('lgt:chat', { detail: { name: 'Bạn', text: t, mine: true } })); return t; }, get count() { return client.count; }, get remoteCount() { return client.remoteCount; } };
   return client;
 }

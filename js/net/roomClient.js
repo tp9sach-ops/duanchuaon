@@ -17,6 +17,7 @@ export function createRoomClient(deps) {
   const { call, getSelf, makeAvatar, scene, onOnline = () => {}, pageId } = deps;
   const schedule = deps.schedule || ((fn, ms) => setTimeout(fn, ms)), cancel = deps.cancel || ((h) => clearTimeout(h));
   const remotes = createRemotes(), views = new Map();       // id → { av, key }
+  let holdId = null; const flies = new Map();               // Phiên 91: người đang được MÌNH khiêng trên vai / đang bị MÌNH ném bay vòng cung (id → { x0,y0,z0,x1,z1,t,dur,peak })
   let lastRoom = null, cursor = 0, first = true, pendingSay = '', timer = null, running = false, active = true, fails = 0, busy = false, lastCount = 1, hiddenMs = 9000;
   const API = { pageId };
 
@@ -34,8 +35,12 @@ export function createRoomClient(deps) {
       alive.add(p.id); const { av } = viewFor(p);
       av.group.position.set(p.x, p.y, p.z); av.setFacing(p.ry);
       av.setState(p.state === 'walk' && p.speed < 0.4 ? 'idle' : p.state, p.speed); av.update(dt);
+      const fl = flies.get(p.id), me = p.id === holdId && deps.selfPose ? deps.selfPose() : null, rot = av.group.rotation;   // (nhân vật giả trong test có thể không có rotation)
+      if (fl) { fl.t += dt; const u = Math.min(1, fl.t / fl.dur); av.group.position.set(fl.x0 + (fl.x1 - fl.x0) * u, fl.y0 * (1 - u) + 4 * fl.peak * u * (1 - u), fl.z0 + (fl.z1 - fl.z0) * u); if (rot) rot.x = u >= 1 ? 0 : 1.3 * (1 - u); if (u >= 1) flies.delete(p.id); }
+      else if (me) { av.group.position.set(me.x, (me.y || 0) + 2.05, me.z); av.setFacing(me.r, true); if (rot) rot.x = 1.3; }   // nằm vắt trên vai mình
+      else if (rot && rot.x) rot.x = 0;
     }
-    for (const [id, v] of views) if (!alive.has(id)) { scene.remove(v.av.group); v.av.dispose(); views.delete(id); }
+    for (const [id, v] of views) if (!alive.has(id)) { scene.remove(v.av.group); v.av.dispose(); views.delete(id); flies.delete(id); if (holdId === id) holdId = null; }
   };
 
   /** Một lượt đồng bộ: gửi trạng thái của mình, nhận người khác + lời nhắn mới. */
@@ -73,6 +78,14 @@ export function createRoomClient(deps) {
 
   /** Đổi sang đường truyền khác: quên mốc lời nhắn của nơi cũ, bỏ mọi người của nơi cũ (khung hình kế tiếp sẽ dọn nhân vật). */
   API.reset = () => { cursor = 0; first = true; remotes.ingest([], pageId); };
+  /** Phiên 91: hiện người `id` nằm trên vai MÌNH (id = null: thôi). Vị trí lấy từ deps.selfPose() ({x,y,z,r}) mỗi khung hình. */
+  API.hold = (id) => { holdId = id || null; };
+  /** Phiên 91: người `id` bị mình ném bay vòng cung từ vai mình tới `to` ({x,z}, mét); sau đó vị trí thật (nhận từ mạng) tiếp quản. */
+  API.toss = (id, to) => {
+    const c = deps.selfPose ? deps.selfPose() : null, v = views.get(id); if (!v || !to) return false;
+    const x0 = c ? c.x : v.av.group.position.x, z0 = c ? c.z : v.av.group.position.z, range = Math.hypot(to.x - x0, to.z - z0);
+    flies.set(id, { x0, y0: 2.05 + (c && c.y ? c.y : 0), z0, x1: to.x, z1: to.z, t: 0, dur: 0.5 + range * 0.035, peak: 1.2 + range * 0.1 }); if (holdId === id) holdId = null; return true;
+  };
   /** Gửi một lời nhắn (hiện bong bóng trên đầu mình ở lượt đồng bộ kế tiếp của người khác). Trả chuỗi đã làm sạch hoặc ''. */
   API.say = (text) => { const t = chatOk(text); if (t) pendingSay = t; return t; };
   API.start = () => { if (running) return; running = true; timer = schedule(API.tick, 0); };

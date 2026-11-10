@@ -207,6 +207,16 @@ export function createWorld({ scene, camera, canvas, coarse = false, LGT = windo
     nav.clear(); mark.visible = false; const ry = facingOf(to.x - P.x, to.z - P.z);
     dashS = { x0: P.x, z0: P.z, x1: +to.x, z1: +to.z, t: 0, dur: Math.max(0.1, +dur || 0.32) }; if (Math.hypot(to.x - P.x, to.z - P.z) > 0.2) avatar.setFacing(ry, true); return true;
   }
+  // Phiên 91: bị người khác khiêng lên vai — đứng yên, nằm vắt trên vai người khiêng (x, z, y do js/ui/throwPlayer.js cập nhật theo vị trí người đó). hold(null) = thả xuống.
+  let heldS = null;
+  function hold(to) {
+    if (to && Number.isFinite(+to.x) && Number.isFinite(+to.z)) {
+      if (!heldS) { release(); arrival.cancel(); showHint(null); nav.clear(); mark.visible = false; }
+      heldS = { x: +to.x, z: +to.z, y: Number.isFinite(+to.y) ? +to.y : 2.1 }; return true;
+    }
+    if (heldS) { heldS = null; avatar.group.rotation.x = 0; }
+    return false;
+  }
   /** Gọi mỗi khung hình (thay rail.update khi ở chế độ đi bộ). */
   function update(dt) {
     let v = null, spd = WALK_SPEED;
@@ -219,6 +229,11 @@ export function createWorld({ scene, camera, canvas, coarse = false, LGT = windo
     if (act.mode === 'bow') {                                 // đang lạy: đứng yên (phím/bấm sẽ hủy qua release)
       speedNow = 0; P.y = damp(P.y, walkStep(P, { x: 0, z: 0 }, dt, 0).y, 14, dt);
       avatar.setState('bow', 0); avatar.group.position.set(P.x, P.y, P.z); avatar.update(dt);
+      camStep(dt); return;
+    }
+    if (heldS) {                                              // đang bị khiêng: theo người khiêng, khóa đi lại/nhảy
+      P.x = damp(P.x, heldS.x, 12, dt); P.z = damp(P.z, heldS.z, 12, dt); P.y = damp(P.y, heldS.y, 12, dt); speedNow = 0; nav.clear(); mark.visible = false;
+      avatar.setState('idle', 0); avatar.group.position.set(P.x, P.y, P.z); avatar.update(dt); avatar.group.rotation.x = 1.3;   // nằm vắt ngang vai
       camStep(dt); return;
     }
     if (dashS) {
@@ -264,7 +279,7 @@ export function createWorld({ scene, camera, canvas, coarse = false, LGT = windo
     camera.position.set(cam.x, Math.max(0.5, cam.y), cam.z); camera.lookAt(cam.lx, cam.ly, cam.lz);
   }
 
-  LGT.world = { setProfile, zoom, walkTo, sit, bow, meditate, chant, beads, rest, stand, get mode() { return act.mode; }, seats: SEATS, get pos() { return { x: P.x, z: P.z, y: P.y }; }, get facing() { return avatar.group.rotation.y; }, get dashing() { return !!dashS; }, dash, face(ry) { if (Number.isFinite(ry)) avatar.setFacing(ry, true); }, teleport, goTo, get avatar() { return avatar; }, get camera() { return { yaw, pitch, dist }; }, nav };
+  LGT.world = { setProfile, zoom, walkTo, sit, bow, meditate, chant, beads, rest, stand, get mode() { return act.mode; }, seats: SEATS, get pos() { return { x: P.x, z: P.z, y: P.y }; }, get facing() { return avatar.group.rotation.y; }, get dashing() { return !!dashS; }, get held() { return !!heldS; }, hold, dash, face(ry) { if (Number.isFinite(ry)) avatar.setFacing(ry, true); }, teleport, goTo, get avatar() { return avatar; }, get camera() { return { yaw, pitch, dist }; }, nav };
   update(0.016);
   return { update, get avatar() { return avatar; }, setProfile, zoom, walkTo, sit, bow, meditate, chant, beads, rest, stand, teleport, goTo, get pos() { return { x: P.x, z: P.z, y: P.y }; } };
 }

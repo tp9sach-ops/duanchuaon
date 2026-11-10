@@ -34,9 +34,9 @@ test('poseAt: bay vòng cung → nằm nghỉ → đi về → xong', () => {
 });
 test('có dân làng ngoài chùa để ném', () => assert.ok(VILLAGERS.length > 0 && VILLAGERS.some((v) => !inTemple(v.x, v.z))));
 
-test('dock: gần NPC (không có người chơi) → nút "Ném NPC"; có người chơi gần thì ưu tiên "Ném người"', async () => {
+test('dock: gần NPC (không có người chơi) → nút "Ném NPC"; có người chơi gần thì ưu tiên "Khiêng người" (Phiên 91)', async () => {
   const { dockButtons } = await import('../js/world/dock.js');
   assert.ok(dockButtons({ free: true, npc: { near: 'Bác Ba' } }).some((b) => b.id === 'nemnpc'));
   assert.ok(!dockButtons({ free: true, npc: { near: '' } }).some((b) => b.id === 'nemnpc'));
-  const both = dockButtons({ free: true, npc: { near: 'Bác Ba' }, ply: { near: 'An' } }).map((b) => b.id); assert.ok(both.includes('nemnguoi') && !both.includes('nemnpc'));
+  const both = dockButtons({ free: true, npc: { near: 'Bác Ba' }, ply: { near: 'An' } }).map((b) => b.id); assert.ok(both.includes('khiengnguoi') && !both.includes('nemnpc'));
 });

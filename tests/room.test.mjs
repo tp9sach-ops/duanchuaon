@@ -179,3 +179,19 @@ test('initRoom (nối thật): gửi vị trí/áo của mình, thấy người 
   assert.equal(r.started, true); assert.deepEqual(r.sent, { action: 'sync', n: 'Tg', c: '9sach', x: 2, z: 3, s: 'walk', noUserKey: true });
   assert.equal(r.online, '2 đang online'); assert.equal(r.remotes, 1); assert.equal(r.roomApi, 'function'); assert.equal(r.afterStop, 0);
 });
+
+// ---------- Phiên 91: người đang được khiêng trên vai / bị ném bay vòng cung (roomClient.hold / toss)
+test('hold: người khiêng hiện trên vai mình theo selfPose; thôi khiêng thì về vị trí mạng; toss bay vòng cung rồi về vị trí mạng', async () => {
+  const pos = new Map(); let pose = { x: 5, y: 0, z: 7, r: 1 };
+  const makeAvatar = (p) => { const av = { rec: [], group: { position: { set(x, y, z) { av.rec.push([x, y, z]); } }, rotation: { x: 0 } }, setFacing() {}, setState() {}, update() {}, say() {}, dispose() {} }; pos.set(p.name, av); return av; };
+  const scene = { add() {}, remove() {} };
+  const c = createRoomClient({ call: async () => ({ ok: true, players: [{ id: 'player-bbbbbbbb', n: 'B', c: 'nau', h: 'troc', x: 1, y: 0, z: 2, r: 0, s: 'idle' }], chat: [], seq: 1, count: 2, pollMs: 1500 }), getSelf: () => ({ n: 'A', c: 'nau', h: 'troc', x: 5, y: 0, z: 7, r: 1, s: 'idle' }), makeAvatar, scene, pageId: 'page-self0001', schedule: () => 0, cancel() {}, selfPose: () => pose });
+  await c.tick(); c.frame(0.1); const av = pos.get('B'); assert.deepEqual(av.rec.at(-1), [1, 0, 2], 'chưa khiêng: đứng ở vị trí mạng');
+  c.hold('player-bbbbbbbb'); c.frame(0.1); assert.deepEqual(av.rec.at(-1), [5, 2.05, 7]); assert.equal(av.group.rotation.x, 1.3, 'nằm vắt vai');
+  pose = { x: 6, y: 0, z: 8, r: 1 }; c.frame(0.1); assert.deepEqual(av.rec.at(-1), [6, 2.05, 8], 'theo người khiêng khi họ đi');
+  c.hold(null); c.frame(0.1); assert.deepEqual(av.rec.at(-1), [1, 0, 2]); assert.equal(av.group.rotation.x, 0);
+  c.hold('player-bbbbbbbb'); assert.equal(c.toss('player-bbbbbbbb', { x: 16, z: 8 }), true);
+  c.frame(0.05); const mid = av.rec.at(-1); assert.ok(mid[1] > 0 && mid[0] > 6 && mid[0] < 16, 'đang bay vòng cung: ' + mid);
+  for (let i = 0; i < 40; i++) c.frame(0.1); assert.deepEqual(av.rec.at(-1), [1, 0, 2], 'bay xong: vị trí mạng tiếp quản'); assert.equal(av.group.rotation.x, 0);
+  assert.equal(c.toss('player-zzzzzzzz', { x: 1, z: 1 }), false, 'không có người đó: không bay');
+});

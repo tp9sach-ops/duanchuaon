@@ -33,6 +33,7 @@ export function initSkill(hud, { toast = () => {}, getSen = () => 0, spendSen = 
   function doJump() {
     const W = LGT.world; if (!W) return false;
     if (LGT.swim && LGT.swim.active) return false;   // đang bơi/lặn: không nhảy
+    if (LGT.heldBy) return false;   // Phiên 91: đang bị người khác khiêng trên vai
     const lv = level();
     if (!canJump({ level: lv, mode: W.mode, panelOpen: !!LGT.panelOpen, dialogOpen: dialogOpen() })) return false;
     const ok = jump.start(jumpHeightAt(lv, !!LGT.inHouse));
