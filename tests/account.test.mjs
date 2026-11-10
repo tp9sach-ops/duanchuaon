@@ -456,5 +456,5 @@ test('Nối vào trang: main.js, hud.js, index.html, sw.js, api.js đã được
   assert.match(api, /keepalive: !!opts\.keepalive/);
   for (const a of ['acctCreate', 'acctLogin', 'acctLoad', 'acctSave', 'acctLogout']) assert.match(code, new RegExp("case '" + a + "'"), a);
   assert.match(code, /Accounts: \['aid', 'accKey'/);
-  assert.match(sw, /VERSION = 'dgt-v(5[2-9]|[6-9]\d)'/, 'sw.js phải tăng VERSION khi đổi mã');
+  assert.match(sw, /VERSION = 'dgt-v(5[2-9]|[6-9]\d|\d{3,})'/, 'sw.js phải tăng VERSION khi đổi mã');
 });

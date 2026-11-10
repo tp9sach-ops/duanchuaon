@@ -4,6 +4,7 @@ import { cleanProfile, loadProfile, saveProfile, initialOf, robeCss, insideHall,
 import { HAIR_STYLES } from '../world/avatarLogic.js';
 import { initHudMenu } from './hudMenu.js';
 import { initAccountGate, initAccountBanner } from './accountGate.js';
+import { showIntroUi } from './introUi.js';
 
 const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -109,6 +110,21 @@ export function initHud() {
     if (gate.begin()) return;                     // vừa đăng nhập xong và tải lại: tự vào chùa
     setTimeout(() => nameIn.focus({ preventScroll: true }), 80);
   }
-  paintChip(); open();
+  paintChip();
+  // Phiên 91: vừa vào game → nhân vật cưỡi hạc bay một vòng bản đồ rồi đáp trước cổng chùa; xong mới hiện màn đăng nhập. Bỏ qua được (nút/Esc/Enter/Space).
+  // Không chiếu khi: vừa đăng nhập xong rồi tải lại (tự vào chùa), hoặc thêm ?intro=0 vào địa chỉ trang.
+  function startWithIntro() {
+    let skip = false;
+    try { skip = sessionStorage.getItem('lgt.autoEnter') === '1' || new URLSearchParams(location.search).get('intro') === '0'; } catch (_) { /* riêng tư */ }
+    if (skip || !LGT.intro || !LGT.intro.play) { open(); return; }
+    try {
+      W.setProfile(cleanProfile(profile));   // người cưỡi hạc mặc đúng áo/kiểu đầu đã lưu trên máy này (chưa có thì mặc định)
+      LGT.panelOpen = true;                    // chặn đi lại / bấm điểm sáng trong lúc bay
+      const ui = showIntroUi({ onSkip: () => LGT.intro.skip() });
+      const ok = LGT.intro.play({ onLabel: (t) => ui.label(t), onDone: () => { ui.end(); LGT.panelOpen = false; open(); } });
+      if (!ok) { ui.end(); LGT.panelOpen = false; open(); }
+    } catch (e) { console.warn('[Diệu Giang Tự] Cảnh mở đầu lỗi:', e && e.message); LGT.panelOpen = false; open(); }
+  }
+  startWithIntro();
   return { get profile() { return profile; }, open };
 }

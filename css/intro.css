@@ -1,0 +1,18 @@
+/* Cảnh mở đầu: hạc bay quanh chùa (Phiên 91) */
+.intro{position:fixed;inset:0;z-index:55;pointer-events:none;transition:opacity .6s}
+.intro.bye{opacity:0}
+.intro-bar{position:absolute;left:0;right:0;height:9vh;background:#000;animation:introBar 1.2s ease-out both}
+.intro-bar.top{top:0}.intro-bar.bot{bottom:0}
+@keyframes introBar{from{transform:scaleY(0);opacity:0}to{transform:scaleY(1);opacity:.92}}
+.intro-bar.top{transform-origin:top}.intro-bar.bot{transform-origin:bottom}
+.intro-ttl{position:absolute;left:50%;top:22%;transform:translateX(-50%);text-align:center;color:#fff3c4;text-shadow:0 2px 18px rgba(0,0,0,.7);transition:opacity 1.6s;animation:introTtl 1.6s ease-out both}
+.intro-ttl small{display:block;font-size:12px;letter-spacing:.35em;opacity:.85}
+.intro-ttl b{display:block;font-size:clamp(26px,6vw,46px);letter-spacing:.14em;font-weight:600;font-family:"Cormorant Garamond",serif}
+.intro-ttl.out{opacity:0}
+@keyframes introTtl{from{opacity:0;transform:translate(-50%,10px)}to{opacity:1;transform:translate(-50%,0)}}
+.intro-cap{position:absolute;left:50%;bottom:calc(9vh + 22px);transform:translateX(-50%);padding:6px 18px;border-radius:999px;background:rgba(20,14,6,.5);color:#ffe9a8;font-size:15px;letter-spacing:.06em;white-space:nowrap;max-width:90vw;overflow:hidden;text-overflow:ellipsis;opacity:0;transition:opacity .5s}
+.intro-cap.on{opacity:1}
+.intro-skip{position:absolute;right:max(14px,env(safe-area-inset-right));bottom:calc(9vh + 18px);pointer-events:auto;padding:9px 18px;border-radius:999px;border:1px solid rgba(255,240,190,.7);background:rgba(20,14,6,.55);color:#fff3c4;font-size:14px;cursor:pointer;backdrop-filter:blur(4px)}
+.intro-skip:hover,.intro-skip:focus-visible{background:rgba(120,80,10,.7);outline:2px solid #ffe9a8}
+body.intro-on .hud,body.intro-on #hud{display:none}
+@media (prefers-reduced-motion:reduce){.intro-bar,.intro-ttl{animation:none}}

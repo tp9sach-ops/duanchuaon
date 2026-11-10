@@ -21,6 +21,7 @@ import { buildFireflies, buildPetals, buildSmoke, buildRain } from './particles.
 import { createRail } from './rail.js';
 import { createHotspots } from './hotspots.js';
 import { createWorld } from '../world/world.js';
+import { buildIntro } from './intro.js';
 import { buildCushions } from './boduon.js';
 import { buildHoaSen } from './hoasen.js';
 import { buildNpcs } from './npc.js';
@@ -145,6 +146,7 @@ export function createScene(canvas, { onProgress, onPick, onArrive } = {}) {
   // Chế độ đi bộ (mặc định). Thêm ?rail=1 vào địa chỉ để quay lại chế độ camera bay cũ.
   const useRail = new URLSearchParams(location.search).get('rail') === '1';
   const world = useRail ? null : createWorld({ scene, camera, canvas, coarse, LGT, onArrive });
+  const intro = world ? buildIntro({ scene, camera, world, LGT, reduce }) : null; if (intro) LGT.intro = intro;   // Phiên 91: cảnh hạc bay mở đầu (LGT.intro.play)
   LGT.view = { camera, canvas };   // Phiên 43: chế độ chỉnh sửa trong nhà cần camera + canvas để chọn đồ bằng chuột
 
   // --- PERF governor (logic ở perfLogic.js, có test): bậc 0 = đầy đủ … 5 = nhẹ nhất; chỉ hạ, nhớ bậc đã hạ 7 ngày. ?perf=N (0–5) ép cố định.
@@ -264,7 +266,7 @@ export function createScene(canvas, { onProgress, onPick, onArrive } = {}) {
     } else applyDay(dt);   // ban ngày mặc định: chu kỳ ngày đêm (bình minh, ban ngày, hoàng hôn, ban đêm); đèn trong điện lập lòe áp lên phía dưới
 
     // Camera + hiệu ứng nhẹ theo con trỏ (tắt khi reduced-motion)
-    if (world && !LGT.freeCam) world.update(dt); else if (!world) rail.update(dt, reduce);   // freeCam: chỉ dùng khi chụp thử (?debug=1)
+    if (intro && intro.active) intro.update(dt); else if (world && !LGT.freeCam) world.update(dt); else if (!world) rail.update(dt, reduce);   // freeCam: chỉ dùng khi chụp thử (?debug=1)
     if (!world && !reduce && !coarse) {
       mx = damp(mx, mouseX, 2, dt); my = damp(my, mouseY, 2, dt);
       camera.position.x += mx * 1.2; camera.position.y += -my * 0.6;
@@ -289,7 +291,7 @@ export function createScene(canvas, { onProgress, onPick, onArrive } = {}) {
     if (bloomOn) composer.render(); else renderer.render(scene, camera);
 
     // Điểm sáng: chỉ hiện khi không có bảng nào mở
-    hotspots.setVisible(!LGT.panelOpen);
+    hotspots.setVisible(!LGT.panelOpen && !(intro && intro.active));
     hotspots.update(w, h);
 
     // PERF governor: đo FPS theo cửa sổ 2 giây; chậm 2 cửa sổ liền thì hạ một bậc (xem perfLogic.js)
