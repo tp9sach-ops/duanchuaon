@@ -44,7 +44,10 @@ SOFTWARE.
 - Do ptg gửi ngày 2026-11-06, đã xử lý bằng `tools/make-nature-audio.py` (mono, lọc tiếng ù, chỉnh cùng mức, nối vòng lặp). Tên file gốc: `dragon-studio-frogs-croaking-329854.mp3` (ếch nhái), `audiopapkin-beautiful-birdsong-3-301866.mp3` (chim, dùng đoạn 20–80 s), `loswin23-birds-and-crickets-2-627567.mp3` (chim và dế).
 - Tên file giống kiểu đặt tên của kho âm thanh miễn phí (có thể là Pixabay) nhưng **đây chỉ là suy đoán**: ptg cần gửi link nguồn từng file để ghi tác giả và giấy phép vào đây trước khi công bố rộng.
 
-## Mô hình nhà GLB (`assets/models/houses/`) — CC-BY-4.0
+## Mô hình nhà GLB (`assets/models/houses/`) — mỗi cấp nhà một mô hình
 
-- `nha-lau.glb` (cấp 1 "Nhà lầu"): "VIANNEY HOUSE 2" của fantecboisseau (https://sketchfab.com/fantecboisseau), CC-BY-4.0, https://sketchfab.com/3d-models/vianney-house-2-b45403bf4f7849aebb61f7623c00b714 . Đã sửa: bỏ bệ nền và gara, bỏ ~47.000 tam giác rác, thu nhỏ ảnh về 512 px, thêm mặt kính trước, cửa chính, bậc thềm.
-- `nha-hoa-vien.glb` (cấp 2 "Nhà hoa viên"): "Autumn House" của Zhenya (https://sketchfab.com/evgeniya93svg), CC-BY-4.0, https://sketchfab.com/3d-models/autumn-house-52772448c62348e0a4951b51758d5587 . Đã sửa: bỏ nền tròn, xe và cây rời, giữ thân nhà + dây leo + lá thu, thu nhỏ ảnh về 512 px, xoay mặt trước về +z.
+- `nha-0-go.glb` (cấp 0 "Nhà trống thô sơ"): "Autumn House" của Zhenya (https://sketchfab.com/evgeniya93svg), CC-BY-4.0, https://sketchfab.com/3d-models/autumn-house-52772448c62348e0a4951b51758d5587 . Đã sửa: bỏ nền tròn, xe và cây rời, giữ thân nhà + dây leo + lá thu, thu nhỏ ảnh về 512 px, xoay mặt trước về +z, thu về rộng 6 m.
+- `nha-1-lau.glb` (cấp 1 "Nhà lầu"): "VIANNEY HOUSE 2" của fantecboisseau (https://sketchfab.com/fantecboisseau), CC-BY-4.0, https://sketchfab.com/3d-models/vianney-house-2-b45403bf4f7849aebb61f7623c00b714 . Đã sửa: bỏ bệ nền và gara, bỏ ~47.000 tam giác rác, thu nhỏ ảnh về 512 px, thêm mặt kính trước, cửa chính, bậc thềm.
+- `nha-2-hoa-vien.glb` (cấp 2 "Nhà hoa viên"): mô hình "villa_with_garden" ptg gửi ngày 2026-11-10. Đã sửa: chỉ lấy phần nhà + hồ, bỏ rừng thông và dòng suối, giảm từ ~590.000 xuống ~17.000 tam giác, ảnh texture được tô thành màu đỉnh.
+- `nha-3-villa.glb` (cấp 3 "Villa hồ bơi"): mô hình "modern_luxury_villa_house_building_with_pool" ptg gửi ngày 2026-11-10. Đã sửa: bỏ tường rào và nền khu đất, giảm từ ~133.000 xuống ~2.000 tam giác, tô lại màu theo bảng màu riêng.
+- **Tác giả / link nguồn / giấy phép của 2 mô hình villa (cấp 2 và 3): CHƯA BIẾT.** ptg cần gửi link Sketchfab từng mô hình để ghi tác giả và giấy phép vào đây trước khi công bố rộng.
