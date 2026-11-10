@@ -43,3 +43,8 @@ SOFTWARE.
 
 - Do ptg gửi ngày 2026-11-06, đã xử lý bằng `tools/make-nature-audio.py` (mono, lọc tiếng ù, chỉnh cùng mức, nối vòng lặp). Tên file gốc: `dragon-studio-frogs-croaking-329854.mp3` (ếch nhái), `audiopapkin-beautiful-birdsong-3-301866.mp3` (chim, dùng đoạn 20–80 s), `loswin23-birds-and-crickets-2-627567.mp3` (chim và dế).
 - Tên file giống kiểu đặt tên của kho âm thanh miễn phí (có thể là Pixabay) nhưng **đây chỉ là suy đoán**: ptg cần gửi link nguồn từng file để ghi tác giả và giấy phép vào đây trước khi công bố rộng.
+
+## Mô hình nhà GLB (`assets/models/houses/`) — CC-BY-4.0
+
+- `nha-lau.glb` (cấp 1 "Nhà lầu"): "VIANNEY HOUSE 2" của fantecboisseau (https://sketchfab.com/fantecboisseau), CC-BY-4.0, https://sketchfab.com/3d-models/vianney-house-2-b45403bf4f7849aebb61f7623c00b714 . Đã sửa: bỏ bệ nền và gara, bỏ ~47.000 tam giác rác, thu nhỏ ảnh về 512 px, thêm mặt kính trước, cửa chính, bậc thềm.
+- `nha-hoa-vien.glb` (cấp 2 "Nhà hoa viên"): "Autumn House" của Zhenya (https://sketchfab.com/evgeniya93svg), CC-BY-4.0, https://sketchfab.com/3d-models/autumn-house-52772448c62348e0a4951b51758d5587 . Đã sửa: bỏ nền tròn, xe và cây rời, giữ thân nhà + dây leo + lá thu, thu nhỏ ảnh về 512 px, xoay mặt trước về +z.
