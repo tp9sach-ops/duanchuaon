@@ -1,17 +1,21 @@
-// Nhà dựng từ mô hình GLB (cấp 1 "Nhà lầu" và cấp 2 "Nhà hoa viên"), nạp khi cần. Gắn vào js/scene/land.js (houseModel).
-// Nếu file chưa có hoặc nạp lỗi, nhà vẫn hiện bằng bản dựng bằng mã (không vỡ cảnh). Hình + vật liệu của bản mẫu dùng CHUNG
+// Nhà dựng từ mô hình GLB, mỗi cấp một mô hình (0 nhà gỗ Autumn, 1 nhà lầu Vianney, 2 villa vườn, 3 villa hồ bơi), nạp khi cần. Gắn vào js/scene/land.js (houseModel).
+// Không còn nhà do mã tự dựng: file chưa có hoặc nạp lỗi thì land.js giữ khối tạm (một hộp trơn). Hình + vật liệu của bản mẫu dùng CHUNG
 // (userData.shared = true) nên refresh() của land.js dọn nhà cũ sẽ không hủy bản mẫu.
 // Mô hình đã tối ưu bằng công cụ riêng: mặt trước +z, gốc ở tâm thân nhà, sàn tầng trệt y = 0, đơn vị mét, khớp thân nhà HOUSE_LEVELS (js/world/land.js).
-//   nha-lau.glb       = "VIANNEY HOUSE 2" của fantecboisseau (CC-BY-4.0)   — nhà phố hiện đại 3 tầng, mặt tiền kính
-//   nha-hoa-vien.glb  = "Autumn House" của Zhenya (CC-BY-4.0)             — nhà gỗ có hiên, dây leo và lá thu
+//   nha-0-go.glb        = "Autumn House" của Zhenya (CC-BY-4.0)             — nhà gỗ có hiên, dây leo và lá thu
+//   nha-1-lau.glb       = "VIANNEY HOUSE 2" của fantecboisseau (CC-BY-4.0)   — nhà phố hiện đại 3 tầng, mặt tiền kính
+//   nha-2-hoa-vien.glb  = "Villa with Garden" (Sketchfab)                    — villa 2 tầng có hồ, cắt riêng phần nhà, tô màu đỉnh
+//   nha-3-villa.glb     = "Modern Luxury Villa House Building With Pool"     — villa mái bằng + hồ bơi dài, tô màu đỉnh
 // Ghi công xem THIRD_PARTY.md.
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
-/** Cấp nhà -> file GLB. Muốn đổi mô hình chỉ cần đổi url (giữ quy ước: mặt trước +z, gốc ở tâm thân nhà). Cấp không có trong bảng dùng bản dựng bằng mã. */
+/** Cấp nhà -> file GLB. Muốn đổi mô hình chỉ cần đổi url (giữ quy ước: mặt trước +z, gốc ở tâm thân nhà). */
 export const HOUSE_GLB = {
-  1: { url: 'assets/models/houses/nha-lau.glb', lift: 0.06 },
-  2: { url: 'assets/models/houses/nha-hoa-vien.glb', lift: 0.06 },
+  0: { url: 'assets/models/houses/nha-0-go.glb', lift: 0.06 },
+  1: { url: 'assets/models/houses/nha-1-lau.glb', lift: 0.06 },
+  2: { url: 'assets/models/houses/nha-2-hoa-vien.glb', lift: 0.06 },
+  3: { url: 'assets/models/houses/nha-3-villa.glb', lift: 0.06 },
 };
 
 const store = new Map();   // lv -> { tpl, p }
