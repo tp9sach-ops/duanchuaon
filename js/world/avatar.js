@@ -3,6 +3,7 @@
 // Logic tư thế/tên/chat nằm ở avatarLogic.js (có test). Dùng: const a = createAvatar({ name, color }); scene.add(a.group); mỗi khung: a.update(dt).
 import * as THREE from 'three';
 import { DEFAULT_COLOR, colorById, hairById, beardById, cleanName, cleanSay, bubbleLife, wrapText, poseFor, turnToward, BELL_PROFILE, bellRadius, logoPatch, POLO_LOGOS } from './avatarLogic.js';
+import { swingPose, SWING_S } from './conKhi.js';
 
 const SKIN = 0xe8934c, HAIR = 0x1f1511, OUTLINE = 0x3a2314;
 const FONT = '600 38px "Be Vietnam Pro", "Noto Sans", system-ui, sans-serif';
@@ -143,6 +144,15 @@ export function createAvatar({ name = 'Khách', color = DEFAULT_COLOR, hair: hai
   };
   const armL = mkArm(-0.25), armR = mkArm(0.25);
 
+  // Côn (Phiên 93): cây gậy dài 1,3 m cầm ở tay phải, nối tiếp theo hướng cánh tay; chỉ hiện khi vung (avatar.swing). Khớp tay quay quanh vai nên côn quay theo.
+  const staff = new THREE.Group(); staff.visible = false; armR.add(staff);
+  { const woodM = std(0x7a4a24, 0.55), capM = std(0xe0a93a, 0.35), bandM = std(0xb3261e, 0.5);
+    mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.3, 8), woodM, staff, 0, -0.85, 0);          // thân côn: từ y = -0,2 (sau bàn tay) tới y = -1,5
+    mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.1, 8), capM, staff, 0, -1.5, 0);            // đầu côn bịt vàng
+    mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.1, 8), capM, staff, 0, -0.2, 0);            // đuôi côn bịt vàng
+    mesh(new THREE.CylinderGeometry(0.038, 0.038, 0.12, 8), bandM, staff, 0, -1.1, 0); }      // dải đỏ quấn giữa
+  let swingT = -1;   // giây kể từ lúc bắt đầu vung côn; < 0 = không vung
+
   // Đầu: cầu tròn to không cổ, tai, mắt cười, miệng, má hồng, tóc
   const head = new THREE.Group(); head.position.y = 1.08; upper.add(head);
   const skullG = geo(new THREE.SphereGeometry(0.42, 28, 20));
@@ -211,7 +221,13 @@ export function createAvatar({ name = 'Khách', color = DEFAULT_COLOR, hair: hai
     footL.position.y = 0.06 + Math.max(0, p.legL) * 0.12; footR.position.y = 0.06 + Math.max(0, p.legR) * 0.12;
     // Tay chắp trước ngực, đung đưa nhẹ; gõ mõ/lạy dùng armL/armR của poseFor
     armL.rotation.set(-1.2 + p.armL * 0.7, 0, 0.8); armR.rotation.set(-1.2 + p.armR * 0.7, 0, -0.8);
-    body.rotation.x = p.lean; head.rotation.x = p.head;
+    let swingLean = 0;
+    if (swingT >= 0) {   // vung côn (Phiên 93): tay phải nâng côn rồi chém xuống, tay trái hơi lùi lại giữ thăng bằng, người ngả về trước
+      swingT += dt; const sp = swingPose(swingT), v = Math.min(1, sp.vis * 2);
+      armR.rotation.set(sp.arm, 0, -0.8 * (1 - v) - 0.2 * v); armL.rotation.set((-1.2 + p.armL * 0.7) * (1 - v) - 0.5 * v, 0, 0.8 * (1 - v) + 0.5 * v);
+      swingLean = sp.lean; staff.visible = sp.vis > 0.3; if (swingT >= SWING_S + 0.35) { swingT = -1; staff.visible = false; }
+    }
+    body.rotation.x = p.lean + swingLean; head.rotation.x = p.head;
     robe.scale.y = 1 - 0.4 * p.sit; upper.position.y = -0.34 * p.sit;
     for (const m of trim) m.scale.y = 1 / robe.scale.y;   // chi tiết trên thân (nẹp, cúc, logo) giữ nguyên hình dạng khi ngồi
     rig.position.y = p.dy; body.rotation.z = st.state === 'walk' ? Math.sin(clock * (5 + 4 * Math.min(1, st.speed / 2.2))) * 0.05 : 0;
@@ -229,5 +245,7 @@ export function createAvatar({ name = 'Khách', color = DEFAULT_COLOR, hair: hai
 
   /** Số hạt đã lần (0..108): xoay chuỗi hạt 3D. */
   function setBeadCount(n) { malaTarget = -(Math.max(0, +n || 0) / 108) * Math.PI * 2; }
-  return { group, setState, setFacing, say, setBeadCount, update, dispose, get state() { return st.state; } };
+  /** Vung côn chém (Phiên 93): bắt đầu hoạt ảnh nâng côn → chém xuống → thu về (thời gian cố định SWING_S + 0,35 s). */
+  function swing() { swingT = 0; }
+  return { group, setState, setFacing, say, setBeadCount, swing, update, dispose, get state() { return st.state; }, get swinging() { return swingT >= 0; } };
 }
