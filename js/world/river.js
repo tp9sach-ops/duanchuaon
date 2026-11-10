@@ -53,7 +53,7 @@ export function registerRiver() {
   const cs = riverCircles(), b = RIVER.bridge;
   // cầu gắn vào hình tròn gần giữa cầu nhất (bridgeAt xét mọi hồ nên một chỗ gắn là đủ)
   let bi = 0, bd = Infinity; cs.forEach((c, i) => { const d = Math.hypot(c.x - (b.x0 + b.x1) / 2, c.z - (b.z0 + b.z1) / 2); if (d < bd) { bd = d; bi = i; } });
-  cs.forEach((c, i) => addWater({ x: c.x, z: c.z, r: c.r, bridges: i === bi ? [{ ...b }] : [] }));
-  addWater({ x: LAKE.x, z: LAKE.z, r: LAKE.r, bridges: [{ ...THUY_TA.deck }, { ...THUY_TA.pier }] });   // sàn + lối gỗ thủy tạ: đi được trên mặt hồ
+  cs.forEach((c, i) => addWater({ x: c.x, z: c.z, r: c.r, bridges: i === bi ? [{ ...b }] : [], swim: true }));   // sông bơi được (không có ngọc trai: ngọc chỉ ở hồ)
+  addWater({ x: LAKE.x, z: LAKE.z, r: LAKE.r, bridges: [{ ...THUY_TA.deck }, { ...THUY_TA.pier }], id: 'horung', swim: true });   // sàn + lối gỗ thủy tạ: đi được trên mặt hồ
   THUY_TA.posts.forEach(([x, z]) => addCircle({ x, z, r: THUY_TA.postR }));
 }

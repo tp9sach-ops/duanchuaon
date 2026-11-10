@@ -45,7 +45,7 @@ export const addRect = (r) => RECTS.push(r);
 /** Vùng đi bộ ngoài cổng chùa (Phiên 17: đường làng, chợ, đường mòn rừng/thác): hình chữ nhật {x0,x1,z0,z1}. Ngoài mọi vùng thì bị chặn. */
 export const WALKS = [];
 export const addWalk = (r) => WALKS.push(r);
-/** Hồ nước thêm (Phiên 14f): {x,z,r, bridges:[{x0,x1,z0,z1,y}]}. Trong hồ là vật cản, trừ các mảng cầu/đảo (đi được, cao y). */
+/** Hồ nước thêm (Phiên 14f): {x,z,r, bridges:[{x0,x1,z0,z1,y}], id?, swim?}. Trong hồ là vật cản, trừ các mảng cầu/đảo (đi được, cao y); `swim: true` = bơi/lặn được (js/world/swim.js). */
 export const WATERS = [];
 export const addWater = (w) => WATERS.push(w);
 export const bridgeAt = (x, z) => { for (const w of WATERS) for (const b of w.bridges || []) if (x >= b.x0 && x <= b.x1 && z >= b.z0 && z <= b.z1) return b; return null; };
@@ -153,7 +153,7 @@ function terrainBlocked(x, z) {
   // Ao sen: chặn trừ lối cầu đá
   if (Math.hypot(x - POND.x, z - POND.z) < POND.r && Math.abs(x) > POND.bridgeHalf) return true;
   // Hồ thêm: chặn trừ cầu/đảo
-  for (const w of WATERS) if (Math.hypot(x - w.x, z - w.z) < w.r && !bridgeAt(x, z)) return true;
+  for (const w of WATERS) if (!w.swim && Math.hypot(x - w.x, z - w.z) < w.r && !bridgeAt(x, z)) return true;   // nước có cờ `swim` (Phiên 80) bơi/lặn được, không chặn
   if (hallSolid(x, z, 0)) return true;
   return false;
 }

@@ -221,7 +221,7 @@ export function createWorld({ scene, camera, canvas, coarse = false, LGT = windo
     } else { nav.clear(); arrival.cancel(); showHint(null); }
     if (!nav.active) mark.visible = false;
     if (v) {
-      const r = walkStep(P, v, dt, spd * (v.mag ?? 1));
+      const r = walkStep(P, v, dt, spd * (v.mag ?? 1) * (LGT.swim ? LGT.swim.speedMul : 1));
       speedNow = damp(speedNow, r.moved / Math.max(dt, 1e-4), 12, dt); P.x = r.x; P.z = r.z; P.y = damp(P.y, r.y, 14, dt);
       if (r.moved > 1e-4) avatar.setFacing(facingOf(v.x, v.z));
     } else { speedNow = damp(speedNow, 0, 14, dt); P.y = damp(P.y, walkStep(P, { x: 0, z: 0 }, dt, 0).y, 14, dt); }

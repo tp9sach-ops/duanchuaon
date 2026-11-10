@@ -161,7 +161,7 @@ let done = false;
 export function registerOutside() {
   if (done) return; done = true;
   OUT_WALKS.forEach(addWalk);
-  addWater({ x: THAC.pool.x, z: THAC.pool.z, r: THAC.pool.r, bridges: [] });
+  addWater({ x: THAC.pool.x, z: THAC.pool.z, r: THAC.pool.r, bridges: [], id: 'hothac', swim: true });
   registerRiver();   // Phiên 74: sông chảy ra từ hồ thác + cầu đá + Hồ Rừng (js/world/river.js)
   [DA_LANG, GIENG, CO_THU, ...OUT_ROCKS, ...STREET_LAMPS, ...VILLAGE_GATE.posts.map((x) => ({ x, z: VILLAGE_GATE.z, r: VILLAGE_GATE.r }))].forEach((c) => addCircle({ x: c.x, z: c.z, r: c.r }));
   STALLS.forEach((s) => addRect({ x0: s.x0, x1: s.x1, z0: s.z0, z1: s.z1 }));

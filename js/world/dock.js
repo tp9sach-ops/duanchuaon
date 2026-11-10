@@ -21,13 +21,14 @@ export const HINTS = {
   nem: 'Bấm “Ném” để ném vật ra phía trước mặt.',
   da: 'Bấm “Ném đá” khi yêu quái còn xa. Khi nó gồng (vùng đỏ trên đất), chạy ra ngoài vùng đỏ!',
   thuong: 'Lại gần yêu quái rồi bấm “Thương” để đâm — mạnh hơn ném đá.',
+  lan: 'Bấm “Lặn” để lặn xuống nhặt ngọc trai (+1 hạt sen/viên). Hơi thở có hạn — hết hơi sẽ tự nổi lên.',
   nemyq: 'Bạn đủ mạnh để nhấc cả yêu quái lên ném!',
 };
-const HINT_ORDER = ['tap', 'da', 'thuong', 'nemyq', 'cast', 'thu', 'nem', 'khieng', 'nemnguoi', 'nhay', 'kynang', 'tui'];
+const HINT_ORDER = ['lan', 'tap', 'da', 'thuong', 'nemyq', 'cast', 'thu', 'nem', 'khieng', 'nemnguoi', 'nhay', 'kynang', 'tui'];
 
 /**
  * Các nút cần hiện, xếp từ DƯỚI lên (nút đầu = gần ngón cái nhất).
- * c = { free (đang đi lại bình thường), khinh (bậc), canTrain, water (đứng sát mép nước, ngoài nhà), fish: { phase: 'idle'|'wait'|'lotus'|'caught', hasOrb, cracked, text }, carry: { holding, heldName, near }, yq: { active, ten, canThrow } }.
+ * c = { free (đang đi lại bình thường), khinh (bậc), canTrain, water (đứng sát mép nước, ngoài nhà), fish: { phase: 'idle'|'wait'|'lotus'|'caught', hasOrb, cracked, text }, carry: { holding, heldName, near }, yq: { active, ten, canThrow }, swim: { mode: 'land'|'swim'|'dive', say } }.
  * Mỗi nút { id, label, big?, hot?, say? }. Đang ngồi/thiền/lạy → không có nút nào.
  */
 export function dockButtons(c = {}) {
@@ -35,6 +36,8 @@ export function dockButtons(c = {}) {
   if (!k.free) return out;
   if (f.phase === 'wait' || f.phase === 'lotus') return [{ id: 'tap', label: 'Bấm!', big: true, hot: f.phase === 'lotus', say: String(f.text || '') }];
   if (f.phase === 'caught') return [{ id: 'thu', label: 'Thu cá', big: true, say: String(f.text || '') }, { id: 'phong', label: 'Phóng sinh', say: '' }];
+  const sw = isObj(k.swim) ? k.swim : {};
+  if (sw.mode === 'swim' || sw.mode === 'dive') return [{ id: 'lan', label: sw.mode === 'dive' ? 'Nổi lên' : 'Lặn', big: true, say: sw.say ? String(sw.say) : '' }, { id: 'tui', label: 'Túi đồ' }];   // đang bơi/lặn: chỉ Lặn↔Nổi lên + Túi đồ (không câu/khiêng/nhảy dưới nước)
   const cr = isObj(k.carry) ? k.carry : {};
   if (cr.holding) return [{ id: 'nem', label: 'Ném', big: true, say: cr.heldName ? `Đang khiêng: ${cr.heldName}` : '' }, { id: 'ha', label: 'Đặt xuống' }];   // tay đang khiêng vật: chỉ Ném / Đặt xuống
   if (cr.near) out.push({ id: 'khieng', label: 'Khiêng', big: true, say: `Gần: ${cr.near}` });

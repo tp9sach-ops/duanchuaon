@@ -93,3 +93,11 @@ test('có người chơi khác ở gần → nút Ném người (sau Khiêng, �
   assert.ok(!ids({ ply: { near: 'An' }, carry: { holding: true } }).includes('nemnguoi'));
   const b = dockButtons({ free: true, khinh: 1, ply: { near: 'An' } }); assert.equal(b.find((x) => x.id === 'nemnguoi').say, 'Gần: An');
 });
+
+test('bơi/lặn: chỉ còn nút Lặn↔Nổi lên + Túi đồ; trên cạn không có', () => {
+  assert.deepEqual(ids({ free: true, khinh: 1, water: true, swim: { mode: 'swim' } }), ['lan', 'tui']);
+  assert.equal(dockButtons({ free: true, swim: { mode: 'swim' } })[0].label, 'Lặn');
+  assert.equal(dockButtons({ free: true, swim: { mode: 'dive', say: 'Hơi thở: 12 giây' } })[0].label, 'Nổi lên');
+  assert.ok(!ids({ free: true, khinh: 1, swim: { mode: 'land' } }).includes('lan'));
+  assert.deepEqual(ids({ free: false, swim: { mode: 'swim' } }), []);
+});
