@@ -10,12 +10,21 @@ export const FLIGHT = 0.6;
 /** Cầu rơi cách mép nước vào trong chừng này mét (tối đa 40% bán kính nước, để hồ nhỏ không rơi ra giữa). */
 export const LAND_INSET = 2.6;
 
-/** Điểm cầu rơi: nằm trên đường từ tâm nước ra phía người chơi, cách mép vào trong. Người đứng ngay tâm (cầu hồ cá) → thả về phía +x. Trả { x, z }. */
-export function castTarget(player, water) {
+/** Tầm ném về phía trước mặt (m). */
+export const THROW_AHEAD = 4.2;
+/** Điểm cầu rơi. Có `ry` (hướng nhìn của nhân vật, nhìn +z khi ry = 0): ném THẲNG TRƯỚC MẶT — điểm cách người THROW_AHEAD mét theo hướng nhìn,
+ *  nếu ra ngoài mặt nước thì kéo vào mép trong của nước (vẫn cùng phía trước mặt). Không có `ry`: kiểu cũ — trên đường từ tâm nước ra phía người chơi. Trả { x, z }. */
+export function castTarget(player, water, ry) {
   const w = typeof water === 'string' ? waterById(water) : water; if (!w || !player) return { x: 0, z: 0 };
+  const r = Math.max(0.5, w.r - Math.min(LAND_INSET, w.r * 0.4));
+  if (Number.isFinite(ry)) {
+    const ax = player.x + Math.sin(ry) * THROW_AHEAD, az = player.z + Math.cos(ry) * THROW_AHEAD;
+    let dx = ax - w.x, dz = az - w.z; const d = Math.hypot(dx, dz);
+    if (d <= r) return { x: ax, z: az };
+    return { x: w.x + (dx / d) * r, z: w.z + (dz / d) * r };
+  }
   let dx = player.x - w.x, dz = player.z - w.z; const d = Math.hypot(dx, dz);
   if (d < 0.5) { dx = 1; dz = 0; } else { dx /= d; dz /= d; }
-  const r = Math.max(0.5, w.r - Math.min(LAND_INSET, w.r * 0.4));
   return { x: w.x + dx * r, z: w.z + dz * r };
 }
 

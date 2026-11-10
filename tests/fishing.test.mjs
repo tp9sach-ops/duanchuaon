@@ -13,8 +13,8 @@ const rngSeed = (a) => () => { a |= 0; a = (a + 0x6D2B79F5) | 0; let t = Math.im
 const run = (s, secs, dt = 0.05) => { for (let t = 0; t < secs; t += dt) s = tick(s, dt); return s; };
 const owned = (id = 'go', la = 1e6) => buyOrb(emptyFish(), { la, sen: 1e6 }, id).state;
 
-test('luật ptg: 5 loại quả cầu, Cầu Gỗ 50 hạt sen, còn lại 100 → 1000 lá, càng đắt càng bền/may/dễ bấm; cửa sổ hoa sen loại đầu = 0,5 giây', () => {
-  assert.equal(ORBS.length, 5); assert.equal(ORBS[0].gia, 50); assert.equal(ORBS[0].don, 'sen'); assert.ok(ORBS.slice(1).every((o) => o.don === 'la')); assert.equal(ORBS[4].gia, 1000); assert.equal(ORBS[0].cua, 0.5); assert.equal(T_SHADOW, 4);
+test('luật ptg: 5 loại quả cầu, Cầu Gỗ 50 hạt sen, còn lại 100 → 1000 lá, càng đắt càng bền/may/dễ bấm; cửa sổ hoa sen loại đầu = 0,8 giây (Phiên 89)', () => {
+  assert.equal(ORBS.length, 5); assert.equal(ORBS[0].gia, 50); assert.equal(ORBS[0].don, 'sen'); assert.ok(ORBS.slice(1).every((o) => o.don === 'la')); assert.equal(ORBS[4].gia, 1000); assert.equal(ORBS[0].cua, 0.8); assert.equal(T_SHADOW, 4);
   for (let i = 1; i < ORBS.length; i++) for (const k of ['gia', 'ben', 'may', 'cua']) assert.ok(ORBS[i][k] > ORBS[i - 1][k], `${ORBS[i].id}.${k}`);
   assert.equal(new Set(ORBS.map((o) => o.id)).size, 5); assert.equal(new Set(SPECIES.map((s) => s.id)).size, SPECIES.length);
   assert.deepEqual(ORBS.map(repairCost), [10, 20, 50, 120, 200]);
@@ -64,7 +64,7 @@ test('nhịp câu: 4 giây bóng cá → rỉa → cắn → hoa sen đúng cử
     const c = startCast(owned('go'), 'hoca', rngSeed(seed)), s = c.sess;
     assert.equal(s.tShadow, 4); assert.ok(s.nibbles.length >= 1 && s.nibbles.length <= 3); assert.ok(s.nibbles[0] >= 4.8 && s.nibbles[0] <= 5.8, 'rỉa đầu sau bóng cá');
     for (let i = 1; i < s.nibbles.length; i++) assert.ok(s.nibbles[i] > s.nibbles[i - 1]);
-    assert.ok(s.tBite > s.nibbles[s.nibbles.length - 1]); assert.ok(Math.abs(s.tEnd - s.tBite - 0.5) < 1e-9, 'cửa sổ hoa sen 0,5 giây');
+    assert.ok(s.tBite > s.nibbles[s.nibbles.length - 1]); assert.ok(Math.abs(s.tEnd - s.tBite - 0.8) < 1e-9, 'cửa sổ hoa sen 0,8 giây (Phiên 89: đủ để kịp bấm)');
     assert.equal(s.phase, 'wait'); assert.equal(tick(s, 0.1).phase, 'wait');
     const seq = []; let x = s; for (let t = 0; t < 12 && !x.over; t += 0.05) { x = tick(x, 0.05); if (seq[seq.length - 1] !== x.phase) seq.push(x.phase); }
     assert.deepEqual(seq, ['wait', 'shadow', 'nibble', 'lotus', 'over'], 'seed ' + seed); assert.equal(x.outcome, 'late');
@@ -84,7 +84,7 @@ test('bấm: đúng lúc hoa sen → thu được cá; sớm → cá giật mìn
 
 test('cầu tốt hơn → cửa sổ dài hơn và dễ gặp loài hiếm/cỡ lớn hơn (đo bằng 4000 lần bốc)', () => {
   const wins = ORBS.map((o) => { const s = startCast(owned(o.id), 'hoca', rngSeed(5)).sess; return +(s.tEnd - s.tBite).toFixed(6); });
-  assert.deepEqual(wins, [0.5, 0.6, 0.7, 0.8, 0.9]);
+  assert.deepEqual(wins, [0.8, 0.9, 1, 1.1, 1.2]);
   const share = (orb, key) => { const r = rngSeed(99); let n = 0; for (let i = 0; i < 4000; i++) { const f = rollCatch(orb, r); if (key === 'hiem' ? speciesById(f.sp).hiem : f.lon) n++; } return n / 4000; };
   const h = ORBS.map((o) => share(o, 'hiem')); for (let i = 1; i < h.length; i++) assert.ok(h[i] > h[i - 1], 'hiếm tăng theo cầu ' + i);
   assert.ok(Math.abs(h[0] - rareChance(ORBS[0])) < 0.03); assert.ok(Math.abs(h[4] - rareChance(ORBS[4])) < 0.03);
@@ -152,8 +152,8 @@ test('phaseText / outcomeText / orbBrief: chữ hiển thị đúng và không r
   assert.match(F.outcomeText('early'), /sớm/);
   assert.match(F.outcomeText('late'), /khép/);
   assert.equal(F.outcomeText(null), '');
-  assert.equal(F.orbBrief(F.ORBS[0]), 'bền 20 lần · may ×1 · hoa sen 0,5 giây');
-  assert.equal(F.orbBrief(F.ORBS[4]), 'bền 100 lần · may ×4,5 · hoa sen 0,9 giây');
+  assert.equal(F.orbBrief(F.ORBS[0]), 'bền 20 lần · may ×1 · hoa sen 0,8 giây');
+  assert.equal(F.orbBrief(F.ORBS[4]), 'bền 100 lần · may ×4,5 · hoa sen 1,2 giây');
 });
 
 test('js/ui/fishing.js chỉ nhập những hàm có thật trong js/world/fishing.js', () => {

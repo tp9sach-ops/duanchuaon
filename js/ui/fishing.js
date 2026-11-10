@@ -41,8 +41,10 @@ export function initFishing(hud, { toast = () => {} } = {}) {
   }
   function begin() {
     const w = here(); if (!w) { toast('Hãy đứng gần mặt nước (hồ cá, ao sen, hồ thác) rồi thả cầu.', 3000); return; }
+    // Phiên 89: luôn ném THẲNG TRƯỚC MẶT. Nếu mặt nước không ở phía trước (lệch > ~50°) thì nhân vật quay mặt về phía nước rồi mới ném.
+    let ry = NaN; { const W = LGT.world; if (W && W.pos && Number.isFinite(W.facing)) { ry = W.facing; const want = Math.atan2(w.x - W.pos.x, w.z - W.pos.z); let df = Math.atan2(Math.sin(want - ry), Math.cos(want - ry)); if (Math.abs(df) > 0.9) { ry = want; W.face(ry); } } }
     const r = startCast(st, w.id); if (!r.ok) { toast(r.reason === 'cracked' ? 'Quả cầu đã nứt, hãy sửa hoặc đổi cầu khác.' : r.reason === 'noorb' ? 'Bạn chưa có quả cầu nào. Mở tab “Quả cầu” để mua.' : 'Không thả cầu được ở đây.', 3200); return; }
-    st = r.state; save(); sess = r.sess; caught = null; note = ''; lastT = 0; draw(); stopLoop(); raf = requestAnimationFrame(loop);
+    st = r.state; save(); sess = r.sess; if (Number.isFinite(ry)) sess.ry = ry; caught = null; note = ''; lastT = 0; draw(); stopLoop(); raf = requestAnimationFrame(loop);
   }
   function leave() { stopLoop(); sess = null; note = ''; draw(); toast('Bạn đã rời mặt nước nên cầu được thu về (lượt này coi như đã dùng).', 3000); }
   function pressTap() { if (!sess || sess.over) return; sess = tap(sess); finish(); }
@@ -152,6 +154,6 @@ export function initFishing(hud, { toast = () => {} } = {}) {
     const phase = sess ? (sess.phase === 'lotus' ? 'lotus' : 'wait') : caught ? 'caught' : 'idle';
     return { phase, hasOrb: !!cur, cracked: !!(cur && cur.cracked), water: !!here(), text: sess ? phaseText(sess.phase, w && w.ten) : caught ? note : '' };
   }
-  LGT.fishing = { open, close, cast: castQuick, tap: pressTap, keep, release, status, get state() { return st; }, get session() { return sess; } };
+  LGT.fishing = { open, close, cast: castQuick, tap: pressTap, keep, release, status, get state() { return st; }, get session() { return sess; }, get caught() { return caught; } };
   return LGT.fishing;
 }

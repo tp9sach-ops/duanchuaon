@@ -18,6 +18,7 @@ import { initDock } from './dock.js';
 import { initCarry } from './carry.js';
 import { initYeuQuai } from './yeuquai.js';
 import { initThrowPlayer } from './throwPlayer.js';
+import { initNpcThrow } from './npcThrow.js';
 import { initSwim } from './swim.js';
 import { initBag } from './bag.js';
 import { initEdit } from './editmode.js';
@@ -137,6 +138,7 @@ export function initHudMenu(hud) {
   try { initSkill(hud, { toast, getSen: () => wallet.sen, spendSen: spendMerit }); } catch (e) { console.warn('[Diệu Giang Tự] Kỹ năng lỗi:', e && e.message); }   // Khinh thân: phím Space / nút Nhảy khi đã mở bậc 1 (Phiên 4)
   try { initBag(hud); } catch (e) { console.warn('[Diệu Giang Tự] Túi đồ lỗi:', e && e.message); }   // Phiên 62
   try { initCarry({ toast }); } catch (e) { console.warn('[Diệu Giang Tự] Khiêng/ném lỗi:', e && e.message); }   // Phiên 63: sức mạnh, khiêng và ném vật nặng
+  try { initNpcThrow({ toast }); } catch (e) { console.warn('[Diệu Giang Tự] Ném NPC lỗi:', e && e.message); }   // Phiên 89
   try { initThrowPlayer({ toast }); } catch (e) { console.warn('[Diệu Giang Tự] Ném người lỗi:', e && e.message); }   // Phiên 72: ném người chơi khác qua mạng
   try { initSwim({ toast, addSen: addMerit }); } catch (e) { console.warn('[Diệu Giang Tự] Bơi lặn lỗi:', e && e.message); }   // Phiên 87: bơi, lặn, ngọc trai
   try { initYeuQuai(hud, { toast }); } catch (e) { console.warn('[Diệu Giang Tự] Yêu quái lỗi:', e && e.message); }   // Phiên 64: yêu quái mỗi tháng một lần

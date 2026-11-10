@@ -12,11 +12,11 @@ import { SUOI } from './river.js';
 
 /** Năm loại quả cầu. gia = giá (đơn vị theo `don`: 'la' = lá bồ đề — mặc định; 'sen' = hạt sen. Phiên 57: Cầu Gỗ bán bằng 50 HẠT SEN = 5 lá); ben = số lần quăng trước khi nứt; may = hệ số nhân cơ hội gặp loài hiếm; cua = giây hoa sen hiện (0,5 giây ở loại đầu). */
 export const ORBS = [
-  { id: 'go', ten: 'Cầu Gỗ Bồ Đề', gia: 50, don: 'sen', ben: 20, may: 1, cua: 0.5 },
-  { id: 'da', ten: 'Cầu Đá Suối', gia: 100, don: 'la', ben: 30, may: 1.4, cua: 0.6 },
-  { id: 'ngoc', ten: 'Cầu Ngọc Bích', gia: 250, don: 'la', ben: 45, may: 2, cua: 0.7 },
-  { id: 'luuly', ten: 'Cầu Lưu Ly', gia: 600, don: 'la', ben: 70, may: 3, cua: 0.8 },
-  { id: 'kim', ten: 'Cầu Kim Quang', gia: 1000, don: 'la', ben: 100, may: 4.5, cua: 0.9 },
+  { id: 'go', ten: 'Cầu Gỗ Bồ Đề', gia: 50, don: 'sen', ben: 20, may: 1, cua: 0.8 },
+  { id: 'da', ten: 'Cầu Đá Suối', gia: 100, don: 'la', ben: 30, may: 1.4, cua: 0.9 },
+  { id: 'ngoc', ten: 'Cầu Ngọc Bích', gia: 250, don: 'la', ben: 45, may: 2, cua: 1 },
+  { id: 'luuly', ten: 'Cầu Lưu Ly', gia: 600, don: 'la', ben: 70, may: 3, cua: 1.1 },
+  { id: 'kim', ten: 'Cầu Kim Quang', gia: 1000, don: 'la', ben: 100, may: 4.5, cua: 1.2 },
 ];
 export const orbById = (id) => ORBS.find((o) => o.id === id) || null;
 /** Đơn vị tiền của quả cầu: 'sen' (hạt sen) hoặc 'la' (lá bồ đề). */
@@ -272,7 +272,7 @@ export function outcomeText(outcome, fish) {
   if (outcome === 'late') return 'Hoa sen đã khép, cá đã đi mất. Lần sau bấm nhanh hơn nhé.';
   return '';
 }
-/** Mô tả ngắn một quả cầu cho cửa hàng: "bền 20 lần · may ×1 · hoa sen 0,5 giây". */
+/** Mô tả ngắn một quả cầu cho cửa hàng: "bền 20 lần · may ×1 · hoa sen 0,8 giây". */
 export function orbBrief(orb) {
   const n = (x) => String(x).replace('.', ',');
   return `bền ${orb.ben} lần · may ×${n(orb.may)} · hoa sen ${n(orb.cua)} giây`;

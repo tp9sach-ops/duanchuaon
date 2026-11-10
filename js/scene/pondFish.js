@@ -6,7 +6,7 @@ const mats = new Map();
 const mat = (c) => { let m = mats.get(c); if (!m) { m = new THREE.MeshStandardMaterial({ color: c, roughness: 0.55 }); mats.set(c, m); } return m; };
 
 /** Một con: thân (cầu dẹt) + đuôi/chi theo loài. Mũi quay về +z. Trả { g, tail }. */
-function makeFish(look) {
+export function makeFish(look) {
   const g = new THREE.Group(), L = look.len; let tail = null;
   if (look.shape === 'rua' || look.shape === 'baba') {
     const shell = new THREE.Mesh(new THREE.SphereGeometry(0.5, 12, 8), mat(look.c1)); shell.scale.set(L * 0.55, L * 0.22, L * 0.72); g.add(shell);

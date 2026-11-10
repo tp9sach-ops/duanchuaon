@@ -33,6 +33,8 @@ function makeLantern(i) {   // lồng đèn giấy cầm bằng cây tre ngắn 
   return { g, hang, mat, ph: PHASE(i) };
 }
 
+import { startFlight, poseAt } from '../world/npcThrow.js';
+
 export function buildNpcs(scene, LGT) {
   let ui = 0;
   const list = NPCS.map((n) => {
@@ -58,18 +60,41 @@ export function buildNpcs(scene, LGT) {
     if (!want && o.open < 0.02) o.open = 0;
     o.umb.visible = o.open > 0.02; o.umb.scale.setScalar(Math.max(0.001, o.open));
   };
-  return {
+  // Phiên 89: ném NPC — o.thr = { th (bay), home }; trong lúc bị ném bỏ qua đi/đứng bình thường, xong thì trở lại.
+  const clock = () => performance.now() / 1000;
+  const ents = () => [
+    ...list.map((o) => ({ id: o.n.id, ten: o.n.ten, x: o.a.group.position.x, z: o.a.group.position.z, scale: o.n.scale || 1, held: !!o.thr })),
+    ...walkers.map((o, i) => ({ id: 'w' + i, ten: 'Dân làng', x: o.a.group.position.x, z: o.a.group.position.z, scale: o.w.scale || 1, held: !!o.thr || !!o.k.hidden })),
+  ];
+  const thrown = (o, home, baseY, dt, isWalker) => {   // trả true nếu đang bị ném (đã đặt vị trí)
+    if (!o.thr) return false;
+    const p = poseAt(o.thr.th, clock(), home);
+    if (p.phase === 'done') { o.thr = null; o.a.group.rotation.x = 0; o.a.group.position.set(home.x, baseY(home.x, home.z), home.z); if (!isWalker) o.a.setState('idle'); return false; }
+    o.a.group.position.set(p.x, baseY(p.x, p.z) + p.y, p.z); o.a.group.rotation.x = p.phase === 'fly' ? p.spin : 0;
+    if (p.phase === 'back') { o.a.setState('walk', 1.2); o.a.setFacing(Math.atan2(home.x - o.thr.th.to.x, home.z - o.thr.th.to.z)); } else o.a.setState(p.sit ? 'sit' : 'idle', 0);
+    o.a.update(dt); return true;
+  };
+  const api = {
     byId,
+    entities: ents,
+    /** Ném NPC `id` từ chỗ đang đứng tới `to` {x,z}. Trả true nếu có NPC đó và chưa đang bị ném. */
+    launch(id, to) {
+      const o = list.find((e) => e.n.id === id) || walkers.find((e, i) => 'w' + i === id); if (!o || o.thr) return false;
+      const g = o.a.group.position; o.thr = { th: startFlight({ x: g.x, z: g.z }, to, clock()) }; return true;
+    },
     update(dt, pos) {
       const level = LGT.weather ? LGT.weather.level : 0, rainy = umbrellaOpen(level);
       for (const o of list) {
         const { n, a } = o, dx = pos.x - n.x, dz = pos.z - n.z;
+        if (thrown(o, { x: n.x, z: n.z }, (x, z) => groundY(x, z), dt, false)) continue;
         a.setFacing(Math.hypot(dx, dz) <= 9 ? Math.atan2(dx, dz) : n.ry);
         if (o.umb) setUmb(o, rainy, dt);
         a.update(dt);
       }
       for (const o of walkers) {
-        const { w, a, k } = o, r = stepWalker(k, w, dt, level);
+        const { w, a, k } = o;
+        if (thrown(o, { x: k.x, z: k.z }, () => 0, dt, true)) continue;
+        const r = stepWalker(k, w, dt, level);
         if (r.moving) { a.setState('walk', r.speed); if (r.face != null) a.setFacing(r.face); } else a.setState('idle');
         a.group.visible = !k.hidden;   // trẻ em vào nhà tránh mưa lớn
         setUmb(o, rainy && k.mode !== 'in' && !k.hidden, dt);   // đang đứng dưới mái chỗ trú thì thu dù
@@ -78,4 +103,6 @@ export function buildNpcs(scene, LGT) {
       }
     },
   };
+  LGT.npcCtl = api;   // Phiên 89: js/ui/npcThrow.js dùng entities() + launch()
+  return api;
 }

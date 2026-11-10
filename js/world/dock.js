@@ -16,6 +16,7 @@ export const HINTS = {
   nhay: 'Bấm “Nhảy” để bay lên (Khinh thân).',
   kynang: 'Bạn đủ điều kiện luyện bậc kế — bấm vào đây.',
   tui: 'Túi đồ: xem bạn đang có những gì.',
+  nemnpc: 'Có người dân ở gần — bấm “Ném NPC” để nhấc họ lên ném thẳng trước mặt (họ rơi an toàn rồi tự quay về; không ném trong chùa).',
   nemnguoi: 'Có người ở gần — bấm “Ném người” để nhấc họ lên ném (chỉ ném được người cấp và sức mạnh nhỏ hơn bạn; không ném trong chùa).',
   khieng: 'Có vật khiêng được ngay đây — bấm “Khiêng”. Vật nặng cần sức mạnh cao hơn.',
   nem: 'Bấm “Ném” để ném vật ra phía trước mặt.',
@@ -24,7 +25,7 @@ export const HINTS = {
   lan: 'Bấm “Lặn” để lặn xuống nhặt ngọc trai (+1 hạt sen/viên). Hơi thở có hạn — hết hơi sẽ tự nổi lên.',
   nemyq: 'Bạn đủ mạnh để nhấc cả yêu quái lên ném!',
 };
-const HINT_ORDER = ['lan', 'tap', 'da', 'thuong', 'nemyq', 'cast', 'thu', 'nem', 'khieng', 'nemnguoi', 'nhay', 'kynang', 'tui'];
+const HINT_ORDER = ['lan', 'tap', 'da', 'thuong', 'nemyq', 'cast', 'thu', 'nem', 'khieng', 'nemnguoi', 'nemnpc', 'nhay', 'kynang', 'tui'];
 
 /**
  * Các nút cần hiện, xếp từ DƯỚI lên (nút đầu = gần ngón cái nhất).
@@ -43,6 +44,8 @@ export function dockButtons(c = {}) {
   if (cr.near) out.push({ id: 'khieng', label: 'Khiêng', big: true, say: `Gần: ${cr.near}` });
   const pl = isObj(k.ply) ? k.ply : {};
   if (pl.near && !(isObj(k.yq) && k.yq.active)) out.push({ id: 'nemnguoi', label: 'Ném người', say: `Gần: ${pl.near}` });
+  const np = isObj(k.npc) ? k.npc : {};
+  if (np.near && !pl.near && !(isObj(k.yq) && k.yq.active)) out.push({ id: 'nemnpc', label: 'Ném NPC', say: `Gần: ${np.near}` });   // Phiên 89
   const yq = isObj(k.yq) ? k.yq : {};
   if (yq.active) { out.push({ id: 'da', label: 'Ném đá', big: true, wait: +yq.stoneCd > 0, say: yq.ten ? `${yq.ten} đang ở làng!` : '' }, { id: 'thuong', label: 'Thương', wait: +yq.spearCd > 0 }); if (yq.canThrow) out.push({ id: 'nemyq', label: 'Ném yêu quái' }); }
   if (k.water && !yq.active) out.push({ id: 'cast', label: f.cracked ? 'Sửa cầu' : f.hasOrb ? 'Thả cầu' : 'Mua cầu', big: true, say: f.text ? String(f.text) : '' });

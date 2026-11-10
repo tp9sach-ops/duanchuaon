@@ -55,3 +55,19 @@ test('mỗi loại cầu có màu; sessionKey đổi theo phiên mới và ổn 
   for (const o of ORBS) assert.ok(Number.isInteger(orbColor(o.id)), o.id); assert.ok(Number.isInteger(orbColor('khong-co')));
   const a = mkSess(1), b = mkSess(7); assert.equal(sessionKey(a), sessionKey(tick(a, 0.1))); assert.notEqual(sessionKey(a), sessionKey(b)); assert.equal(sessionKey(null), '');
 });
+
+test('Phiên 89: có hướng nhìn → cầu rơi THẲNG TRƯỚC MẶT, trong mặt nước', async () => {
+  const { castTarget: ct, THROW_AHEAD } = await import('../js/world/fishingView.js');
+  for (const w of FISH_WATERS) {
+    for (const ry of [0, 1, 2.5, -1.2]) {
+      // đứng cách tâm nước 60% bán kính, nhìn về tâm → cầu rơi giữa người và/hoặc qua tâm, luôn trong nước và cùng phía hướng nhìn
+      const want = Math.atan2(0, 1), off = 0; void want; void off;
+      const p = { x: w.x - Math.sin(ry) * w.r * 0.6, z: w.z - Math.cos(ry) * w.r * 0.6 };
+      const t = ct(p, w, ry), fx = Math.sin(ry), fz = Math.cos(ry);
+      assert.ok((t.x - p.x) * fx + (t.z - p.z) * fz > 0, 'cầu ở phía trước mặt');
+      assert.ok(Math.hypot(t.x - w.x, t.z - w.z) <= w.r, 'trong mặt nước');
+      assert.ok(Math.hypot(t.x - p.x, t.z - p.z) <= THROW_AHEAD + 1e-9);
+    }
+  }
+  assert.deepEqual(ct({ x: 0, z: 0 }, FISH_WATERS[0], NaN), ct({ x: 0, z: 0 }, FISH_WATERS[0]));   // không hướng → kiểu cũ
+});
