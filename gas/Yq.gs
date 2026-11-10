@@ -1,5 +1,5 @@
 /**
- * Yêu quái đánh CHUNG (Phiên 71). Mỗi lần yêu quái xuất hiện có một "key" (vd 2026-11-cao). Mọi người chơi cùng key dùng CHUNG:
+ * Yêu quái đánh CHUNG (Phiên 71). Mỗi lần yêu quái xuất hiện có một "key" (vd 2026-11-10-toi). Mọi người chơi cùng key dùng CHUNG:
  *   - máu: tổng sát thương của tất cả người chơi (mỗi người gửi TỔNG sát thương mình đã gây — gửi lại không bị tính đôi),
  *   - túi lá bồ đề: khi hết máu, máy chủ cho một "hạt giống" + chỗ rơi; ai gửi xin nhặt túi đó TRƯỚC thì được (mỗi túi một người).
  * Trạng thái giữ trong CacheService (không ghi Sheet), tự hết sau vài giờ.
@@ -10,7 +10,7 @@
  */
 var YQ_CFG = { PREFIX: 'dgt_yq_', CACHE_SEC: 21600, MAX_HP: 20000, MAX_PLAYERS: 60, MAX_LOOT: 80, MAX_STEP: 600 };
 
-function yqKey_(s) { s = String(s == null ? '' : s); return /^\d{4}-\d{2}-(trung|cao)$/.test(s) ? s : ''; }
+function yqKey_(s) { s = String(s == null ? '' : s); return /^\d{4}-\d{2}(-\d{2})?-(trung|cao|trua|chieu|toi)$/.test(s) ? s : ''; }
 function yqNum_(v, lo, hi, d) { v = Number(v); if (!isFinite(v)) return d; return Math.max(lo, Math.min(hi, v)); }
 
 function yqSync_(req) {

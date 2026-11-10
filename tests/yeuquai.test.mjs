@@ -3,27 +3,31 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import '../js/world/outside.js';
-import { YQ, YQ_ORDER, AOE, DIFF, monthEvents, windupOf, rewardFor as rewardFor2, lootDrops as lootDrops2, monthEvent, eventAt, eventPhase, nextEvent, maxHp, hitDamage, newPlayer, hurt, tickPlayer, INVULN_S, RESPAWN, stoneDamage, spearDamage, throwBossDamage, bossHp, createBoss, aoeShapes, inShape, stepBoss, hitBoss, shareOf, lootDrops, pickLoot, tickLoot, rewardFor, MIN_SHARE, loadYq, emptyYq, rngSeed } from '../js/world/yeuquai.js';
+import { YQ, YQ_ORDER, AOE, DIFF, SLOTS, dayEvents, monthEvents, windupOf, rewardFor as rewardFor2, lootDrops as lootDrops2, monthEvent, eventAt, eventPhase, nextEvent, maxHp, hitDamage, newPlayer, hurt, tickPlayer, INVULN_S, RESPAWN, stoneDamage, spearDamage, throwBossDamage, bossHp, createBoss, aoeShapes, inShape, stepBoss, hitBoss, shareOf, lootDrops, pickLoot, tickLoot, rewardFor, MIN_SHARE, loadYq, emptyYq, rngSeed } from '../js/world/yeuquai.js';
 import { throwCheck, markThrown, tickCooldown, inTemple, strengthOf, THROW_COOLDOWN_S, THROW_COST_SEN } from '../js/world/strength.js';
 import { blocked, region } from '../js/world/layout.js';
 import { emptyLeaf, addLa, loadLeaf, SEN_PER_LA } from '../js/world/merit.js';
 
 const read = (p) => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
 
-test('lịch: mỗi tháng đúng một sự kiện, cố định theo năm-tháng, 20:00–21:30 giờ VN, ngày 5..25, loại xoay vòng', () => {
-  const seen = new Set();
-  for (let y = 2026; y <= 2028; y++) for (let m = 1; m <= 12; m++) {
-    const e = monthEvent(y, m); assert.deepEqual(e, monthEvent(y, m)); assert.ok(e.day >= 5 && e.day <= 25); assert.equal(e.end - e.start, 90 * 60000);
-    const d = new Date(e.start + 7 * 3600e3); assert.equal(d.getUTCHours(), 20); assert.equal(d.getUTCMinutes(), 0); assert.equal(d.getUTCMonth() + 1, m); assert.equal(d.getUTCDate(), e.day); assert.ok(YQ_ORDER.includes(e.type)); seen.add(e.type);
+test('lịch: MỖI NGÀY đúng ba sự kiện 12:00, 16:00, 20:00 giờ VN, mỗi khung 90 phút, không chồng nhau, đủ ba loại quái', () => {
+  const hours = SLOTS.map((s) => s.hour); assert.deepEqual(hours, [12, 16, 20]);
+  for (let y = 2026; y <= 2028; y++) for (let m = 1; m <= 12; m++) for (const day of [1, 15, 28]) {
+    const evs = dayEvents(y, m, day); assert.deepEqual(evs, dayEvents(y, m, day)); assert.equal(evs.length, 3);
+    evs.forEach((e, i) => { const d = new Date(e.start + 7 * 3600e3); assert.equal(d.getUTCHours(), hours[i]); assert.equal(d.getUTCMinutes(), 0); assert.equal(d.getUTCMonth() + 1, m); assert.equal(d.getUTCDate(), day); assert.equal(e.end - e.start, 90 * 60000); assert.match(e.key, /^\d{4}-\d{2}-\d{2}-(trua|chieu|toi)$/); if (i) assert.ok(evs[i - 1].end < e.start); });
+    assert.equal(new Set(evs.map((e) => e.type)).size, 3, 'mỗi ngày đủ ba loại');
   }
-  assert.equal(seen.size, 3, 'đủ ba loại yêu quái'); assert.notEqual(monthEvent(2026, 1).type, monthEvent(2026, 2).type);
-  assert.equal(monthEvent(2026, 99).month, 12); assert.equal(monthEvent(NaN, NaN).month, 1);
+  assert.deepEqual(dayEvents(2026, 11, 10).map((e) => e.diff), ['trung', 'trung', 'cao']);
+  assert.equal(dayEvents(2026, 99, 99)[0].month, 12); assert.equal(dayEvents(2026, 2, 31)[0].day, 28); assert.equal(dayEvents(NaN, NaN, NaN)[0].month, 1);
+  assert.equal(monthEvents(2026, 11).length, 90); assert.equal(monthEvents(2028, 2).length, 87);
+  assert.notEqual(dayEvents(2026, 11, 10)[0].type, dayEvents(2026, 11, 11)[0].type);
 });
-test('giai đoạn: trước / đang / sau; eventAt dùng tháng theo giờ VN; nextEvent chuyển sang tháng sau', () => {
-  const e = monthEvent(2026, 11);
-  assert.equal(eventPhase(e, e.start - 1000).phase, 'before'); assert.equal(eventPhase(e, e.start).phase, 'live'); assert.equal(eventPhase(e, e.end - 1).phase, 'live'); assert.equal(eventPhase(e, e.end).phase, 'after'); assert.equal(eventPhase(e, e.start + 60000).secs, 89 * 60);
-  assert.equal(eventAt(Date.UTC(2026, 10, 30, 16, 59)).key, '2026-11-cao', '23:59 ngày 30/11 giờ VN'); assert.equal(eventAt(Date.UTC(2026, 10, 30, 17, 0)).key, '2026-12-trung', '00:00 ngày 1/12 giờ VN đã sang tháng 12');
-  assert.equal(nextEvent(e.start - 5).key, '2026-11-cao'); assert.equal(nextEvent(e.end + 5).key, '2026-12-trung'); assert.equal(nextEvent(monthEvent(2026, 12).end + 5).key, '2027-01-trung');
+test('giai đoạn: trước / đang / sau; eventAt dùng ngày theo giờ VN; nextEvent sang ngày mai (qua tháng, qua năm)', () => {
+  const [a, b, c] = dayEvents(2026, 11, 10);
+  assert.equal(eventPhase(a, a.start - 1000).phase, 'before'); assert.equal(eventPhase(a, a.start).phase, 'live'); assert.equal(eventPhase(a, a.end - 1).phase, 'live'); assert.equal(eventPhase(a, a.end).phase, 'after'); assert.equal(eventPhase(a, a.start + 60000).secs, 89 * 60);
+  assert.equal(eventAt(a.start + 1000).key, '2026-11-10-trua'); assert.equal(eventAt(a.end + 1000).key, '2026-11-10-chieu', 'giữa hai khung: chỉ khung sau'); assert.equal(eventAt(b.end + 1000).key, '2026-11-10-toi'); assert.equal(eventAt(c.end + 1000).key, '2026-11-10-toi', 'sau khung cuối ngày: vẫn là khung cuối');
+  assert.equal(eventAt(Date.UTC(2026, 10, 30, 16, 59)).key, '2026-11-30-toi', '23:59 ngày 30/11 giờ VN'); assert.equal(eventAt(Date.UTC(2026, 10, 30, 17, 0)).key, '2026-12-01-trua', '00:00 ngày 1/12 giờ VN');
+  assert.equal(nextEvent(a.start - 5).key, a.key); assert.equal(nextEvent(c.end + 5).key, '2026-11-11-trua'); assert.equal(nextEvent(Date.UTC(2026, 10, 30, 16, 0)).key, '2026-12-01-trua'); assert.equal(nextEvent(Date.UTC(2026, 11, 31, 16, 0)).key, '2027-01-01-trua');
 });
 test('máu người chơi theo cấp; cấp càng cao mất càng ít (cả giá trị lẫn tỉ lệ); 3 đòn hạ cấp 1', () => {
   assert.equal(maxHp(1), 100); assert.ok(maxHp(10) > maxHp(5)); assert.equal(maxHp(NaN), 100);
@@ -110,13 +114,13 @@ test('nối dây: initYeuQuai trong hudMenu, cảnh 3D, thanh máu, gửi thư�
   assert.match(m, /addLa: gain/); assert.match(c, /bonus: LGT\.yq \? LGT\.yq\.bonus : 0/);
 });
 
-test('hai khung giờ mỗi tháng: 15:00 trung bình, 20:00 cao, cùng ngày, mỗi khung 90 phút', () => {
-  const [a, b] = monthEvents(2026, 11);
-  assert.equal(a.diff, 'trung'); assert.equal(b.diff, 'cao'); assert.equal(a.day, b.day);
-  assert.equal(new Date(a.start + 7 * 3600e3).getUTCHours(), 15); assert.equal(new Date(b.start + 7 * 3600e3).getUTCHours(), 20);
-  assert.equal(a.end - a.start, 90 * 60000); assert.ok(a.end < b.start);
-  assert.equal(eventAt(a.start + 1000).key, a.key); assert.equal(eventAt(b.start + 1000).key, b.key);
-  assert.equal(eventAt(a.end + 1000).key, b.key, 'giữa hai khung: chỉ khung sau');
+test('ba khung giờ mỗi ngày: 12:00 và 16:00 trung bình, 20:00 cao; mỗi khung 90 phút', () => {
+  const [a, b, c] = dayEvents(2026, 11, 10);
+  assert.deepEqual([a.diff, b.diff, c.diff], ['trung', 'trung', 'cao']); assert.ok(a.day === b.day && b.day === c.day);
+  assert.deepEqual([a, b, c].map((e) => new Date(e.start + 7 * 3600e3).getUTCHours()), [12, 16, 20]);
+  assert.equal(a.end - a.start, 90 * 60000); assert.ok(a.end < b.start && b.end < c.start);
+  assert.equal(eventAt(a.start + 1000).key, a.key); assert.equal(eventAt(b.start + 1000).key, b.key); assert.equal(eventAt(c.start + 1000).key, c.key);
+  assert.equal(eventAt(a.end + 1000).key, b.key, 'giữa hai khung: chỉ khung sau'); assert.equal(eventAt(b.end + 1000).key, c.key);
 });
 test('độ khó cao: máu nhiều, đánh đau hơn, gồng ngắn hơn, rơi nhiều lá, thưởng lớn hơn', () => {
   const t = createBoss('da', { diff: 'trung' }), c = createBoss('da', { diff: 'cao' });
@@ -125,5 +129,5 @@ test('độ khó cao: máu nhiều, đánh đau hơn, gồng ngắn hơn, rơi n
   assert.ok(lootDrops2(0, 0, 1, () => 0.5, 'cao').length > lootDrops2(0, 0, 1, () => 0.5, 'trung').length);
   assert.ok(rewardFor2(1, 'cao').xp > rewardFor2(1, 'trung').xp); assert.equal(rewardFor2(0, 'cao').xp, 0);
   assert.equal(createBoss('da', {}).diff, 'trung'); assert.equal(createBoss('da', { diff: 'xx' }).diff, 'trung');
-  assert.ok(DIFF.cao.hour === 20 && DIFF.trung.hour === 15);
+  assert.deepEqual(SLOTS.map((s) => s.diff), ['trung', 'trung', 'cao']);
 });
