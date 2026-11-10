@@ -73,6 +73,8 @@ export function defineZone(id, def = {}) {
   zoneDefs.set(id, def);
   if (!zoneStore.has(id)) zoneStore.set(id, { circles: [], rects: [], walks: [], waters: [] });
 }
+/** Khung bounds của zone đang chạy (hub → null: hub dùng khung riêng của path.js). */
+export const activeBounds = () => { const d = activeZone === HUB ? null : zoneDefs.get(activeZone); return d ? d.bounds : null; };
 export const hasZone = (id) => id === HUB || zoneDefs.has(id);
 /** Chuyển zone đang chạy: cất vật cản của zone cũ, nạp vật cản của zone mới. Trả true nếu có đổi. */
 export function activateZone(id) {

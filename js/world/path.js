@@ -1,8 +1,9 @@
 // Tìm đường cho bấm-để-đi và "đi tới chương" (Phiên 12b). Thuần hàm, có test: A* trên lưới 0,5 m dùng blocked/canStep của layout.js,
 // chừa một khoảng sát tường (0,3 m) rồi làm thẳng đường (bỏ điểm thừa nếu đi thẳng được). Trả danh sách điểm {x,z} hoặc null.
-import { blocked, canStep, CIRCLES, RECTS, activeZoneId, zoneRevision } from './layout.js';
+import { blocked, canStep, CIRCLES, RECTS, activeZoneId, zoneRevision, activeBounds } from './layout.js';
 
-const S = 0.5, CLEAR = 0.7, X0 = -130, Z0 = -80, W = 520, H = 600;     // lưới phủ khuôn viên + đường làng, rừng, thác ngoài cổng, khu dân cư (−130…130; −80…220)
+const S = 0.5, CLEAR = 0.7;
+let X0 = -130, Z0 = -80, W = 520, H = 600;     // lưới phủ khuôn viên + đường làng, rừng, thác ngoài cổng, khu dân cư (−130…130; −80…220)
 const SQ2 = Math.SQRT2;
 
 /**
@@ -17,6 +18,12 @@ function nearObstacle(x, z) {
 }
 export const free = (x, z) => !blocked(x, z) && !nearObstacle(x, z) && NB.every(([dx, dz]) => !blocked(x + dx, z + dz) && canStep(x, z, x + dx, z + dz));
 
+/** Phiên 87: lưới theo zone — hub giữ khung cũ, zone khác phủ đúng bounds của nó (tối đa 1200 ô mỗi chiều). */
+function syncGrid() {
+  const b = activeBounds();
+  if (b) { X0 = b.x0; Z0 = b.z0; W = Math.min(1200, Math.ceil((b.x1 - b.x0) / S) + 1); H = Math.min(1200, Math.ceil((b.z1 - b.z0) / S) + 1); }
+  else { X0 = -130; Z0 = -80; W = 520; H = 600; }
+}
 // Bộ nhớ đệm theo ô lưới (A* hỏi mỗi ô nhiều lần); tự làm mới nếu có vật cản mới được thêm vào layout.js
 let cache = null, cacheKey = '';
 function freeCell(i, j) {
@@ -70,6 +77,7 @@ function clear(a, b) {
  * Trả mảng điểm {x,z} (không gồm điểm xuất phát; điểm cuối là đích hoặc ô gần đích) hoặc null nếu không có đường.
  */
 export function findPath(x0, z0, x1, z1) {
+  syncGrid();
   const s = free(x0, z0) ? { i: ci(x0), j: cj(z0) } : nearestFree(x0, z0, 2);
   const g = free(x1, z1) ? { i: ci(x1), j: cj(z1) } : nearestFree(x1, z1, 4);
   if (!s || !g || !inGrid(s.i, s.j)) return null;

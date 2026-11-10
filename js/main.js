@@ -79,12 +79,14 @@ async function boot() {
 
   window.LGT = window.LGT || {};
   try { acct.attach(window.LGT); } catch (e) { console.warn('[Diệu Giang Tự] Gắn tài khoản lỗi:', e && e.message); }   // LGT.account (chỉ gắn SAU khi cảnh dựng xong: scene/index.js tự tạo LGT mặc định)
+  window.LGT.scene = created.scene;   // Phiên 87: zone dựng/dỡ cảnh riêng
   window.LGT.getPos = () => (created.world ? created.world.pos : null);   // vị trí người chơi {x, z}: ui.js dùng để chỉnh to/nhỏ tiếng thác và chuông
 
   stage = initAll(created.rail);
   try { initWind(created.scene); } catch (e) { console.warn('[Diệu Giang Tự] Gió lỗi:', e && e.message); }   // cây lung lay; lỗi thì cây đứng yên
   try { initHud(); } catch (e) { console.warn('[Diệu Giang Tự] HUD lỗi:', e && e.message); }   // màn vào cửa + HUD; lỗi thì giữ giao diện cũ
   try { initZones(localStorage, () => (window.LGT && window.LGT.world ? window.LGT.world.pos : null)); } catch (e) { console.warn('[Diệu Giang Tự] Khu vực lỗi:', e && e.message); }
+  try { import('./ui/zoneGate.js').then((m) => m.initZoneGate({ toast: (t, ms) => window.LGT.toast && window.LGT.toast(t, ms) })).catch((e) => console.warn('[Diệu Giang Tự] Cổng zone lỗi:', e && e.message)); } catch (_) { /* bỏ qua */ }
   try { initRoom(); } catch (e) { console.warn('[Diệu Giang Tự] Đa người lỗi:', e && e.message); }   // thấy người khác trong chùa; lỗi thì vẫn chơi một mình
   // Phòng khi onProgress(1) không tới (tab nền): vẫn mở trang sau 6s
   setTimeout(hidePre, 6000);
