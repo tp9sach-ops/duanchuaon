@@ -9,8 +9,8 @@
 | Mục | Giá trị |
 |---|---|
 | Dự án | DIỆU GIANG TỰ — chùa Việt 3D; đang cải tạo thành "chùa online": nhập tên → thành nhân vật, đi bộ trong chùa, nhiều người cùng vào, chat |
-| Repo | https://github.com/tp9sach-ops/loinhuan.github.io (nhánh `main`) |
-| Địa chỉ trang | https://tp9sach-ops.github.io/loinhuan.github.io/ — **GIẢ ĐỊNH**, ptg chưa xác nhận (suy từ tên repo) |
+| Repo | https://github.com/tp9sach-ops/duanchuaon (nhánh `main`) — ptg xác nhận 2026-11-10: đổi từ `loinhuan.github.io` sang repo này |
+| Địa chỉ trang | https://tp9sach-ops.github.io/duanchuaon/ — suy từ tên repo (GitHub Pages), ptg chưa gửi lại địa chỉ thật |
 | Chủ dự án | ptg = Phan Trường Giang (gọi là Giang). Nói tiếng Việt thường ngày, **không cần biết tên file hay kỹ thuật** |
 | Front-end | Trang tĩnh `index.html` + ES modules, three.js ghim phiên bản, chạy trên GitHub Pages |
 | Backend | Google Apps Script (Web App trả JSON) chỉ để lưu Sheet, cache, gọi AI. Khóa API chỉ ở Script Properties, **không bao giờ vào repo** |
@@ -209,7 +209,7 @@ Việc ptg làm song song (không chặn các phiên trên): bật Pages (Settin
 ## 8. PROMPT KHỞI ĐỘNG PHIÊN MỚI (dán nguyên văn)
 
 ```
-Dự án DIỆU GIANG TỰ. Repo: https://github.com/tp9sach-ops/loinhuan.github.io
+Dự án DIỆU GIANG TỰ. Repo: https://github.com/tp9sach-ops/duanchuaon
 Đọc PROMPT.md rồi HANDOFF.md trong repo trước. Kiểm repo thật, chạy npm test, rồi làm đúng "bước" của phiên này
 theo PROMPT.md mục 6 (tôi không nói bước nào thì làm bước kế tiếp chưa xong).
 Tôi nói tiếng Việt thường ngày, không cần biết tên file. Cần đoạn mã nào thì hỏi tôi, không đoán. Làm từng bước, xong trọn vẹn.
@@ -338,3 +338,4 @@ Nguồn: https://github.com/hoangminhon/olongvien (tác giả Kent Juno, MIT). p
 - 2026-11-09 (Phiên 81): ptg bảo xem lại repo, đọc kỹ, làm tiếp theo "prompt chiều sâu" + "prompt tổng" và đẩy GitHub. Làm hạ tầng ZONE ở mức lõi logic (va chạm theo zone trong `js/world/layout.js`, `js/world/zones.js`, `tests/zones.test.mjs`); chưa nối vào game. `npm test` 775/775. Chi tiết: `docs/PHIEN81.md`. **Quy tắc giữ nguyên:** làm từng mục nhỏ, xong báo, chờ "tiếp tục".
 - 2026-11-09 (Phiên 82): ptg nói "tiếp tục và làm các kiến trúc" → làm Bảo tháp 7 tầng trên đồi (`js/scene/baothap.js`, `BAO_THAP` + 2 vùng đi bộ trong `js/world/outside.js`, nhiệm vụ `v-baothap`). `npm test` 776/776. Chi tiết: `docs/PHIEN82.md`. Cầu đá / cổng tam quan thứ hai: chờ ptg chọn.
 - 2026-11-10 (Phiên 89): ptg đổi nguồn mã sang repo `tp9sach-ops/duanchuaon`. Làm 4 yêu cầu câu cá 2026-11-08: hoa sen trên đầu + rung 0,8 s (cửa sổ cầu gỗ 0,8 s), ném cầu thẳng trước mặt, cá văng lên tay, ném NPC (nút Ném NPC). sw `dgt-v95`. Xem docs/PHIEN89.md.
+- 2026-11-10 (Phiên 90): ptg chốt đổi sang repo `duanchuaon`; ném NPC chỉ để vui; yêu cầu mới THIẾT ĐẦU CÔNG (Khinh thân bậc ≥ 4: sau khi nhảy bấm nút để lao đầu một quãng ngắn, đâm yêu quái gây sát thương, bậc càng cao càng xa/đau). sw `dgt-v96`. Xem docs/PHIEN90.md.

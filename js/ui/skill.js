@@ -29,6 +29,7 @@ export function initSkill(hud, { toast = () => {}, getSen = () => 0, spendSen = 
     document.body.appendChild(btn);
   }
 
+  let lastAirAt = -1e9;   // Phiên 90: lần cuối còn trên không (cho nút Thiết đầu công)
   function doJump() {
     const W = LGT.world; if (!W) return false;
     if (LGT.swim && LGT.swim.active) return false;   // đang bơi/lặn: không nhảy
@@ -49,7 +50,7 @@ export function initSkill(hud, { toast = () => {}, getSen = () => 0, spendSen = 
   function wrap() {
     const av = LGT.world && LGT.world.avatar; if (!av || av.__khinh) return;
     const orig = av.update.bind(av); av.__khinh = true;
-    av.update = (dt) => { orig(dt); const y = jump.step(dt); if (y > 0 && av.group) av.group.position.y += y; };
+    av.update = (dt) => { orig(dt); const y = jump.step(dt); if (y > 0 && av.group) av.group.position.y += y; if (jump.air) lastAirAt = performance.now(); };
   }
 
   // ---- theo dõi bậc: hiện/ẩn nút, nhắc người chơi cách dùng đúng một lần khi vừa mở khóa
@@ -119,6 +120,6 @@ export function initSkill(hud, { toast = () => {}, getSen = () => 0, spendSen = 
   addEventListener('keydown', (e) => { if (e.code === 'Escape' && !box.hidden) { closeBox(); e.stopPropagation(); } }, true);
   setInterval(paintChip, 700); paintChip();
 
-  LGT.skill = { get level() { return level(); }, get canTrain() { return !!plan().ok; }, jump: doJump, open: openBox, close: closeBox, train };
+  LGT.skill = { get air() { return jump.air; }, get sinceAir() { return jump.air ? 0 : (performance.now() - lastAirAt) / 1000; }, get level() { return level(); }, get canTrain() { return !!plan().ok; }, jump: doJump, open: openBox, close: closeBox, train };
   return LGT.skill;
 }

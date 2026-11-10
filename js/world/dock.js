@@ -13,6 +13,7 @@ export const HINTS = {
   tap: 'Hoa sen nở thì bấm nút này NGAY!',
   cast: 'Bấm đây để thả cầu câu cá (đang đứng sát mép nước).',
   thu: 'Bấm “Thu cá” để nuôi cá trong ao riêng.',
+  thietdau: 'Vừa nhảy xong bấm “Thiết đầu công”: nhân vật lao đầu về phía trước, đâm trúng yêu quái thì gây sát thương (Khinh thân bậc 4 trở lên; bậc càng cao lao càng xa, đâm càng đau).',
   nhay: 'Bấm “Nhảy” để bay lên (Khinh thân).',
   kynang: 'Bạn đủ điều kiện luyện bậc kế — bấm vào đây.',
   tui: 'Túi đồ: xem bạn đang có những gì.',
@@ -25,7 +26,7 @@ export const HINTS = {
   lan: 'Bấm “Lặn” để lặn xuống nhặt ngọc trai (+1 hạt sen/viên). Hơi thở có hạn — hết hơi sẽ tự nổi lên.',
   nemyq: 'Bạn đủ mạnh để nhấc cả yêu quái lên ném!',
 };
-const HINT_ORDER = ['lan', 'tap', 'da', 'thuong', 'nemyq', 'cast', 'thu', 'nem', 'khieng', 'nemnguoi', 'nemnpc', 'nhay', 'kynang', 'tui'];
+const HINT_ORDER = ['lan', 'tap', 'da', 'thuong', 'nemyq', 'cast', 'thu', 'nem', 'khieng', 'nemnguoi', 'nemnpc', 'thietdau', 'nhay', 'kynang', 'tui'];
 
 /**
  * Các nút cần hiện, xếp từ DƯỚI lên (nút đầu = gần ngón cái nhất).
@@ -49,6 +50,8 @@ export function dockButtons(c = {}) {
   const yq = isObj(k.yq) ? k.yq : {};
   if (yq.active) { out.push({ id: 'da', label: 'Ném đá', big: true, wait: +yq.stoneCd > 0, say: yq.ten ? `${yq.ten} đang ở làng!` : '' }, { id: 'thuong', label: 'Thương', wait: +yq.spearCd > 0 }); if (yq.canThrow) out.push({ id: 'nemyq', label: 'Ném yêu quái' }); }
   if (k.water && !yq.active) out.push({ id: 'cast', label: f.cracked ? 'Sửa cầu' : f.hasOrb ? 'Thả cầu' : 'Mua cầu', big: true, say: f.text ? String(f.text) : '' });
+  const hd = isObj(k.head) ? k.head : {};
+  if (hd.open) out.push({ id: 'thietdau', label: 'Thiết đầu công', big: true, hot: true, wait: !!hd.wait, say: hd.dist ? `Lao ${hd.dist} m · −${hd.dmg} máu` : '' });   // Phiên 90
   if (yq.active) { if (num(k.khinh) > 0) out.push({ id: 'nhay', label: 'Nhảy' }); return out; }   // đang đánh yêu quái: chỉ giữ Ném đá / Thương / Ném yêu quái / Nhảy — ẩn Kỹ năng, Túi đồ, Nhảy mờ cho đỡ vướng
   if (num(k.khinh) > 0) { out.push({ id: 'nhay', label: 'Nhảy', big: !k.water }); out.push({ id: 'kynang', label: 'Kỹ năng', hot: !!k.canTrain }); }
   else out.push({ id: 'nhay', label: 'Nhảy', locked: true });   // chưa mở Khinh thân: vẫn hiện nút mờ, bấm vào được chỉ cách mở (người mới không phải đoán)

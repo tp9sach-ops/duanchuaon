@@ -123,7 +123,7 @@ export function initYeuQuai(hud, { toast = () => {} } = {}) {
 
   LGT.yq = {
     get boss() { return boss; }, get active() { return !!boss && !boss.dead; }, get bonus() { return stat.bonus; }, get stat() { return stat; }, get hp() { return me; },
-    stone, spear, throwBoss, canThrowBoss,
+    stone, spear, throwBoss, canThrowBoss, ramHit(dmg) { if (!boss || boss.dead || !(dmg > 0)) return false; hit(dmg); return true; },   // Phiên 90: Thiết đầu công
     status() { const a = !!boss && !boss.dead && here(), d = distBoss(); return { active: a, stoneCd: cdStone, spearCd: cdSpear, ten: a ? YQ[boss.type].ten : '', far: a ? d > STONE.range + YQ[boss.type].body : false, near: a ? d - YQ[boss.type].body <= SPEAR.range : false, canThrow: a && canThrowBoss() }; },
   };
   return LGT.yq;
