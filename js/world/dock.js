@@ -81,21 +81,36 @@ export function loadSeen(raw) {
   return Array.isArray(o) ? [...new Set(o.filter((s) => typeof s === 'string' && HINTS[s]))] : [];
 }
 
-/** Nội dung Túi đồ khi ĐANG Ở NGOÀI NHÀ (chỉ để xem). ctx = { sen, la, fish, furni, khinh, land }. Trả [{ title, rows: [{ ten, mo }] }]. */
+/** Các loại hình trong ô Túi đồ (Phiên 92). js/ui/bagIcons.js vẽ mỗi loại một hình; loại lạ được vẽ ô dấu hỏi. */
+export const BAG_ICON_KINDS = ['sen', 'la', 'orb', 'fish', 'turtle', 'squid', 'power', 'wing', 'house', 'board',
+  'altar', 'bed', 'bench', 'chair', 'crate', 'floorlamp', 'lamp', 'lantern', 'plant', 'rug', 'shelf', 'sofa', 'statue', 'stool', 'table', 'tank', 'tvunit', 'wardrobe'];
+const ORB_COLOR = { go: '#a8763e', da: '#8d98a3', ngoc: '#3fbf9b', luuly: '#4a6fe0', kim: '#f0c23a' };
+const FISH_COLORS = ['#e8863a', '#7aa5c9', '#6b8f4e', '#b9a27a', '#c96a5a', '#8e7cc3', '#5aa9a0'];
+const hexOf = (n) => '#' + (Number(n) >>> 0 & 0xffffff).toString(16).padStart(6, '0');
+function fishIcon(sp) {
+  let h = 0; for (const ch of String(sp.id)) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  const c = sp.hiem ? '#f0c23a' : FISH_COLORS[h % FISH_COLORS.length];
+  return { k: sp.loai === 'rua' || sp.loai === 'baba' ? 'turtle' : sp.loai === 'muc' ? 'squid' : 'fish', c };
+}
+
+/**
+ * Nội dung Túi đồ khi ĐANG Ở NGOÀI NHÀ (chỉ để xem). ctx = { sen, la, fish, furni, khinh, land, board, strength }.
+ * Trả [{ title, rows: [{ ten, mo, ic?: { k, c? }, n?, trong? }] }]. Hàng có `ic` là một ô có hình (n = số lượng ở góc ô); hàng `trong: true` là ô trống kèm lời chỉ chỗ lấy đồ.
+ */
 export function bagSections(ctx = {}) {
   const c = isObj(ctx) ? ctx : {}, f = isObj(c.fish) ? c.fish : {}, fu = isObj(c.furni) ? c.furni : {}, S = [];
-  S.push({ title: 'Tiền', rows: [{ ten: 'Hạt sen', mo: String(num(c.sen)) }, { ten: 'Lá bồ đề', mo: String(num(c.la)) }] });
+  S.push({ title: 'Tiền', rows: [{ ten: 'Hạt sen', mo: String(num(c.sen)), ic: { k: 'sen' }, n: num(c.sen) }, { ten: 'Lá bồ đề', mo: String(num(c.la)), ic: { k: 'la' }, n: num(c.la) }] });
   const orbs = isObj(f.orbs) ? f.orbs : {}, orbRows = ORBS.filter((o) => orbs[o.id] !== undefined).map((o) => {
-    const d = num(orbs[o.id]); return { ten: o.ten, mo: `${d <= 0 ? 'đã nứt' : `còn ${d}/${o.ben} lần`}${f.sel === o.id ? ' · đang dùng' : ''}` };
+    const d = num(orbs[o.id]); return { ten: o.ten, mo: `${d <= 0 ? 'đã nứt' : `còn ${d}/${o.ben} lần`}${f.sel === o.id ? ' · đang dùng' : ''}`, ic: { k: 'orb', c: ORB_COLOR[o.id] || '#8d98a3' } };
   });
-  S.push({ title: 'Quả cầu câu cá', rows: orbRows.length ? orbRows : [{ ten: 'Chưa có quả cầu nào', mo: 'Cầu Gỗ 50 hạt sen — mua ở nút “Mua cầu” khi đứng sát nước' }] });
+  S.push({ title: 'Quả cầu câu cá', rows: orbRows.length ? orbRows : [{ ten: 'Chưa có quả cầu nào', mo: 'Cầu Gỗ 50 hạt sen — mua ở nút “Mua cầu” khi đứng sát nước', trong: true }] });
   const cnt = {}; for (const p of Array.isArray(f.pond) ? f.pond : []) if (isObj(p) && speciesById(p.sp)) cnt[p.sp] = (cnt[p.sp] || 0) + 1;
-  const pondRows = Object.keys(cnt).map((id) => ({ ten: speciesById(id).ten, mo: '× ' + cnt[id] }));
-  S.push({ title: 'Ao cá riêng', rows: pondRows.length ? pondRows : [{ ten: 'Chưa có con nào', mo: 'Câu được cá rồi bấm “Thu cá”' }] });
+  const pondRows = Object.keys(cnt).map((id) => ({ ten: speciesById(id).ten, mo: '× ' + cnt[id], ic: fishIcon(speciesById(id)), n: cnt[id] }));
+  S.push({ title: 'Ao cá riêng', rows: pondRows.length ? pondRows : [{ ten: 'Chưa có con nào', mo: 'Câu được cá rồi bấm “Thu cá”', trong: true }] });
   const owned = isObj(fu.owned) ? fu.owned : {}, placed = Array.isArray(fu.placed) ? fu.placed : [];
-  const fRows = Object.keys(owned).filter((id) => furnitureById(id) && num(owned[id]) > 0).map((id) => ({ ten: furnitureById(id).ten, mo: `× ${num(owned[id])} (đã đặt ${placed.filter((p) => p && p.id === id).length})` }));
-  S.push({ title: 'Nội thất', rows: fRows.length ? fRows : [{ ten: 'Chưa có món nào', mo: 'Mua ở “Cửa hàng” khi đang ở trong nhà' }] });
+  const fRows = Object.keys(owned).filter((id) => furnitureById(id) && num(owned[id]) > 0).map((id) => ({ ten: furnitureById(id).ten, mo: `× ${num(owned[id])} (đã đặt ${placed.filter((p) => p && p.id === id).length})`, ic: { k: furnitureById(id).kind, c: hexOf(furnitureById(id).color) }, n: num(owned[id]) }));
+  S.push({ title: 'Nội thất', rows: fRows.length ? fRows : [{ ten: 'Chưa có món nào', mo: 'Mua ở “Cửa hàng” khi đang ở trong nhà', trong: true }] });
   const kb = Math.min(MAX_BAC, num(c.khinh)), own = isObj(c.land) && isObj(c.land.own) ? c.land.own : null;
-  S.push({ title: 'Thân pháp & nhà', rows: [{ ten: 'Sức mạnh', mo: c.strength ? `${num(c.strength.value)} · ${String(c.strength.tier || '')} · khiêng tối đa ${num(c.strength.limit)} kg` : 'chưa có' }, { ten: 'Khinh thân', mo: kb > 0 ? `bậc ${kb}/${MAX_BAC} · ${KHINH_TEN[kb]}` : 'chưa mở' }, { ten: 'Nhà', mo: own ? houseLevel(own.lv).ten : 'chưa có đất' }, { ten: BOARD.ten, mo: isObj(c.board) && c.board.own ? (c.board.on ? 'đang đứng trên ván · đi nhanh gấp đôi' : 'đã có · bấm “Lên ván” để dùng') : `chưa có — ${BOARD.gia} hạt sen ở Điện Máy Lam Sen` }] });
+  S.push({ title: 'Thân pháp & nhà', rows: [{ ten: 'Sức mạnh', mo: c.strength ? `${num(c.strength.value)} · ${String(c.strength.tier || '')} · khiêng tối đa ${num(c.strength.limit)} kg` : 'chưa có', ic: { k: 'power' } }, { ten: 'Khinh thân', mo: kb > 0 ? `bậc ${kb}/${MAX_BAC} · ${KHINH_TEN[kb]}` : 'chưa mở', ic: { k: 'wing' } }, { ten: 'Nhà', mo: own ? houseLevel(own.lv).ten : 'chưa có đất', ic: { k: 'house' } }, { ten: BOARD.ten, mo: isObj(c.board) && c.board.own ? (c.board.on ? 'đang đứng trên ván · đi nhanh gấp đôi' : 'đã có · bấm “Lên ván” để dùng') : `chưa có — ${BOARD.gia} hạt sen ở Điện Máy Lam Sen`, ic: { k: 'board', c: '#f2a31b' } }] });
   return S;
 }

@@ -1,6 +1,7 @@
 // Cửa hàng nội thất + Túi đồ + sửa nhà (Phiên 41, bước 4). Logic ở js/world/furniture.js (có test). Mọi chữ hiển thị đi qua textContent.
 // Chỉ mở khi người chơi đang Ở TRONG NHÀ của mình (LGT.inHouse). Mua bằng lá bồ đề (LGT.merit.spendLa). Lưu localStorage['lgt.furni'].
 // Đổi bố trí thì gọi LGT.houseRemount() (js/ui/house.js) để dựng lại phòng 3D và vật cản.
+import { icon as bagIcon } from './bagIcons.js';
 import { FURNITURE, furnitureById, loadFurni, freeCount, buyItem, autoPlace, moveItem, rotateItem, pickUp, toFurniture, MAX_PLACED } from '../world/furniture.js';
 import { houseLevel } from '../world/land.js';
 import { createPreview } from './preview.js';
@@ -65,7 +66,7 @@ export function initFurni(hud, { toast = () => {} } = {}) {
     const free = FURNITURE.filter((f) => freeCount(st, f.id) > 0);
     list.appendChild(el('h4', null, 'Chưa đặt'));
     if (!free.length) list.appendChild(el('p', 'fn-hint', 'Túi trống. Mua đồ ở tab Cửa hàng.'));
-    for (const f of free) { const row = el('div', 'fn-row'), t = el('div', 'fn-t'); t.append(el('b', null, f.ten), el('span', null, ` × ${freeCount(st, f.id)}`)); row.append(t, btn('Đặt', () => apply(autoPlace(st, L, f.id)), 'fn-b buy')); list.appendChild(row); }
+    for (const f of free) { const row = el('div', 'fn-row'), t = el('div', 'fn-t'); t.append(el('b', null, f.ten), el('span', null, ` × ${freeCount(st, f.id)}`)); row.append(bagIcon({ k: f.kind, c: '#' + (f.color & 0xffffff).toString(16).padStart(6, '0') }), t, btn('Đặt', () => apply(autoPlace(st, L, f.id)), 'fn-b buy')); list.appendChild(row); }   // Phiên 92: có hình món đồ
     list.appendChild(el('h4', null, 'Đã đặt trong nhà'));
     if (!st.placed.length) list.appendChild(el('p', 'fn-hint', 'Chưa đặt món nào. Nhà đang trống.'));
     for (const p of st.placed) {

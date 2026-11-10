@@ -41,7 +41,7 @@ test('Túi đồ ngoài nhà: tiền, cầu, ao cá, nội thất, thân pháp &
   const e = bagSections({}); assert.deepEqual(e.map((s) => s.title), ['Tiền', 'Quả cầu câu cá', 'Ao cá riêng', 'Nội thất', 'Thân pháp & nhà']); assert.ok(e.every((s) => s.rows.length >= 1));
   assert.match(e[1].rows[0].mo, /50 hạt sen/);
   const f = bagSections({ sen: 12, la: 3, fish: { orbs: { go: 0, da: 5 }, sel: 'da', pond: [{ sp: 'koi' }, { sp: 'koi' }, { sp: 'zzz' }] }, furni: { owned: { zzz: 2 }, placed: [] }, khinh: 2, land: { own: { lv: 1 } } });
-  assert.deepEqual(f[0].rows.map((r) => r.mo), ['12', '3']); assert.match(f[1].rows[0].mo, /đã nứt/); assert.match(f[1].rows[1].mo, /đang dùng/); assert.deepEqual(f[2].rows, [{ ten: 'Cá koi', mo: '× 2' }]);
+  assert.deepEqual(f[0].rows.map((r) => r.mo), ['12', '3']); assert.match(f[1].rows[0].mo, /đã nứt/); assert.match(f[1].rows[1].mo, /đang dùng/); assert.deepEqual(f[2].rows.map((r) => [r.ten, r.mo, r.n, r.ic.k]), [['Cá koi', '× 2', 2, 'fish']]);
   assert.equal(f[3].rows[0].ten, 'Chưa có món nào', 'món lạ bị bỏ'); assert.equal(f[4].rows[0].mo, 'chưa có'); assert.match(f[4].rows[1].mo, /bậc 2\/8/); assert.equal(f[4].rows[2].mo, 'Nhà lầu');
   assert.match(bagSections({ strength: { value: 40, tier: 'Khỏe khoắn', limit: 72 } })[4].rows[0].mo, /40 · Khỏe khoắn · khiêng tối đa 72 kg/);
 });

@@ -39,3 +39,15 @@ body.has-dock .fs-fab{display:none!important}
 .yq-name{font-size:13px}.yq-bar{display:block;height:9px;border-radius:5px;background:rgba(255,255,255,.15);overflow:hidden}.yq-bar i{display:block;height:100%;width:100%;background:#e8552b}.yq-bar.me i{background:#6fe0a0}
 .yq-me{display:flex;align-items:center;gap:6px;font-weight:500;font-size:11px}.yq-me .yq-bar{flex:1}.yq-time{color:#aeb3c2;font-weight:400}
 .yq-flash{position:absolute;inset:0;background:rgba(255,40,20,.28);pointer-events:none;z-index:5}.yq-flash[hidden]{display:none!important}
+/* Túi đồ dạng lưới ô có hình vật phẩm (Phiên 92) */
+.bg-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.bg-cell{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:2px;min-height:78px;padding:6px 2px 4px;border-radius:10px;border:1px solid rgba(217,178,95,.4);background:linear-gradient(180deg,rgba(255,255,255,.09),rgba(255,255,255,.03));color:#e8eaf2;font:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.bg-cell.empty{cursor:default;border:1px dashed rgba(217,178,95,.22);background:rgba(255,255,255,.025)}
+.bg-cell:not(.empty):hover{background:rgba(217,178,95,.16)}
+.bg-cell.sel{border-color:#f1db9f;box-shadow:0 0 0 2px rgba(241,219,160,.45);background:rgba(217,178,95,.22)}
+.bg-cell:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.bg-ic{width:44px;height:44px;flex:none}
+.bg-n{position:absolute;right:3px;top:3px;min-width:18px;padding:1px 5px;border-radius:9px;background:rgba(0,0,0,.65);border:1px solid rgba(241,219,160,.55);color:#f1dba0;font:700 11px/1.25 var(--sans,inherit);text-align:center}
+.bg-nm{max-width:100%;padding:0 2px;font:500 10.5px/1.15 var(--sans,inherit);color:#d6d9e4;text-align:center;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;word-break:break-word}
+.bg-hint{margin:6px 0 0;font:400 12px/1.4 var(--sans,inherit);color:#aeb3c2}
+.bg-detail{position:sticky;bottom:-12px;margin:10px -14px -12px;padding:8px 14px;background:rgba(14,10,7,.97);border-top:1px solid rgba(217,178,95,.35);font:400 13px/1.35 var(--sans,inherit);color:#e8eaf2}.bg-detail b{color:#fff}
