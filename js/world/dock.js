@@ -52,7 +52,7 @@ export function dockButtons(c = {}) {
   const np = isObj(k.npc) ? k.npc : {};
   if (np.near && !pl.near && !(isObj(k.yq) && k.yq.active)) out.push({ id: 'nemnpc', label: 'Ném NPC', say: `Gần: ${np.near}` });   // Phiên 89
   const yq = isObj(k.yq) ? k.yq : {};
-  if (yq.active) { out.push({ id: 'da', label: 'Ném đá', big: true, wait: +yq.stoneCd > 0, say: yq.ten ? `${yq.ten} đang ở làng!` : '' }, { id: 'thuong', label: 'Thương', wait: +yq.spearCd > 0 }); if (yq.canThrow) out.push({ id: 'nemyq', label: 'Ném yêu quái' }); }
+  if (yq.active) { out.push({ id: 'da', label: 'Ném đá', big: true, wait: +yq.stoneCd > 0, say: yq.ten ? `${yq.ten} đang ở làng!` : '' }, { id: 'thuong', label: 'Thương', wait: +yq.spearCd > 0 }); if (isObj(k.khi)) out.push({ id: 'chemkhi', label: 'Chém khí', hot: true, wait: +k.khi.cd > 0 }); if (yq.canThrow) out.push({ id: 'nemyq', label: 'Ném yêu quái' }); }
   if (k.water && !yq.active) out.push({ id: 'cast', label: f.cracked ? 'Sửa cầu' : f.hasOrb ? 'Thả cầu' : 'Mua cầu', big: true, say: f.text ? String(f.text) : '' });
   const hd = isObj(k.head) ? k.head : {};
   if (hd.open) out.push({ id: 'thietdau', label: 'Thiết đầu công', big: true, hot: true, wait: !!hd.wait, say: hd.dist ? `Lao ${hd.dist} m · −${hd.dmg} máu` : '' });   // Phiên 90

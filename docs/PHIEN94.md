@@ -23,3 +23,9 @@
 
 ## Việc tồn
 journey/landpool/tutorial test lỗi sẵn (cần xem nguồn Phiên 93); room.js đổi phòng theo vùng; thêm kiến trúc (hỏi anh); GAS Donations; THIET_KE_CHIEU_SAU mục 6; js/PROMPT.md & js/sw.js thừa (chờ anh quyết).
+
+## Bổ sung: rà soát Côn Khí Trảm (do anh Giang đẩy ở Phiên 93, commit 21c3375/63a3c44/39d8762)
+- LỖI TÌM THẤY: nút "Chém khí" có biểu tượng + hành động trong js/ui/dock.js nhưng js/world/dock.js (\`dockButtons\`) KHÔNG bao giờ xếp nút này vào cụm → nút không hiện. Đã sửa: khi yêu quái ở làng và có ngữ cảnh \`khi\` thì thêm \`{id:'chemkhi', label:'Chém khí', hot:true, wait: hồi chiêu>0}\`.
+- THIẾU: tests/conkhi.test.mjs mà js/world/conKhi.js nhắc tới chưa có → đã viết (6 bài: sát thương, hướng, tự ngắm, kế hoạch luồng khí, tư thế vung, nút trong cụm) và thêm vào package.json.
+- Đã thử trong game (trình duyệt không đầu): nút "🌙 Chém khí" hiện; xa quá thì không chém; đứng cách yêu quái 9 m bấm chém → chạy được, không lỗi JS. CHƯA nhìn thấy luồng khí trên ảnh (chụp phần mềm quá chậm), chưa thử trên điện thoại.
+- Số liệu (tầm 16 m, hồi 3 s, 45 + sức mạnh×0,8 sát thương) là quy ước tạm, chờ anh duyệt. sw.js = dgt-v102.
