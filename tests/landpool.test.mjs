@@ -22,6 +22,9 @@ test('hồ bơi nằm trong lô, không đè thân nhà, không chắn điểm �
 test('kích thước hồ khớp mô hình 3D (1,7·hw, sâu 3 m)', () => {
   const p = PLOTS[0], pr = poolRect(p, 3), hw = houseLevel(3).hw;
   assert.ok(Math.abs((pr.x1 - pr.x0) - (hw * 1.7 + 0.5)) < 1e-9); assert.ok(Math.abs((pr.z1 - pr.z0) - 3.5) < 1e-9);
-  assert.ok(fs.readFileSync(new URL('../js/scene/land.js', import.meta.url), 'utf8').includes('pw = hw * 1.7, pz0 = hd + 0.8, pz1 = hd + 3.8'));
+  // Từ Phiên 95 hồ do mô hình GLB Villa vẽ (không còn mã dựng hồ trong scene/land.js): kiểm cấp 3 vẫn dùng đúng mô hình có hồ và file tồn tại.
+  const hg = fs.readFileSync(new URL('../js/scene/houseGlb.js', import.meta.url), 'utf8');
+  assert.ok(/3:\s*\{\s*url:\s*'assets\/models\/houses\/nha-3-villa\.glb'/.test(hg));
+  assert.ok(fs.existsSync(new URL('../assets/models/houses/nha-3-villa.glb', import.meta.url)));
   assert.ok(LOT_W > 0 && LOT_D > 0);
 });
