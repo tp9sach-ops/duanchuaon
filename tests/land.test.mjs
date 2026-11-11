@@ -60,7 +60,7 @@ test('xem xóm khác: chỉ các xóm đã có người; đổi xóm xem không 
 test('đọc dữ liệu hỏng/sửa tay: rác → chưa có đất; lô/xóm vô lý bị bỏ; cấp nhà bị kẹp vào 0..3', () => {
   for (const bad of [null, undefined, '{{{', '[]', 7]) assert.deepEqual(loadLand(bad), emptyLand());
   assert.equal(loadLand({ own: { xom: 1, plot: 99 } }).own, null); assert.equal(loadLand({ own: { xom: 0, plot: 2 } }).own, null); assert.equal(loadLand({ own: { xom: 1.5, plot: 2 } }).own, null);
-  const ok = loadLand(JSON.stringify({ own: { xom: 2, plot: 4, lv: 9 }, view: 0 })); assert.deepEqual(ok.own, { xom: 2, plot: 4, lv: 3 }); assert.equal(ok.view, 2);
+  const ok = loadLand(JSON.stringify({ own: { xom: 2, plot: 4, lv: 9 }, view: 0 })); assert.deepEqual(ok.own, { xom: 2, plot: 4, lv: 5 }); assert.equal(ok.view, 2);
   assert.equal(loadLand({ own: { xom: 1, plot: 2, lv: -3 } }).own.lv, 0); assert.equal(loadLand({ own: { xom: 1, plot: 2, lv: 2.9 } }).own.lv, 2); assert.equal(loadLand({ own: { xom: 1, plot: 2, lv: 'abc' } }).own.lv, 0);
   assert.deepEqual(localRegistry(emptyLand()), {});
 });
@@ -74,20 +74,21 @@ test('bác khu phố đứng ngoài đường đi: chiếm một vòng nhỏ nh�
 
 // ---------- Phiên 37, bước 3a: 4 cấp nhà + nâng cấp ----------
 test('4 cấp nhà: giá tăng dần, thân nhà lớn dần, luôn nằm trong lô và chừa sân trước cho mọi lô', () => {
-  assert.equal(HOUSE_LEVELS.length, 4); assert.equal(MAX_LV, 3);
-  assert.deepEqual(HOUSE_LEVELS.map((h) => h.lv), [0, 1, 2, 3]); assert.deepEqual(HOUSE_LEVELS.map((h) => h.gia), [0, 150, 400, 900]);
+  assert.equal(HOUSE_LEVELS.length, 6); assert.equal(MAX_LV, 5);
+  assert.deepEqual(HOUSE_LEVELS.map((h) => h.lv), [0, 1, 2, 3, 4, 5]); assert.deepEqual(HOUSE_LEVELS.map((h) => h.gia), [0, 150, 400, 900, 1500, 2400]);
   for (let i = 1; i < HOUSE_LEVELS.length; i++) { assert.ok(HOUSE_LEVELS[i].gia > HOUSE_LEVELS[i - 1].gia); assert.ok(HOUSE_LEVELS[i].hw >= HOUSE_LEVELS[i - 1].hw && HOUSE_LEVELS[i].hd >= HOUSE_LEVELS[i - 1].hd); }
   for (const p of PLOTS) for (const h of HOUSE_LEVELS) {
     const r = houseRect(p, h.lv);
-    assert.ok(r.x0 >= p.x0 + 1 && r.x1 <= p.x1 - 1 && r.z0 >= p.z0 && r.z1 <= p.z1, `nhà cấp ${h.lv} lô ${p.id} tràn lô`);
+    assert.ok(r.x0 >= p.x0 + (h.lv >= 4 ? 0.5 : 1) && r.x1 <= p.x1 - (h.lv >= 4 ? 0.5 : 1) && r.z0 >= p.z0 && r.z1 <= p.z1, `nhà cấp ${h.lv} lô ${p.id} tràn lô`);
     const yard = p.face > 0 ? p.z1 - r.z1 : r.z0 - p.z0;   // sân trước (từ thân nhà tới mép lô phía đường)
-    assert.ok(yard >= 4.5, `sân trước lô ${p.id} cấp ${h.lv} chỉ ${yard}`);
+    assert.ok(yard >= (h.lv >= 4 ? 0.3 : 4.5),   // cấp 4–5: mô hình đã gồm sân vườn nên chiếm gần hết lô
+     `sân trước lô ${p.id} cấp ${h.lv} chỉ ${yard}`);
   }
-  assert.equal(houseLevel(-5).lv, 0); assert.equal(houseLevel(99).lv, 3); assert.equal(houseLevel(NaN).lv, 0); assert.equal(houseLevel('2').lv, 2); assert.equal(houseLevel(2.7).lv, 2);
+  assert.equal(houseLevel(-5).lv, 0); assert.equal(houseLevel(99).lv, 5); assert.equal(houseLevel(NaN).lv, 0); assert.equal(houseLevel('2').lv, 2); assert.equal(houseLevel(2.7).lv, 2);
 });
 
 test('giá nâng cấp là chênh lệch giá niêm yết, được nhảy cấp, không bao giờ âm', () => {
-  assert.equal(upgradeCost(0, 1), 150); assert.equal(upgradeCost(1, 2), 250); assert.equal(upgradeCost(2, 3), 500); assert.equal(upgradeCost(0, 3), 900);
+  assert.equal(upgradeCost(0, 1), 150); assert.equal(upgradeCost(1, 2), 250); assert.equal(upgradeCost(2, 3), 500); assert.equal(upgradeCost(0, 3), 900); assert.equal(upgradeCost(3, 4), 600); assert.equal(upgradeCost(4, 5), 900); assert.equal(upgradeCost(0, 5), 2400);
   assert.equal(upgradeCost(3, 0), 0); assert.equal(upgradeCost(2, 2), 0);
 });
 
@@ -102,11 +103,12 @@ test('nâng cấp nhà: cần có đất, đủ lá chênh lệch; cập nhật 
   const up2 = upgradeHouse(up.land, 250, up.reg); assert.equal(up2.ok, true); assert.equal(up2.cost, 250); assert.equal(up2.land.own.lv, 2);
   const jump = upgradeHouse(land, 900, reg, 3); assert.equal(jump.ok, true); assert.equal(jump.cost, 900); assert.equal(jump.land.own.lv, 3);
   assert.equal(upgradeHouse(land, 899, reg, 3).reason, 'poor');
-  const top = upgradeHouse(jump.land, 1e6, jump.reg); assert.equal(top.ok, false); assert.equal(top.reason, 'maxed');
+  const j5 = upgradeHouse(land, 2400, reg, 5); assert.equal(j5.ok, true); assert.equal(j5.cost, 2400); assert.equal(j5.land.own.lv, 5);
+  const top = upgradeHouse(j5.land, 1e6, j5.reg); assert.equal(top.ok, false); assert.equal(top.reason, 'maxed');
 });
 
 test('nâng cấp: cấp đích sai thì từ chối (lùi cấp, cùng cấp, quá cấp, không phải số nguyên)', () => {
   const b = buyLand(emptyLand(), 100, {}, 1), up = upgradeHouse(b.land, 150, b.reg).land;
-  for (const bad of [0, 1, 4, -1, 1.5, 'x', null, NaN]) assert.equal(upgradeHouse(up, 1e6, localRegistry(up), bad).reason, 'invalid', 'to=' + bad);
+  for (const bad of [0, 1, 6, -1, 1.5, 'x', null, NaN]) assert.equal(upgradeHouse(up, 1e6, localRegistry(up), bad).reason, 'invalid', 'to=' + bad);
   assert.equal(upgradeHouse(up, 1e6, localRegistry(up), '3').ok, true);
 });

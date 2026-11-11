@@ -8,9 +8,9 @@ import { blocked, bodyBlocked, canStepBody, WALKS, RECTS, addRect, addWalk } fro
 const lvs = HOUSE_LEVELS.map((h) => h.lv);
 
 test('4 phòng, cấp cao hơn thì rộng hơn hoặc bằng; cấp sai được kẹp', () => {
-  assert.equal(ROOMS.length, 4);
-  for (let i = 1; i < 4; i++) assert.ok(ROOMS[i].w * ROOMS[i].d >= ROOMS[i - 1].w * ROOMS[i - 1].d);
-  assert.equal(roomFor(9), ROOMS[3]); assert.equal(roomFor(-2), ROOMS[0]); assert.equal(roomFor(NaN), ROOMS[0]);
+  assert.equal(ROOMS.length, 6);
+  for (let i = 1; i < 6; i++) assert.ok(ROOMS[i].w * ROOMS[i].d >= ROOMS[i - 1].w * ROOMS[i - 1].d);
+  assert.equal(roomFor(9), ROOMS[5]); assert.equal(roomFor(-2), ROOMS[0]); assert.equal(roomFor(NaN), ROOMS[0]);
 });
 
 test('khu phòng xa mọi vùng đi bộ ngoài trời và lưới tìm đường (−130…130 × −80…220)', () => {

@@ -59,7 +59,7 @@ test('gợi ý kế tiếp đi đúng chuỗi: kiếm sen → đổi lá → mua
   assert.equal(a({ sen: 0, la: 150, own: own(0) }).id, 'nangnha');
   assert.equal(a({ sen: 80, la: 10, own: own(1) }).id, 'doila2');
   assert.equal(a({ sen: 0, la: 250, own: own(1) }).id, 'nangnha'); assert.equal(a({ la: 500, own: own(2) }).id, 'nangnha');
-  assert.equal(a({ la: 0, own: own(3) }).id, 'vaonha');
+  assert.equal(a({ la: 0, own: own(5) }).id, 'vaonha');
 });
 
 test('gợi ý chịu dữ liệu hỏng (âm, chữ, NaN, own lạ) và luôn trả một lời khuyên hợp lệ', () => {

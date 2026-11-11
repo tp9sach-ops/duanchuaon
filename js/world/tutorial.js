@@ -40,7 +40,7 @@ export const TOPICS = [
       { text: `Cần ${LAND_LA} lá bồ đề cho một lô đất. Mua xong bạn được tặng ngay một căn nhà trống thô sơ.` },
       { text: 'Ra làng, đi qua chợ, xuống đường phía Nam tới đầu khu nhà ở và gặp Bác Tư khu phố. Bấm vào bác để mở bảng đất ở.', go: npc('bacphuong') },
       { text: `Mỗi xóm có tối đa ${XOM_SIZE} nhà. Chọn một lô trống rồi bấm “Mua lô”. Nhà thứ ${XOM_SIZE + 1} sẽ ở xóm mới.`, go: place('xom') },
-      { text: `Nâng cấp nhà (trả chênh lệch giá, được nhảy cấp): ${L1.ten} ${L1.gia} lá · ${L2.ten} ${L2.gia} lá · ${L3.ten} ${L3.gia} lá (tính từ nhà trống).` },
+      { text: `Nâng cấp nhà (trả chênh lệch giá, được nhảy cấp): ${L1.ten} ${L1.gia} lá · ${L2.ten} ${L2.gia} lá · ${L3.ten} ${L3.gia} lá · ${HOUSE_LEVELS[4].ten} ${HOUSE_LEVELS[4].gia} lá · ${HOUSE_LEVELS[5].ten} ${HOUSE_LEVELS[5].gia} lá (tính từ nhà trống).` },
       { text: 'Đứng gần cửa nhà, bấm nút “Vào nhà” để vào bên trong, “Ra ngoài” để ra. Nút “Dẫn tôi tới nhà” trong bảng của Bác Tư đưa bạn về trước cửa.', go: place('xom') },
       { text: 'Vào nhà, mở “Cửa hàng” để mua nội thất bằng lá bồ đề; mở “Túi đồ” rồi bấm “Đặt” để bày vào nhà, kéo để di chuyển và xoay. Khi đang ở ngoài nhà, bấm “Túi đồ” sẽ cho bạn xem mình đang có gì.' },
       { text: 'Mời khách tới tham quan nhà và mở tiệc: đang làm, sắp có.', soon: true },

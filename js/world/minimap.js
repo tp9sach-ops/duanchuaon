@@ -58,11 +58,31 @@ export function houseMarker(land) {
 }
 
 /**
- * Tất cả điểm cần vẽ. ctx: { land (LGT.land.state), loc ({active,spot}) , target ({x,z,label}) }.
- * Mỗi điểm: { id, kind: 'place'|'store'|'npc'|'house'|'loc'|'target', ten, x, z, stand }.
+ * Người chơi đang online (Phiên 95): `players` = LGT.room.players() = [{ id, n, x, z }] (người KHÁC, vị trí thế giới hiện tại).
+ * Bỏ điểm hỏng, người ở ngoài khung bản đồ (đang trong nhà: tọa độ phòng nằm xa), trùng id; tối đa MAX_PLAYER_MARKERS. Tên cắt 20 ký tự, rỗng → "Khách".
+ */
+export const MAX_PLAYER_MARKERS = 60;
+export function playerMarkers(players, box = WORLD_BOX) {
+  const out = [], seen = new Set();
+  if (!Array.isArray(players)) return out;
+  for (const p of players) {
+    if (out.length >= MAX_PLAYER_MARKERS) break;
+    if (!p || typeof p !== 'object' || !fin(p.x) || !fin(p.z) || p.id == null) continue;
+    const id = 'pl-' + String(p.id).slice(0, 40); if (seen.has(id)) continue;
+    if (p.x < box.x0 || p.x > box.x1 || p.z < box.z0 || p.z > box.z1) continue;
+    seen.add(id);
+    const ten = (typeof p.n === 'string' ? p.n.trim() : '').slice(0, 20) || 'Khách';
+    out.push({ id, kind: 'player', ten, x: p.x, z: p.z, stand: { x: p.x, z: p.z } });
+  }
+  return out;
+}
+
+/**
+ * Tất cả điểm cần vẽ. ctx: { land (LGT.land.state), loc ({active,spot}) , target ({x,z,label}), players (LGT.room.players()) }.
+ * Mỗi điểm: { id, kind: 'place'|'store'|'npc'|'player'|'house'|'loc'|'target', ten, x, z, stand }.
  */
 export function buildMarkers(ctx = {}) {
-  const out = [...placeMarkers(), ...EXTRA_POIS.map((p) => ({ ...p })), ...npcMarkers()];
+  const out = [...placeMarkers(), ...EXTRA_POIS.map((p) => ({ ...p })), ...npcMarkers(), ...playerMarkers(ctx.players)];
   const h = houseMarker(ctx.land); if (h) out.push(h);
   const lc = ctx.loc;
   if (lc && fin(lc.spot && lc.spot.x) && fin(lc.spot && lc.spot.z) && (typeof lc.active !== 'function' || lc.active())) out.push({ id: 'hoasenvang', kind: 'loc', ten: 'Hoa sen vàng (nhận lộc)', x: lc.spot.x, z: lc.spot.z, stand: { x: lc.spot.x, z: lc.spot.z } });
@@ -80,7 +100,7 @@ export function terrain() {
 }
 
 /** Điểm gần nhất với chạm tại (u, v) trong bán kính rpx; điểm nhiều tầng thì ưu tiên mục tiêu > nhà > hoa sen > NPC > nơi. */
-const RANK = { target: 0, house: 1, loc: 2, npc: 3, store: 4, place: 5 };
+const RANK = { target: 0, house: 1, loc: 2, player: 2.5, npc: 3, store: 4, place: 5 };
 export function hitTest(markers, u, v, w, h, rpx = 16, box = WORLD_BOX) {
   let best = null;
   for (const m of markers) {
@@ -99,6 +119,6 @@ export function describeFrom(pos, m) {
 
 /** Chú giải: nhãn + loại. */
 export const LEGEND = [
-  { kind: 'me', text: 'Bạn' }, { kind: 'place', text: 'Địa điểm' }, { kind: 'store', text: 'Cửa hàng' }, { kind: 'npc', text: 'Người (bấm để dẫn tới)' },
+  { kind: 'me', text: 'Bạn' }, { kind: 'place', text: 'Địa điểm' }, { kind: 'store', text: 'Cửa hàng' }, { kind: 'npc', text: 'Người (bấm để dẫn tới)' }, { kind: 'player', text: 'Người chơi đang online' },
   { kind: 'house', text: 'Nhà của bạn' }, { kind: 'loc', text: 'Hoa sen vàng' }, { kind: 'target', text: 'Đang dẫn tới' },
 ];

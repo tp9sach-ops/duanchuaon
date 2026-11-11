@@ -3,8 +3,8 @@
 import { WORLD_BOX, worldToMap, mapHeight, buildMarkers, terrain, hitTest, describeFrom, shortName, LEGEND, mapAvailable } from '../world/minimap.js';
 
 const KEY = 'lgt.mm';
-const COLOR = { place: '#d9b25f', store: '#4aa58a', npc: '#f4efe2', house: '#ff9a52', loc: '#ffe27a', target: '#ff5a4d', me: '#6ee7ff' };
-const KIND_TEXT = { place: 'Địa điểm', store: 'Cửa hàng', npc: 'Người trong làng/chùa', house: 'Nhà của bạn', loc: 'Hoa sen vàng', target: 'Điểm đang dẫn tới' };
+const COLOR = { place: '#d9b25f', store: '#4aa58a', npc: '#f4efe2', player: '#c792ff', house: '#ff9a52', loc: '#ffe27a', target: '#ff5a4d', me: '#6ee7ff' };
+const KIND_TEXT = { place: 'Địa điểm', store: 'Cửa hàng', npc: 'Người trong làng/chùa', player: 'Người chơi đang online', house: 'Nhà của bạn', loc: 'Hoa sen vàng', target: 'Điểm đang dẫn tới' };
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
 
 /** hud: phần tử HUD; opts: { toast(text, ms), onList() (mở danh sách điểm đến cũ), onHelp() (mở sổ tay) }. Đặt LGT.minimap = { openBig, closeBig, toggleBig, setGoal }. */
@@ -34,7 +34,8 @@ export function initMinimap(hud, { toast = () => {}, onList = null, onHelp = nul
   const legend = el('ul', 'mm-lg'); for (const l of LEGEND) { const li = el('li'), d = el('i'); d.style.background = COLOR[l.kind]; li.append(d, document.createTextNode(l.text)); legend.appendChild(li); }
   const foot = el('div', 'mm-ft'), listBtn = el('button', 'mm-b', 'Danh sách điểm đến'), helpBtn = el('button', 'mm-b', 'Hướng dẫn chơi'); listBtn.type = helpBtn.type = 'button';
   if (onList) foot.appendChild(listBtn); if (onHelp) foot.appendChild(helpBtn);
-  const note = el('p', 'mm-note', 'Phía trên là chánh điện, phía dưới là làng và khu nhà ở. Bấm vào chấm để xem tên và được dẫn tới.');
+  const NOTE_BASE = 'Phía trên là chánh điện, phía dưới là làng và khu nhà ở. Bấm vào chấm để xem tên và được dẫn tới.';
+  const note = el('p', 'mm-note', NOTE_BASE); let online = -1;
   big.append(head, bigC, info, legend, foot, note); hud.appendChild(big);
   info.hidden = true;
 
@@ -61,11 +62,12 @@ export function initMinimap(hud, { toast = () => {}, onList = null, onHelp = nul
     const labels = [];
     for (const m of markers) {   // dưới cùng: nơi/cửa hàng, rồi người, rồi nhà/lộc/đích
       if (m.kind === 'target') continue;
-      const p = pt(m, w, h); g.beginPath(); g.arc(p.u, p.v, m.kind === 'npc' ? rad * 0.8 : rad, 0, 6.283); g.fillStyle = COLOR[m.kind]; g.fill();
-      if (isBig && (m.kind === 'place' || m.kind === 'store' || m.kind === 'house')) labels.push({ m, p });
+      const p = pt(m, w, h); g.beginPath(); g.arc(p.u, p.v, m.kind === 'npc' ? rad * 0.8 : m.kind === 'player' ? rad * 0.95 : rad, 0, 6.283); g.fillStyle = COLOR[m.kind]; g.fill();
+      if (m.kind === 'player') { g.lineWidth = 1.2; g.strokeStyle = '#2a1648'; g.stroke(); }   // viền tối để thấy rõ trên nền sáng
+      if (isBig && (m.kind === 'place' || m.kind === 'store' || m.kind === 'house' || m.kind === 'player')) labels.push({ m, p });
     }
     if (isBig) {   // nhãn chữ: nhà của bạn trước, rồi nơi, rồi cửa hàng; nhãn nào đè lên nhãn đã vẽ thì bỏ (xem tên bằng cách bấm vào chấm)
-      g.font = '600 9px system-ui,sans-serif'; const order = { house: 0, place: 1, store: 2 }, drawn = [];
+      g.font = '600 9px system-ui,sans-serif'; const order = { house: 0, player: 1, place: 2, store: 3 }, drawn = [];
       labels.sort((a, b) => order[a.m.kind] - order[b.m.kind]);
       for (const { m, p } of labels) {
         const text = m.id === 'xom' ? 'Khu nhà ở' : shortName(m), tw = g.measureText(text).width, right = p.u > w - tw - 14, cx = m.id === 'xom';
@@ -90,7 +92,9 @@ export function initMinimap(hud, { toast = () => {}, onList = null, onHelp = nul
     const now = Date.now(); if (!force && now - mkAt < 900) return; mkAt = now;
     const guideT = LGT.guide && LGT.guide.target;
     const target = guideT ? { x: guideT.x, z: guideT.z, label: guideT.label } : goal;
-    markers = buildMarkers({ land: LGT.land && LGT.land.state, loc: LGT.loc, target });
+    let players = []; try { players = LGT.room && LGT.room.players ? LGT.room.players() : []; } catch (_) { players = []; }   // người đang online (Phiên 95)
+    markers = buildMarkers({ land: LGT.land && LGT.land.state, loc: LGT.loc, target, players });
+    const nOn = markers.filter((m) => m.kind === 'player').length; if (nOn !== online) { online = nOn; note.textContent = `${NOTE_BASE} Đang online: ${online + 1} người (kể cả bạn), ${online} người khác hiện trên bản đồ.`; }
     if (sel) sel = markers.find((m) => m.id === sel.id) || null;
   }
   function tick() {

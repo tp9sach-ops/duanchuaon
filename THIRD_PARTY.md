@@ -51,3 +51,10 @@ SOFTWARE.
 - `nha-2-hoa-vien.glb` (cấp 2 "Nhà hoa viên"): mô hình "villa_with_garden" ptg gửi ngày 2026-11-10. Đã sửa: chỉ lấy phần nhà + hồ, bỏ rừng thông và dòng suối, giảm từ ~590.000 xuống ~17.000 tam giác, ảnh texture được tô thành màu đỉnh.
 - `nha-3-villa.glb` (cấp 3 "Villa hồ bơi"): mô hình "modern_luxury_villa_house_building_with_pool" ptg gửi ngày 2026-11-10. Đã sửa: bỏ tường rào và nền khu đất, giảm từ ~133.000 xuống ~2.000 tam giác, tô lại màu theo bảng màu riêng.
 - **Tác giả / link nguồn / giấy phép của 2 mô hình villa (cấp 2 và 3): CHƯA BIẾT.** ptg cần gửi link Sketchfab từng mô hình để ghi tác giả và giấy phép vào đây trước khi công bố rộng.
+
+## Mô hình nhà cấp 4–5 (`assets/models/houses/nha-4-tuscan.glb`, `nha-5-la-ma.glb`) — GIẤY PHÉP CHƯA RÕ
+
+- Do ptg gửi ngày 2026-11-10 (2 file zip chứa rar, bên trong là SketchUp `.dae` ~250 MB): `Bali Villa - Italian Influence` (→ cấp 4 "Biệt thự Tuscan") và `Roman Villa` (→ cấp 5 "Biệt thự La Mã"; thư mục texture ghi 2016). Tên file zip bị đảo so với nội dung.
+- Đã xử lý bằng công cụ riêng: bỏ chi tiết vụn + nền gốc, cắt vùng nhà chính, thu nhỏ vừa lô 10,8×10,8 m, giảm còn ~56–60 nghìn tam giác, thay texture bằng màu đỉnh trung bình (1–2 lần vẽ), thêm sân cỏ phẳng. Mỗi file ~1,1 MB.
+- **Tác giả / link nguồn / giấy phép: CHƯA BIẾT** — ptg cần gửi link Sketchfab/3D Warehouse của từng mô hình để ghi công trước khi công bố rộng.
+

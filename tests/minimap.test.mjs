@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { WORLD_BOX, worldToMap, mapToWorld, mapHeight, buildMarkers, terrain, hitTest, describeFrom, houseMarker, EXTRA_POIS, shortName, LEGEND, mapAvailable } from '../js/world/minimap.js';
+import { WORLD_BOX, worldToMap, mapToWorld, mapHeight, buildMarkers, terrain, hitTest, describeFrom, houseMarker, EXTRA_POIS, shortName, LEGEND, mapAvailable, playerMarkers, MAX_PLAYER_MARKERS } from '../js/world/minimap.js';
 import { NPCS } from '../js/world/npc.js';
 import { PLACES } from '../js/world/outside.js';
 import { SPAWN } from '../js/world/layout.js';
@@ -74,4 +74,19 @@ test('bản đồ chỉ hiện ở zone hub (Phiên 86)', () => {
   assert.equal(mapAvailable({ current: 'chua' }), true);       // hub
   assert.equal(mapAvailable({ current: 'sương-mù' }), false);  // zone khác: ẩn
   assert.equal(mapAvailable({ current: 123 }), true);          // dữ liệu lạ không làm mất bản đồ
+});
+
+test('người chơi online trên bản đồ (Phiên 95): lọc điểm hỏng/ngoài khung/trùng, cắt tên, giới hạn số lượng, vào buildMarkers + hitTest', () => {
+  const ps = [{ id: 'a', n: '  Minh  ', x: 0, z: 100 }, { id: 'a', n: 'trùng', x: 1, z: 1 }, { id: 'b', n: '', x: -50, z: 20 }, { id: 'c', n: 'trong nhà', x: 400, z: 400 },
+    { id: 'd', n: 'hỏng', x: NaN, z: 3 }, null, 5, { n: 'không id', x: 1, z: 1 }, { id: 'e', n: 'x'.repeat(50), x: 10, z: 10 }];
+  const m = playerMarkers(ps);
+  assert.deepEqual(m.map((q) => q.id), ['pl-a', 'pl-b', 'pl-e']);
+  assert.equal(m[0].ten, 'Minh'); assert.equal(m[1].ten, 'Khách'); assert.equal(m[2].ten.length, 20);
+  assert.ok(m.every((q) => q.kind === 'player' && q.stand.x === q.x && q.stand.z === q.z));
+  assert.deepEqual(playerMarkers(null), []); assert.deepEqual(playerMarkers(undefined), []); assert.deepEqual(playerMarkers('x'), []);
+  const many = Array.from({ length: 200 }, (_, i) => ({ id: i, n: 'n' + i, x: -100 + i % 150, z: 0 })); assert.equal(playerMarkers(many).length, MAX_PLAYER_MARKERS);
+  const all = buildMarkers({ players: ps }); assert.equal(all.filter((q) => q.kind === 'player').length, 3);
+  assert.equal(buildMarkers({}).filter((q) => q.kind === 'player').length, 0);
+  assert.ok(LEGEND.some((l) => l.kind === 'player'));
+  const w = 240, h = mapHeight(w), q = worldToMap({ x: 0, z: 100 }, w, h); assert.equal(hitTest(all, q.u, q.v, w, h).id, 'pl-a');
 });

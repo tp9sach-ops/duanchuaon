@@ -17,8 +17,10 @@ export const ROOMS = [
   { lv: 1, w: 11.8, d: 9.7, h: 3.3, furniture: [] },
   { lv: 2, w: 11.8, d: 9.7, h: 3.3, furniture: [] },
   { lv: 3, w: 14.9, d: 10.4, h: 3.7, furniture: [] },
+  { lv: 4, w: 15.6, d: 10.8, h: 3.8, furniture: [] },
+  { lv: 5, w: 16.2, d: 11.2, h: 3.9, furniture: [] },
 ];
-/** Phòng của cấp nhà `lv` (kẹp 0..3 như houseLevel). */
+/** Phòng của cấp nhà `lv` (kẹp 0..5 như houseLevel). */
 export const roomFor = (lv) => ROOMS[houseLevel(lv).lv];
 const W = (lx, lz) => ({ x: INTERIOR.x + lx, z: INTERIOR.z + lz });
 /** Vùng đi bộ của phòng (tọa độ thế giới). Mép sàn = mép tường. */
@@ -45,7 +47,7 @@ export function registerRoom(lv, placed = []) {
 /** Cửa trước của nhà ngoài sân (thế giới). Nhà trống/lầu/hoa viên: cửa giữa; villa: cửa lệch phải 0,65·hw (khớp js/scene/land.js). */
 export function doorPoint(plot, lv = 0) {
   const h = houseLevel(lv), r = houseRect(plot, h.lv), cz = (r.z0 + r.z1) / 2;
-  return { x: plot.x + (h.lv >= 3 ? h.hw * 0.65 : 0), z: cz + plot.face * (h.hd + 0.04) };
+  return { x: plot.x + (h.lv === 3 ? h.hw * 0.65 : 0), z: cz + plot.face * (h.hd + 0.04) };
 }
 /** Người chơi p = {x,z} đủ gần cửa nhà (trong DOOR_R) để vào nhà? */
 export const nearDoor = (p, plot, lv = 0) => { const d = doorPoint(plot, lv); return Math.hypot(p.x - d.x, p.z - d.z) <= DOOR_R; };

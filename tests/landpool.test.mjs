@@ -7,7 +7,7 @@ import { PLOTS, LOT_W, LOT_D, houseRect, poolRect, houseLevel } from '../js/worl
 const inter = (a, b) => a.x0 < b.x1 && b.x0 < a.x1 && a.z0 < b.z1 && b.z0 < a.z1;
 
 test('chỉ villa (cấp 3) có hồ bơi', () => {
-  for (const p of PLOTS) { for (const lv of [0, 1, 2]) assert.equal(poolRect(p, lv), null); assert.ok(poolRect(p, 3)); assert.ok(poolRect(p, 9)); }
+  for (const p of PLOTS) { for (const lv of [0, 1, 2]) assert.equal(poolRect(p, lv), null); assert.ok(poolRect(p, 3)); for (const lv of [4, 5, 9]) assert.equal(poolRect(p, lv), null); }   // cấp 4–5: hồ nằm trong mô hình
 });
 test('hồ bơi nằm trong lô, không đè thân nhà, không chắn điểm đứng trước nhà', () => {
   for (const p of PLOTS) {

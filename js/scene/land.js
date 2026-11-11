@@ -1,6 +1,6 @@
 // Khu dân cư "xóm" (Phiên 36, bước 2): đường lát gạch xuống xóm + đường giữa, 10 lô đất có cột mốc và bảng số, nhà trống thô sơ được tặng.
 // Dữ liệu ở js/world/land.js (có test). refresh(land, reg) dựng lại bảng trạng thái từng lô và nhà theo xóm đang XEM.
-// Nhà: 4 cấp, MỖI CẤP MỘT MÔ HÌNH GLB (js/scene/houseGlb.js, assets/models/houses/). Không còn nhà do mã tự dựng; chỉ có khối tạm trong lúc mô hình đang nạp.
+// Nhà: 6 cấp (0–3 + Tuscan, La Mã ở Phiên 95), MỖI CẤP MỘT MÔ HÌNH GLB (js/scene/houseGlb.js, assets/models/houses/). Không còn nhà do mã tự dựng; chỉ có khối tạm trong lúc mô hình đang nạp.
 import * as THREE from 'three';
 import { villageTileTexture } from './textures.js';
 import { PLOTS, LAND_WALKS, LANE_Z, LOT_W, LOT_D, houseLevel, houseRect, plotById } from '../world/land.js';

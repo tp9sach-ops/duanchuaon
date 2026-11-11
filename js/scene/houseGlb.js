@@ -6,6 +6,8 @@
 //   nha-1-lau.glb       = "VIANNEY HOUSE 2" của fantecboisseau (CC-BY-4.0)   — nhà phố hiện đại 3 tầng, mặt tiền kính
 //   nha-2-hoa-vien.glb  = "Villa with Garden" (Sketchfab)                    — villa 2 tầng có hồ, cắt riêng phần nhà, tô màu đỉnh
 //   nha-3-villa.glb     = "Modern Luxury Villa House Building With Pool"     — villa mái bằng + hồ bơi dài, tô màu đỉnh
+//   nha-4-tuscan.glb    = "Bali Villa – Italian Influence" (SketchUp, giấy phép CHƯA RÕ) — biệt thự kiểu Tuscan, đã cắt/ thu nhỏ vừa lô 10,8×10,8 m, màu đỉnh, ~56k tam giác
+//   nha-5-la-ma.glb     = "Roman Villa" (SketchUp, giấy phép CHƯA RÕ)          — biệt thự kiểu La Mã, cùng cách xử lý, ~60k tam giác (cấp 4–5: Phiên 95)
 // Ghi công xem THIRD_PARTY.md.
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
@@ -16,6 +18,8 @@ export const HOUSE_GLB = {
   1: { url: 'assets/models/houses/nha-1-lau.glb', lift: 0.06 },
   2: { url: 'assets/models/houses/nha-2-hoa-vien.glb', lift: 0.06 },
   3: { url: 'assets/models/houses/nha-3-villa.glb', lift: 0.06 },
+  4: { url: 'assets/models/houses/nha-4-tuscan.glb', lift: 0.06 },
+  5: { url: 'assets/models/houses/nha-5-la-ma.glb', lift: 0.06 },
 };
 
 const store = new Map();   // lv -> { tpl, p }

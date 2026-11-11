@@ -32,7 +32,7 @@ test('làm xong một việc thì tự sang việc kế, không lặp lại vi�
     assert.ok(g.guide && QUESTS.some((q) => q.id === g.guide), 'guide hợp lệ ' + g.id);
     prog = mark(prog, g.guide);
   }
-  assert.equal(nextGoal({ story: doneStory(), prog, sen: 999, la: 999, own: { xom: 1, plot: 1, lv: 3 }, now: NOW }).kind, 'free');
+  assert.equal(nextGoal({ story: doneStory(), prog, sen: 999, la: 999, own: { xom: 1, plot: 1, lv: 5 }, now: NOW }).kind, 'free');
 });
 test('xong hết nhiệm vụ vẫn có mục tiêu "tự do" với lời gợi ý', () => {
   let prog = emptyProg(); for (const q of QUESTS) prog = mark(prog, q.id);

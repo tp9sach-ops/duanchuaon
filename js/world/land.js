@@ -32,6 +32,8 @@ export const HOUSE_LEVELS = [
   { lv: 1, ten: 'Nhà lầu', hw: 3.6, hd: 3, gia: 150 },
   { lv: 2, ten: 'Nhà hoa viên', hw: 3.6, hd: 3, gia: 400 },
   { lv: 3, ten: 'Villa hồ bơi', hw: 4.4, hd: 3.2, gia: 900 },
+  { lv: 4, ten: 'Biệt thự Tuscan', hw: 5.4, hd: 5.4, gia: 1500 },   // Phiên 95: mô hình đã gồm sân vườn, vừa khít lô → hồ bơi nằm trong mô hình, không có khối chặn riêng
+  { lv: 5, ten: 'Biệt thự La Mã', hw: 5.4, hd: 5.4, gia: 2400 },
 ];
 export const MAX_LV = HOUSE_LEVELS.length - 1;
 /** Thông tin cấp nhà; cấp sai (NaN, âm, quá lớn) được kẹp vào 0..MAX_LV. */
@@ -43,7 +45,7 @@ export const upgradeCost = (from, to) => Math.max(0, houseLevel(to).gia - houseL
  * PHẢI khớp js/scene/land.js `villa()`: rộng 1,7·hw, bắt đầu cách mặt nhà 0,8 m, sâu 3 m. Tâm nhà lấy từ houseRect.
  */
 export function poolRect(plot, lv = 0) {
-  const h = houseLevel(lv); if (h.lv < 3) return null;
+  const h = houseLevel(lv); if (h.lv !== 3) return null;
   const r = houseRect(plot, h.lv), c = (r.z0 + r.z1) / 2, a = c + plot.face * (h.hd + 0.8), b = c + plot.face * (h.hd + 3.8), pw = h.hw * 1.7, m = 0.25;
   return { x0: plot.x - pw / 2 - m, x1: plot.x + pw / 2 + m, z0: Math.min(a, b) - m, z1: Math.max(a, b) + m };
 }
