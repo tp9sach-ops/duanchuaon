@@ -75,9 +75,9 @@ Mỗi dòng dưới đây là NỘI DUNG cần thêm vào mã, gắn vào mục 
 |---|---|
 | G0.1 đối chiếu | **XONG (Phiên 99)** |
 | G0.2 ptg trả lời câu hỏi | chưa |
-| G0.3 sửa 4 test hỏng | chưa |
+| G0.3 sửa 4 test hỏng | **XONG (Phiên 100)** — 4 test đỏ #322, #328, #355, #767 đã sửa, `npm test` 869/869 |
 | G0.4 hỏi thứ tự phần CÁ | chưa |
-| G0.5 grep xác nhận mục THIẾU | chưa |
+| G0.5 grep xác nhận mục THIẾU | **XONG (Phiên 101)** — xem mục 8 |
 | G1.1 trở đi | chưa |
 
 ## 7. Câu hỏi mới cho ptg (phát sinh từ đối chiếu; có mặc định, cộng thêm vào 10 câu của GDD mục 16)
@@ -86,3 +86,17 @@ Mỗi dòng dưới đây là NỘI DUNG cần thêm vào mã, gắn vào mục 
 12. Giữ yêu quái sự kiện **3 lần/ngày** (Phiên 67) cho Yêu Đá/Nước/Lửa, và thêm Ma Tướng hằng tuần ở giai đoạn sau? Mặc định: giữ 3 lần/ngày, Ma Tướng tuần là sự kiện riêng (thay câu 2).
 13. **Chém khí** và **Thiết đầu công** đặt ở đâu trong hệ skill? Mặc định: Chém khí là skill chung (ai cũng có), Thiết đầu công là tuyệt kỹ Khinh công; không thuộc Hệ nào.
 14. Truyện: giữ `story.js`/`story2.js` (chuông Diệu Giang, tam độc) làm tuyến chính, còn chương 2–4 của GDD thành tuyến Hệ Phái? Mặc định: có. Gợi ý liên kết: ba mảnh chuông Đá/Nước/Lửa ứng ba loại yêu quái hiện có.
+
+## 8. Bổ sung Phiên 101 (đã `git clone` và grep thật; Node 22)
+
+**G0.5 — xác nhận mục THIẾU:** grep trong `js/` và `gas/` các từ `tu vi`, `oán khí`, `sinh lực`, `hồ lô`, `linh ấn`, `sổ thu phục`, `linh thú`/`ấp trứng`, `thần khí`/`trang bị`, `khai ngộ`/`pháp môn`/`hệ phái`, `Dã Mèo Rừng`, `thiền phái`/`guild` → **không có mã nào** (chỉ chữ "Linh thú" và "Thiền phái" trong nhãn nút mờ của `js/ui/menuLogic.js`). Mục THIẾU ở bảng mục 2 được xác nhận. `Khinh thân`, `Thiết đầu công` có đủ ở `js/world` và `js/ui`.
+
+**Phần "chưa kiểm" ở đầu file nay đã kiểm:**
+- **Boss chung (`yqCoop.js`)**: máu + túi lá chung chạy qua **Google Apps Script `gas/Yq.gs`** (thăm dò), KHÔNG qua Firebase. Firebase chỉ lo vị trí và chat (`js/net/firebaseTransport.js`, ≤ 4 lần gửi/giây, phòng tối đa 30 người). Kế hoạch G7.1 ("boss chung qua Firebase") phải đổi: hoặc giữ GAS, hoặc chuyển có chủ đích.
+- **ZONE**: đã nối một phần vào game (`js/ui/zoneGate.js`, `js/main.js`; cổng "Vườn thử"; test `zoneruntime`, `zonethu`). G7.4 không còn từ con số 0.
+
+**MÂU THUẪN MỚI (quan trọng): nạp tiền thật làm tăng sức mạnh.** `strengthOf = lv*6 + khinh*10 + √(tổng hạt sen từng kiếm)*2 + bonus` (`js/world/strength.js`, dòng 12–16). Thùng công đức (`js/ui/donate.js` → `addMerit`) đổi 1.000đ = 1 hạt sen, tối đa 50.000 sen mỗi khoản. Ví dụ: người chơi cấp 10 + Khinh thân 8 được 60 + 80 = 140; nạp 50.000 sen cộng thêm khoảng +447 sức mạnh, vượt xa mọi cách chơi thường. Điều này **trái GDD mục 13 và câu 5** (sức mạnh chiến đấu chỉ kiếm bằng chơi), và G1.1 dự định dựng Công trên `strengthOf` nên sẽ thừa hưởng lỗi này. **Đề xuất (chờ ptg):** bỏ thành phần `√sen` khỏi `strengthOf`, hoặc chỉ tính hạt sen kiếm bằng chơi (không tính khoản donate). Sửa nhỏ, test có sẵn (`tests/strength.test.mjs`) sẽ phải đổi theo. Cũng xem lại: hạt sen đang ảnh hưởng quy tắc "ném người" qua `strengthOf`.
+
+**Câu hỏi thêm cho ptg (có mặc định):**
+15. Bỏ `√hạt sen` khỏi `strengthOf` (nạp tiền không tăng sức mạnh)? Mặc định: bỏ.
+16. Boss chung giữ **GAS** (đã chạy) hay chuyển Firebase như GDD? Mặc định: giữ GAS cho tới khi đo thấy trễ.
