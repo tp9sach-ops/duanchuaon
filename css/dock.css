@@ -51,3 +51,41 @@ body.has-dock .fs-fab{display:none!important}
 .bg-nm{max-width:100%;padding:0 2px;font:500 10.5px/1.15 var(--sans,inherit);color:#d6d9e4;text-align:center;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;word-break:break-word}
 .bg-hint{margin:6px 0 0;font:400 12px/1.4 var(--sans,inherit);color:#aeb3c2}
 .bg-detail{position:sticky;bottom:-12px;margin:10px -14px -12px;padding:8px 14px;background:rgba(14,10,7,.97);border-top:1px solid rgba(217,178,95,.35);font:400 13px/1.35 var(--sans,inherit);color:#e8eaf2}.bg-detail b{color:#fff}
+
+/* ===== Phiên 100: nút chiến đấu + thanh máu yêu quái dựng lại ===== */
+.dk-b{--c1:#f1dba0;--c2:#5b4520;position:relative;overflow:visible;border:2px solid var(--c1);background:radial-gradient(circle at 50% 32%,rgba(58,46,26,.96),rgba(12,10,8,.95) 72%);box-shadow:0 0 0 2px rgba(0,0,0,.55),0 0 0 3.5px var(--c2),0 5px 14px rgba(0,0,0,.55),0 0 14px -4px var(--c1);transition:transform .1s,box-shadow .2s}
+.dk-b:active{transform:scale(.9);box-shadow:0 0 0 2px rgba(0,0,0,.55),0 0 0 3.5px var(--c1),0 0 22px 2px var(--c1)}
+.dk-b .dk-ic{position:relative;z-index:1}.dk-b .dk-tx{position:relative;z-index:1;text-shadow:0 1px 3px #000}
+.dk-ic svg{display:block;width:27px;height:27px;filter:drop-shadow(0 0 4px var(--c1));overflow:visible}.dk-b.big .dk-ic svg{width:34px;height:34px}.dk.small .dk-ic svg{width:22px;height:22px}
+.dk-ic .f1{fill:var(--c1)}.dk-ic .f2{fill:var(--c2)}.dk-ic .s1{stroke:var(--c1);fill:none;stroke-linecap:round;stroke-linejoin:round}.dk-ic .s2{stroke:var(--c2);fill:none;stroke-linecap:round;stroke-linejoin:round}
+.sk-da{--c1:#ffb347;--c2:#7a4a1a}.sk-thuong{--c1:#ff6a5a;--c2:#6b1a14}.sk-chemkhi{--c1:#7fe0ff;--c2:#0f4a66}.sk-thietdau{--c1:#ffe066;--c2:#6b5410}.sk-nemyq{--c1:#7be59a;--c2:#17592e}.sk-nhay{--c1:#cdbbff;--c2:#3c2a78}
+.dk-b[class*="sk-"].hot{background:radial-gradient(circle at 50% 32%,var(--c1),rgba(20,12,8,.9) 135%);color:#fff;border-color:#fff;animation:dkpulse2 .6s ease-in-out infinite alternate}
+.dk-b[class*="sk-"].hot .dk-ic .f1{fill:#fff}.dk-b[class*="sk-"].hot .dk-ic .s1{stroke:#fff}
+@keyframes dkpulse2{from{box-shadow:0 0 0 2px rgba(0,0,0,.5),0 0 0 3.5px var(--c2),0 0 12px -2px var(--c1)}to{box-shadow:0 0 0 2px rgba(0,0,0,.5),0 0 0 3.5px var(--c1),0 0 26px 3px var(--c1);transform:scale(1.06)}}
+.dk-cd{position:absolute;inset:0;border-radius:50%;pointer-events:none;z-index:2;background:conic-gradient(rgba(0,0,0,.7) calc(var(--cd,0) * 360deg),transparent 0)}
+.dk-sec{position:absolute;inset:0;z-index:3;display:flex;align-items:center;justify-content:center;pointer-events:none;font:800 19px/1 var(--sans,system-ui,sans-serif);color:#fff;text-shadow:0 1px 4px #000,0 0 8px var(--c1)}
+.dk-sec:empty{display:none}
+.dk-b.wait{opacity:1;filter:none}.dk-b.wait .dk-ic,.dk-b.wait .dk-tx{opacity:.5}
+.dk-b.rdy::after{content:"";position:absolute;inset:-3px;border-radius:50%;border:3px solid var(--c1);pointer-events:none;z-index:4;animation:dkrdy .7s ease-out forwards}
+@keyframes dkrdy{0%{transform:scale(1);opacity:1}100%{transform:scale(1.55);opacity:0}}
+@media (max-width:899px){.dk-ic svg{width:25px;height:25px}.dk-b.big .dk-ic svg{width:31px;height:31px}.dk-sec{font-size:17px}}
+@media (prefers-reduced-motion:reduce){.dk-b[class*="sk-"].hot{animation:none}.dk-b.rdy::after{animation:none;opacity:0}}
+/* Thanh máu yêu quái */
+.yq-hud{--yc:#e8552b;width:min(430px,calc(100vw - 150px));gap:5px;padding:8px 14px 10px;border-radius:14px;background:linear-gradient(180deg,rgba(40,24,16,.93),rgba(14,8,6,.93));border:1.5px solid #c9a24a;box-shadow:0 6px 22px rgba(0,0,0,.6),inset 0 0 0 1px rgba(255,214,130,.18),0 0 26px -6px var(--yc)}
+.yq-hud[data-t="da"]{--yc:#ffa83a}.yq-hud[data-t="nuoc"]{--yc:#4fc3f7}.yq-hud[data-t="lua"]{--yc:#ff5a2a}
+.yq-hud::before,.yq-hud::after{content:"";position:absolute;top:-6px;width:11px;height:11px;background:#c9a24a;transform:rotate(45deg);border:1.5px solid #3a2a10;box-shadow:0 0 8px var(--yc)}.yq-hud::before{left:14px}.yq-hud::after{right:14px}
+.yq-top{display:flex;align-items:center;gap:8px}
+.yq-name{font:700 16px/1.1 var(--serif,Georgia,serif);color:#ffe9b0;letter-spacing:.03em;text-shadow:0 1px 3px #000,0 0 10px var(--yc)}
+.yq-diff{padding:1px 9px;border-radius:999px;font:700 10.5px/1.6 var(--sans,system-ui,sans-serif);background:#1f4a2a;color:#d4ffd0;border:1px solid #6fcf7f}.yq-diff.d-cao{background:#5a1f1a;color:#ffd6cf;border-color:#ff7a6a}
+.yq-top .yq-time{margin-left:auto;color:#cfc6b0;font-size:11px}
+.yq-bar.boss{position:relative;height:21px;border-radius:11px;background:rgba(0,0,0,.65);border:1px solid rgba(255,214,130,.5);box-shadow:inset 0 2px 5px rgba(0,0,0,.7)}
+.yq-bar.boss i{position:absolute;left:0;top:0;bottom:0;height:auto;border-radius:11px 0 0 11px}
+.yq-ghost{background:#ffe08a!important;opacity:.9}
+.yq-fill{background:linear-gradient(180deg,#ff9a6a,#e8412b 55%,#9a2010)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.5);transition:width .12s}
+.yq-hud[data-t="da"] .yq-fill{background:linear-gradient(180deg,#ffd27a,#e8932b 55%,#8a4a10)!important}.yq-hud[data-t="nuoc"] .yq-fill{background:linear-gradient(180deg,#a8ecff,#2f9fd8 55%,#1a6a96)!important}
+.yq-bar.boss::before{content:"";position:absolute;left:0;right:0;top:0;height:45%;background:linear-gradient(180deg,rgba(255,255,255,.28),rgba(255,255,255,0));z-index:1;pointer-events:none}
+.yq-bar.boss::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(90deg,transparent calc(33.3% - 1px),rgba(0,0,0,.6) calc(33.3% - 1px),rgba(0,0,0,.6) 33.3%,transparent 33.3%,transparent calc(66.6% - 1px),rgba(0,0,0,.6) calc(66.6% - 1px),rgba(0,0,0,.6) 66.6%,transparent 66.6%)}
+.yq-num{position:absolute;inset:0;z-index:2;display:flex;align-items:center;justify-content:center;font:700 11.5px/1 var(--sans,system-ui,sans-serif);color:#fff;text-shadow:0 1px 3px #000}
+.yq-hud.low .yq-fill{animation:yqlow .55s ease-in-out infinite alternate}@keyframes yqlow{to{filter:brightness(1.6)}}
+.yq-me{gap:8px}.yq-melab{color:#cfc6b0;font:600 10.5px/1 var(--sans,system-ui,sans-serif)}.yq-me .yq-bar{height:9px;border:1px solid rgba(143,214,191,.4)}.yq-bar.me i{background:linear-gradient(90deg,#3fcf7a,#a6f06a);transition:width .15s}.yq-bar.me.low i{background:linear-gradient(90deg,#e8412b,#ff8a5a)}
+@media (prefers-reduced-motion:reduce){.yq-hud.low .yq-fill{animation:none}}
