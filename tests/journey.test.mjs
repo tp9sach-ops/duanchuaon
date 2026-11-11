@@ -44,11 +44,11 @@ test('nối dây: tab Lộ trình trong quest.js, LGT.spendSen, cầu gỗ bán 
   assert.ok(!/innerHTML/.test(j), 'giao diện lộ trình không dùng innerHTML');
 });
 
-test('trang Sức mạnh · Yêu quái: bậc theo sức mạnh, thu phục + sức mạnh thưởng theo số liệu, có giờ 15:00 và 20:00', () => {
+test('trang Sức mạnh · Yêu quái: bậc theo sức mạnh, thu phục + sức mạnh thưởng theo số liệu, có giờ 12:00, 16:00 và 20:00', () => {
   const p0 = pageSucManh({}); assert.equal(p0.done, 0); assert.equal(p0.tiles.length, 4 + 2);
   const p1 = pageSucManh({ str: 50, yq: { kills: 1, bonus: 3 } }); assert.equal(p1.tiles.filter((t) => t.id.startsWith('sm-') && /^sm-\d+$/.test(t.id) && t.done).length, 2);
   assert.ok(p1.tiles.find((t) => t.id === 'sm-yq-thu').done && p1.tiles.find((t) => t.id === 'sm-yq-bonus').done);
-  assert.match(p1.tiles.find((t) => t.id === 'sm-yq-thu').how[0], /15:00.*20:00/);
+  assert.match(p1.tiles.find((t) => t.id === 'sm-yq-thu').how[0], /12:00.*16:00.*20:00/);
   assert.equal(pageSucManh(null).tiles.length, 6);
 });
 
