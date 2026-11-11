@@ -1,41 +1,58 @@
-# Phiên 99 — BÀN GIAO: xong G0.1 (đối chiếu GDD v2 với mã thật)
-
-> Ngày 2026-11-11. Repo https://github.com/tp9sach-ops/duanchuaon (nhánh `main`). Phiên này CHỈ đọc mã và viết tài liệu; KHÔNG đổi mã game; không chạy `npm test` (không có gì để test).
-
-## 0. QUY TẮC BÀN GIAO (nguyên văn — chép vào mọi bản bàn giao)
+# PHIÊN 99 — Nhân vật chibi từ mô hình GLB có xương — BÀN GIAO
 
 > For the 9 Sạch monthly-archive project (and any long multi-session build): after EVERY reply, attach an updated handoff .md so a fresh session with no memory can continue exactly and in detail; if there isn't room to finish everything, send the handoff first; copy this rule verbatim into every handoff
 
-## 1. ptg yêu cầu (Phiên 99)
-"Lập kế hoạch để triển khai từng bước theo đúng cái tôi gửi (GDD v2), cập nhật thêm cách chơi, nội dung, quái, vật phẩm, skill... và làm từ bước 1." → Bước 1 của `docs/KE_HOACH_GDD_V2.md` là **G0.1** (đối chiếu GDD với mã thật). Đã làm xong mục này; theo quy tắc, DừNG và chờ ptg nói "tiếp tục".
+Đọc: PROMPT.md → HANDOFF.md (đầu file) → docs/PHIEN98.md (kế hoạch GDD v2) → file này. Nguồn mã thật: repo `tp9sach-ops/duanchuaon`, nhánh `main`.
 
-## 2. Kết quả
-- Tạo `docs/GDD_v2_DOICHIEU.md`: bảng đúng / lệch / thiếu theo từng hạng mục GDD, danh mục nội dung hiện có (quái, kỹ năng, vật phẩm, tiền tệ), kế hoạch bổ sung nội dung, điều chỉnh kế hoạch G1–G7 và 4 câu hỏi mới cho ptg.
-- **Trạng thái G0.1 = XONG (Phiên 99).** Cột Trạng thái trong `docs/KE_HOACH_GDD_V2.md` CHƯA được sửa (sửa nguyên file qua công cụ tốn kém); coi mục DOICHIEU mục 6 là nguồn đúng về tiến độ.
+## Yêu cầu Gp (2026-11-11)
+Gửi 3 mô hình `chibi_base.glb`, `chibi_base_body.glb`, `low_poly_chibi_base.glb`: đổi hình nhân vật game và các thao tác di chuyển, cầm nắm, chiến đấu dựa trên mô hình 3D; khung xương chuyển động mượt, chân thật, không lag.
 
-## 3. Phát hiện quan trọng nhất (chi tiết trong DOICHIEU)
-1. "Cấp độ" trong mã là 10 cấp công hạnh (`js/world/quests.js` LEVELS, xp 0 → 1800), dùng khắp nơi (Sinh lực, sát thương nhận, ném người, Khinh thân). Tu Vi 1–150 của GDD phải là hệ RIÊNG, đặt tên biến khác (`tuvi`), không đè `level`.
-2. Yêu quái hiện tại là BOSS SỰ KIỆN (`js/world/yeuquai.js`): 3 loại Đá/Nước/Lửa, **mỗi ngày 3 lần (12:00, 16:00, 20:00 giờ VN)**, dùng máu thật (hp), không có Oán Khí/Hồ Lô/Dao Động. GDD ghi "hằng tháng" là LỆCH. Chưa có quái thường.
-3. Đã có hai kỹ năng GDD không nhắc: **Chém khí** (`conKhi.js`, Phiên 93) và **Thiết đầu công** (`thietDau.js`, Phiên 90); cùng ném đá, thương, ném vật/người (`strength.js`), Khinh thân 8 bậc (`skills.js`).
-4. Cốt truyện thật: chương 1 (`story.js`) và chương 2 "Mảnh chuông Đá" (`story2.js`, chuông Diệu Giang + tam độc). Khác chương GDD v2 (chương 2 = Lễ Khai Ngộ). Cần ptg chọn cách hợp nhất.
-5. Chưa có: Hệ Ngũ Hành, Pháp Môn, Hồ Lô, Quy Y Viện, Sổ Thu Phục (có mẫu `dex` cá), Linh Thú, Thần Khí, 10 ô trang bị, Thiền Phái, Huyền Tinh, Linh Ấn. `js/world/zones.js` có sẵn loại zone QUAI/HAM nhưng cần xác nhận đã nối vào game chưa (G7.4).
-6. Công cụ tìm mã của phiên này trả "incomplete_results", nên mục "chưa có" được xác nhận bằng danh sách tên file trong `js/world` và `js/ui`, không phải grep toàn repo. Phiên sau nên `git clone` rồi grep thật trước khi viết G1.
+## Phát hiện về 3 file GLB (đã đo bằng mã)
+- Cả ba là **thân trần tư thế chữ T, MỘT lưới duy nhất, KHÔNG có xương (skin) và KHÔNG có hoạt ảnh**, không có texture (chỉ 1 vật liệu).
+- `low_poly_chibi_base`: 700 đỉnh, Y lên, mặt +z. `chibi_base`: 7.223 đỉnh, Y lên, mặt +z. `chibi_base_body`: 20.244 đỉnh, **Z lên** (đầu ở +z), nặng gấp ~29 lần bản low-poly → CHƯA dùng.
+- Hai file đầu cùng tỉ lệ (hông 0,22 · vai 0,45 · cổ 0,515 chiều cao). Chân rất ngắn (0,22 chiều cao) nên bước chân dùng góc lớn hơn nhân vật cũ.
+- Vì không có xương sẵn, mã TỰ GẮN bộ xương và tự tính trọng số da từ vị trí đỉnh.
 
-## 4. Việc kế tiếp
-1. **G0.2:** hỏi ptg 10 câu GDD mục 16 + 4 câu mới (DOICHIEU mục 7). Cho phép "mặc định". Ghi kết quả vào `PROMPT.md` mục 7 (cùng dòng nhật ký Phiên 98 và 99 còn thiếu).
-2. **G0.3:** sửa 4 test hỏng (`312`, `318`, `345`, `tutorial: chủ đề mới`). Cần `git clone` + `npm test` để thấy lỗi thật; có thể phải hỏi ptg đoạn mã.
-3. **G0.4:** hỏi ptg làm phần CÁ (Phiên 97) trước hay sau G1 (mặc định: sau).
-4. Rồi G1.1 (theo bản điều chỉnh ở DOICHIEU mục 5). Mỗi mục: làm → npm test → đẩy GitHub → báo → chờ "tiếp tục".
+## Đã làm
+| File | Nội dung |
+|---|---|
+| `js/world/chibiRig.js` (mới, thuần) | Mốc tỉ lệ, `skinOf` (trọng số da), `zoneOf` (vùng màu: da/áo/tay áo/quần/giày), `armTarget/armAngle`, `chibiPose` (poseFor → góc 7 xương, gồm vung côn, giơ tay khiêng, ném, nhặt) |
+| `js/scene/chibiBody.js` (mới) | Nạp GLB (`loadChibi`), chuẩn hóa cao 1,5 m, `prepareChibi`, `buildChibi` (SkinnedMesh + 7 Bone, màu đỉnh theo vùng), `applyChibiPose` |
+| `js/world/avatarChibi.js` (mới) | Nhân vật mới, cùng giao diện cũ + `setHold(bool)`, `act('throw'\|'grab')`. Mặt/râu/tóc búi/hào quang gắn xương đầu; áo polo 9 Sạch = vùng màu + cổ áo + logo ngực/lưng; cà sa NPC gắn xương hông; côn gắn xương tay phải |
+| `js/world/avatar.js` | `createAvatar` chọn thân GLB nếu đã nạp, không thì giữ nguyên thân dựng khối (`createProcAvatar`); xuất các hàm dùng chung |
+| `js/main.js` | Nạp GLB trước khi dựng cảnh (chờ tối đa 4 s) để mọi nhân vật/NPC/người chơi khác dùng chung |
+| `js/world/world.js`, `js/ui/carry.js`, `js/scene/carry.js` | Đang khiêng vật → giơ hai tay; nhặt → cúi nhặt; ném → vung tay phải; vật khiêng hạ từ 2,05 m xuống 1,85 m |
+| `assets/models/chibi/chibi-low.glb`, `chibi-mid.glb` | Bản sao 2 file GLB (low_poly_chibi_base, chibi_base) |
+| `tests/chibirig.test.mjs`, `tests/sim/*` | 9 test mới; sim thêm bản giả GLTFLoader + lớp three còn thiếu |
+| `sw.js` | `dgt-v106` |
 
-## 5. Chưa kiểm / rủi ro
-- Chưa đọc `docs/PHIEN81.md`, `PHIEN90.md`, `PHIEN91.md`, `js/world/yqCoop.js`, `zoneRuntime.js`, `zoneGate.js`, `zoneThu.js`, `throwPlayer`: nên đọc ở G7 và khi nối mạng.
-- `PROMPT.md` mục 7 vẫn thiếu dòng Phiên 98 và 99 (file lớn, chưa sửa).
+Công tắc URL: `?chibi=off` (về nhân vật dựng khối), `?chibi=mid` (mô hình 7.000 đỉnh).
 
-## 6. Prompt khởi động phiên sau (dán nguyên văn)
-```
-Dự án DIỆU GIANG TỰ. Repo: https://github.com/tp9sach-ops/duanchuaon
-Đọc PROMPT.md, docs/KE_HOACH_GDD_V2.md, docs/GDD_v2_DOICHIEU.md và docs/PHIEN99.md trước (HANDOFF.md ở gốc đã cũ).
-Clone repo, chạy npm test. Làm đúng MỘT mục nhỏ kế tiếp (G0.2 nếu tôi đã trả lời câu hỏi; không thì hỏi tôi). Xong thì npm test,
-đẩy GitHub (trùng tên ghi đè), báo tôi và CHỜ tôi nói "tiếp tục". Cần đoạn mã nào thì hỏi tôi, không đoán. Số liệu (TẠM) không tự chốt.
-Cuối câu trả lời LUÔN đính kèm file bàn giao cập nhật (docs/PHIENxx.md) và chép nguyên văn quy tắc bàn giao. Không đủ chỗ: gửi bàn giao TRƯỚC.
-```
+## Kiểm
+- `npm test`: **869 tổng, 865 đạt, 4 đỏ có sẵn (#322, #328, #355, #767) — không do phiên này**.
+- Dựng THẬT bằng three.js 0.160.1 trong Node: tải GLB, gắn xương, đặt tư thế rồi xuất đỉnh sau skin và vẽ ảnh: đứng, đi (2 nhịp), ngồi, gõ mõ, lạy, vung côn (nâng/chém), giơ tay khiêng, ném đều biến dạng đúng, không rách ở hông/vai/cổ. Nhân vật đủ bộ (mặt, tóc búi, râu bạc, cà sa) khớp đầu.
+- Chi phí: 60 nhân vật dựng 232 ms; cập nhật xương ~2,7 µs mỗi nhân vật mỗi khung (CPU); mỗi nhân vật 4.188 đỉnh.
+- **CHƯA xem trong trình duyệt thật** (cảnh + ánh sáng + điện thoại thật). Chưa đo FPS thật khi đông người.
+
+## Gp phải làm
+1. Tải các file trong `cap-nhat-phien99.zip` lên repo đúng đường dẫn (trùng tên thì ghi đè). Phiên này KHÔNG đẩy được lên GitHub (không có quyền ghi). **Hai file GLB là nhị phân nên phải tải lên bằng "Add file → Upload files"**. Thiếu GLB thì game vẫn chạy bằng nhân vật dựng khối cũ.
+2. Mở game, thử: đi, ngồi thiền, gõ mõ, lạy, "Chém khí", khiêng/ném đá. Báo chỗ nào xấu/lệch (ghi rõ tư thế nào, góc nào).
+3. Xác nhận nguồn + giấy phép của 3 file chibi (không có tên tác giả trong file) rồi bổ sung `THIRD_PARTY.md`.
+
+## Giới hạn / chưa làm
+- Thân trần không có tóc/quần áo riêng: áo, quần, giày chỉ là TÔ MÀU theo vùng trên lưới (trong lúc ngồi, vùng áo/quần theo đúng xương). Kiểu quần áo khác nhau (váy, áo dài…) chưa có.
+- Tay ngắn (0,37 m): giơ tay khiêng không chạm tới vật (vật nằm trên đầu 1,85 m). Có thể cần hạ vật thêm hoặc kéo dài tay.
+- Hai chân là một khối ngắn, không có đầu gối: bước đi chỉ xoay quanh hông. Chưa có chân tiếp đất (IK) nên khi chạy nhanh có thể trượt chân nhẹ.
+- Người chơi khác: chỉ đồng bộ state/speed qua mạng, chưa đồng bộ `setHold`/`act` (khiêng, ném, vung côn của người khác chưa thấy).
+- Chưa thêm động tác: nhảy, bơi, câu cá, đấm/đá (mới có vung côn, ném, nhặt, giơ tay khiêng). Chưa có hoạt ảnh chuyển trạng thái (đứng→ngồi) riêng, hiện dựa vào làm mượt `sit`.
+- `chibi_base_body.glb` chưa dùng (Z lên, 20.000 đỉnh).
+- Chưa tối ưu: dùng chung lưới + vật liệu giữa các nhân vật (hiện mỗi người một bản sao; chấp nhận được tới ~50 người).
+
+## VIỆC KẾ (từng mục, xong báo, chờ Gp "tiếp tục")
+1. Sau khi Gp thử trong game thật: chỉnh tư thế/màu/mặt theo phản hồi.
+2. Động tác còn thiếu: bơi (khớp `js/world/swim.js`), câu cá (`fishing.js`), nhảy, đồng bộ `setHold/act` cho người chơi khác (`js/net/roomClient.js`).
+3. Đo FPS khi đông người (50+) trên điện thoại; nếu cần gộp lưới/dùng chung vật liệu hoặc hạ chất lượng theo thiết bị.
+4. Tiếp tục kế hoạch GDD v2 (`docs/KE_HOACH_GDD_V2.md`, bước G0.1 …) và 4 test đỏ có sẵn.
+
+## Prompt khởi động cho phiên sau (dán nguyên)
+> Đọc PROMPT.md → HANDOFF.md (đầu file) → docs/PHIEN99.md. Repo `tp9sach-ops/duanchuaon`. Phiên 99 đã đưa nhân vật chibi từ GLB có bộ xương tự gắn (`js/world/chibiRig.js`, `js/scene/chibiBody.js`, `js/world/avatarChibi.js`). Kiểm repo đã có `assets/models/chibi/chibi-low.glb` chưa (nếu chưa, nhắc Gp tải bản zip lên). Gp báo kết quả thử trong game → chỉnh theo phản hồi (VIỆC KẾ 1). Làm một mục, `npm test` (4 test đỏ có sẵn #322, #328, #355, #767), đẩy GitHub (không đẩy được thì gửi zip), cập nhật PROMPT.md mục 7 + HANDOFF.md + docs/PHIEN100.md, gửi bàn giao, rồi CHỜ Gp nói "tiếp tục".
