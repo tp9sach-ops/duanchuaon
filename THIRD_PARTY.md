@@ -58,3 +58,6 @@ SOFTWARE.
 - Đã xử lý bằng công cụ riêng: bỏ chi tiết vụn + nền gốc, cắt vùng nhà chính, thu nhỏ vừa lô 10,8×10,8 m, giảm còn ~56–60 nghìn tam giác, thay texture bằng màu đỉnh trung bình (1–2 lần vẽ), thêm sân cỏ phẳng. Mỗi file ~1,1 MB.
 - **Tác giả / link nguồn / giấy phép: CHƯA BIẾT** — ptg cần gửi link Sketchfab/3D Warehouse của từng mô hình để ghi công trước khi công bố rộng.
 
+## Mô hình nhân vật chibi (`assets/models/chibi/chibi-low.glb`, `chibi-mid.glb`) — GIẤY PHÉP CHƯA RÕ
+- Do ptg gửi ngày 2026-11-11: `low_poly_chibi_base.glb` (→ `chibi-low.glb`, xuất từ Sketchfab, 700 đỉnh) và `chibi_base.glb` (→ `chibi-mid.glb`, xuất từ Sketchfab, 7.000 đỉnh). Tên tác giả và giấy phép KHÔNG có trong file; ptg cần xác nhận nguồn/giấy phép trước khi công bố rộng và bổ sung ghi công ở đây. Mã đã gắn xương và tô màu theo vùng (không sửa lưới).
+- `chibi_base_body.glb` (20.000 đỉnh) ptg cũng gửi nhưng CHƯA đưa vào repo.

@@ -1,6 +1,8 @@
 # HANDOFF — Web tâm linh "DIỆU GIANG TỰ" (chùa Việt 3D) — tên cũ: Linh Giang Tự (Phiên 5 đổi tên theo ptg)
 
-> **Cập nhật Phiên 96 (2026-11-11): mảnh chuông Đá trong Túi đồ + hiệu ứng ở vách Đại Phật (chương 2 xong hẳn) — ĐỌC `docs/PHIEN96.md` TRƯỚC (có "VIỆC KẾ" + prompt khởi động). `sw.js` = `dgt-v104`. 4 test đỏ là LỖI CÓ SẴN (#312, #318, #345, #756).**
+> **Cập nhật Phiên 99 (2026-11-11): NHÂN VẬT MỚI từ mô hình GLB có xương (chibi) + tư thế đi/ngồi/lạy/vung côn/giơ tay khiêng/ném/nhặt — ĐỌC `docs/PHIEN99.md` TRƯỚC (có mục "Gp phải làm": tải 2 file GLB lên `assets/models/chibi/`). `sw.js` = `dgt-v106`. 4 test đỏ là LỖI CÓ SẴN (#322, #328, #355, #767).**
+
+> **(cũ) Cập nhật Phiên 96 (2026-11-11): mảnh chuông Đá trong Túi đồ + hiệu ứng ở vách Đại Phật (chương 2 xong hẳn) — ĐỌC `docs/PHIEN96.md` TRƯỚC (có "VIỆC KẾ" + prompt khởi động). `sw.js` = `dgt-v104`. 4 test đỏ là LỖI CÓ SẴN (#312, #318, #345, #756).**
 
 > **(cũ) Cập nhật Phiên 95 (2026-11-10/11): CHƯƠNG 2 CỐT TRUYỆN "Mảnh chuông Đá" (thầy kể chuyện chuông → Ông Ba gốc đa → luyện Khinh thân bậc 2 → vách Đại Phật → báo thầy → mảnh chuông Đá) — ĐỌC `docs/PHIEN95.md` TRƯỚC (có "VIỆC KẾ" + prompt khởi động). `npm test` 858 tổng / 854 đạt; 4 test đỏ là LỖI CÓ SẴN (#312, #318, #345, #756). `sw.js` = `dgt-v103`. Phiên 91–94 xem `docs/PHIEN91.md` … `PHIEN94.md`.**
 
