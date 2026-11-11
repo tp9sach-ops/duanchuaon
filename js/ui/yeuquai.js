@@ -7,6 +7,8 @@ import { callApi, apiEnabled } from '../api.js';
 import { COOP_POLL_MS, coopKeyOk, buildReq, applyServer, lootFromServer, leavesGranted } from '../world/yqCoop.js';
 import { move } from '../world/layout.js';
 import { levelOf } from '../world/quests.js';
+import { pushHit, hitStyle, ghostStep, fmtNum, isLow } from '../world/yqFx.js';
+import { prefersReduced } from '../util.js';
 
 const KEY = 'lgt.yq';
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
@@ -18,14 +20,27 @@ export function initYeuQuai(hud, { toast = () => {} } = {}) {
   let stat = loadYq(null); try { stat = loadYq(localStorage.getItem(KEY)); } catch (_) { /* riêng tư */ }
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(stat)); } catch (_) { /* bỏ qua */ } };
   let force = '', forceDiff = 'cao'; try { const q = new URLSearchParams(location.search).get('yq'); if (q && YQ[q]) force = q; const yd = new URLSearchParams(location.search).get('yd'); if (yd && DIFF[yd]) forceDiff = yd; } catch (_) { /* bỏ qua */ }
-  const rng = rngSeed((Date.now() ^ 0x5bd1e995) >>> 0), view = LGT.yqView = { boss: null, shapes: [], wt: 0, flash: 0, loot: [], stones: [], type: '' };
+  const rng = rngSeed((Date.now() ^ 0x5bd1e995) >>> 0), view = LGT.yqView = { boss: null, shapes: [], wt: 0, flash: 0, loot: [], stones: [], hits: [], hitSeq: 0, type: '' };
   const pageId = (globalThis.crypto && crypto.randomUUID ? crypto.randomUUID() : 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10));
   let coopOn = false, dealt = 0, coopBusy = false, coopLast = 0, allDrops = [], lootBuilt = false, claimQ = [], inflight = [], rewarded = false;
   let boss = null, me = newPlayer(1), drops = [], cdStone = 0, cdSpear = 0, cdThrow = 0, spawnedKey = '', announced = false, lastT = performance.now();
 
+  // Phiên 100: thanh máu yêu quái dựng lại — khung vàng, huy hiệu độ khó, thanh máu có vệt trễ + vạch mốc 1/3, số máu, thanh máu của bạn
   const hudBox = el('div', 'yq-hud'); hudBox.hidden = true;
-  const bn = el('b', 'yq-name'), bb = el('i', 'yq-bar boss'), bf = el('i'), pl = el('div', 'yq-me'), pb = el('i', 'yq-bar me'), pf = el('i'), pt = el('span'), tm = el('small', 'yq-time');
-  bb.appendChild(bf); pb.appendChild(pf); pl.append(el('span', null, 'Máu của bạn'), pb, pt); hudBox.append(bn, bb, tm, pl); hud.appendChild(hudBox);
+  const bn = el('b', 'yq-name'), dfc = el('span', 'yq-diff'), tm = el('small', 'yq-time'), top = el('div', 'yq-top'), bb = el('i', 'yq-bar boss'), bg = el('i', 'yq-ghost'), bf = el('i', 'yq-fill'), bnum = el('span', 'yq-num');
+  const pl = el('div', 'yq-me'), pb = el('i', 'yq-bar me'), pf = el('i'), pt = el('span');
+  top.append(bn, dfc, tm); bb.append(bg, bf, bnum); pb.appendChild(pf); pl.append(el('span', 'yq-melab', 'Sức bạn'), pb, pt); hudBox.append(top, bb, pl); hud.appendChild(hudBox);
+  let ghost = null;
+  /** Rung nhẹ khung hình 3D (không rung khi người chơi chọn giảm chuyển động). */
+  function shake(px, ms) {
+    if (prefersReduced()) return; const c = document.querySelector('canvas'); if (!c || !c.animate) return;
+    try { c.animate([{ transform: 'translate(0,0)' }, { transform: `translate(${px}px,${-px * 0.6}px)` }, { transform: `translate(${-px}px,${px * 0.5}px)` }, { transform: `translate(${px * 0.5}px,${px * 0.3}px)` }, { transform: 'translate(0,0)' }], { duration: ms, easing: 'ease-out' }); } catch (_) { /* bỏ qua */ }
+  }
+  /** Báo cho cảnh 3D vẽ tia lửa + số sát thương, và rung màn hình. */
+  function fxHit(dmg, kind) {
+    if (!boss || boss.dead || !(dmg > 0)) return; const p = pos(), st = hitStyle(kind, dmg);
+    pushHit(view, { dmg: Math.floor(dmg), kind: st.kind, x: boss.x, z: boss.z, px: p ? p.x : boss.x, pz: p ? p.z : boss.z }); shake(st.shake, st.ms);
+  }
   const flash = el('div', 'yq-flash'); flash.hidden = true; hud.appendChild(flash);
 
   const level = () => levelOf(LGT.quests && LGT.quests.prog ? LGT.quests.prog.xp : 0).lv;
@@ -53,21 +68,20 @@ export function initYeuQuai(hud, { toast = () => {} } = {}) {
   }
 
   function stone() {
-    if (!boss || boss.dead) { if (LGT.farm) LGT.farm.stone(); return; }   // Phiên 107: không có yêu quái hằng tháng → ném vào quái bãi rừng
-    if (!here() || cdStone > 0) return; const d = distBoss(); if (d > STONE.range + YQ[boss.type].body) { toast('Yêu quái còn xa quá, lại gần hơn để ném đá.', 1800); return; }
+    if (!boss || boss.dead || !here() || cdStone > 0) return; const d = distBoss(); if (d > STONE.range + YQ[boss.type].body) { toast('Yêu quái còn xa quá, lại gần hơn để ném đá.', 1800); return; }
     cdStone = STONE.cd; const p = pos(), dmg = stoneDamage(str()); view.stones.push({ x0: p.x, z0: p.z, x1: boss.x, z1: boss.z, t: 0, dur: Math.max(0.15, d / STONE.speed), dmg });
   }
   function spear() {
-    if (!boss || boss.dead) { if (LGT.farm) LGT.farm.spear(); return; }   // Phiên 107
-    if (!here() || cdSpear > 0) return; if (distBoss() - YQ[boss.type].body > SPEAR.range) { toast('Lại gần yêu quái hơn mới đâm được thương.', 1800); return; }
-    cdSpear = SPEAR.cd; hit(spearDamage(str()));
+    if (!boss || boss.dead || !here() || cdSpear > 0) return; if (distBoss() - YQ[boss.type].body > SPEAR.range) { toast('Lại gần yêu quái hơn mới đâm được thương.', 1800); return; }
+    cdSpear = SPEAR.cd; hit(spearDamage(str()), 'thuong');
   }
   function throwBoss() {
     if (!boss || boss.dead || !here() || cdThrow > 0 || distBoss() - YQ[boss.type].body > SPEAR.range) return;
     const t = YQ[boss.type]; if (!canGrab({ lv: level(), str: str() }, { lv: t.lv, str: t.str }).ok) { toast(`Chưa đủ sức nhấc ${t.ten}: cần cấp lớn hơn ${t.lv} và sức mạnh lớn hơn ${t.str}.`, 3200); return; }
-    cdThrow = 6; toast(`Bạn nhấc ${t.ten} lên và ném xuống đất!`, 2600); hit(throwBossDamage(str()));
+    cdThrow = 6; toast(`Bạn nhấc ${t.ten} lên và ném xuống đất!`, 2600); hit(throwBossDamage(str()), 'nem');
   }
-  function hit(dmg) {
+  function hit(dmg, kind = 'da') {
+    fxHit(dmg, kind);
     if (coopOn) {   // đánh chung: không tự kết liễu — gửi sát thương lên máy chủ, máy chủ báo hết máu chung thì mới thu phục
       if (!boss || boss.dead || !(dmg > 0)) return; const real = Math.min(Math.max(0, boss.hp - 1), Math.floor(dmg)); dealt += Math.floor(dmg); boss.hp -= real; boss.dmgBy.ban = (boss.dmgBy.ban || 0) + Math.floor(dmg);
       if (boss.hp <= 1) coopLast = 0; return;   // máu cục bộ chạm đáy: đồng bộ ngay để biết đã hết máu chung chưa
@@ -106,26 +120,31 @@ export function initYeuQuai(hud, { toast = () => {} } = {}) {
       const p = pos(), events = stepBoss(boss, dt, p ? [{ id: 'ban', x: p.x, z: p.z }] : [], rng, (x, z, dx, dz) => move(x, z, dx, dz));
       for (const e of events) {
         if (e.k === 'windup') { view.shapes = e.shapes; view.wt = 0; view.dur = e.dur; }
-        else if (e.k === 'strike') { view.shapes = e.shapes; view.wt = -1; view.flash = 0.35; if (e.hits.includes('ban')) damageMe(hitDamage(boss.type, level(), boss.diff)); }
+        else if (e.k === 'strike') { view.shapes = e.shapes; view.wt = -1; view.flash = 0.35; if (e.hits.includes('ban')) damageMe(hitDamage(boss.type, level(), boss.diff)); const dB = distBoss(); if (dB < 22) shake(dB < 12 ? 9 : 4, 320); }
       }
       if (boss.state === 'windup') view.wt = Math.min(1, boss.t / windupOf(boss)); else if (boss.state === 'move') { view.shapes = []; view.wt = 0; }
     }
     view.flash = Math.max(0, (view.flash || 0) - dt);
     // đá đang bay
-    view.stones = view.stones.filter((s) => { s.t += dt; if (s.t < s.dur) return true; if (boss && !boss.dead) hit(s.dmg); return false; });
+    view.stones = view.stones.filter((s) => { s.t += dt; if (s.t < s.dur) return true; if (boss && !boss.dead) hit(s.dmg, 'da'); return false; });
     // nhặt lá bồ đề: ai chạm trước lấy trước (hiện mỗi máy tự nhặt; tranh nhặt giữa nhiều người cần máy chủ)
     if (drops.length) { drops = tickLoot(drops, dt); const p = pos(); if (p && here()) { const r = pickLoot(drops, p.x, p.z); if (r.got) { drops = r.drops; if (coopOn) { claimQ.push(r.got.id); coopLast = 0; } else { const n = LGT.merit && LGT.merit.addLa ? LGT.merit.addLa(r.got.la) : 0; toast(`Nhặt được ${n} lá bồ đề!`, 2200); } } } view.loot = drops; }
     coopSync();
     if (boss && boss.dead && !drops.length && !claimQ.length && !coopBusy) { boss = null; view.boss = null; view.shapes = []; }
     // thanh máu
     const on = !!boss && !boss.dead && here(); hudBox.hidden = !on;
-    if (on) { const t = YQ[boss.type]; bn.textContent = `${t.ten} · ${DIFF[boss.diff].ten} · ${boss.hp}/${boss.max}`; bf.style.width = `${Math.round(boss.hp / boss.max * 100)}%`; pf.style.width = `${Math.round(me.hp / me.max * 100)}%`; pt.textContent = `${me.hp}/${me.max}${me.inv > 0 ? ' · bất tử' : ''}`; tm.textContent = force ? 'Chế độ thử' : `Còn ${Math.floor(ph.secs / 60)} phút`; }
+    if (on) {
+      const t = YQ[boss.type], pct = Math.max(0, Math.min(100, boss.hp / boss.max * 100)); ghost = ghostStep(ghost, pct, dt);
+      bn.textContent = t.ten; dfc.textContent = DIFF[boss.diff].ten; dfc.className = `yq-diff d-${boss.diff}`; hudBox.dataset.t = boss.type; hudBox.classList.toggle('low', isLow(boss.hp, boss.max));
+      bf.style.width = `${pct.toFixed(1)}%`; bg.style.width = `${ghost.v.toFixed(1)}%`; bnum.textContent = `${fmtNum(boss.hp)} / ${fmtNum(boss.max)}`;
+      pf.style.width = `${Math.round(me.hp / me.max * 100)}%`; pb.classList.toggle('low', me.hp / me.max < 0.3); pt.textContent = `${me.hp}/${me.max}${me.inv > 0 ? ' · bất tử' : ''}`; tm.textContent = force ? 'Chế độ thử' : `Còn ${Math.floor(ph.secs / 60)} phút`;
+    } else ghost = null;
   }
   setInterval(tick, 50);
 
   LGT.yq = {
     get boss() { return boss; }, get active() { return !!boss && !boss.dead; }, get bonus() { return stat.bonus; }, get stat() { return stat; }, get hp() { return me; },
-    stone, spear, throwBoss, canThrowBoss, ramHit(dmg) { if (!boss || boss.dead || !(dmg > 0)) return false; hit(dmg); return true; },   // Phiên 90: Thiết đầu công
+    stone, spear, throwBoss, canThrowBoss, ramHit(dmg, kind = 'dau') { if (!boss || boss.dead || !(dmg > 0)) return false; hit(dmg, kind); return true; },   // Phiên 90: Thiết đầu công
     status() { const a = !!boss && !boss.dead && here(), d = distBoss(); return { active: a, stoneCd: cdStone, spearCd: cdSpear, ten: a ? YQ[boss.type].ten : '', far: a ? d > STONE.range + YQ[boss.type].body : false, near: a ? d - YQ[boss.type].body <= SPEAR.range : false, canThrow: a && canThrowBoss() }; },
   };
   return LGT.yq;
