@@ -1,6 +1,7 @@
 // Thảm đỏ viền vàng + lưới bồ đoàn tròn trong chánh điện (vị trí lấy từ js/world/seats.js, một nguồn duy nhất). Tự dựng bằng khối hình học.
 import * as THREE from 'three';
 import { SEATS, RUG, SEAT_R } from '../world/seats.js';
+import { heOfSeat, HE_COLOR } from '../world/heSeats.js';
 import { HALL } from '../world/layout.js';
 import { rugTexture } from './textures.js';
 
@@ -17,13 +18,15 @@ export function buildCushions() {
 
   // Bồ đoàn: khối cầu dẹt kiểu quả bí (nâu) + nút tròn trên đỉnh, dùng InstancedMesh cho nhẹ
   const n = SEATS.length, m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), p = new THREE.Vector3();
-  const body = new THREE.InstancedMesh(new THREE.SphereGeometry(SEAT_R, 18, 10), new THREE.MeshStandardMaterial({ color: 0x8a5a2a, roughness: 0.85 }), n);
+  const body = new THREE.InstancedMesh(new THREE.SphereGeometry(SEAT_R, 18, 10), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.85 }), n);   // màu theo từng cái (G2.4b: 5 bồ đoàn Hệ có màu Ngũ Hành)
+  const brown = new THREE.Color(0x8a5a2a), tint = new THREE.Color();
   const top = new THREE.InstancedMesh(new THREE.SphereGeometry(0.07, 8, 6), new THREE.MeshStandardMaterial({ color: 0xd9b25f, roughness: 0.5, metalness: 0.3 }), n);
   SEATS.forEach((st, i) => {
     body.setMatrixAt(i, m4.compose(p.set(st.x, y + 0.13, st.z), q, s.set(1, 0.42, 1)));
     top.setMatrixAt(i, m4.compose(p.set(st.x, y + 0.29, st.z), q, s.set(1, 0.7, 1)));
+    const he = heOfSeat(st.id); body.setColorAt(i, he ? tint.setHex(HE_COLOR[he]) : brown);
   });
-  body.instanceMatrix.needsUpdate = top.instanceMatrix.needsUpdate = true;
+  body.instanceMatrix.needsUpdate = top.instanceMatrix.needsUpdate = true; if (body.instanceColor) body.instanceColor.needsUpdate = true;
   g.add(body, top);
   return g;
 }
