@@ -12,3 +12,13 @@ export const STATS_CFG = Object.freeze({
 });
 // Đường cong Tu Vi (GDD v2 mục 4.2, G1.2): EXP để lên từ cấp n lên cấp n+1 = heSo × n^mu, làm tròn. Các mốc "≈ 1.200 / 6.900 / 21.000..." trong GDD chính là giá trị này tại n = 10 / 30 / 60... (không phải tổng tích lũy).
 export const EXP_CFG = Object.freeze({ tam: true, heSo: 30, mu: 1.6 });
+// Công thức sát thương mới (GDD v2 mục 6.4, G1.3). Chỉ dành cho kỹ năng MỚI; ném đá, thương, chém khí, thiết đầu công giữ công thức cũ (xem tests/combat.test.mjs).
+export const COMBAT_CFG = Object.freeze({
+  tam: true,
+  kLoi: 1.3,        // đánh trúng Hệ bị mình khắc
+  kThuong: 1,       // không khắc, không bị khắc
+  kBat: 0.8,        // đánh trúng Hệ khắc mình
+  chiMang: 1.5,     // nhân sát thương khi chí mạng
+  thuNen: 100,      // hằng số trong 100 ÷ (100 + Thủ)
+  toiThieu: 1,      // đòn trúng luôn gây ít nhất 1 (khi hệ số skill > 0)
+});
