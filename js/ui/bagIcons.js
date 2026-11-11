@@ -23,6 +23,7 @@ const DRAW = {
   turtle: (c) => [ell(24, 28, 15, 9, shade(c, -0.1)), path('M10 28 Q24 4 38 28Z', c, { stroke: shade(c, -0.35), 'stroke-width': 1.5 }), line(24, 12, 24, 28, shade(c, -0.35), 1.2), line(17, 17, 15, 28, shade(c, -0.35), 1.2), line(31, 17, 33, 28, shade(c, -0.35), 1.2), circ(40, 27, 4.5, '#8fb36a'), circ(41.5, 26, 1, '#222'), ell(14, 38, 4, 3, '#8fb36a'), ell(32, 38, 4, 3, '#8fb36a')],
   squid: (c) => [path('M24 4 Q38 14 34 28 L14 28 Q10 14 24 4Z', c), ell(24, 30, 10, 3, shade(c, -0.2)), ...[14, 19, 24, 29, 34].map((x, i) => path(`M${x} 30 Q${x + (i % 2 ? 3 : -3)} 38 ${x} 44`, 'none', { stroke: shade(c, -0.1), 'stroke-width': 2.5, 'stroke-linecap': 'round' })), circ(19, 21, 2.2, '#fff'), circ(29, 21, 2.2, '#fff'), circ(19, 21, 1, '#222'), circ(29, 21, 1, '#222')],
   power: () => [rect(5, 20, 7, 12, '#4a4f58', 2), rect(12, 17, 6, 18, '#6a707c', 2), rect(18, 23, 12, 6, '#b9bec8', 2), rect(30, 17, 6, 18, '#6a707c', 2), rect(36, 20, 7, 12, '#4a4f58', 2)],
+  bell: (c) => [path('M24 6 C15 6 12 16 11 27 L8 35 L40 35 L37 27 C36 16 33 6 24 6Z', c, { stroke: shade(c, -0.5), 'stroke-width': 1.6 }), path('M15 14 L21 8 L19 20 Z', shade(c, 0.35), { opacity: 0.55 }), line(8, 35, 40, 35, shade(c, -0.5), 2.4), circ(24, 39, 3, shade(c, -0.3)), line(24, 4, 24, 7, shade(c, -0.5), 2)],
   wing: () => [path('M8 36 C10 16 26 8 42 8 C38 26 28 36 8 36Z', '#e9eef5', { stroke: '#9fb2c9', 'stroke-width': 1.5 }), line(10, 35, 36, 12, '#9fb2c9', 1.5), line(18, 33, 27, 22, '#9fb2c9', 1.2), line(14, 34, 22, 25, '#9fb2c9', 1.2)],
   house: () => [path('M5 24 L24 8 L43 24Z', '#b5523b', { stroke: '#7a3322', 'stroke-width': 1.5 }), rect(10, 24, 28, 17, '#e9dcc0'), rect(20, 29, 8, 12, '#7a5230', 1), rect(12, 27, 5, 5, '#8fc6ea'), rect(31, 27, 5, 5, '#8fc6ea')],
   board: (c) => [rect(5, 20, 38, 8, c, 4, { stroke: shade(c, -0.4), 'stroke-width': 1.5 }), rect(14, 20, 5, 8, '#1f64d0'), rect(29, 20, 5, 8, '#1f64d0'), circ(13, 35, 4, '#2a2a2a'), circ(35, 35, 4, '#2a2a2a'), circ(13, 35, 1.5, '#bbb'), circ(35, 35, 1.5, '#bbb'), rect(11, 28, 3, 3, '#555'), rect(34, 28, 3, 3, '#555')],
@@ -45,7 +46,7 @@ const DRAW = {
   tvunit: (c) => [rect(7, 6, 34, 21, '#222a36', 2, { stroke: '#555', 'stroke-width': 1.5 }), rect(10, 9, 28, 15, '#5aa0d8', 1), rect(8, 28, 32, 13, c, 2), line(24, 29, 24, 40, shade(c, -0.35), 1.2)],
   wardrobe: (c) => [rect(9, 4, 30, 38, c, 2, { stroke: shade(c, -0.35), 'stroke-width': 1.5 }), line(24, 5, 24, 41, shade(c, -0.35), 1.5), circ(21, 24, 1.6, '#d9a63a'), circ(27, 24, 1.6, '#d9a63a'), rect(11, 7, 11, 14, shade(c, 0.12), 1), rect(26, 7, 11, 14, shade(c, 0.12), 1)],
 };
-const DEFAULT_COLOR = { orb: '#8d98a3', fish: '#e8863a', turtle: '#6b8f4e', squid: '#c9a0c9', board: '#f2a31b' };
+const DEFAULT_COLOR = { orb: '#8d98a3', fish: '#e8863a', turtle: '#6b8f4e', squid: '#c9a0c9', board: '#f2a31b', bell: '#b9b2a4' };
 
 export function icon(ic) {
   const k = ic && typeof ic.k === 'string' ? ic.k : '', fn = DRAW[k];

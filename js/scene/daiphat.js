@@ -63,5 +63,19 @@ export function buildDaiPhat() {
     const cap = new THREE.Mesh(new THREE.ConeGeometry(0.5, 0.35, 4), stone2); cap.rotation.y = Math.PI / 4; cap.position.set(l.x, 1.78, l.z); root.add(cap);
   }
   void stone;
+
+  // ---- Phiên 96: MẢNH CHUÔNG ĐÁ (chương 2 cốt truyện). Lơ lửng, sáng nhịp thở trước chân vách khi người chơi đang ở bước tìm mảnh chuông.
+  const shard = new THREE.Group(); shard.visible = false;
+  const core = new THREE.Mesh(new THREE.OctahedronGeometry(0.42, 0), new THREE.MeshStandardMaterial({ color: 0xb9b2a4, roughness: 0.55, metalness: 0.35, emissive: 0xffc861, emissiveIntensity: 0.9, flatShading: true }));
+  core.scale.set(0.8, 1.35, 0.8); shard.add(core);
+  const halo = new THREE.Mesh(new THREE.SphereGeometry(0.95, 16, 12), new THREE.MeshBasicMaterial({ color: 0xffd98a, transparent: true, opacity: 0.18, blending: THREE.AdditiveBlending, depthWrite: false })); shard.add(halo);
+  const ring = new THREE.Mesh(new THREE.RingGeometry(0.72, 0.78, 40), new THREE.MeshBasicMaterial({ color: 0xffe3a6, transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending, depthWrite: false })); ring.material.side = THREE.DoubleSide; ring.rotation.x = Math.PI / 2; shard.add(ring);
+  shard.position.set(DAI_PHAT.face - 2.4, 1.75, DAI_PHAT.z); shard.name = 'manh-chuong-da'; root.add(shard);
+  /** Gọi mỗi khung hình: on = có hiện mảnh chuông không (cốt truyện đang ở bước tìm / báo). */
+  root.userData.tickShard = (t, on) => {
+    shard.visible = !!on; if (!on) return;
+    shard.position.y = 1.75 + Math.sin(t * 1.6) * 0.18; core.rotation.y = t * 0.9; ring.rotation.z = t * 0.6;
+    const k = 0.5 + 0.5 * Math.sin(t * 2.2); halo.material.opacity = 0.12 + 0.14 * k; halo.scale.setScalar(0.9 + 0.2 * k); core.material.emissiveIntensity = 0.6 + 0.8 * k;
+  };
   return root;
 }

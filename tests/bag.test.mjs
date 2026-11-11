@@ -31,3 +31,10 @@ test('cá khác loài có hình khác nhau theo loại: rùa/ba ba → turtle, m
   const by = Object.fromEntries(S[2].rows.map((r) => [r.ten, r.ic]));
   assert.equal(by['Cá chép'].k, 'fish'); assert.equal(by['Rùa nước'].k, 'turtle'); assert.equal(by['Ba ba'].k, 'turtle'); assert.equal(by['Mực ống'].k, 'squid'); assert.equal(by['Cá koi'].c, '#f0c23a');
 });
+
+test('Mảnh chuông Diệu Giang: 3 ô, mảnh chưa có xám + n=0, mảnh Đá có màu khi đã nhận; thiếu ctx vẫn dựng được', () => {
+  const sec = (ctx) => bagSections(ctx).find((x) => x.title === 'Mảnh chuông Diệu Giang');
+  const a = sec({}); assert.equal(a.rows.length, 3); assert.ok(a.rows.every((r) => r.ic.k === 'bell' && r.n === 0 && r.ic.c === '#4b4f57' && !r.trong));
+  const b = sec({ bell: { da: true } }); assert.equal(b.rows[0].n, 1); assert.notEqual(b.rows[0].ic.c, '#4b4f57'); assert.ok(b.rows[0].mo.includes('đã có')); assert.equal(b.rows[1].n, 0);
+  assert.ok(BAG_ICON_KINDS.includes('bell')); assert.ok(sec({ bell: 5 }).rows.every((r) => r.n === 0));
+});

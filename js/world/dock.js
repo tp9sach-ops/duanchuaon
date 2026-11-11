@@ -82,7 +82,7 @@ export function loadSeen(raw) {
 }
 
 /** Các loại hình trong ô Túi đồ (Phiên 92). js/ui/bagIcons.js vẽ mỗi loại một hình; loại lạ được vẽ ô dấu hỏi. */
-export const BAG_ICON_KINDS = ['sen', 'la', 'orb', 'fish', 'turtle', 'squid', 'power', 'wing', 'house', 'board',
+export const BAG_ICON_KINDS = ['sen', 'la', 'orb', 'fish', 'turtle', 'squid', 'power', 'wing', 'house', 'board', 'bell',
   'altar', 'bed', 'bench', 'chair', 'crate', 'floorlamp', 'lamp', 'lantern', 'plant', 'rug', 'shelf', 'sofa', 'statue', 'stool', 'table', 'tank', 'tvunit', 'wardrobe'];
 const ORB_COLOR = { go: '#a8763e', da: '#8d98a3', ngoc: '#3fbf9b', luuly: '#4a6fe0', kim: '#f0c23a' };
 const FISH_COLORS = ['#e8863a', '#7aa5c9', '#6b8f4e', '#b9a27a', '#c96a5a', '#8e7cc3', '#5aa9a0'];
@@ -112,5 +112,8 @@ export function bagSections(ctx = {}) {
   S.push({ title: 'Nội thất', rows: fRows.length ? fRows : [{ ten: 'Chưa có món nào', mo: 'Mua ở “Cửa hàng” khi đang ở trong nhà', trong: true }] });
   const kb = Math.min(MAX_BAC, num(c.khinh)), own = isObj(c.land) && isObj(c.land.own) ? c.land.own : null;
   S.push({ title: 'Thân pháp & nhà', rows: [{ ten: 'Sức mạnh', mo: c.strength ? `${num(c.strength.value)} · ${String(c.strength.tier || '')} · khiêng tối đa ${num(c.strength.limit)} kg` : 'chưa có', ic: { k: 'power' } }, { ten: 'Khinh thân', mo: kb > 0 ? `bậc ${kb}/${MAX_BAC} · ${KHINH_TEN[kb]}` : 'chưa mở', ic: { k: 'wing' } }, { ten: 'Nhà', mo: own ? houseLevel(own.lv).ten : 'chưa có đất', ic: { k: 'house' } }, { ten: BOARD.ten, mo: isObj(c.board) && c.board.own ? (c.board.on ? 'đang đứng trên ván · đi nhanh gấp đôi' : 'đã có · bấm “Lên ván” để dùng') : `chưa có — ${BOARD.gia} hạt sen ở Điện Máy Lam Sen`, ic: { k: 'board', c: '#f2a31b' } }] });
+  // Phiên 96: ba mảnh Đại hồng chung (cốt truyện). ctx.bell = { da, nuoc, lua } (true = đã có). Mảnh chưa có hiện mờ (c: màu xám).
+  const bl = isObj(c.bell) ? c.bell : {}, shardRow = (id, ten, hint) => ({ ten, mo: bl[id] ? 'đã có · giữ cho lễ đúc chuông' : hint, ic: { k: 'bell', c: bl[id] ? ({ da: '#b9b2a4', nuoc: '#6fb7e8', lua: '#f26a3d' })[id] : '#4b4f57' }, n: bl[id] ? 1 : 0 });
+  S.push({ title: 'Mảnh chuông Diệu Giang', rows: [shardRow('da', 'Mảnh Đá', 'chưa có · tìm ở vách Đại Phật (Cốt truyện chương 2)'), shardRow('nuoc', 'Mảnh Nước', 'chưa có · sẽ mở ở chương sau'), shardRow('lua', 'Mảnh Lửa', 'chưa có · sẽ mở ở chương sau')] });
   return S;
 }

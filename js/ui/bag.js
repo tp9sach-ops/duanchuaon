@@ -23,7 +23,7 @@ export function initBag(hud) {
   function draw() {
     list.textContent = ''; picked = null; detail.textContent = 'Bấm vào một ô để xem chi tiết.';
     const la = LGT.merit && LGT.merit.leaf ? LGT.merit.leaf.la : 0, ns = LGT.skill ? LGT.skill.level : 0;
-    for (const s of bagSections({ sen: LGT.getSen ? LGT.getSen() : 0, la, fish: LGT.fishing && LGT.fishing.state, furni: LGT.furni && LGT.furni.state, khinh: ns, board: LGT.board && LGT.board.status(), land: LGT.land && LGT.land.state, strength: LGT.strength ? { value: LGT.strength.value, tier: LGT.strength.tier, limit: LGT.strength.limit } : null })) {
+    for (const s of bagSections({ sen: LGT.getSen ? LGT.getSen() : 0, la, fish: LGT.fishing && LGT.fishing.state, furni: LGT.furni && LGT.furni.state, khinh: ns, board: LGT.board && LGT.board.status(), land: LGT.land && LGT.land.state, bell: LGT.story && LGT.story.state2 ? { da: !!LGT.story.state2.shards.da } : null, strength: LGT.strength ? { value: LGT.strength.value, tier: LGT.strength.tier, limit: LGT.strength.limit } : null })) {
       const sec = el('div', 'bg-sec'); sec.appendChild(el('h4', null, s.title));
       const grid = el('div', 'bg-grid'); let cells = 0, hint = '';
       for (const r of s.rows) {

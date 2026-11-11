@@ -327,7 +327,7 @@ function buildPineWoods(g) {
 export function buildOutside() {
   const group = new THREE.Group();
   buildGround(group); buildStreet(group); buildVillageGate(group); buildHouses(group); lamps(group); buildFences(group); buildDecor(group); buildFestoons(group); buildMarket(group); buildForest(group); mountains(group);
-  const wf = buildWaterfall(group); buildForestGlade(group); group.add(buildDaiPhat()); group.add(buildBaoThap()); group.add(buildRiver()); const pw = buildPineWoods(group);
+  const wf = buildWaterfall(group); buildForestGlade(group); const daiPhat = buildDaiPhat(); group.add(daiPhat); group.add(buildBaoThap()); group.add(buildRiver()); const pw = buildPineWoods(group);
   group.add(buildStore9Sach()); group.add(buildTachHoa()); group.add(buildPhoneShop()); group.add(buildElectronicsStore()); group.add(buildJewelryStore());   // Cửa hàng 9 Sạch (nhà phố mặt đường làng, bên phải)
   // đường mòn đất (Đông, Tây) và hai bãi
   const dt = dirtTex(); dt.repeat.set(30, 3);
@@ -336,6 +336,7 @@ export function buildOutside() {
     group,
     update(t) {
       pw.update(t);
+      { const S = window.LGT && window.LGT.story, st = S && S.state2 && S.state && S.state.step === 'done' ? S.state2.step : ''; daiPhat.userData.tickShard(t, st === 'cliff' || st === 'report'); }   // Phiên 96: mảnh chuông Đá (chương 2)
       wf.ft.offset.y = -t * 0.55;
       wf.mist.forEach((s, i) => { s.position.y = s.userData.y0 + Math.sin(t * 0.8 + s.userData.ph) * 0.7; s.material.opacity = 0.35 + 0.2 * Math.sin(t * 0.6 + i); });
     },
