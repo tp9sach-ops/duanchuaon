@@ -11,7 +11,7 @@
 - `js/data/elements.js`: bảng `HE_KHAC` (Kim→Mộc→Thổ→Thủy→Hỏa→Kim), `HE_SINH` (Kim→Thủy→Mộc→Hỏa→Thổ→Kim), `HE_LIST`, `HE_NAME`, `ELEMENT_CFG` (TẠM: +5%/người, tối đa +10%, tầm 10 m, Hội Tụ +10%). Tất cả đóng băng.
 - `js/world/elements.js` (logic thuần): `normHe`, `heName`, `heKhac`, `heBiKhac`, `heSinh`, `heSinhRa`, `relation(atk, def)` → 'loi'|'bat'|'thuong' (đưa thẳng vào `damageOf({rel})` của combat.js), `kHeOf`, `sinhBonus({he, allies:[{he, dist}]})`, `isHoiTu(hes)`, `hoiTuBonus(hes)`. Hệ lạ/chưa chọn → 'thuong', 0, không ném lỗi.
 - `tests/elements.test.mjs` (9 test): bảng 5×5 đủ (5 loi, 5 bat, 15 thuong, đối xứng), vòng khắc/sinh, chiều ngược khớp GDD 5.3 và 10.3, K_hệ nối damageOf (100 → 130 / 80 / 100), tương sinh (trần 10%, đúng 10 m tính, 10,01 m không), Hội Tụ, đầu vào lạ.
-- `package.json`: thêm `tests/elements.test.mjs` vào `npm test`. `npm test` trên bản clone: 958/958 đạt (số tổng tƒÉng hơn 936 ghi ở Phiên 108 vì repo đã có thêm test sau đó).
+- `package.json`: thêm `tests/elements.test.mjs` vào `npm test`. `npm test` trên bản clone: 958/958 đạt (số tổng tăng hơn 936 ghi ở Phiên 108 vì repo đã có thêm test sau đó).
 
 ## Chưa làm / lưu ý
 - Logic này CHƯA nối vào game (chưa có Hệ của người chơi hay của quái; Hệ vào ở G2.4 Lễ Khai Ngộ và dữ liệu quái G2.2/G3). Không đổi gì ở giao diện, `sw.js` không cần tăng VERSION.
@@ -26,4 +26,4 @@
 Với yêu cầu "thêm quái cố định để farm công đức": bãi rừng đã có quái (G3.6, Phiên 106–107). Thêm quái / vùng mới nằm ở G3.6 mở rộng và G4.1–G4.2, làm khi ptg chọn (có thể làm trước G2.2 nếu ptg muốn).
 
 ## Prompt khởi động cho phiên sau (dán nguyên)
-> Đọc PROMPT.md → docs/PHIEN108.md → docs/PHIEN109.md → docs/KE_HOACH_GDD_V2.md. Repo `tp9sach-ops/duanchuaon`. Đã XONG: G0.1, G0.3, G0.5, G1.1–G1.4, G3.6, G1.6a, Tự Động Hàng Yêu, G2.1. Chạy `npm test` trước, sửa test đỏ nếu có. Việc đầu: đánh dấu G2.1 XONG trong KE_HOACH_GDD_V2.md. Làm MỘT mục theo lời ptg (mặc định G2.2), gửi bàn giao docs/PHIEN110.md, rồi CHỜb ptg nói "tiếp tục". Chỉ đọc những file cần thiết.
+> Đọc PROMPT.md → docs/PHIEN108.md → docs/PHIEN109.md → docs/KE_HOACH_GDD_V2.md. Repo `tp9sach-ops/duanchuaon`. Đã XONG: G0.1, G0.3, G0.5, G1.1–G1.4, G3.6, G1.6a, Tự Động Hàng Yêu, G2.1. Chạy `npm test` trước, sửa test đỏ nếu có. Việc đầu: đánh dấu G2.1 XONG trong KE_HOACH_GDD_V2.md. Làm MỘT mục theo lời ptg (mặc định G2.2), gửi bàn giao docs/PHIEN110.md, rồi CHỜ ptg nói "tiếp tục". Chỉ đọc những file cần thiết.
