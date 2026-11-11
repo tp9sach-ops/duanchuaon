@@ -78,7 +78,7 @@ export function buildChibi(palette, t = tpl) {
   b.legR.add(b.shinR); b.shinR.position.set(0, -LIMB.thigh, 0); b.shinR.add(b.footR); b.footR.position.set(0, -LIMB.shin, 0);
   const mesh = new THREE.SkinnedMesh(g, mat); mesh.add(b.hips); mesh.updateMatrixWorld(true);
   const skeleton = new THREE.Skeleton(BONES.map((nm) => b[nm])); mesh.bind(skeleton);
-  mesh.frustumCulled = false;   // hộp bao tính theo thế T; tay giơ/ngả vẫn nằm trong nhưng thôi khỎ i cắt nhầm khi lăn trên vai
+  mesh.frustumCulled = false;   // hộp bao tính theo thế T; tay giơ/ngả vẫn nằm trong nhưng thôi khỏi cắt nhầm khi lăn trên vai
   mesh.castShadow = true;
   return { mesh, bones: b, skeleton, head: t.head, torso: t.torso, dispose() { g.dispose(); mat.dispose(); skeleton.dispose(); } };
 }
