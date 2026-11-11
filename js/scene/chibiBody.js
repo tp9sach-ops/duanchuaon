@@ -1,8 +1,8 @@
 // Thân nhân vật chibi từ file GLB (Phiên 99): nạp mô hình, chuẩn hóa (cao 1,5 m, chân ở y = 0, nhìn +z), tính trọng số xương + vùng màu, rồi dựng SkinnedMesh có bộ xương cho từng nhân vật.
-// Logic xương/vùng màu THUẦN nằm ở js/world/chibiRig.js (có test). File này chỉ lo three.js. Lỗi nạp thì chibiReady() = false và avatar.js giữ nhân vật dựng bằng khối (không bao giờ hỏng game).
+// Logic xương/vùng màu THUẦN nằm ở js/world/chibiRig.js (có test). File này chỉ lo three.js. Bộ xương 15 xương: có KHUỶU TAY (foreL/R), CỔ TAY (handL/R), GỐI (shinL/R), CỔ CHÂN (footL/R). Lỗi nạp thì chibiReady() = false và avatar.js giữ nhân vật dựng bằng khối (không bao giờ hỏng game).
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { CHIBI_H, LM, BONES, skinOf, zoneOf } from '../world/chibiRig.js';
+import { CHIBI_H, LM, LIMB, BONES, skinOf, zoneOf } from '../world/chibiRig.js';
 
 export const CHIBI_GLB = { low: 'assets/models/chibi/chibi-low.glb', mid: 'assets/models/chibi/chibi-mid.glb' };   // low: 700 đỉnh (mặc định, nhẹ cho đa người); mid: 7.000 đỉnh
 export const ZONES = ['skin', 'shirt', 'sleeve', 'pants', 'shoe'];
@@ -71,6 +71,11 @@ export function buildChibi(palette, t = tpl) {
   b.head.position.set(0, (LM.neck - LM.crotch) * H, 0); b.spine.add(b.head, b.armL, b.armR);
   b.armL.position.set(LM.shoulderX * H, (LM.shoulderY - LM.crotch) * H, 0); b.armR.position.set(-LM.shoulderX * H, (LM.shoulderY - LM.crotch) * H, 0);
   b.legL.position.set(LM.legX * H, 0, 0); b.legR.position.set(-LM.legX * H, 0, 0);
+  // Khớp con (vị trí đo từ mô hình): tay dọc trục ngang (trái +x, phải −x); chân dọc trục đứng (−y).
+  b.armL.add(b.foreL); b.foreL.position.set(LIMB.upperArm, 0, 0); b.foreL.add(b.handL); b.handL.position.set(LIMB.forearm, 0, 0);
+  b.armR.add(b.foreR); b.foreR.position.set(-LIMB.upperArm, 0, 0); b.foreR.add(b.handR); b.handR.position.set(-LIMB.forearm, 0, 0);
+  b.legL.add(b.shinL); b.shinL.position.set(0, -LIMB.thigh, 0); b.shinL.add(b.footL); b.footL.position.set(0, -LIMB.shin, 0);
+  b.legR.add(b.shinR); b.shinR.position.set(0, -LIMB.thigh, 0); b.shinR.add(b.footR); b.footR.position.set(0, -LIMB.shin, 0);
   const mesh = new THREE.SkinnedMesh(g, mat); mesh.add(b.hips); mesh.updateMatrixWorld(true);
   const skeleton = new THREE.Skeleton(BONES.map((nm) => b[nm])); mesh.bind(skeleton);
   mesh.frustumCulled = false;   // hộp bao tính theo thế T; tay giơ/ngả vẫn nằm trong nhưng thôi khỏi cắt nhầm khi lăn trên vai
@@ -82,5 +87,5 @@ export function buildChibi(palette, t = tpl) {
 export function applyChibiPose(bones, pose) {
   bones.hips.position.y = LM.crotch * CHIBI_H - pose.hipsDrop;
   bones.spine.rotation.set(pose.spine.x, pose.spine.y, pose.spine.z); bones.head.rotation.set(pose.head.x, 0, 0);
-  for (const k of ['armL', 'armR', 'legL', 'legR']) bones[k].rotation.set(pose[k].x, pose[k].y, pose[k].z);
+  for (const k of ['armL', 'armR', 'foreL', 'foreR', 'handL', 'handR', 'legL', 'legR', 'shinL', 'shinR', 'footL', 'footR']) if (pose[k]) bones[k].rotation.set(pose[k].x, pose[k].y, pose[k].z);
 }
