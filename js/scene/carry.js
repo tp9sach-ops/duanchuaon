@@ -21,7 +21,7 @@ export function buildCarry(world) {
     update(t, mine, near) {
       world.items.forEach((it, i) => {
         const m = nodes[i];
-        if (it.state === 'held' && mine) m.position.set(mine.x, (mine.y || 0) + 2.05 + m.userData.h * 0.6, mine.z);
+        if (it.state === 'held' && mine) m.position.set(mine.x, (mine.y || 0) + 1.85 + m.userData.h * 0.6, mine.z);
         else m.position.set(it.x, (it.state === 'fly' ? it.y : 0) + m.userData.h, it.z);
         if (it.state === 'fly') m.rotation.y += 0.25;
       });
