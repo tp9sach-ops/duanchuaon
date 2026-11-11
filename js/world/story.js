@@ -94,7 +94,7 @@ export function dialogueFor(s, id) {
   if (id === 'chutieu') {
     if (st === 'meet') return { ev: { type: 'talk', id }, pages: [
       'A Di Đà Phật! Chào hành giả mới. Con là tiểu Minh, sáng nào cũng tập võ ở đây cho khỏe người.',
-      'Chùa Diệu Giang có tám cảnh giới khinh công, nhưng đã thất truyền từ lâu. Cây bồ đề cổ sau chánh điện cũng ngừng lớn.',
+      'Chùa Diệu Giang có tám cảnh giới khinh công, nhưng đã thất truyền từ lâu. Từ ngày đại hồng chung vỡ, cây bồ đề cổ cũng ngừng lớn.',
       'Muốn tu tập thì phải bắt đầu từ việc nhỏ. Hành giả vào chánh điện gặp thầy Trụ trì nhé, thầy sẽ giao việc.',
       'Đi thẳng qua Tam quan, theo lối giữa tới bậc thềm. Cần di chuyển thì dùng phím W A S D, hoặc bấm vào chỗ muốn tới.',
     ] };
@@ -106,9 +106,9 @@ export function dialogueFor(s, id) {
   if (id === 'truru') {
     if (st === 'meet') return { ev: null, pages: ['A Di Đà Phật. Bạn mới đến chùa à? Chú tiểu đang tập võ trước cổng sẽ chỉ bạn việc đầu tiên.'] };
     if (st === 'abbot') return { ev: { type: 'talk', id }, pages: [
-      'A Di Đà Phật. Thầy mừng vì có hành giả mới. Tám cảnh giới khinh công đã thất truyền, cây bồ đề cổ cũng thôi đâm chồi.',
+      'A Di Đà Phật. Thầy mừng vì có hành giả mới. Từ đêm đại hồng chung vỡ, tám cảnh giới khinh công thất truyền, cây bồ đề cổ cũng thôi đâm chồi.',
       'Khôi phục cây là bước đầu. Thầy trao bạn bình nước này. Hãy mang tới cây bồ đề cổ phía Tây chánh điện và tưới cho cây.',
-      'Tưới xong, hãy vào ngồi thiền ba phút. Tâm có yên thì cây mới nhận được nước.',
+      'Tưới xong, hãy vào ngồi thiền ba phút. Tâm có yên thì cây mới nhận được nước. Xong việc này, thầy sẽ kể con nghe chuyện về chiếc chuông.',
     ] };
     if (st === 'water1') return { ev: null, pages: ['Bình nước bạn đã cầm. Đem tới cây bồ đề cổ phía Tây chánh điện, tưới nhẹ vào gốc.'] };
     if (st === 'meditate') return { ev: null, pages: ['Cây đã được tưới. Giờ bạn vào bồ đoàn trong chánh điện, bấm Thiền rồi ngồi yên đủ ba phút.'] };

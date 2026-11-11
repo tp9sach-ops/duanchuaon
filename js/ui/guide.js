@@ -41,7 +41,7 @@ export function initGuide(hud, { toast = () => {} } = {}) {
   function tick() {
     if (!qid) return;
     const W = LGT.world, pr = LGT.quests && LGT.quests.prog; if (!W || !W.pos || !pr) return;
-    plan = planGuide(qid, pr, W.pos, { idx, loc: LGT.loc, now: Date.now(), story: LGT.story && LGT.story.state });
+    plan = planGuide(qid, pr, W.pos, { idx, loc: LGT.loc, now: Date.now(), story: LGT.story && LGT.story.state, story2: LGT.story && LGT.story.state2, bac: LGT.story && LGT.story.bac });
     if (!plan) return stop();
     if (plan.done) { stop(); return; }
     idx = plan.idx; render(plan);

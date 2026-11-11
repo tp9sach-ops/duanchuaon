@@ -7,6 +7,7 @@ import { chaptersJustDone } from '../world/celebrate.js';
 import { celebrate } from './celebrate.js';
 import { placesAt } from '../world/outside.js';
 import { storyRows } from '../world/story.js';
+import { story2Rows, active2 } from '../world/story2.js';
 import { initJourney } from './journey.js';
 
 const KEY = 'lgt.prog';
@@ -48,6 +49,15 @@ export function initQuest(hud, { toast = () => {}, addMerit = () => {}, pillHost
     }).join('');
     return `<h4>Chương 1 · Làm quen — chăm sóc cây bồ đề</h4><ul>${rows}</ul>`;
   }
+  /** Nhóm "Cốt truyện · Chương 2 · Mảnh chuông Đá" (Phiên 95): hiện khi đã xong chương 1; bước chưa tới thì mờ. */
+  function story2Group() {
+    const S = window.LGT && window.LGT.story, st = S && S.state, s2 = S && S.state2; if (!st || !s2 || st.step !== 'done') return '';
+    const rows = story2Rows(s2, S.bac).map((r) => {
+      const prog = r.done ? '✓ xong' : r.locked ? 'chưa tới' : r.q.unit === 'bậc' ? `bậc ${r.cur}/${r.need}` : `${r.cur}/${r.need}`;
+      return `<li class="${r.done ? 'done' : ''}${r.locked ? ' locked' : ''}"><div><b>${esc(r.q.ten)}</b><small>${esc(r.q.mo)}</small></div><div class="qs-r"><i class="qs-bar"><i style="width:${Math.round(r.cur / r.need * 100)}%"></i></i><span>${prog}</span><em>+${r.q.xp} điểm${r.q.sen ? ` · +${r.q.sen} sen` : ''}</em>${r.done ? '' : `<button type="button" class="qs-guide" data-q="${esc(r.q.id)}">Dẫn đường</button>`}</div></li>`;
+    }).join('');
+    return `<h4 class="${active2(st, s2) ? '' : 'qs-chdone'}">Chương 2 · Mảnh chuông Đá${s2.shards && s2.shards.da ? ' · đã có mảnh Đá' : ''}</h4><p class="qs-chmo">Đại hồng chung vỡ làm ba mảnh. Tìm lại mảnh Đá ở vách Đại Phật.</p><ul>${rows}</ul>`;
+  }
   function drawBox() {
     const L = levelOf(prog.xp);
     lvBox.innerHTML = `<b>Cấp ${L.lv} · ${esc(L.ten)}</b><i class="qs-bar big"><i style="width:${L.pct}%"></i></i><span>${L.xp1 == null ? 'Cấp cao nhất' : `${L.xp} / ${L.xp1} điểm để lên cấp ${L.lv + 1}`}</span>`;
@@ -59,7 +69,7 @@ export function initQuest(hud, { toast = () => {}, addMerit = () => {}, pillHost
       return `<h4 class="${done === rows.length ? 'qs-chdone' : ''}">Chương ${n} · ${esc(c.ten)} <span>${done}/${rows.length}</span></h4><p class="qs-chmo">${esc(c.mo)}</p><ul>${rows.map(rowHtml).join('')}</ul>`;
     }).join('');
     if (tab === 'j') journey.draw();
-    list.innerHTML = storyGroup() + chapters;
+    list.innerHTML = storyGroup() + story2Group() + chapters;
   }
   const open = () => { drawBox(); box.hidden = false; box.querySelector('.qs-x').focus({ preventScroll: true }); };
   const close = () => { box.hidden = true; };

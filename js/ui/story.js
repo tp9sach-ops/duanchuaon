@@ -4,9 +4,12 @@
 import { loadStory, apply, dialogueFor, objective, canWater, nearTree, WATER_SPOT, STORY_QUESTS } from '../world/story.js';
 import { npcById } from '../world/npc.js';
 import { nextGoal } from '../world/nextGoal.js';
+import { loadStory2, apply2, dialogue2, active2, CLIFF_PLACE } from '../world/story2.js';
+import { khinhBac, loadKhinh } from '../world/skills.js';
+import { placesAt } from '../world/outside.js';
 import { shouldPulse, pulseUntil, readUsed, USED_KEY, PULSE_MS } from '../world/goPulse.js';
 
-const KEY = 'lgt.story';
+const KEY = 'lgt.story', KEY2 = 'lgt.story2';
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
 
 /** hud: phần tử HUD; opts: { toast(text, ms), addMerit(n) }. Trả { talk, apply, get state, close }. */
@@ -14,6 +17,10 @@ export function initStory(hud, { toast = () => {}, addMerit = () => {} } = {}) {
   const LGT = window.LGT || (window.LGT = {});
   let story = loadStory(null); try { story = loadStory(localStorage.getItem(KEY)); } catch (_) { /* bỏ qua */ }
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(story)); } catch (_) { /* chế độ riêng tư */ } };
+  // Phiên 95: chương 2 "Mảnh chuông Đá" (js/world/story2.js), lưu riêng ở 'lgt.story2'; chỉ chạy sau khi xong chương 1
+  let story2 = loadStory2(null); try { story2 = loadStory2(localStorage.getItem(KEY2)); } catch (_) { /* bỏ qua */ }
+  const save2 = () => { try { localStorage.setItem(KEY2, JSON.stringify(story2)); } catch (_) { /* chế độ riêng tư */ } };
+  const bacNow = () => { try { return khinhBac(story, loadKhinh(localStorage.getItem('lgt.khinh'))); } catch (_) { return khinhBac(story, 0); } };
 
   // ---- thẻ mục tiêu hiện tại
   const obj = el('button', 'st-obj'); obj.type = 'button'; obj.setAttribute('aria-live', 'polite');
@@ -25,7 +32,7 @@ export function initStory(hud, { toast = () => {}, addMerit = () => {} } = {}) {
   // Phiên 68: nút "Dẫn đường" nhấp nháy khi có việc mới (PULSE_MS) và cho người mới tới khi bấm lần đầu (js/world/goPulse.js)
   let pulseEnd = 0, pulseTimer = 0, used = false; try { used = readUsed(localStorage.getItem(USED_KEY)); } catch (_) { /* bỏ qua */ }
   // Phiên 43: thẻ này luôn hiện MỘT việc kế tiếp (cốt truyện → hành trình/hằng ngày → tự do), xem js/world/nextGoal.js. Việc mới hiện thì thẻ mở sẵn ~15 giây và có thông báo.
-  const stateNow = () => ({ story, prog: LGT.quests && LGT.quests.prog, sen: LGT.getSen ? LGT.getSen() : 0, la: LGT.merit && LGT.merit.leaf ? LGT.merit.leaf.la : 0, own: LGT.land && LGT.land.state ? LGT.land.state.own : null, orbs: LGT.fishing && LGT.fishing.state ? Object.keys(LGT.fishing.state.orbs || {}).length : 0 });
+  const stateNow = () => ({ story, story2, bac: bacNow(), prog: LGT.quests && LGT.quests.prog, sen: LGT.getSen ? LGT.getSen() : 0, la: LGT.merit && LGT.merit.leaf ? LGT.merit.leaf.la : 0, own: LGT.land && LGT.land.state ? LGT.land.state.own : null, orbs: LGT.fishing && LGT.fishing.state ? Object.keys(LGT.fishing.state.orbs || {}).length : 0 });
   function drawObj() {
     goal = nextGoal(stateNow()); LGT.nextGoalId = goal.guide || goal.id; wrap.hidden = false; obj.hidden = false; drawAct();
     if (LGT.quests && LGT.quests.redraw) LGT.quests.redraw();
@@ -73,7 +80,7 @@ export function initStory(hud, { toast = () => {}, addMerit = () => {} } = {}) {
   // đếm giờ thiền: chỉ khi đang ngồi thiền ở bồ đoàn (tab ẩn vẫn đếm); mỗi nhịp cộng thời gian thật (logic tự chặn trần 2 giây/lần)
   let lastTick = Date.now(), tickN = 0;
   setInterval(() => {
-    const now = Date.now(), dt = (now - lastTick) / 1000; lastTick = now; drawAct(); if (++tickN % 3 === 0) refresh();   // 1,5 giây tính lại việc kế tiếp (hạt sen / lá / nhiệm vụ đổi)
+    const now = Date.now(), dt = (now - lastTick) / 1000; lastTick = now; drawAct(); watch2(); if (++tickN % 3 === 0) refresh();   // 1,5 giây tính lại việc kế tiếp (hạt sen / lá / nhiệm vụ đổi)
     const W = LGT.world;                                            // Phiên 38: treo web / đổi tab vẫn đếm giờ thiền (chia đoạn ≤2 giây, tổng tối đa 120 giây mỗi nhịp)
     if (W && W.mode === 'meditate' && dt > 0) for (let left = Math.min(dt, 120); left > 0 && story.step === 'meditate'; left -= 2) commit({ type: 'meditate', dt: Math.min(left, 2) });
   }, 500);
@@ -84,7 +91,7 @@ export function initStory(hud, { toast = () => {}, addMerit = () => {} } = {}) {
   const dlg = el('section', 'st-dlg'); dlg.hidden = true; dlg.setAttribute('role', 'dialog'); dlg.setAttribute('aria-label', 'Hội thoại');
   const who = el('b', 'st-who'), txt = el('p', 'st-txt'), pg = el('span', 'st-pg'), next = el('button', 'st-next', 'Tiếp ▸'); next.type = 'button';
   const foot = el('div', 'st-foot'); foot.append(pg, next); dlg.append(who, txt, foot); hud.appendChild(dlg);
-  let cur = null;   // { id, pages, ev, i }
+  let cur = null;   // { id, pages, ev, i, two (true = lời chương 2) }
   function showPage() {
     txt.textContent = cur.pages[cur.i]; pg.textContent = cur.pages.length > 1 ? `${cur.i + 1}/${cur.pages.length}` : '';
     next.textContent = cur.i + 1 < cur.pages.length ? 'Tiếp ▸' : 'Xong';
@@ -98,10 +105,25 @@ export function initStory(hud, { toast = () => {}, addMerit = () => {} } = {}) {
     r.notes.forEach((n, i) => setTimeout(() => toast(n, 5200), 700 + i * 1300));
     refresh(); return r;
   }
+  /** Chương 2: áp dụng sự kiện, lưu, thưởng, báo. */
+  function commit2(ev) {
+    const r = apply2(story2, ev); if (!r.changed) return r;
+    story2 = r.story; save2();
+    if (r.gain.sen) addMerit(r.gain.sen);
+    if (r.gain.xp && LGT.addXp) LGT.addXp(r.gain.xp);
+    r.notes.forEach((n, i) => setTimeout(() => toast(n, 5600), 700 + i * 1300));
+    refresh(); return r;
+  }
+  /** Mỗi nhịp: tới vách Đại Phật / đủ bậc Khinh thân thì chương 2 tự tiến (không cần bấm thêm). */
+  function watch2() {
+    if (!active2(story, story2)) return;
+    if (story2.step === 'train') { const b = bacNow(); if (b >= 2) commit2({ type: 'khinh', bac: b }); }
+    else if (story2.step === 'cliff') { const w = LGT.world; if (w && w.pos && placesAt(w.pos).includes(CLIFF_PLACE)) commit2({ type: 'at', place: CLIFF_PLACE }); }
+  }
   function advance() {
     if (!cur) return;
     if (cur.i + 1 < cur.pages.length) { cur.i++; showPage(); return; }
-    const ev = cur.ev; close(); if (ev) commit(ev);
+    const ev = cur.ev, two = cur.two; close(); if (ev) (two ? commit2 : commit)(ev);
   }
   next.addEventListener('click', advance);
   dlg.addEventListener('click', (e) => { if (e.target !== next) advance(); });
@@ -112,15 +134,15 @@ export function initStory(hud, { toast = () => {}, addMerit = () => {} } = {}) {
 
   /** NPC `id` được thưa chuyện: mở hộp thoại cốt truyện nếu đang có lời ở bước này. Trả true nếu đã xử lý (để lời thường không chồng lên). */
   function talk(id) {
-    if (story.step === 'done') return false;   // xong chương: dùng lời thường của NPC
-    const d = dialogueFor(story, id); if (!d) return false;
+    const two = story.step === 'done';   // xong chương 1: lời cốt truyện chương 2 (nếu có), hết chương 2 thì dùng lời thường của NPC
+    const d = two ? (active2(story, story2) ? dialogue2(story2, id) : null) : dialogueFor(story, id); if (!d) return false;
     const n = npcById(id); who.textContent = n ? n.ten : '';
-    cur = { id, pages: d.pages, ev: d.ev, i: 0 }; showPage(); dlg.hidden = false; next.focus({ preventScroll: true });
+    cur = { id, pages: d.pages, ev: d.ev, i: 0, two }; showPage(); dlg.hidden = false; next.focus({ preventScroll: true });
     return true;
   }
 
   LGT.storyTalk = talk;
-  LGT.story = { get state() { return story; }, apply: commit, talk, close, refresh, get goal() { return goal; } };
+  LGT.story = { get state() { return story; }, get state2() { return story2; }, get bac() { return bacNow(); }, apply: commit, talk, close, refresh, get goal() { return goal; } };
   setTimeout(() => refresh(true), 0); drawObj();
   return LGT.story;
 }

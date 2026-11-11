@@ -7,6 +7,7 @@ import { PLACES } from './outside.js';
 import { LOC_RADIUS } from './loc.js';
 import { insideHall, HALL_POINT } from '../ui/hudLogic.js';
 import { isStoryQuest, storyRows, emptyStory, WATER_SPOT } from './story.js';
+import { isStory2Quest, story2Rows, emptyStory2, ABBOT_NPC, ELDER_NPC } from './story2.js';
 
 /** Chỗ đứng đi tới được (đã kiểm bằng test) cho từng nơi trong PLACES. */
 export const PLACE_STAND = {
@@ -60,6 +61,30 @@ function storySteps(id) {
   }
 }
 
+/** Bước dẫn đường của chương 2 "Mảnh chuông Đá" (id 's2-...', xem story2.js). */
+function story2Steps(id) {
+  const npc = (nid, text) => ({ text, npc: NPCS.find((n) => n.id === nid) });
+  switch (id) {
+    case 's2-hear': return [npc(ABBOT_NPC, 'Vào chánh điện gặp thầy Trụ trì (bấm vào thầy, hoặc để mình dẫn tới).')];
+    case 's2-elder': return [WAY_LANG, npc(ELDER_NPC, 'Xuống làng, tới gốc đa ở cuối đường làng, bấm vào Ông Ba.')];
+    case 's2-train': return [{ text: 'Mở bảng “Luyện Khinh thân” (biểu tượng bậc ở góc phải, cạnh nút nhảy) và bấm “Luyện lên bậc 2”. Cần cấp 2 và 10 hạt sen; thiếu thì làm nhiệm vụ hằng ngày để kiếm.' }];
+    case 's2-cliff': return [WAY_LANG, go(0, 104, 3, 'Đi dọc đường làng tới ngã ba, chỗ có đường mòn rẽ sang phải.'), go(PLACE_STAND.daiphat.x, PLACE_STAND.daiphat.z, 4, 'Theo đường mòn tới thác nước, rồi tới chân vách đá có tượng Đại Phật khắc. Đứng lại một lát để tìm mảnh chuông.')];
+    case 's2-report': return [HALL_GO, npc(ABBOT_NPC, 'Vào chánh điện kể lại cho thầy Trụ trì (bấm vào thầy).')];
+    default: return [];
+  }
+}
+
+/** Dẫn đường cho bước chương 2. ctx.story2 = trạng thái chương 2 (loadStory2); thiếu thì coi như mới bắt đầu. */
+function story2Guide(id, pos, ctx) {
+  const s2 = ctx.story2 || emptyStory2(), row = story2Rows(s2, ctx.bac).find((r) => r.q.id === id), q = row.q, base = { id: q.id, ten: q.ten, cur: row.cur, need: row.need };
+  if (row.done) return { ...base, done: true, idx: 0, steps: [], target: null, tap: null, key: q.id + ':done', dist: null, wait: 0 };
+  if (row.locked) {
+    const prev = story2Rows(s2, ctx.bac).find((r) => !r.done);
+    return { ...base, done: false, idx: 0, steps: [{ text: `Chưa tới bước này. Hãy làm xong “${prev.q.ten}” trước.`, state: 'now' }], target: null, tap: null, key: q.id + ':locked', dist: null, wait: 0 };
+  }
+  return buildPlan(base, q.id, story2Steps(id), pos, ctx);
+}
+
 /** Nhiệm vụ “ghé một nơi” (dk.key = visit:<id>, Phiên 60) tự có bước dẫn đường tới chỗ đứng của nơi đó; nơi ngoài chùa (z > 55) đi qua Tam quan ra làng trước. */
 function visitSteps(q) {
   const m = /^visit:([\w-]+)$/.exec(q.dk.key), st = m && PLACE_STAND[m[1]]; if (!st) return [];
@@ -103,6 +128,7 @@ function dynamicSteps(q, prog, pos, ctx) {
  */
 export function planGuide(questId, prog, pos, ctx = {}) {
   if (isStoryQuest(questId)) return storyGuide(questId, pos, ctx);
+  if (isStory2Quest(questId)) return story2Guide(questId, pos, ctx);
   const row = questStatus(prog, ctx.now || Date.now()).find((r) => r.q.id === questId); if (!row) return null;
   const q = row.q, base = { id: q.id, ten: q.ten, cur: row.cur, need: row.need };
   if (row.done) return { ...base, done: true, idx: 0, steps: [], target: null, tap: null, key: q.id + ':done', dist: null, wait: 0 };

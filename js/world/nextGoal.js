@@ -2,6 +2,7 @@
 // Ghép 3 nguồn việc thành MỘT chuỗi không bao giờ đứt: cốt truyện chương 1 (story.js) → hành trình + hằng ngày (quests.js) theo thứ tự CHAIN → gợi ý tự do (tutorial.js advise).
 // Trả về luôn đúng MỘT mục tiêu để thẻ mục tiêu (js/ui/story.js) hiển thị và để nút "Dẫn đường" dùng (guide = id nhiệm vụ cho js/ui/guide.js).
 import { loadStory, objective, STORY_QUESTS, storyRows } from './story.js';
+import { active2, objective2, story2Rows, STORY2_QUESTS } from './story2.js';
 import { CHAPTERS, CHAIN, chapterOf, chapterProgress } from './chapters.js';
 import { QUESTS, questById, questStatus } from './quests.js';
 import { advise } from './tutorial.js';
@@ -34,6 +35,15 @@ export function nextGoal(state = {}) {
     const sq = STORY_QUESTS.find((q) => q.step === story.step);
     const rows = storyRows(story), ch = chapterProgress(CHAPTERS[0], [], { done: rows.filter((r) => r.done).length, of: rows.length });
     return { ...base, chapter: ch, id: sq.id, kind: 'story', label: chLabel(ch), title: o.title, text: o.text, cur: o.cur || 0, need: o.need || 0, unit: o.unit || '', guide: sq.id, left: QUESTS.length };
+  }
+
+  // Phiên 95: xong chương 1 thì việc chính là chương 2 "Mảnh chuông Đá" (js/world/story2.js); thiếu state.story2 thì bỏ qua (giữ hành vi cũ)
+  if (state.story2 && active2(story, state.story2)) {
+    const o2 = objective2(state.story2), sq2 = STORY2_QUESTS.find((q) => q.step === state.story2.step);
+    if (o2 && sq2) {
+      const rows = story2Rows(state.story2, state.bac);
+      return { ...base, chapter: null, id: sq2.id, kind: 'story', label: `Cốt truyện · Chương 2 · Mảnh chuông Đá · ${rows.filter((r) => r.done).length}/${rows.length}`, title: o2.title, text: o2.text, cur: o2.cur || 0, need: o2.need || 0, unit: o2.unit || '', guide: sq2.id, left: QUESTS.length };
+    }
   }
 
   const status = prog ? questStatus(prog, now) : QUESTS.map((q) => ({ q, cur: 0, need: q.dk.n, done: false }));
