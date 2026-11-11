@@ -119,3 +119,12 @@ test('quái bãi rừng (Phiên 107): có quái gần → Ném đá + Thương n
   assert.deepEqual(ids({ free: false, farm: { active: true } }), [], 'đang ngồi/thiền: không nút nào');
   assert.deepEqual(ids({ carry: { holding: true }, farm: { active: true } }), ['nem', 'ha'], 'đang khiêng vật: chỉ Ném / Đặt xuống');
 });
+
+test('Tự Động Hàng Yêu (Phiên 108): nút "Tự động" chỉ hiện khi bật khả năng; đổi thành "Dừng đánh" khi đang chạy; có lời chỉ chỗ bấm', () => {
+  const base = { free: true, khinh: 1 }, farm = { active: true, ten: 'Dã Mèo Rừng', canAuto: true, auto: false, autoLeft: 60 };
+  assert.deepEqual(ids({ ...base, farm }), ['da', 'thuong', 'tudong', 'nhay', 'kynang', 'tui']);
+  const on = dockButtons({ ...base, farm: { ...farm, auto: true, autoLeft: 41 } }).find((b) => b.id === 'tudong'); assert.equal(on.label, 'Dừng đánh'); assert.equal(on.hot, true); assert.match(on.say, /41 phút/);
+  assert.ok(HINTS.tudong && HINTS.tudong.length > 20);
+  assert.deepEqual(ids({ ...base, farm: { active: true } }), ['da', 'thuong', 'nhay', 'kynang', 'tui'], 'không canAuto: không có nút');
+  assert.match(read('js/ui/dock.js'), /tudong: \(\) => LGT\.farm && LGT\.farm\.toggleAuto\(\)/);
+});

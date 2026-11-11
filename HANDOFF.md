@@ -1,6 +1,8 @@
 # HANDOFF — Web tâm linh "DIỆU GIANG TỰ" (chùa Việt 3D) — tên cũ: Linh Giang Tự (Phiên 5 đổi tên theo ptg)
 
-> **Cập nhật Phiên 107 (2026-11-11): QUÁI BÃI RỪNG THẤY VÀ ĐÁNH ĐƯỢC (Ném đá + Thương), thu phục → Tu Vi + hạt sen (trần 100 sen/ngày, TẠM) — ĐỌC `docs/PHIEN107.md` TRƯỚC (có "Gp phải làm", giả định cần duyệt, VIỆC KẾ + prompt khởi động). Các Phiên 100–106 (GDD v2 G0–G1, G3.6) nằm ở `docs/PHIEN100.md` … `PHIEN106.md`. `sw.js` = `dgt-v108`.**
+> **Cập nhật Phiên 108 (2026-11-11): TỰ ĐỘNG HÀNG YÊU (nút "Tự động", tầm 15 m, 60 phút/ngày) — ĐỌC `docs/PHIEN108.md` TRƯỚC (rồi `docs/PHIEN107.md`). `sw.js` = `dgt-v109`.**
+
+> **(cũ) Cập nhật Phiên 107 (2026-11-11): QUÁI BÃI RỪNG THẤY VÀ ĐÁNH ĐƯỢC (Ném đá + Thương), thu phục → Tu Vi + hạt sen (trần 100 sen/ngày, TẠM) — ĐỌC `docs/PHIEN107.md` TRƯỚC (có "Gp phải làm", giả định cần duyệt, VIỆC KẾ + prompt khởi động). Các Phiên 100–106 (GDD v2 G0–G1, G3.6) nằm ở `docs/PHIEN100.md` … `PHIEN106.md`. `sw.js` = `dgt-v108`.**
 
 > **(cũ) Cập nhật Phiên 99 (2026-11-11): NHÂN VẬT MỚI từ mô hình GLB có xương (chibi) + tư thế đi/ngồi/lạy/vung côn/giơ tay khiêng/ném/nhặt — ĐỌC `docs/PHIEN99.md` TRƯỚC (có mục "Gp phải làm": tải 2 file GLB lên `assets/models/chibi/`). `sw.js` = `dgt-v106`. 4 test đỏ là LỖI CÓ SẴN (#322, #328, #355, #767).**
 

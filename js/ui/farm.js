@@ -7,8 +7,9 @@ import { createSpawner, tickSpawner, hitMonster, nearestMonster, ZONE_IDS } from
 import { loadFarm, settleKill, senLeft, tuViOf } from '../world/farm.js';
 import { STONE, SPEAR, stoneDamage, spearDamage, rngSeed } from '../world/yeuquai.js';
 import { mapAvailable } from '../world/minimap.js';
+import { loadAuto, autoLeft, addAutoTime, nextAction } from '../world/autoHunt.js';
 
-const KEY = 'lgt.farm';
+const KEY = 'lgt.farm', AKEY = 'lgt.farmauto';
 const HE_TEN = { kim: 'Kim', moc: 'Mộc', thuy: 'Thủy', hoa: 'Hỏa', tho: 'Thổ' };
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
 const rectDist = (r, x, z) => Math.hypot(Math.max(r.x0 - x, 0, x - r.x1), Math.max(r.z0 - z, 0, z - r.z1));
@@ -22,6 +23,9 @@ export function initFarm(hud, { toast = () => {} } = {}) {
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(farm)); } catch (_) { /* bỏ qua */ } };
   const rng = rngSeed((Date.now() ^ 0x2545f491) >>> 0), view = LGT.farmView = LGT.farmView || { mons: [], target: '', stones: [] };
   const spawners = {}, away = {};   // id vùng → bộ sinh quái / số giây người chơi đã rời xa (để quái hồi sinh bù khi quay lại)
+  let auto = loadAuto(null, Date.now()); try { auto = loadAuto(localStorage.getItem(AKEY), Date.now()); } catch (_) { /* riêng tư */ }
+  const saveAuto = () => { try { localStorage.setItem(AKEY, JSON.stringify(auto)); } catch (_) { /* bỏ qua */ } };
+  let running = false, autoSaved = 0;
   let cdStone = 0, cdSpear = 0, lastT = performance.now(), capToast = '', hudUntil = 0;
 
   const box = el('div', 'fm-hud'); box.hidden = true;
@@ -66,11 +70,29 @@ export function initFarm(hud, { toast = () => {} } = {}) {
     cdSpear = SPEAR.cd; hit(t.uid, spearDamage(str()));
   }
 
+  // Tự Động Hàng Yêu (Phiên 108): tự Thương/Ném đá quái trong tầm autoRange, không tự đi. Dừng khi mở bảng, rời tab, vào nhà, có yêu quái hằng tháng, hoặc hết 60 phút hôm nay.
+  function stopAuto(msg) { if (!running) return; running = false; saveAuto(); if (msg) toast(msg, 3200); }
+  function toggleAuto() {
+    if (running) { stopAuto('Đã tắt tự động hàng yêu.'); return; }
+    if (autoLeft(auto, Date.now()) <= 0) { toast('Hôm nay bạn đã dùng hết thời gian tự động hàng yêu. Mai dùng tiếp, hoặc tự bấm đánh nhé!', 3600); return; }
+    if (!here() || bossOn()) return;
+    running = true; toast(`Tự động hàng yêu BẬT: đứng yên, nhân vật tự đánh quái trong ${FARM_CFG.autoRange} m. Mở bảng hoặc rời trang sẽ tự dừng.`, 4200);
+  }
+  function autoStep(dt) {
+    if ((typeof document !== 'undefined' && document.hidden) || LGT.panelOpen || LGT.heldBy || (LGT.world && LGT.world.mode && LGT.world.mode !== 'free')) return stopAuto('Tự động hàng yêu đã dừng.');
+    const r = addAutoTime(auto, dt, Date.now()); auto = r.state; if (performance.now() - autoSaved > 5000) { autoSaved = performance.now(); saveAuto(); }
+    if (r.out) return stopAuto('Hết 60 phút tự động hàng yêu hôm nay. Mai dùng tiếp nhé!');
+    const p = pos(); let best = null, bd = Infinity; for (const m of view.mons) { const d = gap(m, p); if (d < bd) { bd = d; best = m; } }
+    if (!best) return;
+    const act = nextAction({ gap: bd, body: bodyOf(best), stoneReady: cdStone <= 0, spearReady: cdSpear <= 0, spearRange: SPEAR.range });
+    if (act === 'spear') spear(); else if (act === 'stone') stone();
+  }
+
   function tick() {
     const now = performance.now(), dt = Math.min(0.25, (now - lastT) / 1000); lastT = now;
     cdStone = Math.max(0, cdStone - dt); cdSpear = Math.max(0, cdSpear - dt);
     const p = pos();
-    if (!p || !here()) { if (view.mons.length) { view.mons = []; view.stones = []; view.target = ''; } box.hidden = true; return; }
+    if (!p || !here() || bossOn()) { stopAuto('Tự động hàng yêu đã dừng.'); if (view.mons.length) { view.mons = []; view.stones = []; view.target = ''; } box.hidden = true; return; }
     const mons = [];
     for (const id of ZONE_IDS) {
       if (zoneDist(id, p) > FARM_CFG.nearMargin) { if (spawners[id]) away[id] = (away[id] || 0) + dt; continue; }
@@ -82,6 +104,7 @@ export function initFarm(hud, { toast = () => {} } = {}) {
     }
     view.mons = mons;
     view.stones = view.stones.filter((s) => { s.t += dt; if (s.t < s.dur) return true; hit(s.uid, s.dmg); return false; });
+    if (running) autoStep(dt);
     const t = target(); view.target = t ? t.uid : '';
     const show = !!t && !bossOn(); box.hidden = !show && now > hudUntil || bossOn();
     if (!box.hidden && t) {
@@ -95,9 +118,9 @@ export function initFarm(hud, { toast = () => {} } = {}) {
   setInterval(tick, 100);
 
   LGT.farm = {
-    stone, spear,
+    stone, spear, toggleAuto,
     get tuvi() { return tuViOf(farm).tuvi; }, get state() { return farm; },
-    status() { const t = target(); return { active: !!t, ten: t ? t.ten : '', stoneCd: cdStone, spearCd: cdSpear }; },
+    status() { const t = target(); return { active: !!t || running, ten: t ? t.ten : '', stoneCd: cdStone, spearCd: cdSpear, canAuto: true, auto: running, autoLeft: Math.floor(autoLeft(auto, Date.now()) / 60) }; },
   };
   return LGT.farm;
 }

@@ -44,4 +44,6 @@ export const FARM_ZONES = Object.freeze({
 // để kinh tế hạt sen → lá bồ đề → đất (js/world/merit.js: các nguồn khác đều có trần ngày) không bị cày vô hạn. 100 hạt sen = 10 lá bồ đề mỗi ngày.
 // nearMargin: người chơi cách vùng farm ≤ số mét này thì quái được vẽ và chạy; xa hơn thì quái đứng yên (không vẽ, không tốn máy).
 // maxVisible: số quái tối đa vẽ cùng lúc (bể mô hình của js/scene/farm.js). Hai vùng sát nhau (Bìa Rừng Thông và Đường Mòn) có thể cùng hiện: 2 × 12 = 24 ≤ 26.
-export const FARM_CFG = Object.freeze({ tam: true, senCapNgay: 100, nearMargin: 40, maxVisible: 26 });
+export const FARM_CFG = Object.freeze({ tam: true, senCapNgay: 100, nearMargin: 40, maxVisible: 26,
+  // Tự Động Hàng Yêu (GDD v2 mục 12, câu 7; TẠM): tự đánh quái trong tầm autoRange (m), tối đa autoSecNgay giây mỗi ngày giờ VN (60 phút).
+  autoRange: 15, autoSecNgay: 3600 });

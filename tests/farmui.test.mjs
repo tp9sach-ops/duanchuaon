@@ -68,3 +68,15 @@ test('quái bị thu phục hồi sinh sau 30–60 giây (cục bộ)', () => {
   step(60);   // 60 giây (mỗi nhịp 0,1 giây như vòng lặp thật)
   assert.ok(LGT.farmView.mons.filter((m) => m.zone === 'biaRungThong' && !m.elite).length >= 10, 'quái thường đã hồi sinh đủ');
 });
+
+test('Tự động hàng yêu: bật thì tự đánh quái trong 15 m và thu phục; mở bảng thì dừng; tính giờ và lưu lgt.farmauto', () => {
+  LGT.world.pos = { x: -100, z: 80 }; step(1); toasts.length = 0;
+  const k0 = api.state.kills; api.toggleAuto(); assert.equal(api.status().auto, true); assert.ok(toasts.some((t) => /BẬT/.test(t)));
+  step(30); assert.ok(api.state.kills > k0, 'tự đánh thu phục được quái'); const left = api.status().autoLeft;
+  LGT.panelOpen = true; step(0.3); assert.equal(api.status().auto, false, 'mở bảng thì dừng'); LGT.panelOpen = false;
+  const saved = JSON.parse(store.get('lgt.farmauto')); assert.ok(saved.secs >= 25 && saved.secs <= 40, `giây đã dùng ${saved.secs}`); assert.ok(left <= 59);
+});
+test('Tự động hàng yêu: không bật khi có yêu quái hằng tháng; hết giờ hôm nay thì không bật được', () => {
+  LGT.yq = { active: true }; api.toggleAuto(); assert.equal(api.status().auto, false); LGT.yq = undefined;
+  
+});

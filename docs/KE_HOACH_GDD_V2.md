@@ -67,7 +67,7 @@
 | G4.3 | Pháp Môn cấp 30 (10 Pháp Môn) + Skill 4 + đổi Pháp Môn/Hệ (lần đầu miễn phí) | Test Skill 4 + chi phí đổi | chưa |
 | G4.4 | Tuyệt Học cấp 60 (5 Tâm Ấn, hồi 60 giây) + Tâm Ấn | Test tiêu Tâm Ấn | chưa |
 | G4.5 | Nhiệm vụ: chính tuyến chương 2–4 theo mốc cấp; Hệ Phái (8 mỗi Hệ); hằng ngày +3; hằng tuần 4. Dùng đúng khung Dẫn Đường, thẻ "Việc kế tiếp" không bao giờ trống | Không có chỗ bí; test `nextGoal` | chưa |
-| G4.6 | Điểm Linh Khí (mở rộng hoa sen vàng ra vùng farm) + Tự Động Hàng Yêu (tối đa 60 phút/ngày, dừng khi mở bảng/rời tab) | Test giới hạn thời gian | chưa |
+| G4.6 | Điểm Linh Khí (mở rộng hoa sen vàng ra vùng farm) + Tự Động Hàng Yêu (tối đa 60 phút/ngày, dừng khi mở bảng/rời tab) | Test giới hạn thời gian | MỘT PHẦN (Phiên 108): Tự Động Hàng Yêu xong; Điểm Linh Khí chưa |
 
 ### G5 — Linh Thú (xong khi: một Linh Thú ấp xong, đánh cùng, cưỡi được)
 | ID | Việc | Xong khi | Trạng thái |
