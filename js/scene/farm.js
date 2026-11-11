@@ -6,12 +6,12 @@ import { FARM_CFG } from '../data/monsters.js';
 
 export const POOL = FARM_CFG.maxVisible;
 const CULL = 70;
-const HE_COLOR = { moc: 0x6fe08a, kim: 0xf0d060 };
+const HE_COLOR = { moc: 0x6fe08a, kim: 0xf0d060, thuy: 0x6ab8ff };
 const mat = (c, e = 0, o = {}) => new THREE.MeshStandardMaterial({ color: c, emissive: e, emissiveIntensity: e ? 0.8 : 0, roughness: 0.85, flatShading: true, ...o });
 const add = (g, geo, m, x, y, z) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); g.add(o); return o; };
 
 // Chiều cao thân (m) để đặt thanh Oán Khí phía trên đầu.
-export const HEIGHT = { dameo: 0.95, reutinh: 2.5, daotac: 2.0, cuopduong: 3.0 };
+export const HEIGHT = { dameo: 0.95, reutinh: 2.5, daotac: 2.0, cuopduong: 3.0, thuyquy: 1.7, lyngu: 2.8 };
 
 function buildType(type) {
   const g = new THREE.Group();
@@ -36,6 +36,19 @@ function buildType(type) {
     add(g, new THREE.ConeGeometry(0.62, 0.38, 10), hat, 0, 1.88, 0);
     add(g, new THREE.BoxGeometry(0.08, 0.9, 0.2), blade, 0.55, 1.0, 0.25).rotation.z = -0.35;
     for (const s of [-1, 1]) add(g, new THREE.CylinderGeometry(0.1, 0.1, 0.5, 6), robe, s * 0.17, 0.12, 0);
+  } else if (type === 'thuyquy') {   // Thủy Quỷ Hồ Thác: thân nước xanh trong, đầu tròn, hai tay dài, mắt trắng sáng
+    const water = mat(0x3f8fd0, 0x0c3a66, { transparent: true, opacity: 0.85 }), weed = mat(0x2f6a4a), eye = mat(0xe8faff, 0xbfefff);
+    add(g, new THREE.ConeGeometry(0.62, 1.3, 9), water, 0, 0.65, 0);
+    add(g, new THREE.SphereGeometry(0.34, 10, 8), water, 0, 1.45, 0);
+    for (const s of [-1, 1]) { add(g, new THREE.CylinderGeometry(0.09, 0.07, 0.9, 6), water, s * 0.62, 0.95, 0.1).rotation.z = s * 0.5; add(g, new THREE.SphereGeometry(0.06, 6, 5), eye, s * 0.13, 1.5, 0.3); }
+    for (let i = 0; i < 5; i++) { const a = i * 1.26; add(g, new THREE.ConeGeometry(0.07, 0.4, 5), weed, Math.cos(a) * 0.3, 1.8, Math.sin(a) * 0.3); }
+  } else if (type === 'lyngu') {   // Lý Ngư Tinh (tinh anh): cá chép lớn đứng thẳng, vảy đỏ cam, râu dài, vây lưng xanh
+    const scale = mat(0xe8742a, 0x6a2200), fin = mat(0x3fa0d8, 0x0c4a6a), eye = mat(0xfff3b0, 0xffd400), whisk = mat(0xf6d27a);
+    add(g, new THREE.SphereGeometry(0.85, 12, 10), scale, 0, 1.35, 0).scale.set(0.85, 1.5, 0.85);
+    add(g, new THREE.SphereGeometry(0.5, 10, 8), scale, 0, 2.5, 0.12);
+    add(g, new THREE.ConeGeometry(0.55, 0.9, 6), fin, 0, 0.35, -0.2).rotation.x = Math.PI;
+    add(g, new THREE.ConeGeometry(0.3, 1.0, 5), fin, 0, 1.6, -0.75).rotation.x = -0.6;
+    for (const s of [-1, 1]) { add(g, new THREE.SphereGeometry(0.09, 6, 5), eye, s * 0.27, 2.6, 0.55); add(g, new THREE.CylinderGeometry(0.02, 0.02, 0.9, 4), whisk, s * 0.2, 2.35, 0.65).rotation.z = s * 1.1; add(g, new THREE.ConeGeometry(0.22, 0.7, 5), fin, s * 0.85, 1.3, 0).rotation.z = s * -1.2; }
   } else {   // cuopduong: Cướp Đường — to lớn, giáp xám viền vàng, đao lớn
     const armor = mat(0x555a66), gold = mat(0xd4af37, 0x5a4300), skin = mat(0xc98f64), blade = mat(0xe8eef6, 0x7a8aa0);
     add(g, new THREE.CylinderGeometry(0.55, 0.7, 1.7, 8), armor, 0, 1.05, 0);

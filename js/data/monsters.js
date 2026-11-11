@@ -15,6 +15,9 @@ export const MONSTERS = Object.freeze({
   reutinh: Object.freeze({ id: 'reutinh', ten: 'Rêu Tinh', lv: 10, he: 'moc', elite: true, drop: Object.freeze({ chance: 1, min: 3, max: 5 }) }),
   daotac: Object.freeze({ id: 'daotac', ten: 'Đạo Tặc Sơn Cước', lv: 15, he: 'kim', elite: false, drop: Object.freeze({ chance: 0.5, min: 1, max: 2 }) }),
   cuopduong: Object.freeze({ id: 'cuopduong', ten: 'Cướp Đường', lv: 22, he: 'kim', elite: true, drop: Object.freeze({ chance: 1, min: 4, max: 6 }) }),
+  // Phiên 114: vùng thứ ba (Hồ Thác Đại Phật, Hệ Thủy). Quy ước TẠM như trên: Lý Ngư Tinh (con sau) là TINH ANH. Hạt sen rơi nhỉnh hơn vùng trước vì cấp cao hơn; vẫn bị trần FARM_CFG.senCapNgay.
+  thuyquy: Object.freeze({ id: 'thuyquy', ten: 'Thủy Quỷ Hồ Thác', lv: 28, he: 'thuy', elite: false, drop: Object.freeze({ chance: 0.5, min: 1, max: 3 }) }),
+  lyngu: Object.freeze({ id: 'lyngu', ten: 'Lý Ngư Tinh', lv: 38, he: 'thuy', elite: true, drop: Object.freeze({ chance: 1, min: 5, max: 8 }) }),
 });
 
 // Hồi sinh (giây, giữ GDD mục 8): thường 30–60, tinh anh 5 phút.
@@ -22,7 +25,7 @@ export const RESPAWN_CFG = Object.freeze({ normal: Object.freeze([30, 60]), elit
 // Đặt quái: cách nhau ≥ minGap m, cách người chơi ≥ minFromPlayer m, thử tối đa `tries` lần mỗi chỗ, đặt không được thì thử lại sau `retry` giây.
 export const SPAWN_CFG = Object.freeze({ minGap: 3, minFromPlayer: 6, tries: 30, retry: 5 });
 
-// Hai vùng đầu. `rects` NẰM TRỌN trong vùng đi bộ OUT_WALKS (js/world/outside.js), chừa lề ≥ 1 m; `avoid` = hình tròn tránh (miếu, cổ thụ, hồ + thủy tạ).
+// Ba vùng (hai vùng đầu Phiên 107, vùng Hồ Thác Phiên 114). `rects` NẰM TRỌN trong vùng đi bộ OUT_WALKS (js/world/outside.js), chừa lề ≥ 1 m; `avoid` = hình tròn tránh (miếu, cổ thụ, hồ + thủy tạ).
 // Các hình chữ nhật của hai vùng KHÔNG chồng nhau. cap = tối đa số quái cùng lúc (GDD: ~12); eliteMax ≤ cap.
 export const FARM_ZONES = Object.freeze({
   biaRungThong: Object.freeze({
@@ -36,6 +39,13 @@ export const FARM_ZONES = Object.freeze({
     normal: Object.freeze(['daotac']), elite: Object.freeze(['cuopduong']),
     rects: Object.freeze([{ x0: -66, x1: -18, z0: 85, z1: 93 }, { x0: 20, x1: 80, z0: 100, z1: 108 }]),
     avoid: Object.freeze([]),
+  }),
+  // Bãi dưới thác (OUT_WALKS 'bai-thac' x 84–112, z 86–122), chừa lề 1 m. avoid: hồ thác (tâm 106,104 r 7,5, bơi được nên chừa thêm), đình nghỉ chân, bốn đá lớn, bậc đá + đèn trước Đại Phật.
+  hoThac: Object.freeze({
+    id: 'hoThac', ten: 'Hồ Thác Đại Phật', lvMin: 25, lvMax: 45, he: 'thuy', cap: 12, eliteMax: 1,
+    normal: Object.freeze(['thuyquy']), elite: Object.freeze(['lyngu']),
+    rects: Object.freeze([{ x0: 85, x1: 111, z0: 87, z1: 121 }]),
+    avoid: Object.freeze([{ x: 106, z: 104, r: 10 }, { x: 92, z: 90, r: 4 }, { x: 100, z: 92, r: 2.6 }, { x: 109, z: 90, r: 2.7 }, { x: 101, z: 117, r: 3 }, { x: 111.5, z: 117, r: 6 }]),
   }),
 });
 
