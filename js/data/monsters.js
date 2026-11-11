@@ -38,3 +38,10 @@ export const FARM_ZONES = Object.freeze({
     avoid: Object.freeze([]),
   }),
 });
+
+// Farm quái bãi rừng (Phiên 107, G1.6a). TẠM, chờ ptg duyệt và playtest (G8.1).
+// senCapNgay: trần HẠT SEN (công đức) nhận từ hàng yêu mỗi ngày giờ Việt Nam. Vượt trần vẫn được Tu Vi (EXP), chỉ không rơi hạt sen,
+// để kinh tế hạt sen → lá bồ đề → đất (js/world/merit.js: các nguồn khác đều có trần ngày) không bị cày vô hạn. 100 hạt sen = 10 lá bồ đề mỗi ngày.
+// nearMargin: người chơi cách vùng farm ≤ số mét này thì quái được vẽ và chạy; xa hơn thì quái đứng yên (không vẽ, không tốn máy).
+// maxVisible: số quái tối đa vẽ cùng lúc (bể mô hình của js/scene/farm.js). Hai vùng sát nhau (Bìa Rừng Thông và Đường Mòn) có thể cùng hiện: 2 × 12 = 24 ≤ 26.
+export const FARM_CFG = Object.freeze({ tam: true, senCapNgay: 100, nearMargin: 40, maxVisible: 26 });

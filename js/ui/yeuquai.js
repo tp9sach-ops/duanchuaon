@@ -53,11 +53,13 @@ export function initYeuQuai(hud, { toast = () => {} } = {}) {
   }
 
   function stone() {
-    if (!boss || boss.dead || !here() || cdStone > 0) return; const d = distBoss(); if (d > STONE.range + YQ[boss.type].body) { toast('Yêu quái còn xa quá, lại gần hơn để ném đá.', 1800); return; }
+    if (!boss || boss.dead) { if (LGT.farm) LGT.farm.stone(); return; }   // Phiên 107: không có yêu quái hằng tháng → ném vào quái bãi rừng
+    if (!here() || cdStone > 0) return; const d = distBoss(); if (d > STONE.range + YQ[boss.type].body) { toast('Yêu quái còn xa quá, lại gần hơn để ném đá.', 1800); return; }
     cdStone = STONE.cd; const p = pos(), dmg = stoneDamage(str()); view.stones.push({ x0: p.x, z0: p.z, x1: boss.x, z1: boss.z, t: 0, dur: Math.max(0.15, d / STONE.speed), dmg });
   }
   function spear() {
-    if (!boss || boss.dead || !here() || cdSpear > 0) return; if (distBoss() - YQ[boss.type].body > SPEAR.range) { toast('Lại gần yêu quái hơn mới đâm được thương.', 1800); return; }
+    if (!boss || boss.dead) { if (LGT.farm) LGT.farm.spear(); return; }   // Phiên 107
+    if (!here() || cdSpear > 0) return; if (distBoss() - YQ[boss.type].body > SPEAR.range) { toast('Lại gần yêu quái hơn mới đâm được thương.', 1800); return; }
     cdSpear = SPEAR.cd; hit(spearDamage(str()));
   }
   function throwBoss() {

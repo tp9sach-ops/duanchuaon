@@ -106,3 +106,16 @@ test('bơi/lặn: chỉ còn nút Lặn↔Nổi lên + Túi đồ; trên cạn k
   assert.ok(!ids({ free: true, khinh: 1, swim: { mode: 'land' } }).includes('lan'));
   assert.deepEqual(ids({ free: false, swim: { mode: 'swim' } }), []);
 });
+
+test('quái bãi rừng (Phiên 107): có quái gần → Ném đá + Thương nhưng vẫn giữ Nhảy / Kỹ năng / Túi đồ; yêu quái hằng tháng lấn lướt', () => {
+  const base = { free: true, khinh: 1 };
+  const ids = (c) => dockButtons({ ...base, ...c }).map((x) => x.id);
+  assert.deepEqual(ids({}), ['nhay', 'kynang', 'tui'], 'không có quái: như cũ');
+  assert.deepEqual(ids({ farm: { active: false } }), ['nhay', 'kynang', 'tui']);
+  assert.deepEqual(ids({ farm: { active: true, ten: 'Dã Mèo Rừng' } }), ['da', 'thuong', 'nhay', 'kynang', 'tui']);
+  const b = dockButtons({ ...base, farm: { active: true, ten: 'Dã Mèo Rừng', stoneCd: 0.8, spearCd: 0 } });
+  assert.equal(b[0].wait, true); assert.equal(b[1].wait, false); assert.match(b[0].say, /Dã Mèo Rừng/);
+  assert.deepEqual(ids({ farm: { active: true }, yq: { active: true, stoneCd: 0, spearCd: 0 } }), ['da', 'thuong', 'nhay'], 'có boss: chỉ một cặp Ném đá / Thương (của boss)');
+  assert.deepEqual(ids({ free: false, farm: { active: true } }), [], 'đang ngồi/thiền: không nút nào');
+  assert.deepEqual(ids({ carry: { holding: true }, farm: { active: true } }), ['nem', 'ha'], 'đang khiêng vật: chỉ Ném / Đặt xuống');
+});

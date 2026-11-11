@@ -36,6 +36,7 @@ import { buildPondFish } from './pondFish.js';
 import { buildCarry } from './carry.js';
 import { createCarry } from '../world/strength.js';
 import { buildYeuQuai } from './yeuquai.js';
+import { buildFarm } from './farm.js';
 import { inHall, PLAZA } from '../world/landscape.js';
 import { groundY, blocked } from '../world/layout.js';
 import { createWeather, parseWeatherParam, changeMessage } from '../world/weather.js';
@@ -98,6 +99,7 @@ export function createScene(canvas, { onProgress, onPick, onArrive } = {}) {
   const pondFish = buildPondFish(LGT, { reduce }); scene.add(pondFish.group);   // Phiên 77: cá đã thu bơi trong ao riêng (Hồ Rừng), chỉ máy mình thấy
   const fishing = buildFishing(LGT, { reduce, perf: () => level }); scene.add(fishing.group);   // Phiên 48: cảnh câu cá 3D (đọc LGT.fishing.session)
   const carryWorld = LGT.carryWorld || (LGT.carryWorld = createCarry()); const carry = buildCarry(carryWorld); scene.add(shade(carry.group));   // Phiên 63: vật khiêng/ném được
+  const farmMon = buildFarm(); scene.add(farmMon.group); LGT.farmView = LGT.farmView || { mons: [], target: '', stones: [] };   // Phiên 107: quái cố định ở bãi rừng (cảnh chỉ vẽ; js/ui/farm.js cập nhật)
   const yeuQuai = buildYeuQuai(); scene.add(yeuQuai.group); LGT.yqView = LGT.yqView || { boss: null, shapes: [], wt: 0, flash: 0, loot: [], stones: [] };   // Phiên 64: yêu quái hằng tháng
   const npcs = buildNpcs(scene, LGT);   // NPC: Trụ trì, Tri khách, cư sĩ vườn thiền (Phiên 14g)   // hoa sen vàng nhận lộc
   const land = buildLandscape(); scene.add(shade(land.group));   // cảnh quan mở rộng (Phiên 14f)
@@ -278,7 +280,7 @@ export function createScene(canvas, { onProgress, onPick, onArrive } = {}) {
     if (Math.abs(viewX) > 0.5) camera.setViewOffset(w, h, viewX, 0, w, h); else if (camera.view && camera.view.enabled) camera.clearViewOffset();
 
     if (world) { const wp = world.pos, sp = snapToTexel(wp.x, wp.z, sunOffset, (2 * SHADOW_R) / appliedShadowSize); moonLight.target.position.set(sp.x, sp.y, sp.z); moonLight.position.set(sp.x + sunOffset.x, sp.y + sunOffset.y, sp.z + sunOffset.z); }   // Phiên 28b: nhích vùng bóng theo từng texel (hết răng cưa bò khi đi)   // sunOffset do applyDay cập nhật theo giờ   // vùng đổ bóng đi theo người chơi
-    interior.update(LGT.night || 0); timeU.value = t; hoaSen.update(t); fishing.update(t, dt); pondFish.update(t); carry.update(t, world && world.pos, LGT.carryNear); yeuQuai.update(t, LGT.yqView); land.update(t); outside.update(t); if (world) npcs.update(dt, world.pos);
+    interior.update(LGT.night || 0); timeU.value = t; hoaSen.update(t); fishing.update(t, dt); pondFish.update(t); carry.update(t, world && world.pos, LGT.carryNear); yeuQuai.update(t, LGT.yqView); farmMon.update(t, LGT.farmView, camera); land.update(t); outside.update(t); if (world) npcs.update(dt, world.pos);
     sky.rotation.y = t * 0.004;
     if (!reduce) {
       if (!DAY || fireflies.obj.visible) fireflies.update(t, dt); petals.update(t, dt); smoke.update(t, dt);

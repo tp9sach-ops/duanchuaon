@@ -42,13 +42,14 @@ export function initDock(hud, { toast = () => {} } = {}) {
     const W = LGT.world, fs = LGT.fishing ? LGT.fishing.status() : { phase: 'idle' };
     const cs = LGT.carry ? LGT.carry.status() : null;
     const ys = LGT.yq ? LGT.yq.status() : null;
+    const fms = LGT.farm ? LGT.farm.status() : null;   // Phiên 107: quái bãi rừng
     const ps = LGT.throwP ? LGT.throwP.status() : null;
     const nps = LGT.npcThrow ? LGT.npcThrow.status() : null;
     const hds = LGT.thietDau ? LGT.thietDau.status() : null;
     const khs = LGT.conKhi ? LGT.conKhi.status() : null;
     const sws = LGT.swim ? LGT.swim.status() : null;
     const bds = LGT.board ? LGT.board.status() : null;
-    const c = { swim: sws, board: bds, inHouse: !!LGT.inHouse, ply: ps ? { near: ps.near, holding: ps.holding, heldName: ps.heldName, left: ps.left } : null, npc: nps ? { near: nps.near } : null, head: hds, khi: khs ? { cd: khs.cd } : null, yq: ys ? { active: ys.active, ten: ys.ten, canThrow: ys.canThrow, stoneCd: ys.stoneCd, spearCd: ys.spearCd } : null, carry: cs ? { holding: cs.holding, heldName: cs.heldName, near: cs.near } : null, free: !!W && W.mode === 'free' && !LGT.panelOpen && !LGT.heldBy && !document.querySelector('.st-dlg:not([hidden])'), khinh: LGT.skill ? LGT.skill.level : 0, canTrain: !!(LGT.skill && LGT.skill.canTrain), water: !!fs.water && !LGT.inHouse, fish: fs };
+    const c = { swim: sws, board: bds, inHouse: !!LGT.inHouse, ply: ps ? { near: ps.near, holding: ps.holding, heldName: ps.heldName, left: ps.left } : null, npc: nps ? { near: nps.near } : null, head: hds, khi: khs ? { cd: khs.cd } : null, yq: ys ? { active: ys.active, ten: ys.ten, canThrow: ys.canThrow, stoneCd: ys.stoneCd, spearCd: ys.spearCd } : null, carry: cs ? { holding: cs.holding, heldName: cs.heldName, near: cs.near } : null, free: !!W && W.mode === 'free' && !LGT.panelOpen && !LGT.heldBy && !document.querySelector('.st-dlg:not([hidden])'), farm: fms ? { active: fms.active, ten: fms.ten, stoneCd: fms.stoneCd, spearCd: fms.spearCd } : null, khinh: LGT.skill ? LGT.skill.level : 0, canTrain: !!(LGT.skill && LGT.skill.canTrain), water: !!fs.water && !LGT.inHouse, fish: fs };
     const list = dockButtons(c), next = list.map((b) => b.id).join(',');
     root.hidden = !list.length;
     if (next !== sig) {   // bộ nút đổi → dựng lại các nút còn thiếu / bỏ nút thừa

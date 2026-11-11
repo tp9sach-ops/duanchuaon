@@ -17,6 +17,7 @@ import { initFishing } from './fishing.js';
 import { initDock } from './dock.js';
 import { initCarry } from './carry.js';
 import { initYeuQuai } from './yeuquai.js';
+import { initFarm } from './farm.js';
 import { initThrowPlayer } from './throwPlayer.js';
 import { initNpcThrow } from './npcThrow.js';
 import { initThietDau } from './thietDau.js';
@@ -146,6 +147,7 @@ export function initHudMenu(hud) {
   try { initSwim({ toast, addSen: addMerit }); } catch (e) { console.warn('[Diệu Giang Tự] Bơi lặn lỗi:', e && e.message); }   // Phiên 87: bơi, lặn, ngọc trai
   try { initBoard({ toast }); } catch (e) { console.warn('[Diệu Giang Tự] Ván trượt lỗi:', e && e.message); }   // Phiên 92: mua ván trượt ở Điện Máy Lam Sen, đứng lên ván đi nhanh gấp đôi
   try { initYeuQuai(hud, { toast }); } catch (e) { console.warn('[Diệu Giang Tự] Yêu quái lỗi:', e && e.message); }   // Phiên 64: yêu quái mỗi tháng một lần
+  try { initFarm(hud, { toast }); } catch (e) { console.warn('[Diệu Giang Tự] Quái bãi rừng lỗi:', e && e.message); }   // Phiên 107: quái cố định ở bãi rừng, farm Tu Vi + hạt sen
   try { initDock(hud, { toast }); } catch (e) { console.warn('[Diệu Giang Tự] Cụm nút lỗi:', e && e.message); }   // Phiên 62: cụm nút thao tác góc phải-dưới
 
   // ---- bản đồ chùa (lối đi tới chương: liên kết #id, stage.js tự bắt và cho nhân vật đi tới)

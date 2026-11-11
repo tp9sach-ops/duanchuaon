@@ -1,0 +1,9 @@
+/* Quái bãi rừng (Phiên 107): khung mục tiêu + Tu Vi. Cùng vị trí với khung yêu quái hằng tháng (hai khung không bao giờ hiện cùng lúc). */
+.fm-hud{position:absolute;left:50%;top:max(58px,calc(env(safe-area-inset-top) + 50px));transform:translateX(-50%);width:min(320px,calc(100vw - 150px));display:flex;flex-direction:column;gap:4px;padding:8px 10px;border-radius:12px;background:rgba(8,10,20,.72);border:1px solid rgba(143,214,191,.55);color:#eaf6ef;font:500 12px/1.25 var(--sans,system-ui,sans-serif);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);pointer-events:none;z-index:3}
+.fm-hud[hidden]{display:none!important}
+.fm-name{font-size:13px;font-weight:600}
+.fm-bar{display:block;height:9px;border-radius:5px;background:rgba(255,255,255,.15);overflow:hidden}
+.fm-bar i{display:block;height:100%;width:100%;background:#6fe08a;transition:width .12s linear}
+.fm-hud.kim .fm-bar i{background:#f0d060}.fm-hud.calm .fm-bar i{background:#62c8ff}
+.fm-sub{display:flex;justify-content:space-between;gap:8px;color:#b9c2d0;font-weight:400;font-size:11px}
+.fm-tag{font-weight:400;color:#aeb3c2}

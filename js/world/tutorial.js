@@ -6,6 +6,7 @@ import { ORBS, POND_MAX } from './fishing.js';
 import { HOUSE_LEVELS, MAX_LV, houseLevel, upgradeCost, XOM_SIZE } from './land.js';
 import { CARRY_ITEMS, carryLimit, strengthNeeded, THROW_COOLDOWN_S, THROW_COST_SEN } from './strength.js';
 import { YQ, AOE, EVENT_MIN, DIFF, SLOTS, MIN_SHARE } from './yeuquai.js';
+import { FARM_CFG, FARM_ZONES, MONSTERS } from '../data/monsters.js';
 const slotHours = (d) => SLOTS.filter((x) => x.diff === d).map((x) => `${x.hour}:00`).join(' và ');
 
 /** Chỗ đi tới: { npc: id } (đi tới NPC), { place: id } (đi tới nơi trong bản đồ), { tap: id } (chỉ nút cần bấm). */
@@ -82,6 +83,12 @@ TOPICS.push(
       { text: 'Đánh bằng “Ném đá” (từ xa, nhẹ) và “Thương” (lại gần, mạnh hơn). Người đủ mạnh (cấp và sức mạnh cao hơn yêu quái) còn có “Ném yêu quái”. Bị trúng đòn thì mất máu; cấp càng cao càng mất ít. Hết máu thì được đưa về cửa chùa hồi sinh, bất tử vài giây.' },
       { text: `Thu phục xong, lá bồ đề rơi vãi quanh đó: chạy tới chạm vào là nhặt, ai nhanh tay thì được. Ai đánh được ít nhất ${Math.round(MIN_SHARE * 100)}% máu yêu quái nhận thêm ${DIFF.trung.xp} điểm công hạnh và ${DIFF.trung.str} sức mạnh vĩnh viễn (khung ${slotHours('cao')}: ${DIFF.cao.xp} điểm và ${DIFF.cao.str} sức mạnh).` },
       { text: 'Cùng nhiều người chơi đánh chung một yêu quái (máu chung, tranh nhặt lá): đang làm, sắp có. Hiện mỗi người tự đối đầu một con.', soon: true },
+    ] },
+  { id: 'hangyeu', ten: 'Hàng yêu ở bãi rừng', moTa: 'Luyện Tu Vi, nhận hạt sen',
+    steps: [
+      { text: `Ngoài làng có hai vùng luyện: ${FARM_ZONES.biaRungThong.ten} (phía tây chùa, quái cấp ${MONSTERS.dameo.lv}–${MONSTERS.reutinh.lv}) và ${FARM_ZONES.duongMon.ten} (quái cấp ${MONSTERS.daotac.lv}–${MONSTERS.cuopduong.lv}). Mỗi vùng có tối đa ${FARM_ZONES.biaRungThong.cap} con, bị thu phục thì lát sau lại xuất hiện. Quái ở đây không đánh trả, bạn cứ thong thả luyện.` },
+      { text: 'Lại gần quái, bấm “Ném đá” khi còn xa hoặc “Thương” khi đứng sát. Phía trên đầu quái và trên khung giữa màn hình có thanh Oán Khí: thanh về 0 là bạn đã thu phục xong. Quái tinh anh (có vòng sáng dưới chân) nhiều Oán Khí hơn nhưng thưởng lớn hơn.' },
+      { text: `Thu phục xong bạn nhận Tu Vi và đôi khi hạt sen (công đức). Mỗi ngày nhận tối đa ${FARM_CFG.senCapNgay} hạt sen từ hàng yêu; hết rồi vẫn được Tu Vi. Quái yếu hơn bạn nhiều cho ít Tu Vi hơn, nên lên cấp thì hãy đi vùng xa hơn.` },
     ] },
   { id: 'lotrinh', ten: 'Lộ trình khám phá', moTa: 'Ô nào còn dấu “?” là chưa thử',
     steps: [

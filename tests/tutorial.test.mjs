@@ -19,7 +19,7 @@ const checkGo = (g, where) => {
 };
 
 test('chủ đề: đủ cách chơi, kiếm sen, đổi lá, xây dựng, phóng sinh; mọi chỗ đi tới là có thật', () => {
-  assert.deepEqual(TOPICS.map((t) => t.id), ['batdau', 'kiemsen', 'doila', 'xaydung', 'phongsinh', 'nutphai', 'sucmanh', 'yeuquai', 'lotrinh']);
+  assert.deepEqual(TOPICS.map((t) => t.id), ['batdau', 'kiemsen', 'doila', 'xaydung', 'phongsinh', 'nutphai', 'sucmanh', 'yeuquai', 'hangyeu', 'lotrinh']);
   for (const t of TOPICS) {
     assert.ok(t.ten && t.moTa && t.steps.length >= 2, t.id);
     t.steps.forEach((s, i) => { assert.ok(typeof s.text === 'string' && s.text.length > 20, `${t.id}#${i}`); checkGo(s.go, `${t.id}#${i}`); });

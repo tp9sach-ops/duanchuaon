@@ -31,12 +31,12 @@
 ### G1 — Lõi chiến đấu (xong khi: đánh Dã Mèo Rừng lên cấp 5; test công thức đạt)
 | ID | Việc | File dự kiến | Xong khi | Trạng thái |
 |---|---|---|---|---|
-| G1.1 | Dữ liệu cấu hình số liệu (đánh dấu TẠM) + module chỉ số: Công, Thủ, Sinh Lực theo Tu Vi (logic thuần) | `js/data/stats.js`, `js/world/stats.js`, `tests/stats.test.mjs` | Test: chỉ số tăng đúng theo cấp | chưa |
-| G1.2 | Đường cong Tu Vi: EXP lên cấp kế = 30 × n^1,6; hàm tính cấp từ EXP, EXP còn thiếu | `js/world/stats.js` hoặc `levels.js` | Test mốc: cấp 10 ≈ 1.200, 30 ≈ 6.900, 60 ≈ 21.000, 90 ≈ 40.000, 120 ≈ 64.000, 150 ≈ 91.000 | chưa |
-| G1.3 | Công thức sát thương: Công × hệ số skill × (1 + cường hóa) × K_hệ × 100 ÷ (100 + Thủ), chí mạng ×1,5 | `js/world/combat.js`, `tests/combat.test.mjs` | Test có đáp án tay (vài ca) | chưa |
-| G1.4 | Nguồn Tu Vi: hàng yêu 40%, nhiệm vụ 30%, hoạt động chùa 15% (mỗi loại tối đa 5 lần/ngày), boss/phó bản 15%; cộng EXP từ sự kiện hiện có | `js/world/stats.js`, nối `quests`/`temple` | Test trần 5 lần/ngày; cộng EXP khi xong hoạt động | chưa |
-| G1.5 | Lưu Tu Vi: cục bộ + GAS (mỗi 60 giây và khi đổi vùng) theo tài khoản; cần xem `gas/Accounts.gs` (hỏi ptg nếu cần đoạn mã) | `js/net/*`, `gas/*` | Đăng nhập máy khác thấy đúng Tu Vi; test logic lưu | chưa |
-| G1.6 | HUD tối thiểu: thanh Sinh Lực, khung mục tiêu (tên, cấp, Hệ, Oán Khí); chuẩn hóa Võ Căn Bản (Thương, Ném Đá) và nối quái hiện có sang Oán Khí; Dã Mèo Rừng cấp 3 | `js/ui/combat.js`, `js/world/monsters.js`, css | Đánh Dã Mèo lên cấp 5, thấy thanh Oán Khí giảm; ảnh chụp desktop + điện thoại | chưa |
+| G1.1 | Dữ liệu cấu hình số liệu (đánh dấu TẠM) + module chỉ số: Công, Thủ, Sinh Lực theo Tu Vi (logic thuần) | `js/data/stats.js`, `js/world/stats.js`, `tests/stats.test.mjs` | Test: chỉ số tăng đúng theo cấp | XONG (Phiên 102) |
+| G1.2 | Đường cong Tu Vi: EXP lên cấp kế = 30 × n^1,6; hàm tính cấp từ EXP, EXP còn thiếu | `js/world/stats.js` hoặc `levels.js` | Test mốc: cấp 10 ≈ 1.200, 30 ≈ 6.900, 60 ≈ 21.000, 90 ≈ 40.000, 120 ≈ 64.000, 150 ≈ 91.000 | XONG (Phiên 103) |
+| G1.3 | Công thức sát thương: Công × hệ số skill × (1 + cường hóa) × K_hệ × 100 ÷ (100 + Thủ), chí mạng ×1,5 | `js/world/combat.js`, `tests/combat.test.mjs` | Test có đáp án tay (vài ca) | XONG (Phiên 104) |
+| G1.4 | Nguồn Tu Vi: hàng yêu 40%, nhiệm vụ 30%, hoạt động chùa 15% (mỗi loại tối đa 5 lần/ngày), boss/phó bản 15%; cộng EXP từ sự kiện hiện có | `js/world/stats.js`, nối `quests`/`temple` | Test trần 5 lần/ngày; cộng EXP khi xong hoạt động | XONG (Phiên 105, logic thuần; nối vào game ở Phiên 107 cho nguồn hàng yêu) |
+| G1.5 | Lưu Tu Vi: cục bộ + GAS (mỗi 60 giây và khi đổi vùng) theo tài khoản; cần xem `gas/Accounts.gs` (hỏi ptg nếu cần đoạn mã) | `js/net/*`, `gas/*` | Đăng nhập máy khác thấy đúng Tu Vi; test logic lưu | MỘT PHẦN (Phiên 107): lưu cục bộ `lgt.farm` ngay mỗi lần thu phục; khóa `lgt.*` tự thuộc diện đồng bộ tài khoản (`isSyncKey`). CHƯA kiểm trên máy thật và chưa có lưu riêng "mỗi 60 giây / khi đổi vùng" lên GAS |
+| G1.6 | HUD tối thiểu: thanh Sinh Lực, khung mục tiêu (tên, cấp, Hệ, Oán Khí); chuẩn hóa Võ Căn Bản (Thương, Ném Đá) và nối quái hiện có sang Oán Khí; Dã Mèo Rừng cấp 3 | `js/ui/combat.js`, `js/world/monsters.js`, css | Đánh Dã Mèo lên cấp 5, thấy thanh Oán Khí giảm; ảnh chụp desktop + điện thoại | MỘT PHẦN (Phiên 107): khung mục tiêu (tên, cấp, Hệ, Oán Khí) + dòng Tu Vi/hạt sen còn; Ném đá + Thương đánh được quái bãi rừng. CHƯA có thanh Sinh Lực người chơi (quái không đánh trả) và chưa chụp ảnh desktop + điện thoại |
 
 ### G2 — Hệ phái và kỹ năng (xong khi: chọn được 5 Hệ; mỗi Hệ dùng đủ 3 skill; K_hệ đúng)
 | ID | Việc | File dự kiến | Xong khi | Trạng thái |
@@ -57,7 +57,7 @@
 | G3.3 | Hồ Lô: chứa 5 yêu, mở rộng 10/20 bằng cấp hoặc lá bồ đề; nối nút Hồ Lô | `js/world/hulo.js`, `js/ui/hulo.js` | Test sức chứa; lưu theo tài khoản | chưa |
 | G3.4 | Quy Y Viện (kiến trúc cạnh Chánh Điện) + thanh tẩy 1 lần/ngày/ô → Điểm Công Đức, Linh Ấn, nguyên liệu | `js/scene/quyyvien.js`, `js/world/*` | Thanh tẩy được; nơi mới có nhiệm vụ `v-quyyvien` | chưa |
 | G3.5 | Linh Ấn (10 cùng Hệ → Trứng hạng A) + Sổ Thu Phục (10/25/50 loài) | `js/world/sothuphuc.js`, test | Test mốc danh hiệu | chưa |
-| G3.6 | Hai vùng đầu (Bìa Rừng Thông 3–20, Đường Mòn Đông–Tây 12–25): quái sinh cục bộ, tối đa ~12 con, hồi sinh 30–60 giây | `js/world/spawn.js`, `js/data/monsters.js` | Test spawn/hồi sinh; chơi thử 2 vùng | chưa |
+| G3.6 | Hai vùng đầu (Bìa Rừng Thông 3–20, Đường Mòn Đông–Tây 12–25): quái sinh cục bộ, tối đa ~12 con, hồi sinh 30–60 giây | `js/world/spawn.js`, `js/data/monsters.js` | Test spawn/hồi sinh; chơi thử 2 vùng | XONG (Phiên 106 logic; Phiên 107 nối cảnh 3D + nút + thưởng; CHƯA chơi thử trên trình duyệt thật) |
 
 ### G4 — Đủ vùng, nhiệm vụ, Pháp Môn (xong khi: chơi liền cấp 1 → 60 không bí đường)
 | ID | Việc | Xong khi | Trạng thái |
