@@ -220,6 +220,7 @@ export function createWorld({ scene, camera, canvas, coarse = false, LGT = windo
   /** Gọi mỗi khung hình (thay rail.update khi ở chế độ đi bộ). */
   function update(dt) {
     let v = null, spd = WALK_SPEED;
+    try { avatar.setHold(!!(LGT.carry && LGT.carry.world && LGT.carry.world.held)); } catch (_) { /* thân khối không có tư thế giơ tay */ }   // Phiên 99: đang khiêng vật → giơ hai tay
     act.update(dt);
     if (act.sitting) {                                        // đang ngồi/thiền: khóa tại bồ đoàn, bỏ qua đi lại
       const s = act.seat; P.x = s.x; P.z = s.z; P.y = damp(P.y, SEAT_Y, 10, dt); speedNow = 0; nav.clear(); mark.visible = false;

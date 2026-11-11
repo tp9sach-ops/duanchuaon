@@ -4,17 +4,19 @@
 import * as THREE from 'three';
 import { DEFAULT_COLOR, colorById, hairById, beardById, cleanName, cleanSay, bubbleLife, wrapText, poseFor, turnToward, BELL_PROFILE, bellRadius, logoPatch, POLO_LOGOS } from './avatarLogic.js';
 import { swingPose, SWING_S } from './conKhi.js';
+import { chibiReady } from '../scene/chibiBody.js';
+import { createChibiAvatar } from './avatarChibi.js';
 
 const SKIN = 0xe8934c, HAIR = 0x1f1511, OUTLINE = 0x3a2314;
 const FONT = '600 38px "Be Vietnam Pro", "Noto Sans", system-ui, sans-serif';
 
-function canvas(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
-function roundRect(g, x, y, w, h, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
+export function canvas(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
+export function roundRect(g, x, y, w, h, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
 
 // Logo 9 SẠCH dán lên áo đồng phục: một texture dùng chung cho mọi nhân vật. Vẽ tạm bằng code rồi thay bằng ảnh thật khi tải xong (lỗi tải thì giữ bản tạm).
 const LOGO_URL = new URL('../../assets/logo-9sach.webp', import.meta.url).href;
 let LOGO_TEX = null;
-function logoTexture() {
+export function logoTexture() {
   if (LOGO_TEX) return LOGO_TEX;
   const c = canvas(256, 256), g = c.getContext('2d');
   g.fillStyle = '#f6c21c'; g.beginPath(); g.arc(128, 128, 124, 0, Math.PI * 2); g.fill();
@@ -32,7 +34,7 @@ function logoTexture() {
 
 // Texture cà sa: ô ruộng (hình chữ nhật vàng nghệ viền nâu đỏ, nhiều hàng) như áo cà sa truyền thống; dùng chung cho mọi cà sa.
 let CASA_TEX = null;
-function casaTexture() {
+export function casaTexture() {
   if (CASA_TEX) return CASA_TEX;
   const c = canvas(128, 128), g = c.getContext('2d');
   g.fillStyle = '#7a2c12'; g.fillRect(0, 0, 128, 128);
@@ -44,12 +46,12 @@ function casaTexture() {
   return CASA_TEX;
 }
 
-function makeSprite(tex, w, h, y) {
+export function makeSprite(tex, w, h, y) {
   const m = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false, depthWrite: false });
   const s = new THREE.Sprite(m); s.scale.set(w, h, 1); s.position.y = y; s.renderOrder = 20; return s;
 }
 
-function nameTexture(name, mine) {
+export function nameTexture(name, mine) {
   const c = canvas(512, 80), g = c.getContext('2d');
   g.font = FONT; const tw = Math.min(480, g.measureText(name).width + 40);
   g.fillStyle = mine ? 'rgba(74,165,138,.85)' : 'rgba(6,7,13,.72)'; roundRect(g, (512 - tw) / 2, 8, tw, 64, 30); g.fill();
@@ -57,7 +59,7 @@ function nameTexture(name, mine) {
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
 }
 
-function bubbleTexture(text) {
+export function bubbleTexture(text) {
   const lines = wrapText(text, 18, 4), lh = 46, h = lines.length * lh + 44, c = canvas(512, Math.max(96, h)), g = c.getContext('2d');
   g.font = FONT; const tw = Math.min(496, Math.max(...lines.map((l) => g.measureText(l).width)) + 44);
   g.fillStyle = 'rgba(250,244,226,.96)'; roundRect(g, (512 - tw) / 2, 4, tw, c.height - 20, 22); g.fill();
@@ -70,7 +72,11 @@ function bubbleTexture(text) {
 /** Tạo nhân vật chibi: đầu tròn to, thân áo hình chuông, mắt cười, má hồng, viền hoạt hình, hai tay chắp trước ngực.
  *  opts: { name, color (id màu áo), hair ('troc' | 'bui'), mine (true = nhân vật của mình: nhãn tên màu ngọc, mũi tên vàng ▼) }
  *  Gốc = dưới bàn chân, nhìn +z. Cao ~1,5 (đầu bán kính 0,42). Giao diện hàm giữ nguyên: group, setState, setFacing, say, update, dispose. */
-export function createAvatar({ name = 'Khách', color = DEFAULT_COLOR, hair: hairId = 'troc', beard: beardId = '', mine = false } = {}) {
+export function createAvatar(opts = {}) {
+  if (chibiReady() && opts.model !== 'proc') return createChibiAvatar(opts);   // Phiên 99: thân từ mô hình GLB có xương; chưa nạp được thì dùng thân dựng bằng khối bên dưới
+  return createProcAvatar(opts);
+}
+function createProcAvatar({ name = 'Khách', color = DEFAULT_COLOR, hair: hairId = 'troc', beard: beardId = '', mine = false } = {}) {
   const col = colorById(color), group = new THREE.Group(), rig = new THREE.Group();
   group.add(rig);
   const geos = [], mats = [];
@@ -247,5 +253,5 @@ export function createAvatar({ name = 'Khách', color = DEFAULT_COLOR, hair: hai
   function setBeadCount(n) { malaTarget = -(Math.max(0, +n || 0) / 108) * Math.PI * 2; }
   /** Vung côn chém (Phiên 93): bắt đầu hoạt ảnh nâng côn → chém xuống → thu về (thời gian cố định SWING_S + 0,35 s). */
   function swing() { swingT = 0; }
-  return { group, setState, setFacing, say, setBeadCount, swing, update, dispose, get state() { return st.state; }, get swinging() { return swingT >= 0; } };
+  return { group, setState, setFacing, say, setBeadCount, swing, setHold() {}, act() {}, update, dispose, get state() { return st.state; }, get swinging() { return swingT >= 0; }, get holding() { return false; } };   // setHold/act: chỉ thân GLB có xương mới có tư thế giơ tay/ném (avatarChibi.js)
 }

@@ -1,0 +1,132 @@
+// Nhân vật chibi dùng thân GLB có xương (Phiên 99). Cùng giao diện với createAvatar cũ: { group, setState, setFacing, say, setBeadCount, swing, update, dispose, state, swinging } + MỚI: setHold(bool) (giơ tay khiêng vật), act('throw'|'grab').
+// Tư thế lấy từ poseFor (avatarLogic.js) rồi đổi thành góc xương bằng chibiPose (chibiRig.js, có test) → mọi trạng thái cũ (đứng, đi, ngồi, gõ mõ, lần hạt, lạy, vung côn) giữ nguyên nhịp, chỉ đổi hình dáng.
+// Mặt (mắt cười, miệng, má hồng), râu, tóc búi, hào quang gắn vào xương đầu; áo polo 9 Sạch = vùng màu trên thân + cổ áo + logo; cà sa = vỏ chuông gắn vào hông. Lỗi/chưa nạp GLB thì avatar.js dùng bản dựng khối.
+import * as THREE from 'three';
+import { DEFAULT_COLOR, colorById, hairById, beardById, cleanName, cleanSay, bubbleLife, poseFor, turnToward, BELL_PROFILE, POLO_LOGOS } from './avatarLogic.js';
+import { swingPose, SWING_S } from './conKhi.js';
+import { chibiPose, CHIBI_H, LM } from './chibiRig.js';
+import { buildChibi, applyChibiPose } from '../scene/chibiBody.js';
+import { logoTexture, casaTexture, makeSprite, nameTexture, bubbleTexture } from './avatar.js';
+
+const SKIN = 0xe8934c, HAIR = 0x1f1511, OUTLINE = 0x3a2314;
+const ACT_S = { throw: 0.55, grab: 0.8 };   // giây của từng động tác một lần
+
+export function createChibiAvatar({ name = 'Khách', color = DEFAULT_COLOR, hair: hairId = 'troc', beard: beardId = '', mine = false } = {}) {
+  const col = colorById(color), group = new THREE.Group(), rig = new THREE.Group(); group.add(rig);
+  const geos = [], mats = [], polo = !!col.polo, casa = !!col.casa;
+  const geo = (g) => (geos.push(g), g);
+  const std = (c, r = 0.62) => { const m = new THREE.MeshStandardMaterial({ color: c, roughness: r }); mats.push(m); return m; };
+  const basic = (c, o = {}) => { const m = new THREE.MeshBasicMaterial({ color: c, ...o }); mats.push(m); return m; };
+  const mesh = (g, m, parent, x = 0, y = 0, z = 0) => { const o = new THREE.Mesh(geo(g), m); o.position.set(x, y, z); parent.add(o); return o; };
+
+  // Thân GLB + xương. Vùng màu: da / áo / tay áo / quần / giày.
+  const pal = { skin: SKIN, shirt: col.ao, sleeve: polo ? col.tay : col.ao, pants: polo ? 0x2b2f3a : col.dai, shoe: 0x4a2f1c };
+  const ch = buildChibi(pal), B = ch.bones; rig.add(ch.mesh);
+  const H = CHIBI_H, neckY = LM.neck * H, crotchY = LM.crotch * H, hd = ch.head;
+
+  // Bóng mờ dưới chân
+  const shadow = mesh(new THREE.CircleGeometry(0.46, 20), basic(0x000000, { transparent: true, opacity: 0.26, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }), group, 0, 0.03, 0);
+  shadow.rotation.x = -Math.PI / 2; shadow.renderOrder = 1;
+
+  // Mặt + râu + tóc búi: dựng theo "đầu cầu bán kính 0,42" của bản cũ rồi co giãn khớp đầu của mô hình; gắn vào xương đầu (xương đầu đặt ở cổ).
+  const face = new THREE.Group(); face.position.set(hd.cx, hd.cy - neckY, hd.cz); face.scale.set(hd.rx / 0.42, hd.ry / 0.399, hd.rz / 0.4116); B.head.add(face);
+  const eyeM = basic(0x3a2012), eyeG = geo(new THREE.TorusGeometry(0.055, 0.014, 6, 14, Math.PI));
+  for (const sx of [-1, 1]) { const e = new THREE.Mesh(eyeG, eyeM); e.position.set(sx * 0.16, 0.035, 0.392); e.rotation.y = sx * 0.4; face.add(e); }
+  const mouth = new THREE.Mesh(geo(new THREE.TorusGeometry(0.034, 0.011, 6, 12, Math.PI)), eyeM); mouth.position.set(0, -0.1, 0.414); mouth.rotation.z = Math.PI; face.add(mouth);
+  const cheekM = basic(0xf06a6a, { transparent: true, opacity: 0.55, depthWrite: false }), cheekG = geo(new THREE.CircleGeometry(0.062, 14));
+  for (const sx of [-1, 1]) { const c = new THREE.Mesh(cheekG, cheekM); c.position.set(sx * 0.255, -0.06, 0.338); c.rotation.y = sx * 0.85; face.add(c); }
+  const bd = beardById(beardId);
+  if (bd.id) {
+    const bm = std(bd.mau, 0.85);
+    for (const sx of [-1, 1]) {
+      const mu = mesh(new THREE.SphereGeometry(0.075, 10, 8), bm, face, sx * 0.065, -0.062, 0.405); mu.scale.set(1.25, 0.5, 0.6); mu.rotation.z = sx * -0.35;
+      const br = mesh(new THREE.SphereGeometry(0.06, 8, 6), bm, face, sx * 0.16, 0.115, 0.38); br.scale.set(1.5, 0.35, 0.5); br.rotation.z = sx * -0.25;
+    }
+    const chin = mesh(new THREE.SphereGeometry(0.2, 16, 12), bm, face, 0, -0.27, 0.27); chin.scale.set(1.05, 1.15, 0.55);
+    const tail = mesh(new THREE.ConeGeometry(0.17, 0.5, 14), bm, face, 0, -0.55, 0.3); tail.rotation.x = Math.PI + 0.12; tail.scale.set(1, 1, 0.55);
+  }
+  if (hairById(hairId).id === 'bui') {
+    const hairM = std(HAIR, 0.8), cap = mesh(new THREE.SphereGeometry(0.435, 24, 14, 0, Math.PI * 2, 0, Math.PI * 0.43), hairM, face, 0, 0.01, -0.025); cap.scale.set(1, 0.97, 1); cap.rotation.x = -0.32;
+    mesh(new THREE.SphereGeometry(0.125, 14, 10), hairM, face, 0, 0.5, -0.1);
+  }
+  // Hào quang (khi ngồi thiền/tụng)
+  const haloC = document.createElement('canvas'); haloC.width = haloC.height = 128; { const g = haloC.getContext('2d'), gr = g.createRadialGradient(64, 64, 18, 64, 64, 62); gr.addColorStop(0, 'rgba(255,248,214,.0)'); gr.addColorStop(0.55, 'rgba(255,240,190,.95)'); gr.addColorStop(0.7, 'rgba(255,224,150,.45)'); gr.addColorStop(1, 'rgba(255,224,150,0)'); g.fillStyle = gr; g.fillRect(0, 0, 128, 128); }
+  const haloTex = new THREE.CanvasTexture(haloC); haloTex.colorSpace = THREE.SRGBColorSpace;
+  const haloMat = new THREE.SpriteMaterial({ map: haloTex, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, fog: false });
+  const halo = new THREE.Sprite(haloMat); halo.scale.set(1.9, 1.9, 1); halo.position.set(hd.cx, hd.cy - neckY + 0.02, hd.cz - hd.rz * 0.85); B.head.add(halo);
+
+  // Cổ áo polo + logo ngực trái / lưng; chuỗi hạt quanh cổ; tràng hạt 108
+  const spY = crotchY, zf = ch.torso.zf, zb = ch.torso.zb, midZ = (zf + zb) / 2;   // gốc xương thân ở y = crotchY
+  if (polo) {
+    const collar = mesh(new THREE.TorusGeometry(0.13, 0.026, 8, 24), basic(col.co ?? col.dai), B.spine, 0, neckY - spY - 0.02, midZ + 0.02); collar.rotation.x = Math.PI / 2; collar.scale.set(1, 0.78, 1);
+    const logoM = new THREE.MeshStandardMaterial({ map: logoTexture(), transparent: true, roughness: 0.7, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }); mats.push(logoM);
+    const ly = 0.36 * H - spY;
+    const chest = mesh(new THREE.PlaneGeometry(0.1, 0.1), logoM, B.spine, 0.065, ly + 0.02, zf + 0.006); chest.renderOrder = 2;
+    const back = mesh(new THREE.PlaneGeometry(0.2, 0.2), logoM, B.spine, 0, ly, zb - 0.006); back.rotation.y = Math.PI; back.renderOrder = 2;
+  }
+  { const beadM = std(0xc9792f, 0.4), beads = new THREE.InstancedMesh(geo(new THREE.SphereGeometry(0.03, 8, 6)), beadM, 15), m4 = new THREE.Matrix4();
+    for (let i = 0; i < 15; i++) { const a = (i / 15) * Math.PI * 2; m4.makeTranslation(Math.sin(a) * 0.14, neckY - spY - 0.06 - (Math.cos(a) > 0 ? 0.07 * Math.cos(a) : 0), midZ + 0.02 + Math.cos(a) * 0.1); beads.setMatrixAt(i, m4); }
+    B.spine.add(beads); mats.push(beadM); }
+  const mala = new THREE.Group(); mala.position.set(0, 0.4 * H - spY, zf + 0.12); mala.visible = false; B.spine.add(mala);
+  const malaG = geo(new THREE.SphereGeometry(0.022, 6, 5)), malaBeads = new THREE.InstancedMesh(malaG, std(0xd9a24a, 0.4), 108), m4 = new THREE.Matrix4();
+  for (let i = 0; i < 108; i++) { const a = (i / 108) * Math.PI * 2; m4.makeTranslation(Math.sin(a) * 0.16, Math.cos(a) * 0.16, 0); malaBeads.setMatrixAt(i, m4); }
+  mala.add(malaBeads); let malaTarget = 0, malaCur = 0;
+
+  // Cà sa (NPC trụ trì): vỏ chuông phủ thân + dải vắt vai, gắn vào hông; áo trong kem. Thu chiều cao cho ngang vai chibi.
+  if (casa) {
+    const robe = new THREE.Group(); robe.scale.set(0.78, 0.8, 0.78); robe.position.set(0, -crotchY, midZ); B.hips.add(robe);
+    const bell = geo(new THREE.LatheGeometry(BELL_PROFILE.map(([r, y]) => new THREE.Vector2(r, y)), 30)); robe.add(new THREE.Mesh(bell, std(col.ao, 0.7)));
+    const prof = BELL_PROFILE.map(([r, y]) => new THREE.Vector2(r * 1.035 + 0.004, y));
+    const drape = new THREE.Mesh(geo(new THREE.LatheGeometry(prof, 36, -0.55, Math.PI * 2 - 1.05)), new THREE.MeshStandardMaterial({ map: casaTexture(), roughness: 0.75, side: THREE.DoubleSide })); mats.push(drape.material); robe.add(drape);
+    const vienM = std(col.vien, 0.6), gau = mesh(new THREE.TorusGeometry(0.405, 0.022, 8, 36), vienM, robe, 0, 0.04, 0); gau.rotation.x = Math.PI / 2;
+  }
+
+  // Côn (cầm tay phải, chỉ hiện khi vung): thân dọc theo cánh tay (xương tay nằm ngang −x lúc gắn) → xoay −90° quanh z
+  const staff = new THREE.Group(); staff.visible = false; staff.rotation.z = -Math.PI / 2; B.armR.add(staff);
+  { const woodM = std(0x7a4a24, 0.55), capM = std(0xe0a93a, 0.35), bandM = std(0xb3261e, 0.5);
+    mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.3, 8), woodM, staff, 0, -0.85, 0); mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.1, 8), capM, staff, 0, -1.5, 0);
+    mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.1, 8), capM, staff, 0, -0.2, 0); mesh(new THREE.CylinderGeometry(0.038, 0.038, 0.12, 8), bandM, staff, 0, -1.1, 0); }
+  let swingT = -1;
+
+  // Mũi tên ▼ (nhân vật của mình), tên, bong bóng chat
+  let arrow = null; if (mine) { arrow = mesh(new THREE.ConeGeometry(0.11, 0.2, 4), basic(0xf2c14e), group, 0, 1.86, 0); arrow.rotation.x = Math.PI; }
+  const nameTex = nameTexture(cleanName(name), mine), label = makeSprite(nameTex, 1.28, 0.2, 2.12); group.add(label);
+  let bubble = null, bubbleTex = null, bubbleUntil = 0, clock = 0;
+  group.traverse((o) => { if (o.isMesh && !o.material.isMeshBasicMaterial) o.castShadow = true; });
+
+  const st = { state: 'idle', speed: 0, ry: 0, targetRy: 0, pose: poseFor('idle', 0), halo: 0, t0: 0, hold: false, act: null, actT: 0 };
+  function setState(s, speed = 0) { if (s !== st.state) st.t0 = clock; st.state = s; st.speed = speed; }
+  function setFacing(ry, instant = false) { st.targetRy = ry; if (instant) { st.ry = ry; group.rotation.y = ry; } }
+  function say(text) {
+    const t = cleanSay(text);
+    if (bubble) { group.remove(bubble); bubble.material.dispose(); bubbleTex?.dispose(); bubble = null; bubbleTex = null; }
+    if (!t) return '';
+    const { tex, ratio } = bubbleTexture(t); bubbleTex = tex;
+    bubble = makeSprite(tex, 1.9, 1.9 * ratio, 2.4 + 1.9 * ratio / 2 - 0.1); group.add(bubble);
+    bubbleUntil = clock + bubbleLife(t) / 1000; return t;
+  }
+  function update(dt) {
+    clock += dt;
+    if (arrow) arrow.position.y = 1.86 + Math.sin(clock * 3) * 0.05;
+    const target = poseFor(st.state, clock - st.t0, st.speed), p = st.pose, k = Math.min(1, 14 * dt);
+    for (const key of Object.keys(target)) p[key] += (target[key] - p[key]) * (key === 'sit' ? Math.min(1, 6 * dt) : k);
+    let swing = null, act = null;
+    if (swingT >= 0) { swingT += dt; swing = swingPose(swingT); staff.visible = swing.vis > 0.3; if (swingT >= SWING_S + 0.35) { swingT = -1; staff.visible = false; swing = null; } }
+    if (st.act) { st.actT += dt; const len = ACT_S[st.act]; if (st.actT >= len) st.act = null; else act = { name: st.act, k: st.actT / len }; }
+    applyChibiPose(B, chibiPose(p, st.state, clock - st.t0, st.speed, { hold: st.hold, swing, act }));
+    rig.position.y = p.dy;
+    shadow.scale.setScalar(1 - Math.min(0.3, p.dy * 4));
+    const wantHalo = st.state === 'sit' || st.state === 'mo' || st.state === 'beads' ? 0.9 : 0; st.halo += (wantHalo - st.halo) * Math.min(1, 5 * dt); haloMat.opacity = st.halo;
+    mala.visible = st.state === 'beads'; malaCur += (malaTarget - malaCur) * Math.min(1, 12 * dt); mala.rotation.z = malaCur;
+    st.ry = turnToward(st.ry, st.targetRy, 9 * dt); group.rotation.y = st.ry;
+    if (bubble && clock > bubbleUntil) say('');
+  }
+  function dispose() { say(''); label.material.dispose(); nameTex.dispose(); haloMat.dispose(); haloTex.dispose(); ch.dispose(); geos.forEach((g) => g.dispose()); mats.forEach((m) => m.dispose()); }
+  function setBeadCount(n) { malaTarget = -(Math.max(0, +n || 0) / 108) * Math.PI * 2; }
+  function swing() { swingT = 0; }
+  /** Giơ hai tay đỡ vật trên đầu (khiêng). */
+  function setHold(on) { st.hold = !!on; }
+  /** Động tác một lần: 'throw' (ném), 'grab' (cúi nhặt). Tên lạ: bỏ qua. */
+  function act(nm) { if (ACT_S[nm]) { st.act = nm; st.actT = 0; } }
+  return { group, setState, setFacing, say, setBeadCount, swing, setHold, act, update, dispose, get state() { return st.state; }, get swinging() { return swingT >= 0; }, get holding() { return st.hold; } };
+}
