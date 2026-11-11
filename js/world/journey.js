@@ -7,7 +7,7 @@ import { ORBS, SPECIES } from './fishing.js';
 import { HOUSE_LEVELS } from './land.js';
 import { PLACES } from './outside.js';
 import { TIERS } from './strength.js';
-import { DIFF, SLOT_ORDER, EVENT_MIN } from './yeuquai.js';
+import { DIFF, SLOTS, EVENT_MIN } from './yeuquai.js';
 import { NPCS } from './npc.js';
 
 const isObj = (o) => o && typeof o === 'object' && !Array.isArray(o);
@@ -121,11 +121,11 @@ export function pageNguoi({ prog = null } = {}) {
   return mk('nguoi', 'Dân làng', 'Làm quen với mọi người trong và ngoài chùa.', tiles);
 }
 
-/** Trang 5 — Sức mạnh · Yêu quái: các bậc sức mạnh (khiêng/ném vật nặng) và hai khung giờ yêu quái hằng tháng. ctx.str = sức mạnh hiện tại; ctx.yq = { kills, bonus }. */
+/** Trang 5 — Sức mạnh · Yêu quái: các bậc sức mạnh (khiêng/ném vật nặng) và ba khung giờ yêu quái mỗi ngày. ctx.str = sức mạnh hiện tại; ctx.yq = { kills, bonus }. */
 export function pageSucManh(ctx = {}) {
   const { str = 0, yq = null } = isObj(ctx) ? ctx : {}, s = num(str), y = isObj(yq) ? yq : {}, tiles = [];
   for (const t of TIERS.slice(1)) tiles.push({ id: 'sm-' + t.min, icon: '💪', ten: t.ten, mo: `Sức mạnh từ ${t.min}`, done: s >= t.min, how: ['Sức mạnh tăng theo cấp nhân vật, bậc Khinh thân và tổng hạt sen đã tích.', 'Ngoài làng có 8 vật để khiêng và ném, từ thùng gỗ nhẹ tới khúc gỗ lim 200 kg: bấm “Khiêng” khi đứng gần.', `Bạn đang có ${s} sức mạnh.`], act: null });
-  tiles.push({ id: 'sm-yq-thu', icon: '👹', ten: 'Thu phục yêu quái đầu tiên', mo: 'Mỗi tháng một ngày, hai khung giờ', done: num(y.kills) > 0, how: [`Mỗi tháng yêu quái xuất hiện ở đường làng vào một ngày cố định, ${SLOT_ORDER.length} khung giờ: ${SLOT_ORDER.map((k) => `${DIFF[k].hour}:00 (độ khó ${DIFF[k].ten})`).join(', ')}, mỗi khung ${EVENT_MIN} phút.`, 'Bấm “Ném đá” khi nó còn xa; khi nó gồng (vùng đỏ trên đất) hãy chạy ra ngoài; lại gần bấm “Thương”.', 'Đánh đủ phần công thì nhận điểm, sức mạnh vĩnh viễn và nhặt lá bồ đề rơi ra — ai nhanh tay nhặt được.'], act: null });
+  tiles.push({ id: 'sm-yq-thu', icon: '👹', ten: 'Thu phục yêu quái đầu tiên', mo: 'Mỗi ngày ba khung giờ', done: num(y.kills) > 0, how: [`Mỗi ngày yêu quái xuất hiện ở đường làng ${SLOTS.length} lần (giờ Việt Nam): ${SLOTS.map((s) => `${s.hour}:00 (độ khó ${DIFF[s.diff].ten})`).join(', ')}, mỗi khung ${EVENT_MIN} phút.`, 'Bấm “Ném đá” khi nó còn xa; khi nó gồng (vùng đỏ trên đất) hãy chạy ra ngoài; lại gần bấm “Thương”.', 'Đánh đủ phần công thì nhận điểm, sức mạnh vĩnh viễn và nhặt lá bồ đề rơi ra — ai nhanh tay nhặt được.'], act: null });
   tiles.push({ id: 'sm-yq-bonus', icon: '⭐', ten: 'Sức mạnh từ yêu quái', mo: `+${num(y.bonus)} sức mạnh vĩnh viễn`, done: num(y.bonus) > 0, how: ['Mỗi lần thu phục thành công được thêm sức mạnh vĩnh viễn; khung giờ độ khó cao thưởng nhiều hơn.'], act: null });
   return mk('sucmanh', 'Sức mạnh · Yêu quái', 'Khiêng đồ nặng, ném người, bảo vệ dân làng khỏi yêu quái.', tiles);
 }

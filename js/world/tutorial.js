@@ -5,7 +5,8 @@ import { SEN_PER_LA, LAND_LA, MED_SECONDS_PER_SEN, DAILY_CAP } from './merit.js'
 import { ORBS, POND_MAX } from './fishing.js';
 import { HOUSE_LEVELS, MAX_LV, houseLevel, upgradeCost, XOM_SIZE } from './land.js';
 import { CARRY_ITEMS, carryLimit, strengthNeeded, THROW_COOLDOWN_S, THROW_COST_SEN } from './strength.js';
-import { YQ, AOE, EVENT_MIN, DIFF, MIN_SHARE } from './yeuquai.js';
+import { YQ, AOE, EVENT_MIN, DIFF, SLOTS, MIN_SHARE } from './yeuquai.js';
+const slotHours = (d) => SLOTS.filter((x) => x.diff === d).map((x) => `${x.hour}:00`).join(' và ');
 
 /** Chỗ đi tới: { npc: id } (đi tới NPC), { place: id } (đi tới nơi trong bản đồ), { tap: id } (chỉ nút cần bấm). */
 const npc = (id) => ({ npc: id }), place = (id) => ({ place: id }), tap = (id) => ({ tap: id });
@@ -74,12 +75,12 @@ TOPICS.push(
       { text: 'Đứng sát vật rồi bấm “Khiêng”. Bấm “Ném” để ném về hướng nhân vật đang nhìn: vật nhẹ và bạn khỏe thì bay xa, vật rơi xuống đất rồi tự trở về chỗ cũ sau một lúc. Vào nhà hoặc ngồi xuống thì vật tự được đặt xuống.' },
       { text: `Người có cấp VÀ sức mạnh lớn hơn bạn có thể khiêng và ném bạn dù bạn không đồng ý; nhưng không được ném trong khuôn viên chùa hay người đang ngồi thiền, hồi chiêu ${THROW_COOLDOWN_S} giây cho mỗi cặp, người ném bị trừ ${THROW_COST_SEN} hạt sen, người bị ném rơi an toàn không mất gì. Phần ném người chơi với nhau qua mạng: đang làm, sắp có.`, soon: true },
     ] },
-  { id: 'yeuquai', ten: 'Yêu quái hằng tháng', moTa: 'Bảo vệ dân làng, nhận lá bồ đề',
+  { id: 'yeuquai', ten: 'Yêu quái mỗi ngày', moTa: 'Bảo vệ dân làng, nhận lá bồ đề',
     steps: [
-      { text: `Mỗi tháng yêu quái xuất hiện ở đường làng vào một ngày cố định, hai khung giờ (giờ Việt Nam), mỗi khung ${EVENT_MIN} phút: ${DIFF.trung.hour}:00 chiều độ khó ${DIFF.trung.ten}, ${DIFF.cao.hour}:00 tối độ khó ${DIFF.cao.ten} (máu nhiều, đánh đau, gồng nhanh hơn nhưng thưởng lớn hơn). Yêu Đá, Yêu Nước, Yêu Lửa luân phiên. Khi còn dưới 14 ngày, game báo trước ngày giờ.` },
+      { text: `Mỗi ngày yêu quái xuất hiện ở đường làng ${SLOTS.length} lần (giờ Việt Nam), mỗi khung ${EVENT_MIN} phút: ${slotHours('trung')} độ khó ${DIFF.trung.ten}, ${slotHours('cao')} độ khó ${DIFF.cao.ten} (máu nhiều, đánh đau, gồng nhanh hơn nhưng thưởng lớn hơn). Yêu Đá, Yêu Nước, Yêu Lửa luân phiên. Khi còn dưới 14 ngày, game báo trước ngày giờ.` },
       { text: `Yêu quái sẽ GỒNG chiêu: một vùng đỏ hiện dưới đất và đậm dần. Hãy chạy ra ngoài vùng đỏ trước khi nó đánh (vòng ${AOE.slam} m quanh thân yêu đá; vành khuyên ${AOE.ringIn}–${AOE.ringOut} m của yêu nước, đứng sát thân thì an toàn; các vòng nhỏ của yêu lửa rơi gần chỗ bạn đứng).` },
       { text: 'Đánh bằng “Ném đá” (từ xa, nhẹ) và “Thương” (lại gần, mạnh hơn). Người đủ mạnh (cấp và sức mạnh cao hơn yêu quái) còn có “Ném yêu quái”. Bị trúng đòn thì mất máu; cấp càng cao càng mất ít. Hết máu thì được đưa về cửa chùa hồi sinh, bất tử vài giây.' },
-      { text: `Thu phục xong, lá bồ đề rơi vãi quanh đó: chạy tới chạm vào là nhặt, ai nhanh tay thì được. Ai đánh được ít nhất ${Math.round(MIN_SHARE * 100)}% máu yêu quái nhận thêm ${DIFF.trung.xp} điểm công hạnh và ${DIFF.trung.str} sức mạnh vĩnh viễn (khung ${DIFF.cao.hour}:00: ${DIFF.cao.xp} điểm và ${DIFF.cao.str} sức mạnh).` },
+      { text: `Thu phục xong, lá bồ đề rơi vãi quanh đó: chạy tới chạm vào là nhặt, ai nhanh tay thì được. Ai đánh được ít nhất ${Math.round(MIN_SHARE * 100)}% máu yêu quái nhận thêm ${DIFF.trung.xp} điểm công hạnh và ${DIFF.trung.str} sức mạnh vĩnh viễn (khung ${slotHours('cao')}: ${DIFF.cao.xp} điểm và ${DIFF.cao.str} sức mạnh).` },
       { text: 'Cùng nhiều người chơi đánh chung một yêu quái (máu chung, tranh nhặt lá): đang làm, sắp có. Hiện mỗi người tự đối đầu một con.', soon: true },
     ] },
   { id: 'lotrinh', ten: 'Lộ trình khám phá', moTa: 'Ô nào còn dấu “?” là chưa thử',
