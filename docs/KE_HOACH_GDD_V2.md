@@ -23,9 +23,9 @@
 ### G0 — Chuẩn bị (chưa viết tính năng)
 | ID | Việc | File | Xong khi | Trạng thái |
 |---|---|---|---|---|
-| G0.1 | Đối chiếu GDD với mã thật: đọc `docs/PHIEN62–67`, `PHIEN81`, `PHIEN90`, `PHIEN91` và mã chiến đấu hiện có (ném đá, thương, yêu quái hằng tháng, Thiết đầu công, Khinh thân, Hồ Lô nếu có). Sửa cột "Game hiện tại" | tạo `docs/GDD_v2_DOICHIEU.md` | Mỗi dòng bảng GDD mục 1 có "đúng / lệch / thiếu" + đường dẫn file; liệt kê chỗ GDD mâu thuẫn mã | chưa |
+| G0.1 | Đối chiếu GDD với mã thật: đọc `docs/PHIEN62–67`, `PHIEN81`, `PHIEN90`, `PHIEN91` và mã chiến đấu hiện có (ném đá, thương, yêu quái hằng tháng, Thiết đầu công, Khinh thân, Hồ Lô nếu có). Sửa cột "Game hiện tại" | tạo `docs/GDD_v2_DOICHIEU.md` | Mỗi dòng bảng GDD mục 1 có "đúng / lệch / thiếu" + đường dẫn file; liệt kê chỗ GDD mâu thuẫn mã | XONG (Phiên 99, `docs/GDD_v2_DOICHIEU.md`; bổ sung Phiên 101) |
 | G0.2 | Hỏi ptg 10 câu GDD mục 16 (cho phép trả lời "mặc định"); ghi vào `PROMPT.md` mục 7 | `PROMPT.md` | Có câu trả lời cho cả 10 câu, ghi trong nhật ký | chưa |
-| G0.3 | Sửa 4 test hỏng sẵn: `312`, `318`, `345`, `tutorial: chủ đề mới` (xem `docs/PHIEN97_NHA_CAP45.md`) | `tests/*` và mã liên quan | `npm test` xanh hoàn toàn | chưa |
+| G0.3 | Sửa 4 test hỏng sẵn: `312`, `318`, `345`, `tutorial: chủ đề mới` (xem `docs/PHIEN97_NHA_CAP45.md`) | `tests/*` và mã liên quan | `npm test` xanh hoàn toàn | XONG (Phiên 100: 4 test đỏ đã sửa, 869/869) |
 | G0.4 | Hỏi ptg: làm phần CÁ (tồn từ Phiên 97) trước hay sau G1? Mặc định: sau G1 | — | ptg trả lời | chưa |
 
 ### G1 — Lõi chiến đấu (xong khi: đánh Dã Mèo Rừng lên cấp 5; test công thức đạt)
