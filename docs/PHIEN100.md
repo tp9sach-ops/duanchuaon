@@ -22,16 +22,16 @@ Gp: xem repo, chỉ xem chỗ cần thiết, cập nhật không lỗi, làm t�
 Con số thưởng (60/100 điểm, 3/5 sức mạnh, 90 phút) KHÔNG đổi. Câu "Khi còn dưới 14 ngày, game báo trước ngày giờ" giữ nguyên vì `js/ui/yeuquai.js` dòng ~100 vẫn có tính năng đó.
 
 ## Kiểm
-- `npm test` (Node 22): **869 tổng, 868 đạt, 1 đỏ (#355)**. Trước sửa: 865 đạt, 4 đỏ.
+- `npm test` (Node 22): **869 tổng, 869 đạt, 0 đỏ** (đã chạy lại toàn bộ sau khi sửa #355). Trước sửa: 865 đạt, 4 đỏ.
 - In thử văn bản thật bằng Node: Hướng dẫn và ô Hành trình ra đúng "12:00 / 16:00 / 20:00".
 - **Chưa xem trong trình duyệt** (chỉ đổi chữ + sửa lỗi đọc trường; không đụng cảnh 3D).
 
 ## Gp phải làm
-1. Tải các file trong `cap-nhat-phien100.zip` lên repo đúng đường dẫn (trùng tên ghi đè): `js/world/journey.js`, `js/world/tutorial.js`, `tests/journey.test.mjs`, `tests/tutorial.test.mjs`, `sw.js`, `docs/PHIEN100.md`. Phiên này không đẩy trực tiếp được GitHub.
+1. Tải các file trong `cap-nhat-phien100.zip` lên repo đúng đường dẫn (trùng tên ghi đè): `js/world/journey.js`, `js/world/tutorial.js`, `tests/journey.test.mjs`, `tests/tutorial.test.mjs`, `tests/landpool.test.mjs`, `sw.js`, `docs/PHIEN100.md`. Phiên này không đẩy trực tiếp được GitHub.
 2. Mở game → Hành trình → trang Sức mạnh · Yêu quái, và "?" → Yêu quái: xem chữ giờ đã đúng chưa.
 
-## CHƯA SỬA — cần Gp/nhìn bằng mắt: test #355 (`tests/landpool.test.mjs`)
-Test kiểm CHUỖI MÃ `pw = hw * 1.7, pz0 = hd + 0.8, pz1 = hd + 3.8` trong `js/scene/land.js`. Chuỗi đó không còn vì cảnh nhà nay dựng từ GLB (`js/scene/houseGlb.js`), `js/scene/land.js` không còn vẽ hồ. Nhưng `poolRect()` trong `js/world/land.js` VẪN tạo vật cản hồ bơi cho Villa (lv 3) (dùng ở `js/ui/land.js` dòng ~34). Câu hỏi cần xác nhận: **mô hình GLB Villa có hồ bơi đúng vị trí đó không?** Nếu có → sửa test thành kiểm theo `houseGlb.js`; nếu không → vật cản hồ là "tường vô hình" trước sân Villa, nên bỏ `poolRect` khỏi `js/ui/land.js`. Không tự sửa vì không nhìn được GLB.
+## Test #355 (`tests/landpool.test.mjs`) — ĐÃ SỬA (bước 2 cùng phiên)
+Test kiểm CHUỖI MÃ dựng hồ trong `js/scene/land.js`, đã không còn vì nhà nay là GLB. Đã đọc `nha-3-villa.glb` ("Modern Luxury Villa With Pool"): 1 mesh, kéo ra phía trước +z tới ~8,4 m, nên hồ nằm trước nhà và vật cản `poolRect` là hợp lý. Test mới kiểm cấp 3 vẫn trỏ tới `nha-3-villa.glb` và file tồn tại. **Chưa nhìn bằng mắt** việc vật cản hồ có khớp chính xác hồ trong mô hình không: Gp thử đi quanh hồ Villa trong game; lệch thì chỉnh hằng số trong `poolRect` (`js/world/land.js`, 0,8 / 3,8 / 1,7).
 
 ## VIỆC KẾ (từng mục, xong báo, chờ Gp "tiếp tục")
 1. Gp thử chibi (PHIEN99, mục "Gp phải làm" 2–3) và báo chỗ xấu/lệch; chốt #355 ở trên.
@@ -39,4 +39,4 @@ Test kiểm CHUỖI MÃ `pw = hw * 1.7, pz0 = hd + 0.8, pz1 = hd + 3.8` trong `j
 3. Xếp hạng ("Bảng vàng"), nối hạ tầng ZONE, kế hoạch GDD v2 (`docs/KE_HOACH_GDD_V2.md`).
 
 ## Prompt khởi động cho phiên sau (dán nguyên)
-> Đọc PROMPT.md → docs/PHIEN99.md → docs/PHIEN100.md. Repo `tp9sach-ops/duanchuaon`. Phiên 100 sửa lỗi lịch yêu quái 12/16/20 ở journey.js + tutorial.js (còn test #355 về hồ Villa chờ Gp xác nhận GLB có hồ không). Kiểm repo đã có bản Phiên 100 chưa (`sw.js` = dgt-v107); nếu chưa, nhắc Gp tải zip. Làm MỘT mục, `npm test`, gửi bàn giao docs/PHIEN101.md, rồi CHỜ Gp nói "tiếp tục".
+> Đọc PROMPT.md → docs/PHIEN99.md → docs/PHIEN100.md. Repo `tp9sach-ops/duanchuaon`. Phiên 100 sửa lỗi lịch yêu quái 12/16/20 ở journey.js + tutorial.js (test #355 đã sửa). Kiểm repo đã có bản Phiên 100 chưa (`sw.js` = dgt-v107); nếu chưa, nhắc Gp tải zip. Làm MỘT mục, `npm test`, gửi bàn giao docs/PHIEN101.md, rồi CHỜ Gp nói "tiếp tục".
