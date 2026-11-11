@@ -67,6 +67,7 @@ async function boot() {
   setProgress(0.1);
   await Promise.race([acct.ready, new Promise((r) => setTimeout(r, 4500))]);   // bản lưu từ tài khoản phải xuống trước khi dựng cảnh/HUD đọc dữ liệu
 
+  try { const { loadChibi } = await import('./scene/chibiBody.js'); await Promise.race([loadChibi(), new Promise((r) => setTimeout(r, 4000))]); } catch (e) { console.warn('[Diệu Giang Tự] Mô hình nhân vật lỗi, dùng nhân vật dựng bằng khối:', e && e.message); }   // Phiên 99: thân nhân vật từ GLB (nạp trước khi dựng cảnh để mọi nhân vật/NPC dùng chung); chậm/lỗi thì giữ thân dựng bằng khối
   let created;
   try {
     const { createScene } = await import('./scene/index.js');
