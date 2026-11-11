@@ -26,3 +26,13 @@ export const Vector3=V;
 export const BoxGeometry=mk();
 export const DoubleSide=mk();
 export const Quaternion=mk();
+// Phiên 99: thân nhân vật chibi từ GLB (js/scene/chibiBody.js) cần thêm các lớp này khi import; trong mô phỏng chibiReady() luôn false nên chỉ cần tồn tại.
+export const BufferAttribute=mk();
+export const Uint16BufferAttribute=mk();
+export const Float32BufferAttribute=mk();
+export const SkinnedMesh=mk();
+export const Skeleton=mk();
+export const Bone=mk();
+export const Color=mk();
+export const PlaneGeometry=mk();
+export const BufferGeometry=mk();
