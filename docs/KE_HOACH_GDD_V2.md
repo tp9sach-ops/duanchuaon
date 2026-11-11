@@ -41,10 +41,10 @@
 ### G2 — Hệ phái và kỹ năng (xong khi: chọn được 5 Hệ; mỗi Hệ dùng đủ 3 skill; K_hệ đúng)
 | ID | Việc | File dự kiến | Xong khi | Trạng thái |
 |---|---|---|---|---|
-| G2.1 | Logic Ngũ Hành: tương khắc (×1,3 / ×0,8), tương sinh (+5%/người, tối đa +10%), Ngũ Hành Hội Tụ +10% | `js/world/elements.js`, test | Test bảng khắc/sinh đủ 5×5 | chưa |
-| G2.2 | Dữ liệu 15 skill gốc + 10 Skill 4 + 5 Tuyệt Học (chưa nối giao diện) | `js/data/skills.js`, test tự kiểm dữ liệu | Test: đủ trường, hồi chiêu > 0, mỗi Hệ đủ 3 skill | chưa |
-| G2.3 | Bộ máy kỹ năng: hồi chiêu, Tâm Ấn (+1/đòn trúng, tối đa 5), cấp skill 1–10 (+6%/cấp, tối đa = Tu Vi ÷ 10) | `js/world/skills.js`, test | Test hồi chiêu, Tâm Ấn, trần cấp | chưa |
-| G2.4 | Lễ Khai Ngộ cấp 10: ngồi vào bồ đoàn chọn Hệ (dùng bồ đoàn chánh điện đã có), 60 giây dùng thử Skill 1 | `js/world/khaingo.js`, `js/ui/*` | Chọn được 5 Hệ trên cảnh; hỏi ptg cách ngồi/bấm hiện có nếu chưa rõ | chưa |
+| G2.1 | Logic Ngũ Hành: tương khắc (×1,3 / ×0,8), tương sinh (+5%/người, tối đa +10%), Ngũ Hành Hội Tụ +10% | `js/world/elements.js`, test | Test bảng khắc/sinh đủ 5×5 | XONG (Phiên 109) |
+| G2.2 | Dữ liệu 15 skill gốc + 10 Skill 4 + 5 Tuyệt Học (chưa nối giao diện) | `js/data/skills.js`, test tự kiểm dữ liệu | Test: đủ trường, hồi chiêu > 0, mỗi Hệ đủ 3 skill | XONG (Phiên 110) |
+| G2.3 | Bộ máy kỹ năng: hồi chiêu, Tâm Ấn (+1/đòn trúng, tối đa 5), cấp skill 1–10 (+6%/cấp, tối đa = Tu Vi ÷ 10) | `js/world/skills.js`, test | Test hồi chiêu, Tâm Ấn, trần cấp | XONG (Phiên 111) |
+| G2.4 | Lễ Khai Ngộ cấp 10: ngồi vào bồ đoàn chọn Hệ (dùng bồ đoàn chánh điện đã có), 60 giây dùng thử Skill 1 | `js/world/khaiNgo.js`, `js/ui/*` | Chọn được 5 Hệ trên cảnh; hỏi ptg cách ngồi/bấm hiện có nếu chưa rõ | (a) logic thuần XONG (Phiên 112, `js/world/khaiNgo.js`); (b) nối bồ đoàn + giao diện: chưa |
 | G2.5 | Thanh skill 5 ô trên điện thoại + PC (phím 1–5): thiết kế KHÔNG chồng cụm nút phải-dưới hiện có (cần xem giao diện hiện tại, hỏi ptg ảnh chụp), nhấn giữ xem tên, bong bóng chỉ chỗ khi mở khóa | `js/ui/skillbar.js`, css | Ảnh chụp điện thoại: nút không chồng nhau | chưa |
 | G2.6 | Hiệu ứng skill nhẹ + nối PERF governor (từ bậc 3 giảm hiệu ứng) | `js/scene/*`, `js/world/perf*` | Chạy mượt trên mức PERF thấp | chưa |
 | G2.7 | Mở khóa theo cấp (14: Skill 2, 20: Skill 3) + nhiệm vụ Hệ Phái nhập môn cấp 10 | `js/world/quests.js` | Test mở khóa đúng mốc; nhiệm vụ theo quy tắc `v-<id>` + `PLACE_STAND` | chưa |
