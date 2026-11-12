@@ -12,6 +12,7 @@ import { damp } from '../util.js';
 import {
   WALK_SPEED, RUN_SPEED, CLICK_SPEED, CAM_DIST, CAM_PITCH, moveVector, joyVector, walkStep, createNavigator, camPose, clipCamDist, dragCamera, zoomCamera, facingOf,
 } from './worldLogic.js';
+import { shotPose, blendShot } from './fishShot.js';   // Phiên 120: góc camera câu cá / cầm cá
 
 const isEditable = (el) => !!el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName));
 const KEYMAP = { KeyW: 'f', ArrowUp: 'f', KeyS: 'b', ArrowDown: 'b', KeyA: 'l', ArrowLeft: 'l', KeyD: 'r', ArrowRight: 'r' };
@@ -29,6 +30,7 @@ export function createWorld({ scene, camera, canvas, coarse = false, LGT = windo
 
   const keys = { f: false, b: false, l: false, r: false, run: false };
   let camD = null, joy = null, yaw = 0, pitch = CAM_PITCH.def, dist = CAM_DIST.def, speedNow = 0;
+  let shot = '', shotK = 0, shotCur = null;   // Phiên 120: góc quay câu cá ('cast' | 'show' | ''); shotK = mức trộn 0..1 (ra/vào mượt)
   const nav = createNavigator(), cam = { x: 0, y: 0, z: 0, lx: 0, ly: 0, lz: 0, init: false };
   const blockedNow = () => !!LGT.panelOpen;
   const arrival = createArrival();
@@ -272,16 +274,19 @@ export function createWorld({ scene, camera, canvas, coarse = false, LGT = windo
 
   /** Camera: bám theo, làm mượt (giật cục khi va tường thì mượt hơn). */
   function camStep(dt) {
-    const want = clipCamDist(P, yaw, pitch, dist, solidAt);   // Phiên 31: camera không xuyên tường/vật cản
+    shotK = damp(shotK, shot ? 1 : 0, shot ? 3.2 : 2.4, dt); if (!shot && shotK < 0.002) { shotK = 0; shotCur = null; }
+    if (shot) shotCur = shotPose(shot, avatar.group.rotation.y) || shotCur;   // góc quay bám hướng nhìn nhân vật (Phiên 120)
+    const e = blendShot({ yaw, pitch, dist }, shotK > 0 ? shotCur : null, shotK);
+    const want = clipCamDist(P, e.yaw, e.pitch, e.dist, solidAt);   // Phiên 31: camera không xuyên tường/vật cản
     camD = camD == null ? want : damp(camD, want, want < camD ? 16 : 3, dt);   // bị chắn thì lùi vào nhanh, thoáng thì ra từ từ
-    const c = camPose(P, yaw, pitch, camD);
+    const c = camPose(P, e.yaw, e.pitch, camD);
     if (!cam.init) { cam.x = c.pos.x; cam.y = c.pos.y; cam.z = c.pos.z; cam.lx = c.look.x; cam.ly = c.look.y; cam.lz = c.look.z; cam.init = true; }
     const k = 9; cam.x = damp(cam.x, c.pos.x, k, dt); cam.y = damp(cam.y, c.pos.y, k, dt); cam.z = damp(cam.z, c.pos.z, k, dt);
     cam.lx = damp(cam.lx, c.look.x, 12, dt); cam.ly = damp(cam.ly, c.look.y, 12, dt); cam.lz = damp(cam.lz, c.look.z, 12, dt);
     camera.position.set(cam.x, Math.max(0.5, cam.y), cam.z); camera.lookAt(cam.lx, cam.ly, cam.lz);
   }
 
-  LGT.world = { setProfile, zoom, walkTo, sit, bow, meditate, chant, beads, rest, stand, get mode() { return act.mode; }, seats: SEATS, get pos() { return { x: P.x, z: P.z, y: P.y }; }, get facing() { return avatar.group.rotation.y; }, get dashing() { return !!dashS; }, get held() { return !!heldS; }, hold, dash, face(ry) { if (Number.isFinite(ry)) avatar.setFacing(ry, true); }, teleport, goTo, get avatar() { return avatar; }, get camera() { return { yaw, pitch, dist }; }, nav };
+  LGT.world = { setProfile, zoom, walkTo, sit, bow, meditate, chant, beads, rest, stand, get mode() { return act.mode; }, seats: SEATS, get pos() { return { x: P.x, z: P.z, y: P.y }; }, get facing() { return avatar.group.rotation.y; }, get dashing() { return !!dashS; }, get held() { return !!heldS; }, hold, dash, face(ry) { if (Number.isFinite(ry)) avatar.setFacing(ry, true); }, teleport, goTo, get avatar() { return avatar; }, get camera() { return { yaw, pitch, dist }; }, shot(name) { shot = name === 'cast' || name === 'show' ? name : ''; }, get shotName() { return shot; }, nav };
   update(0.016);
   return { update, get avatar() { return avatar; }, setProfile, zoom, walkTo, sit, bow, meditate, chant, beads, rest, stand, teleport, goTo, get pos() { return { x: P.x, z: P.z, y: P.y }; } };
 }
