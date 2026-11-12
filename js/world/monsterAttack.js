@@ -9,7 +9,7 @@ import { sinhLucOf } from './stats.js';
 
 const num = (x, d = 0) => (Number.isFinite(+x) ? +x : d);
 const clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
-const kind = (m) => (m && m.elite ? 'elite' : 'normal');
+const kind = (m) => (m && (m.elite || m.boss) ? 'elite' : 'normal');   // Phiên 123: boss đánh như tinh anh (nhanh, tầm xa, Hệ số cao)
 
 /** Điểm (x, z) có đi được trong vùng farm `zoneId` không: nằm trong một hình chữ nhật của vùng và không nằm trong hình tròn tránh. Vùng lạ → true (không chặn). */
 export function walkable(zoneId, x, z) {

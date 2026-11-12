@@ -58,7 +58,7 @@ test('đặt sẵn: mỗi vùng đủ cap (1 tinh anh + còn lại quái thườ
   for (const id of ZONE_IDS) for (const seed of [1, 2, 3, 99]) {
     const z = FARM_ZONES[id], player = { x: (z.rects[0].x0 + z.rects[0].x1) / 2, z: (z.rects[0].z0 + z.rects[0].z1) / 2 };
     const sp = createSpawner(id, rngSeed(seed), { player });
-    assert.equal(sp.mons.length, z.cap, `${id}/${seed}`);
+    assert.equal(sp.mons.filter((m) => !m.boss).length, z.cap, `${id}/${seed}`);
     assert.equal(sp.mons.filter((m) => m.elite).length, z.eliteMax);
     assert.equal(sp.timers.length, 0);
     for (const m of sp.mons) {
@@ -82,14 +82,14 @@ test('cùng seed → cùng bố trí; vùng lạ / rng không phải hàm → nu
 
 test('hồi sinh quái thường 30–60 s, không vượt cap', () => {
   const rng = rngSeed(11), sp = createSpawner('biaRungThong', rng), z = FARM_ZONES.biaRungThong;
-  const target = sp.mons.find((m) => !m.elite), r = hitMonster(sp, target.id, 1e6, 'ban', rng);
+  const target = sp.mons.find((m) => !m.elite && !m.boss), r = hitMonster(sp, target.id, 1e6, 'ban', rng);
   assert.equal(r.dead, true);
-  assert.equal(sp.mons.length, z.cap - 1);
+  assert.equal(sp.mons.filter((m) => !m.boss).length, z.cap - 1);
   const t = sp.timers[0].t; assert.ok(t >= RESPAWN_CFG.normal[0] && t <= RESPAWN_CFG.normal[1], `t=${t}`);
   assert.equal(run(sp, RESPAWN_CFG.normal[0] - 1, rng).length, 0);   // chưa tới 30 s
   let got = []; for (let s = 0; s < 40 && !got.length; s++) got = tickSpawner(sp, 1, rng);
   assert.equal(got.length, 1); assert.equal(got[0].k, 'spawn'); assert.equal(got[0].mon.elite, false);
-  assert.equal(sp.mons.length, z.cap); assert.equal(sp.timers.length, 0);
+  assert.equal(sp.mons.filter((m) => !m.boss).length, z.cap); assert.equal(sp.timers.length, 0);
 });
 
 test('tinh anh hồi sinh sau 5 phút', () => {
@@ -102,28 +102,42 @@ test('tinh anh hồi sinh sau 5 phút', () => {
 
 test('đặt không được (điểm bị chiếm) thì thử lại sau retry giây, không mất lượt', () => {
   const sp = createSpawner('duongMon', rngSeed(5)), cap = FARM_ZONES.duongMon.cap, rng0 = () => 0;   // rng0: mọi lần chọn đều ra đúng điểm (37.5, 121.5)
-  const normals = sp.mons.filter((m) => !m.elite);
+  const normals = sp.mons.filter((m) => !m.elite && !m.boss);
   hitMonster(sp, normals[0].id, 1e6, 'ban', rng0); hitMonster(sp, normals[1].id, 1e6, 'ban', rng0);   // hẹn 30 s
   const blocker = { id: 999, type: 'daotac', ten: 'x', lv: 15, he: 'kim', elite: false, x: 37.5, z: 121.5, ry: 0, oan: 1, max: 1, dmgBy: {} };
   sp.mons.push(blocker);
-  assert.equal(sp.mons.length, cap - 1);
+  assert.equal(sp.mons.filter((m) => !m.boss).length, cap - 1);
   assert.equal(run(sp, 30, rng0).length, 0);                       // tới giờ nhưng chỗ bị chiếm
   assert.deepEqual(sp.timers.map((t) => t.t), [SPAWN_CFG.retry, SPAWN_CFG.retry]);
   sp.mons = sp.mons.filter((m) => m.id !== 999);
   const ev = run(sp, SPAWN_CFG.retry, rng0);
   assert.equal(ev.length, 1);                                       // con thứ hai lại bị con vừa đặt chiếm chỗ → còn chờ
   assert.equal(sp.timers.length, 1);
-  assert.ok(sp.mons.length + sp.timers.length <= cap);
+  assert.ok(sp.mons.filter((m) => !m.boss).length + sp.timers.length <= cap);
 });
 
-test('giữ cap sau rất nhiều lượt đánh / chờ ngẫu nhiên', () => {
-  const rng = rngSeed(2026), sp = createSpawner('biaRungThong', rng), cap = FARM_ZONES.biaRungThong.cap;
+test('giữ cap sau rất nhiều lượt đánh / chờ ngẫu nhiên (boss nằm ngoài cap, tối đa 1 con)', () => {
+  const rng = rngSeed(2026), sp = createSpawner('biaRungThong', rng), cap = FARM_ZONES.biaRungThong.cap, reg = () => sp.mons.filter((m) => !m.boss);
   for (let i = 0; i < 4000; i++) {
-    if (i % 3 === 0 && sp.mons.length) hitMonster(sp, sp.mons[Math.floor(rng() * sp.mons.length)].id, 1 + Math.floor(rng() * 200), 'ban', rng);
+    if (i % 3 === 0 && reg().length) hitMonster(sp, reg()[Math.floor(rng() * reg().length)].id, 1 + Math.floor(rng() * 200), 'ban', rng);
     tickSpawner(sp, rng() * 2, rng);
-    assert.ok(sp.mons.length <= cap, `lượt ${i}: ${sp.mons.length}`);
+    assert.ok(reg().length <= cap, `lượt ${i}: ${reg().length}`);
     assert.ok(sp.mons.filter((m) => m.elite).length <= FARM_ZONES.biaRungThong.eliteMax);
-    assert.ok(sp.mons.length + sp.timers.length <= cap);
+    assert.ok(reg().length + sp.timers.filter((t) => !t.boss).length <= cap);
+    assert.ok(sp.mons.filter((m) => m.boss).length <= 1);
+  }
+});
+
+test('boss vùng (Phiên 123): mỗi vùng 1 con, Oán Khí ×8, hồi sinh 45 phút, không tính vào cap, thu phục tính nguồn boss', () => {
+  const rng = rngSeed(5);
+  for (const [id, type, lv, he] of [['biaRungThong', 'laomoc', 20, 'moc'], ['duongMon', 'soncuoc', 25, 'kim'], ['hoThac', 'thuymau', 45, 'thuy']]) {
+    const z = FARM_ZONES[id], sp = createSpawner(id, rng), b = sp.mons.filter((m) => m.boss);
+    assert.equal(z.boss, type); assert.equal(b.length, 1); assert.deepEqual([b[0].type, b[0].lv, b[0].he, b[0].elite], [type, lv, he, false]);
+    assert.equal(b[0].max, (30 + 12 * lv) * 8); assert.equal(oanKhiMaxOf(type), b[0].max); assert.equal(monsterStats(type).boss, true);
+    const r = hitMonster(sp, b[0].id, 1e9, 'ban', rng); assert.equal(r.dead, true); assert.ok(r.drops.hatSen >= 12);
+    const tm = sp.timers.find((t) => t.boss); assert.deepEqual([tm.t, sp.mons.some((m) => m.boss)], [2700, false]);
+    assert.equal(run(sp, 2699, rng).length, 0); let got = []; for (let s = 0; s < 5 && !got.length; s++) got = tickSpawner(sp, 1, rng);
+    assert.equal(got.length, 1); assert.equal(got[0].mon.boss, true); assert.equal(sp.mons.filter((m) => m.boss).length, 1);
   }
 });
 

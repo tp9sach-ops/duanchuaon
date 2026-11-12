@@ -49,3 +49,10 @@ Yêu cầu ptg (12/11): chỗ có cây/đất trống mà không đến được
 - Mọi đường đánh quái bãi rừng (ném đá, thương, tự động) đều qua `reward → settleKill` nên đều cộng Tu Vi; chưa có cơ chế "thuần phục" riêng trong game.
 - Test: `tests/farm.test.mjs` viết lại (trần 30 + boss), `tests/farmui.test.mjs` (+1). 1011 test, chỉ còn `combo.test.mjs` lỗi có sẵn từ upstream. `sw.js` dgt-v115.
 - Cần ptg duyệt: 30 lần/ngày (≈60% một cấp), boss 3 lần/ngày × 15%.
+
+## Phiên 123 — BOSS VÙNG (G4.1 phần local)
+- `js/data/monsters.js`: 3 boss — Lão Mộc Tinh (20, Mộc, bãi Bắc), Sơn Cước Đầu Mục (25, Kim, bãi Đông), Thủy Mẫu Hồ Thác (45, Thủy, bãi Tây); `elite:false, boss:true`; vùng có `boss: '<id>'`; `MON_CFG.bossMul = 8` (Oán Khí = (30+12·cấp)×8, vd 2160); `RESPAWN_CFG.boss = [2700,2700]` (45 phút). Hạt sen rơi 12–30 (vẫn bị trần 100/ngày). Tất cả TẠM.
+- `js/world/spawn.js`: boss nằm NGOÀI cap/eliteMax của vùng, tối đa 1 con/vùng, hẹn giờ hồi sinh riêng (`timers[].boss`); `monsterStats().boss`. `js/world/monsterAttack.js`: boss đánh theo bộ số tinh anh. `js/world/farm.js` `settleKill`: boss → nguồn 'boss' (15% cấp kế, trần 3/ngày, chung bộ đếm `cnt.boss` với thu phục yêu quái hằng tháng), không ăn vào trần hàng yêu.
+- `js/ui/farm.js`: boss HIỆN CẢ BAN NGÀY (quái thường vẫn chỉ ban đêm), nằm ngủ; thân to 1,8 m, nhãn "Boss vùng". `js/scene/farm.js`: boss vẽ to ×1,7, vòng Hệ như tinh anh.
+- Test: `spawn.test` (+1, sửa đếm cap loại boss), `farm.test` (+1), `farmui.test` (ban ngày còn boss). `sw.js` dgt-v116.
+- GIỚI HẠN / việc kế: boss sinh LOCAL theo từng người, CHƯA chung phòng qua Firebase (GDD: "boss vùng dùng chung cả phòng"); CHƯA có vòng đỏ báo hiệu dưới đất (chỉ gồng chiêu như quái thường); chưa có rơi Linh Ấn/Huyền Tinh (chờ hệ vật phẩm); chưa chơi thử trình duyệt. Đồi Bảo Tháp (Thổ) và boss Thạch Linh Hộ Tháp chưa có vùng.

@@ -28,7 +28,7 @@ const step = (secs, n = Math.max(1, Math.ceil(secs * 10))) => { for (let i = 0; 
 test('vào Bìa Rừng Thông: quái xuất hiện (mỗi vùng tối đa 12, có tinh anh), cách người chơi ≥ 6 m, uid duy nhất, vừa khít bể vẽ của cảnh', () => {
   step(0.5);
   const v = LGT.farmView, POOL = FARM_CFG.maxVisible;
-  const bia = v.mons.filter((m) => m.zone === 'biaRungThong'); assert.ok(bia.length > 0 && bia.length <= 12, `số quái ${bia.length}`);
+  const bia = v.mons.filter((m) => m.zone === 'biaRungThong' && !m.boss); assert.ok(bia.length > 0 && bia.length <= 12, `số quái ${bia.length}`);
   assert.ok(v.mons.every((m) => m.uid && Math.hypot(m.x + 100, m.z - 80) >= 6 - 1e-9));
   assert.ok(bia.some((m) => m.elite)); assert.equal(new Set(v.mons.map((m) => m.uid)).size, v.mons.length, 'uid không trùng giữa hai vùng sát nhau');
   assert.ok(v.mons.length <= POOL, `hai vùng cùng hiện (${v.mons.length}) phải ≤ bể vẽ ${POOL}`);
@@ -56,7 +56,7 @@ test('đứng xa không đâm được thương (có thông báo), đặt ngư�
   if (far) { toasts.length = 0; api.spear(); assert.ok(toasts.some((t) => /Lại gần/.test(t)), 'báo lại gần hơn'); }
   let kills = 0;
   for (let guard = 0; guard < 600 && kills < 8; guard++) {
-    const m = LGT.farmView.mons.find((x) => !x.elite); if (!m) { step(5); continue; }
+    const m = LGT.farmView.mons.find((x) => !x.elite && !x.boss); if (!m) { step(5); continue; }
     LGT.world.pos = { x: m.x + 0.5, z: m.z }; step(0.2); const k0 = api.state.kills; api.spear(); step(0.8); if (api.state.kills > k0) kills++;
   }
   assert.ok(kills >= 8, `chỉ thu phục ${kills}`); assert.ok(api.state.exp > 0); assert.ok(api.tuvi >= 1); assert.ok(toasts.some((t) => /Thu phục Dã Mèo Rừng/.test(t)));
@@ -67,7 +67,7 @@ test('đứng xa không đâm được thương (có thông báo), đặt ngư�
 test('quái bị thu phục hồi sinh sau 30–60 giây (cục bộ)', () => {
   LGT.world.pos = { x: -62, z: 80 }; step(1);
   step(60);   // 60 giây (mỗi nhịp 0,1 giây như vòng lặp thật)
-  assert.ok(LGT.farmView.mons.filter((m) => m.zone === 'biaRungThong' && !m.elite).length >= 10, 'quái thường đã hồi sinh đủ');
+  assert.ok(LGT.farmView.mons.filter((m) => m.zone === 'biaRungThong' && !m.elite && !m.boss).length >= 10, 'quái thường đã hồi sinh đủ');
 });
 
 test('Tự động hàng yêu: bật thì tự đánh quái trong 15 m và thu phục; mở bảng thì dừng; tính giờ và lưu lgt.farmauto', () => {
@@ -84,10 +84,11 @@ test('Tự động hàng yêu: không bật khi có yêu quái hằng tháng; h�
 
 test('Phiên 116: ban ngày bãi rừng trống (quái ngủ), tối lại hiện; không còn mục tiêu để đánh', () => {
   const keep = LGT.night; LGT.night = 0.1; step(0.5);
-  assert.equal(LGT.farmView.mons.length, 0, 'ban ngày không có quái');
+  assert.ok(LGT.farmView.mons.every((m) => m.boss), 'ban ngày chỉ còn boss (nằm ngủ)');
+  assert.ok(!LGT.farmView.mons.some((m) => !m.boss));
   assert.equal(LGT.farm.status().active, false);
   LGT.night = keep; step(0.5);
-  assert.ok(LGT.farmView.mons.length > 0, 'ban đêm quái hiện lại');
+  assert.ok(LGT.farmView.mons.some((m) => !m.boss), 'ban đêm quái thường hiện lại');
 });
 
 test('Phiên 122: grantBoss cộng Tu Vi từ thu phục yêu quái, tối đa 3 lần/ngày rồi báo hết trần', () => {

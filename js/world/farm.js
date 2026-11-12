@@ -38,10 +38,11 @@ export const tuViOf = (farm) => progressOf(farm && farm.exp);
  * Trả { farm (mới), expGain, tuvi, tuviBefore, leveledUp, senGain (hạt sen thật sự được cộng), senCapped (có bị cắt vì trần ngày), reason }.
  */
 export function settleKill(farm, mon, drops, now = 0) {
-  const f0 = loadFarm(farm, now), before = levelFromExp(f0.exp), capped = f0.cnt.hangYeu >= NGUON_CFG.tranNgay.hangYeu;
-  const r = capped ? { gain: 0, exp: f0.exp, tuvi: before, leveledUp: false, state: f0.st, reason: 'tran-ngay' } : award({ exp: f0.exp, nguon: 'hangYeu', monsterLevel: mon && mon.lv, state: f0.st, now });
+  const key = mon && mon.boss ? 'boss' : 'hangYeu';   // Phiên 123: boss vùng tính nguồn 'boss' (trần 3 lần/ngày), quái thường nguồn 'hangYeu' (trần 30)
+  const f0 = loadFarm(farm, now), before = levelFromExp(f0.exp), capped = f0.cnt[key] >= NGUON_CFG.tranNgay[key];
+  const r = capped ? { gain: 0, exp: f0.exp, tuvi: before, leveledUp: false, state: f0.st, reason: 'tran-ngay' } : award({ exp: f0.exp, nguon: key, monsterLevel: mon && mon.lv, state: f0.st, now });
   const want = Math.max(0, Math.floor(Number(drops && drops.hatSen) || 0)), give = Math.min(want, FARM_CFG.senCapNgay - f0.sen.n);
-  const cnt = { ...f0.cnt, hangYeu: f0.cnt.hangYeu + (r.gain > 0 ? 1 : 0) };
+  const cnt = { ...f0.cnt, [key]: f0.cnt[key] + (r.gain > 0 ? 1 : 0) };
   const f1 = { v: 1, exp: int(r.exp, 0, MAX_EXP), st: r.state, sen: { day: f0.sen.day, n: f0.sen.n + give }, cnt, kills: int(f0.kills + 1, 0, MAX_EXP) };
   return { farm: f1, expGain: r.gain, tuvi: r.tuvi, tuviBefore: before, leveledUp: r.leveledUp, senGain: give, senCapped: want > give, expCapped: capped, reason: r.reason };
 }

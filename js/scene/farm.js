@@ -84,7 +84,7 @@ export function buildFarm() {
       slots.forEach((s, i) => {
         const m = mons[i]; if (!m || (camera && Math.hypot(m.x - camera.position.x, m.z - camera.position.z) > CULL)) { s.root.visible = false; return; }   // xa camera quá CULL m thì không vẽ (tiết kiệm lượt vẽ trên điện thoại)
         if (s.type !== m.type) { s.body.clear(); (tpl[m.type] = tpl[m.type] || buildType(m.type)); s.body.add(tpl[m.type].clone()); s.type = m.type; }
-        const flash = Math.max(0, m.flash || 0), sc = (m.elite ? 1.15 : 1) * (1 + 0.14 * flash), phase = (m.id || 0) * 1.7;
+        const flash = Math.max(0, m.flash || 0), sc = (m.boss ? 1.7 : m.elite ? 1.15 : 1) * (1 + 0.14 * flash), phase = (m.id || 0) * 1.7;
         s.root.visible = true; s.root.position.set(m.x, 0, m.z);
         const sleep = !m.eng;   // Phiên 118: quái chưa bị đánh thì NGỦ trong bụi (nằm thấp, thở chậm); bị đánh mới nổi giận và đứng dậy
         s.body.position.y = sleep ? 0 : Math.abs(Math.sin(t * 2.2 + phase)) * 0.07; s.body.rotation.y = m.ry + (sleep ? 0 : Math.sin(t * 0.9 + phase) * 0.3); s.body.scale.setScalar(sc);
@@ -93,10 +93,10 @@ export function buildFarm() {
         s.bar.visible = hurt || isT; s.bar.position.y = h; if (camera) s.bar.quaternion.copy(camera.quaternion);
         const pct = Math.max(0, Math.min(1, m.oan / Math.max(1, m.max))); s.fill.scale.set(1.16 * pct, 0.1, 1); s.fill.position.x = -0.58 * (1 - pct);
         s.fillMat.color.setHex(pct <= 0.25 ? 0x62c8ff : (HE_COLOR[m.he] || 0xffffff));   // ≤ 25%: xanh dương = sắp thu phục
-        s.ring.visible = !!m.elite; if (m.elite) s.ring.material.color.setHex(HE_COLOR[m.he] || 0xffffff);
+        s.ring.visible = !!(m.elite || m.boss); if (m.elite || m.boss) s.ring.material.color.setHex(HE_COLOR[m.he] || 0xffffff);
         if (isT) tg = m;
       });
-      if (tg) { tgt.visible = true; tgt.position.set(tg.x, 0.07, tg.z); const k = 1.1 + 0.08 * Math.sin(t * 5) + (tg.elite ? 0.9 : 0); tgt.scale.set(k, k, 1); } else tgt.visible = false;
+      if (tg) { tgt.visible = true; tgt.position.set(tg.x, 0.07, tg.z); const k = 1.1 + 0.08 * Math.sin(t * 5) + (tg.boss ? 1.8 : tg.elite ? 0.9 : 0); tgt.scale.set(k, k, 1); } else tgt.visible = false;
       const ss = (view && view.stones) || [];
       stones.forEach((m, i) => { const s = ss[i]; if (!s) { m.visible = false; return; } const u = Math.min(1, s.t / s.dur); m.visible = true; m.position.set(s.x0 + (s.x1 - s.x0) * u, 1.4 + 1.8 * u * (1 - u) * 2 - u * 0.6, s.z0 + (s.z1 - s.z0) * u); m.rotation.x += 0.4; });
     },

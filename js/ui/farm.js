@@ -14,7 +14,7 @@ const HE_TEN = { kim: 'Kim', moc: 'Mộc', thuy: 'Thủy', hoa: 'Hỏa', tho: 'T
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
 const rectDist = (r, x, z) => Math.hypot(Math.max(r.x0 - x, 0, x - r.x1), Math.max(r.z0 - z, 0, z - r.z1));
 const zoneDist = (id, p) => Math.min(...FARM_ZONES[id].rects.map((r) => rectDist(r, p.x, p.z)));
-const bodyOf = (m) => (m.elite ? 1.1 : 0.55);   // bán kính thân (m) để tính tầm Thương
+const bodyOf = (m) => (m.boss ? 1.8 : m.elite ? 1.1 : 0.55);   // bán kính thân (m) để tính tầm Thương
 
 /** hud: phần tử HUD. opts: { toast }. */
 export function initFarm(hud, { toast = () => {} } = {}) {
@@ -104,13 +104,14 @@ export function initFarm(hud, { toast = () => {} } = {}) {
     const mons = [];
     const night = LGT.night;
     for (const id of ZONE_IDS) {
-      if (!zoneOpen(id, night)) continue;   // ban ngày: bãi trống, quái ngủ (trạng thái giữ nguyên)
+      const open = zoneOpen(id, night);   // ban ngày: quái thường vắng, chỉ BOSS vùng (Phiên 123) vẫn nằm ngủ trong bụi
+      if (!open && !FARM_ZONES[id].boss) continue;
       if (zoneDist(id, p) > FARM_CFG.nearMargin) { if (spawners[id]) away[id] = (away[id] || 0) + dt; continue; }
       if (!spawners[id]) spawners[id] = createSpawner(id, rng, { player: p });
       const sp = spawners[id];
       if (away[id] > 0) { for (let s = Math.min(away[id], 90); s > 0; s -= 5) tickSpawner(sp, Math.min(5, s), rng, p); away[id] = 0; }   // đi xa rồi quay lại: quái đã hồi sinh bù (tối đa 90 giây)
       tickSpawner(sp, dt, rng, p);
-      for (const m of sp.mons) { m.zone = id; m.uid = `${id}:${m.id}`; m.flash = Math.max(0, (m.flash || 0) - dt); mons.push(m); }
+      for (const m of sp.mons) { m.zone = id; m.uid = `${id}:${m.id}`; m.flash = Math.max(0, (m.flash || 0) - dt); if (open || m.boss) mons.push(m); }
     }
     view.mons = mons;
     view.stones = view.stones.filter((s) => { s.t += dt; if (s.t < s.dur) return true; hit(s.uid, s.dmg); if (LGT.sfx) LGT.sfx.play('da-trung'); return false; });
@@ -119,7 +120,7 @@ export function initFarm(hud, { toast = () => {} } = {}) {
     const show = !!t && !bossOn(); box.hidden = !show && now > hudUntil || bossOn();
     if (!box.hidden && t) {
       const pct = Math.max(0, Math.min(1, t.oan / Math.max(1, t.max)));
-      nm.textContent = `${t.ten} · Cấp ${t.lv} · ${HE_TEN[t.he] || ''}${t.elite ? ' · Tinh anh' : ''}`;
+      nm.textContent = `${t.ten} · Cấp ${t.lv} · ${HE_TEN[t.he] || ''}${t.boss ? ' · Boss vùng' : t.elite ? ' · Tinh anh' : ''}`;
       fill.style.width = `${Math.round(pct * 100)}%`; box.classList.toggle('kim', t.he === 'kim'); box.classList.toggle('calm', pct <= 0.25);
       const tv = tuViOf(farm); tvEl.textContent = `Tu Vi ${tv.tuvi} · ${tv.need ? `${tv.into}/${tv.need}` : 'tối đa'}`;
       senEl.textContent = `Hạt sen hôm nay còn ${senLeft(farm, Date.now())}`;

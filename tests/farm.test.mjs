@@ -68,8 +68,15 @@ test('lưu và đọc lại (JSON) giữ nguyên EXP, bộ đếm và hạt sen 
 test('farm thử nối spawn: đánh hết Dã Mèo của Bìa Rừng Thông nhiều vòng (có hồi sinh) → Tu Vi và hạt sen tăng, không vượt trần', () => {
   const rng = rngSeed(2026), sp = createSpawner('biaRungThong', rng); let f = emptyFarm(T0), sen = 0, kills = 0;
   for (let round = 0; round < 6; round++) {
-    for (const m of sp.mons.filter((x) => !x.elite)) { const r = hitMonster(sp, m.id, 9999, 'ban', rng); if (r.dead) { const s = settleKill(f, MONSTERS[r.mon.type], r.drops, T0); f = s.farm; sen += s.senGain; kills++; } }
+    for (const m of sp.mons.filter((x) => !x.elite && !x.boss)) { const r = hitMonster(sp, m.id, 9999, 'ban', rng); if (r.dead) { const s = settleKill(f, MONSTERS[r.mon.type], r.drops, T0); f = s.farm; sen += s.senGain; kills++; } }
     for (let i = 0; i < 70; i++) tickSpawner(sp, 1, rng);   // 70 giây: quái thường (30–60 s) hồi sinh đủ
   }
   assert.ok(kills >= 11 * 5, `chỉ ${kills} lần thu phục`); assert.ok(f.exp > 0); assert.ok(sen > 0 && sen <= FARM_CFG.senCapNgay); assert.equal(f.kills, kills); assert.ok(tuViOf(f).tuvi >= 1);
+});
+
+test('Phiên 123: thu phục BOSS vùng tính nguồn boss (15% cấp kế, trần 3/ngày), không ăn vào trần hàng yêu; hạt sen vẫn theo trần ngày', () => {
+  const boss = { lv: 20, boss: true }; let f = emptyFarm(T0), got = 0;
+  for (let i = 0; i < 6; i++) { const r = settleKill(f, boss, { hatSen: 20 }, T0); f = r.farm; if (r.expGain > 0) { got++; assert.equal(r.expGain, Math.round(expToNext(1) * 0.15)); } else assert.equal(r.expCapped, true); }
+  assert.equal(got, NGUON_CFG.tranNgay.boss); assert.equal(expLeft(f, 'boss', T0), 0); assert.equal(expLeft(f, 'hangYeu', T0), NGUON_CFG.tranNgay.hangYeu, 'quái thường không bị ảnh hưởng');
+  assert.equal(f.sen.n, FARM_CFG.senCapNgay, 'hạt sen vẫn có trần ngày');
 });

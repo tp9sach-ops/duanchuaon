@@ -27,16 +27,16 @@ export function zoneOpen(zoneId, night) {
 /** Oán Khí tối đa của một loại quái; loại lạ → 0. */
 export function oanKhiMaxOf(typeId) {
   const t = MONSTERS[typeId]; if (!t) return 0;
-  return Math.round((MON_CFG.oanBase + MON_CFG.oanPerLv * t.lv) * (t.elite ? MON_CFG.eliteMul : 1));
+  return Math.round((MON_CFG.oanBase + MON_CFG.oanPerLv * t.lv) * (t.boss ? MON_CFG.bossMul : t.elite ? MON_CFG.eliteMul : 1));
 }
 /** Chỉ số của một loại quái: { lv, he, elite, cong, thu, oanKhiMax } (Công/Thủ lấy theo Tu Vi = cấp quái, cùng đường cong người chơi); loại lạ → null. */
 export function monsterStats(typeId) {
   const t = MONSTERS[typeId]; if (!t) return null;
   const s = statsOf(t.lv);
-  return { lv: t.lv, he: t.he, elite: t.elite, cong: s.cong, thu: s.thu, oanKhiMax: oanKhiMaxOf(typeId) };
+  return { lv: t.lv, he: t.he, elite: t.elite, boss: !!t.boss, cong: s.cong, thu: s.thu, oanKhiMax: oanKhiMaxOf(typeId) };
 }
 
-const respawnDelay = (elite, rng) => { const [lo, hi] = elite ? RESPAWN_CFG.elite : RESPAWN_CFG.normal; return lo + rng() * (hi - lo); };
+const respawnDelay = (elite, rng, boss = false) => { const [lo, hi] = boss ? RESPAWN_CFG.boss : elite ? RESPAWN_CFG.elite : RESPAWN_CFG.normal; return lo + rng() * (hi - lo); };
 
 /** Chọn một điểm đặt quái trong vùng (trọng số theo diện tích), tránh `avoid`, cách quái đang sống ≥ minGap, cách người chơi ≥ minFromPlayer. Không được sau `tries` lần → null. */
 export function pickPoint(zone, rng, occupied = [], player = null) {
@@ -52,13 +52,15 @@ export function pickPoint(zone, rng, occupied = [], player = null) {
   return null;
 }
 
-function trySpawn(sp, elite, rng, player) {
-  const zone = FARM_ZONES[sp.zone], list = elite ? zone.elite : zone.normal;
-  const nElite = sp.mons.filter((m) => m.elite).length;
-  if (sp.mons.length >= zone.cap || (elite ? nElite >= zone.eliteMax : sp.mons.length - nElite >= zone.cap - zone.eliteMax)) return null;
+function trySpawn(sp, elite, rng, player, boss = false) {
+  const zone = FARM_ZONES[sp.zone];
+  if (boss) { if (!zone.boss || sp.mons.some((m) => m.boss)) return null; }
+  const list = boss ? [zone.boss] : elite ? zone.elite : zone.normal;
+  const regular = sp.mons.filter((m) => !m.boss), nElite = regular.filter((m) => m.elite).length;   // boss nằm NGOÀI cap của vùng
+  if (!boss && (regular.length >= zone.cap || (elite ? nElite >= zone.eliteMax : regular.length - nElite >= zone.cap - zone.eliteMax))) return null;
   const pos = pickPoint(zone, rng, sp.mons, player); if (!pos) return null;
   const type = list[Math.min(list.length - 1, Math.floor(rng() * list.length))], t = MONSTERS[type], max = oanKhiMaxOf(type);
-  const mon = { id: sp.nextId++, type, ten: t.ten, lv: t.lv, he: t.he, elite: t.elite, x: pos.x, z: pos.z, ry: rng() * Math.PI * 2, oan: max, max, dmgBy: {} };
+  const mon = { id: sp.nextId++, type, ten: t.ten, lv: t.lv, he: t.he, elite: t.elite, boss: !!t.boss, x: pos.x, z: pos.z, ry: rng() * Math.PI * 2, oan: max, max, dmgBy: {} };
   sp.mons.push(mon);
   return mon;
 }
@@ -67,6 +69,7 @@ function trySpawn(sp, elite, rng, player) {
 export function createSpawner(zoneId, rng, { player = null } = {}) {
   const zone = FARM_ZONES[zoneId]; if (!zone || typeof rng !== 'function') return null;
   const sp = { zone: zoneId, nextId: 1, mons: [], timers: [] };
+  if (zone.boss && !trySpawn(sp, false, rng, player, true)) sp.timers.push({ elite: false, boss: true, t: SPAWN_CFG.retry });
   for (let i = 0; i < zone.eliteMax; i++) if (!trySpawn(sp, true, rng, player)) sp.timers.push({ elite: true, t: SPAWN_CFG.retry });
   for (let i = 0; i < zone.cap - zone.eliteMax; i++) if (!trySpawn(sp, false, rng, player)) sp.timers.push({ elite: false, t: SPAWN_CFG.retry });
   return sp;
@@ -79,8 +82,8 @@ export function tickSpawner(sp, dt, rng, player = null) {
   for (const tm of sp.timers) {
     tm.t -= d;
     if (tm.t > 0) { keep.push(tm); continue; }
-    const mon = trySpawn(sp, tm.elite, rng, player);
-    if (mon) ev.push({ k: 'spawn', mon }); else keep.push({ elite: tm.elite, t: SPAWN_CFG.retry });
+    const mon = trySpawn(sp, tm.elite, rng, player, !!tm.boss);
+    if (mon) ev.push({ k: 'spawn', mon }); else keep.push({ elite: tm.elite, boss: !!tm.boss, t: SPAWN_CFG.retry });
   }
   sp.timers = keep;
   return ev;
@@ -106,7 +109,7 @@ export function hitMonster(sp, id, dmg, who = 'ban', rng = () => 0.5) {
   m.oan -= dealt; m.dmgBy[who] = (m.dmgBy[who] || 0) + dealt;
   if (m.oan > 0) return { dead: false, dealt, mon: m, drops: null };
   sp.mons.splice(i, 1);
-  sp.timers.push({ elite: m.elite, t: respawnDelay(m.elite, rng) });
+  sp.timers.push({ elite: m.elite, boss: !!m.boss, t: respawnDelay(m.elite, rng, !!m.boss) });
   return { dead: true, dealt, mon: m, drops: rollDrops(m.type, rng) };
 }
 
