@@ -27,9 +27,9 @@ export const HINTS = {
   nemnguoi: 'Bấm “Ném” để ném người đang trên vai ra phía trước mặt (không bấm thì sau 2 giây tự ném). “Thả xuống” để đặt họ xuống, không mất hạt sen.',
   khieng: 'Có vật khiêng được ngay đây — bấm “Khiêng”. Vật nặng cần sức mạnh cao hơn.',
   nem: 'Bấm “Ném” để ném vật ra phía trước mặt.',
-  tudong: 'Bấm “Tự động”: nhân vật tự Thương / Ném đá quái trong 15 m, tối đa 60 phút mỗi ngày. Mở bảng hoặc rời trang sẽ tự dừng.',
-  da: 'Bấm “Ném đá” khi yêu quái còn xa. Khi nó gồng (vùng đỏ trên đất), chạy ra ngoài vùng đỏ!',
-  thuong: 'Lại gần yêu quái rồi bấm “Thương” để đâm — mạnh hơn ném đá.',
+  tudong: 'Bấm “Tự động”: nhân vật tự LAO vào quái trong 15 m rồi múa côn đánh, tối đa 60 phút mỗi ngày. Mở bảng hoặc rời trang sẽ tự dừng.',
+  da: 'Lại gần yêu quái rồi bấm “Đánh thường” (bấm liên tục ra chuỗi múa côn). Khi nó gồng (vùng đỏ trên đất), chạy ra ngoài vùng đỏ!',
+  thuong: 'Lại gần yêu quái rồi bấm “Thương” để đâm — mạnh hơn đánh thường.',
   lan: 'Bấm “Lặn” để lặn xuống nhặt ngọc trai (+1 hạt sen/viên). Hơi thở có hạn — hết hơi sẽ tự nổi lên.',
   nemyq: 'Bạn đủ mạnh để nhấc cả yêu quái lên ném!',
 };
@@ -56,9 +56,9 @@ export function dockButtons(c = {}) {
   const np = isObj(k.npc) ? k.npc : {};
   if (np.near && !pl.near && !(isObj(k.yq) && k.yq.active)) out.push({ id: 'nemnpc', label: 'Ném NPC', say: `Gần: ${np.near}` });   // Phiên 89
   const yq = isObj(k.yq) ? k.yq : {};
-  if (yq.active) { out.push({ id: 'da', label: 'Ném đá', big: true, wait: +yq.stoneCd > 0, say: yq.ten ? `${yq.ten} đang ở làng!` : '' }, { id: 'thuong', label: 'Thương', wait: +yq.spearCd > 0 }); if (isObj(k.khi)) out.push({ id: 'chemkhi', label: 'Chém khí', hot: true, wait: +k.khi.cd > 0 }); if (yq.canThrow) out.push({ id: 'nemyq', label: 'Ném yêu quái' }); }
+  if (yq.active) { out.push({ id: 'da', label: 'Đánh thường', big: true, wait: +yq.stoneCd > 0, say: yq.ten ? `${yq.ten} đang ở làng!` : '' }, { id: 'thuong', label: 'Thương', wait: +yq.spearCd > 0 }); if (isObj(k.khi)) out.push({ id: 'chemkhi', label: 'Chém khí', hot: true, wait: +k.khi.cd > 0 }); if (yq.canThrow) out.push({ id: 'nemyq', label: 'Ném yêu quái' }); }
   const fm = isObj(k.farm) ? k.farm : {};   // Phiên 107: quái cố định ở bãi rừng (khác yêu quái hằng tháng): chỉ thêm Ném đá / Thương, vẫn giữ Nhảy, Kỹ năng, Túi đồ
-  if (fm.active && !yq.active) out.push({ id: 'da', label: 'Ném đá', big: true, wait: +fm.stoneCd > 0, say: fm.ten ? `Gần: ${fm.ten}` : '' }, { id: 'thuong', label: 'Thương', wait: +fm.spearCd > 0 });
+  if (fm.active && !yq.active) out.push({ id: 'da', label: 'Đánh thường', big: true, wait: +fm.stoneCd > 0, say: fm.ten ? `Gần: ${fm.ten}` : '' }, { id: 'thuong', label: 'Thương', wait: +fm.spearCd > 0 });
   if (fm.active && !yq.active && fm.canAuto) out.push({ id: 'tudong', label: fm.auto ? 'Dừng đánh' : 'Tự động', hot: !!fm.auto, say: fm.auto ? `Đang tự đánh · còn ${num(fm.autoLeft)} phút hôm nay` : `Tự đánh quái · còn ${num(fm.autoLeft)} phút hôm nay` });   // Phiên 108: Tự Động Hàng Yêu
   if (k.water && !yq.active) out.push({ id: 'cast', label: f.cracked ? 'Sửa cầu' : f.hasOrb ? 'Thả cầu' : 'Mua cầu', big: true, say: f.text ? String(f.text) : '' });
   const hd = isObj(k.head) ? k.head : {};

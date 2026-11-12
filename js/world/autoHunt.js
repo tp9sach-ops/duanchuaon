@@ -22,12 +22,30 @@ export function addAutoTime(a, dt, now = 0) {
   s.secs = Math.min(FARM_CFG.autoSecNgay, s.secs + add); return { state: s, out: s.secs >= FARM_CFG.autoSecNgay };
 }
 /**
- * Chọn đòn kế: in { gap (m, từ người chơi tới tâm quái), body (bán kính thân), stoneReady, spearReady, spearRange, stoneRange = autoRange }.
- * Gần thì Thương (mạnh hơn), còn không thì Ném đá; ngoài tầm tự động hoặc đang hồi chiêu → null.
+ * Chọn việc kế (Phiên 127: Tự động LAO VÀO quái): in { gap (m, từ người chơi tới tâm quái), body (bán kính thân), stoneReady (= Đánh thường sẵn sàng), spearReady, spearRange, range = autoRange }.
+ * Ngoài `range` → null; trong tầm đâm: Thương nếu sẵn sàng, không thì Đánh thường ('stone'), đang hồi hết → null; còn xa hơn tầm đâm (nhưng trong `range`) → 'rush' (lao tới quái).
  */
 export function nextAction({ gap, body = 0, stoneReady = false, spearReady = false, spearRange = 3.6, range = FARM_CFG.autoRange } = {}) {
   const g = num(gap, Infinity); if (!(g <= range)) return null;
-  if (spearReady && g - num(body) <= spearRange) return 'spear';
+  if (g - num(body) > spearRange) return 'rush';
+  if (spearReady) return 'spear';
   if (stoneReady) return 'stone';
   return null;
+}
+
+/**
+ * Điểm đứng để lao tới quái: nằm trên đường thẳng người chơi → quái, cách tâm quái `body + stand` m (mặc định đứng sát tầm đâm). Đi từng 0,5 m dọc đường:
+ * gặp chỗ `isBlocked(x, z)` thì dừng ngay trước đó (không xuyên cây/tường). Trả { x, z, dist } hoặc null (đã đứng đủ gần, quá ngắn < 0,4 m, hoặc bước đầu đã bị chặn).
+ */
+export function rushTarget(from, mon, { body = 0.55, stand = 2.2, isBlocked = () => false } = {}) {
+  if (!isObj(from) || !isObj(mon)) return null;
+  const fx = num(from.x, NaN), fz = num(from.z, NaN), mx = num(mon.x, NaN), mz = num(mon.z, NaN);
+  if (![fx, fz, mx, mz].every(Number.isFinite)) return null;
+  const dx = mx - fx, dz = mz - fz, d = Math.hypot(dx, dz), want = d - (num(body) + num(stand));
+  if (!(want > 0.4)) return null;
+  const ux = dx / d, uz = dz / d; let ok = 0;
+  for (let t = 0.5; t <= want + 1e-9; t += 0.5) { if (isBlocked(fx + ux * t, fz + uz * t)) break; ok = t; }
+  if (ok < want - 0.5 && ok < 0.4) return null;
+  const fin = Math.min(ok + (ok >= want - 0.5 ? Math.max(0, want - ok) : 0), want);
+  return fin > 0.4 ? { x: fx + ux * fin, z: fz + uz * fin, dist: fin } : null;
 }

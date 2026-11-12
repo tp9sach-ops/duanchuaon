@@ -202,10 +202,11 @@ export function createWorld({ scene, camera, canvas, coarse = false, LGT = windo
 
   // Phiên 90: Thiết đầu công — lao đầu về phía trước rất nhanh (nhân vật chúi đầu), bỏ qua đi bộ trong lúc lao.
   let dashS = null;
-  function dash(to, dur = 0.32) {
+  function dash(to, dur = 0.32, opts) {
     if (!to || !Number.isFinite(+to.x) || !Number.isFinite(+to.z) || dashS) return false;
     nav.clear(); mark.visible = false; const ry = facingOf(to.x - P.x, to.z - P.z);
-    dashS = { x0: P.x, z0: P.z, x1: +to.x, z1: +to.z, t: 0, dur: Math.max(0.1, +dur || 0.32) }; if (Math.hypot(to.x - P.x, to.z - P.z) > 0.2) avatar.setFacing(ry, true); return true;
+    dashS = { x0: P.x, z0: P.z, x1: +to.x, z1: +to.z, t: 0, dur: Math.max(0.1, +dur || 0.32), tilt: !(opts && opts.tilt === false) };   // Phiên 127: tilt=false → lao tới quái (đạp đất chạy nhanh, KHÔNG chúi đầu)
+     if (Math.hypot(to.x - P.x, to.z - P.z) > 0.2) avatar.setFacing(ry, true); return true;
   }
   // Phiên 91: bị người khác khiêng lên vai — đứng yên, nằm vắt trên vai người khiêng (x, z, y do js/ui/throwPlayer.js cập nhật theo vị trí người đó). hold(null) = thả xuống.
   let heldS = null;
@@ -240,7 +241,7 @@ export function createWorld({ scene, camera, canvas, coarse = false, LGT = windo
     if (dashS) {
       dashS.t += dt; const k = Math.min(1, dashS.t / dashS.dur), e = 1 - (1 - k) * (1 - k);   // nhanh lúc đầu, chậm dần
       P.x = dashS.x0 + (dashS.x1 - dashS.x0) * e; P.z = dashS.z0 + (dashS.z1 - dashS.z0) * e; P.y = damp(P.y, walkStep(P, { x: 0, z: 0 }, dt, 0).y, 14, dt); speedNow = 0;
-      avatar.setState('idle', 0); avatar.group.position.set(P.x, P.y, P.z); avatar.update(dt); avatar.group.rotation.x = 1.15 * Math.sin(Math.PI * Math.min(1, k * 1.15 + 0.08));   // chúi đầu
+      avatar.setState(dashS.tilt ? 'idle' : 'walk', dashS.tilt ? 0 : 6.5); avatar.group.position.set(P.x, P.y, P.z); avatar.update(dt); avatar.group.rotation.x = dashS.tilt ? 1.15 * Math.sin(Math.PI * Math.min(1, k * 1.15 + 0.08)) : 0;   // chúi đầu (Thiết đầu công)
       if (k >= 1) { dashS = null; avatar.group.rotation.x = 0; }
       camStep(dt); return;
     }

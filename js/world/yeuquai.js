@@ -81,7 +81,8 @@ export function hurt(p, dmg, level = 1) {
 export const tickPlayer = (p, dt) => (p.inv > 0 ? { ...p, inv: Math.max(0, p.inv - clamp(num(dt), 0, 1)) } : p);
 
 // ---- đòn của người chơi: ném đá (xa, nhẹ) và thương (gần, mạnh); sức mạnh càng cao đánh càng đau
-export const STONE = { range: 18, cd: 1.4, speed: 20 }, SPEAR = { range: 3.6, cd: 0.7 };
+// Phiên 127: BỎ NÉM ĐÁ → "Đánh thường" cận chiến (STONE giữ tên cũ để khỏi vỡ import): tầm = tầm Thương, hồi chiêu ngắn để bấm liên tục ra chuỗi múa côn.
+export const STONE = { range: 3.6, cd: 0.55, speed: 20 }, SPEAR = { range: 3.6, cd: 0.7 };
 export const stoneDamage = (str) => Math.round(8 + clamp(num(str), 0, 1e4) * 0.35);
 export const spearDamage = (str) => Math.round(20 + clamp(num(str), 0, 1e4) * 0.5);
 /** Sát thương khi NÉM CHÍNH yêu quái (người đủ mạnh: canGrab). */
