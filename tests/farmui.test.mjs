@@ -19,6 +19,7 @@ const toasts = []; let sen = 0;
 LGT.addMerit = (n) => { sen += n; };
 LGT.world = { pos: { x: -100, z: 80 } };
 LGT.strength = { value: 40 };
+LGT.night = 1;   // Phiên 116: quái rừng chỉ hiện ban đêm
 const { initFarm } = await import('../js/ui/farm.js');
 const hud = fakeEl();
 const api = initFarm(hud, { toast: (t) => toasts.push(t) });
@@ -79,4 +80,12 @@ test('Tự động hàng yêu: bật thì tự đánh quái trong 15 m và thu p
 test('Tự động hàng yêu: không bật khi có yêu quái hằng tháng; hết giờ hôm nay thì không bật được', () => {
   LGT.yq = { active: true }; api.toggleAuto(); assert.equal(api.status().auto, false); LGT.yq = undefined;
   
+});
+
+test('Phiên 116: ban ngày bãi rừng trống (quái ngủ), tối lại hiện; không còn mục tiêu để đánh', () => {
+  const keep = LGT.night; LGT.night = 0.1; step(0.5);
+  assert.equal(LGT.farmView.mons.length, 0, 'ban ngày không có quái');
+  assert.equal(LGT.farm.status().active, false);
+  LGT.night = keep; step(0.5);
+  assert.ok(LGT.farmView.mons.length > 0, 'ban đêm quái hiện lại');
 });

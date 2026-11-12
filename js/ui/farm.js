@@ -3,7 +3,7 @@
 // Nút Ném đá / Thương dùng lại ACT.da / ACT.thuong của js/ui/dock.js: js/ui/yeuquai.js chuyển sang LGT.farm khi KHÔNG có yêu quái hằng tháng.
 // Quái không đánh trả (bãi rừng an toàn để luyện); đòn dùng stoneDamage/spearDamage theo sức mạnh như khi đánh yêu quái. Chưa có Hệ người chơi nên chưa tính khắc/sinh (G2).
 import { MONSTERS, FARM_ZONES, FARM_CFG } from '../data/monsters.js';
-import { createSpawner, tickSpawner, hitMonster, nearestMonster, ZONE_IDS } from '../world/spawn.js';
+import { createSpawner, tickSpawner, hitMonster, nearestMonster, zoneOpen, ZONE_IDS } from '../world/spawn.js';
 import { loadFarm, settleKill, senLeft, tuViOf } from '../world/farm.js';
 import { STONE, SPEAR, stoneDamage, spearDamage, rngSeed } from '../world/yeuquai.js';
 import { mapAvailable } from '../world/minimap.js';
@@ -56,7 +56,7 @@ export function initFarm(hud, { toast = () => {} } = {}) {
   }
   function aim(needNear) {
     const t = target();
-    if (!t) { toast('Chưa có quái nào gần. Đi vào bãi rừng (phía tây làng) hoặc đường mòn để luyện.', 2600); return null; }
+    if (!t) { toast('Chưa có quái nào gần. Quái rừng chỉ hiện khi trời tối: chờ đêm rồi đi vào bãi rừng (phía tây làng) hoặc đường mòn để luyện.', 2600); return null; }
     if (needNear && gap(t, pos()) - bodyOf(t) > SPEAR.range) { toast('Lại gần quái hơn mới đâm được thương.', 1800); return null; }
     return t;
   }
@@ -94,7 +94,9 @@ export function initFarm(hud, { toast = () => {} } = {}) {
     const p = pos();
     if (!p || !here() || bossOn()) { stopAuto('Tự động hàng yêu đã dừng.'); if (view.mons.length) { view.mons = []; view.stones = []; view.target = ''; } box.hidden = true; return; }
     const mons = [];
+    const night = LGT.night;
     for (const id of ZONE_IDS) {
+      if (!zoneOpen(id, night)) continue;   // ban ngày: bãi trống, quái ngủ (trạng thái giữ nguyên)
       if (zoneDist(id, p) > FARM_CFG.nearMargin) { if (spawners[id]) away[id] = (away[id] || 0) + dt; continue; }
       if (!spawners[id]) spawners[id] = createSpawner(id, rng, { player: p });
       const sp = spawners[id];

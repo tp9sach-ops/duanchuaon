@@ -2,7 +2,7 @@
 // nơi gọi truyền `rng` (hàm trả [0,1), ví dụ rngSeed của yeuquai.js) và `dt` (giây). Quái sinh CỤC BỘ theo từng người, không đồng bộ mạng.
 // Số liệu: js/data/monsters.js (TẠM). Test: tests/spawn.test.mjs. CHƯA nối cảnh 3D / giao diện / lưu (việc của G1.6 và các mục sau).
 // Hàm sửa `sp` TẠI CHỖ (giống stepBoss trong yeuquai.js). Người chơi truyền vào dạng { x, z } hoặc null.
-import { MONSTERS, FARM_ZONES, RESPAWN_CFG, SPAWN_CFG, MON_CFG } from '../data/monsters.js';
+import { MONSTERS, FARM_ZONES, RESPAWN_CFG, SPAWN_CFG, MON_CFG, FARM_CFG } from '../data/monsters.js';
 import { statsOf } from './stats.js';
 
 const num = (x, d = 0) => (Number.isFinite(+x) ? +x : d);
@@ -15,6 +15,13 @@ export function zoneAt(x, z) {
   const px = num(x, NaN), pz = num(z, NaN);
   for (const id of ZONE_IDS) if (FARM_ZONES[id].rects.some((r) => inRect(r, px, pz))) return id;
   return null;
+}
+
+/** Vùng có quái hiện lúc này không? `nightOnly` → chỉ khi `night` (số 0..1 hoặc bool) vượt FARM_CFG.nightAt. Vùng lạ → false. */
+export function zoneOpen(zoneId, night) {
+  const z = FARM_ZONES[zoneId]; if (!z) return false;
+  if (!z.nightOnly) return true;
+  return night === true || num(night, 0) > FARM_CFG.nightAt;
 }
 
 /** Oán Khí tối đa của một loại quái; loại lạ → 0. */

@@ -29,20 +29,20 @@ export const SPAWN_CFG = Object.freeze({ minGap: 3, minFromPlayer: 6, tries: 30,
 // Các hình chữ nhật của hai vùng KHÔNG chồng nhau. cap = tối đa số quái cùng lúc (GDD: ~12); eliteMax ≤ cap.
 export const FARM_ZONES = Object.freeze({
   biaRungThong: Object.freeze({
-    id: 'biaRungThong', ten: 'Bìa Rừng Thông', lvMin: 3, lvMax: 20, he: 'moc', cap: 12, eliteMax: 1,
+    id: 'biaRungThong', nightOnly: true, ten: 'Bìa Rừng Thông', lvMin: 3, lvMax: 20, he: 'moc', cap: 12, eliteMax: 1,
     normal: Object.freeze(['dameo']), elite: Object.freeze(['reutinh']),
     rects: Object.freeze([{ x0: -117, x1: -91, z0: 73, z1: 107 }, { x0: -90, x1: -72, z0: 85, z1: 93 }]),
     avoid: Object.freeze([{ x: -100.5, z: 75.5, r: 3.2 }, { x: -106, z: 90, r: 3.6 }, { x: -110, z: 102, r: 8.5 }]),
   }),
   duongMon: Object.freeze({
-    id: 'duongMon', ten: 'Đường Mòn Đông–Tây', lvMin: 12, lvMax: 25, he: 'kim', cap: 12, eliteMax: 1,
+    id: 'duongMon', nightOnly: true, ten: 'Đường Mòn Đông–Tây', lvMin: 12, lvMax: 25, he: 'kim', cap: 12, eliteMax: 1,
     normal: Object.freeze(['daotac']), elite: Object.freeze(['cuopduong']),
     rects: Object.freeze([{ x0: -66, x1: -18, z0: 85, z1: 93 }, { x0: 20, x1: 80, z0: 100, z1: 108 }]),
     avoid: Object.freeze([]),
   }),
   // Bãi dưới thác (OUT_WALKS 'bai-thac' x 84–112, z 86–122), chừa lề 1 m. avoid: hồ thác (tâm 106,104 r 7,5, bơi được nên chừa thêm), đình nghỉ chân, bốn đá lớn, bậc đá + đèn trước Đại Phật.
   hoThac: Object.freeze({
-    id: 'hoThac', ten: 'Hồ Thác Đại Phật', lvMin: 25, lvMax: 45, he: 'thuy', cap: 12, eliteMax: 1,
+    id: 'hoThac', nightOnly: true, ten: 'Hồ Thác Đại Phật', lvMin: 25, lvMax: 45, he: 'thuy', cap: 12, eliteMax: 1,
     normal: Object.freeze(['thuyquy']), elite: Object.freeze(['lyngu']),
     rects: Object.freeze([{ x0: 85, x1: 111, z0: 87, z1: 121 }]),
     avoid: Object.freeze([{ x: 106, z: 104, r: 10 }, { x: 92, z: 90, r: 4 }, { x: 100, z: 92, r: 2.6 }, { x: 109, z: 90, r: 2.7 }, { x: 101, z: 117, r: 3 }, { x: 111.5, z: 117, r: 6 }]),
@@ -54,6 +54,9 @@ export const FARM_ZONES = Object.freeze({
 // để kinh tế hạt sen → lá bồ đề → đất (js/world/merit.js: các nguồn khác đều có trần ngày) không bị cày vô hạn. 100 hạt sen = 10 lá bồ đề mỗi ngày.
 // nearMargin: người chơi cách vùng farm ≤ số mét này thì quái được vẽ và chạy; xa hơn thì quái đứng yên (không vẽ, không tốn máy).
 // maxVisible: số quái tối đa vẽ cùng lúc (bể mô hình của js/scene/farm.js). Hai vùng sát nhau (Bìa Rừng Thông và Đường Mòn) có thể cùng hiện: 2 × 12 = 24 ≤ 26.
-export const FARM_CFG = Object.freeze({ tam: true, senCapNgay: 100, nearMargin: 40, maxVisible: 26,
+export const FARM_CFG = Object.freeze({ tam: true,
+  // Phiên 116: quái bãi rừng CHỈ hiện khi trời tối trong game (LGT.night > nightAt); ban ngày bãi trống để chụp hình check-in. (Boss to ban ngày: G4.1.)
+  nightAt: 0.55,
+  senCapNgay: 100, nearMargin: 40, maxVisible: 26,
   // Tự Động Hàng Yêu (GDD v2 mục 12, câu 7; TẠM): tự đánh quái trong tầm autoRange (m), tối đa autoSecNgay giây mỗi ngày giờ VN (60 phút).
   autoRange: 15, autoSecNgay: 3600 });

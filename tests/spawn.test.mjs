@@ -177,3 +177,13 @@ test('farm thử: người cấp 1 hạ Dã Mèo Rừng liên tục → có hạ
   assert.ok(hat > 0);
   assert.ok(exp > expToNext(1), `exp=${exp}`);   // đủ để lên cấp 2 trở lên
 });
+
+test('zoneOpen (Phiên 116): vùng nightOnly chỉ mở khi đêm vượt ngưỡng; vùng lạ đóng', async () => {
+  const { zoneOpen, ZONE_IDS } = await import('../js/world/spawn.js'); const { FARM_CFG } = await import('../js/data/monsters.js');
+  for (const id of ZONE_IDS) {
+    assert.equal(zoneOpen(id, 0), false, id); assert.equal(zoneOpen(id, FARM_CFG.nightAt), false, 'đúng ngưỡng chưa mở');
+    assert.equal(zoneOpen(id, FARM_CFG.nightAt + 0.01), true); assert.equal(zoneOpen(id, true), true);
+    for (const bad of [undefined, null, NaN, 'x']) assert.equal(zoneOpen(id, bad), false, String(bad));
+  }
+  assert.equal(zoneOpen('khongcoo', 1), false);
+});
