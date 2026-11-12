@@ -25,3 +25,21 @@
 .fs-fab{position:absolute;left:50%;bottom:max(120px,calc(env(safe-area-inset-bottom) + 104px));transform:translateX(-50%);z-index:11;min-height:44px;padding:10px 20px;border-radius:100px;border:1px solid #8fd6bf;background:rgba(10,12,24,.8);color:#fff;font:600 14px/1 var(--sans,inherit);cursor:pointer;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
 .fs-fab[hidden]{display:none}
 @media (prefers-reduced-motion:reduce){.fs-tap{transition:none}.fs-tap.hot{transform:none}}
+
+/* Phiên 128 — THẺ CÁ vừa thu (theo clip mẫu: tên, MỚI, cỡ cm, kỷ lục, hai nút) + ẩn bớt HUD khi đang thu cá */
+.fc-card{position:absolute;right:max(10px,env(safe-area-inset-right));top:50%;transform:translateY(-50%);width:min(250px,calc(100vw - 24px));padding:12px 14px 14px;border-radius:16px;background:#fff;color:#3a3a3a;box-shadow:0 6px 24px rgba(0,0,0,.35);z-index:13;pointer-events:auto;text-align:center}
+.fc-card[hidden]{display:none!important}
+.fc-t{margin:0 0 4px;font-size:16px;font-weight:800;border-bottom:1px dashed #d8c9b0;padding-bottom:6px}
+.fc-new{display:inline-block;margin:0 auto 4px;padding:1px 8px;border-radius:8px;background:#f5a623;color:#fff;font-size:11px;font-weight:800}
+.fc-ic{width:52px;height:52px;margin:2px auto 6px;border-radius:50%;background:#e9e2d2;display:flex;align-items:center;justify-content:center}
+.fc-ic svg{width:34px;height:34px}
+.fc-rows{background:#f4f0e8;border-radius:10px;padding:6px 10px;text-align:left;font-size:13px}
+.fc-r{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:3px 0;position:relative}
+.fc-r span{color:#777}.fc-r b{font-size:15px}
+.fc-rec{position:absolute;right:-14px;top:-16px;padding:1px 8px;border-radius:4px;background:#e0433a;color:#fff;font-size:11px;font-style:normal;font-weight:700}
+.fc-sen{margin:8px 0 4px;font-size:13px;color:#2e7d4f;font-weight:700}
+.fc-act{display:flex;gap:8px;margin-top:6px}
+.fc-b{flex:1;min-height:42px;border:0;border-radius:21px;font-size:15px;font-weight:800;color:#fff;cursor:pointer;box-shadow:0 3px 0 rgba(0,0,0,.18)}
+.fc-keep{background:#3fa7e6}.fc-free{background:#f5b21c}
+body.fishing .hm-grid,body.fishing .hm-bar,body.fishing .hm-stand,body.fishing #goto-hint{display:none!important}
+@media (max-width:520px){.fc-card{top:auto;bottom:calc(96px + env(safe-area-inset-bottom));transform:none;right:8px;width:min(230px,calc(100vw - 16px))}}
