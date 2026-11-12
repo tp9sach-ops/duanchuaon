@@ -45,12 +45,12 @@ test('zoneAt: nhận đúng vùng, ngoài vùng và toạ độ lạ → null', 
   assert.equal(zoneAt('x', undefined), null);
 });
 
-test('Oán Khí và chỉ số quái: Dã Mèo Rừng cấp 3 = 66; tinh anh ×3; loại lạ → 0/null', () => {
-  assert.equal(oanKhiMaxOf('dameo'), 66);
-  assert.equal(oanKhiMaxOf('reutinh'), 450);
+test('Oán Khí và chỉ số quái: Dã Mèo Rừng cấp 3 = 125 (Phiên 127: quái trâu hơn); tinh anh ×3; loại lạ → 0/null', () => {
+  assert.equal(oanKhiMaxOf('dameo'), 125);
+  assert.equal(oanKhiMaxOf('reutinh'), 900);
   assert.equal(oanKhiMaxOf('xyz'), 0);
   const s = monsterStats('dameo');
-  assert.deepEqual([s.lv, s.he, s.elite, s.cong, s.thu, s.oanKhiMax], [3, 'moc', false, 16, 9, 66]);
+  assert.deepEqual([s.lv, s.he, s.elite, s.cong, s.thu, s.oanKhiMax], [3, 'moc', false, 16, 9, 125]);
   assert.equal(monsterStats('xyz'), null);
 });
 
@@ -128,12 +128,12 @@ test('giữ cap sau rất nhiều lượt đánh / chờ ngẫu nhiên (boss n�
   }
 });
 
-test('boss vùng (Phiên 123): mỗi vùng 1 con, Oán Khí ×8, hồi sinh 45 phút, không tính vào cap, thu phục tính nguồn boss', () => {
+test('boss vùng (Phiên 123): mỗi vùng 1 con, Oán Khí ×5, hồi sinh 45 phút, không tính vào cap, thu phục tính nguồn boss', () => {
   const rng = rngSeed(5);
   for (const [id, type, lv, he] of [['biaRungThong', 'laomoc', 20, 'moc'], ['duongMon', 'soncuoc', 25, 'kim'], ['hoThac', 'thuymau', 45, 'thuy']]) {
     const z = FARM_ZONES[id], sp = createSpawner(id, rng), b = sp.mons.filter((m) => m.boss);
     assert.equal(z.boss, type); assert.equal(b.length, 1); assert.deepEqual([b[0].type, b[0].lv, b[0].he, b[0].elite], [type, lv, he, false]);
-    assert.equal(b[0].max, (30 + 12 * lv) * 8); assert.equal(oanKhiMaxOf(type), b[0].max); assert.equal(monsterStats(type).boss, true);
+    assert.equal(b[0].max, (50 + 25 * lv) * 5); assert.equal(oanKhiMaxOf(type), b[0].max); assert.equal(monsterStats(type).boss, true);
     const r = hitMonster(sp, b[0].id, 1e9, 'ban', rng); assert.equal(r.dead, true); assert.ok(r.drops.hatSen >= 12);
     const tm = sp.timers.find((t) => t.boss); assert.deepEqual([tm.t, sp.mons.some((m) => m.boss)], [2700, false]);
     assert.equal(run(sp, 2699, rng).length, 0); let got = []; for (let s = 0; s < 5 && !got.length; s++) got = tickSpawner(sp, 1, rng);
@@ -144,16 +144,16 @@ test('boss vùng (Phiên 123): mỗi vùng 1 con, Oán Khí ×8, hồi sinh 45 p
 test('hitMonster: trừ Oán Khí, ghi công, tối thiểu 1, dmg lạ không làm gì, id lạ → không chết', () => {
   const rng = rngSeed(3), sp = createSpawner('biaRungThong', rng), m = sp.mons.find((x) => x.type === 'dameo');
   let r = hitMonster(sp, m.id, 16, 'a', rng);
-  assert.deepEqual([r.dead, r.dealt, m.oan], [false, 16, 50]);
+  assert.deepEqual([r.dead, r.dealt, m.oan], [false, 16, 109]);
   assert.equal(hitMonster(sp, m.id, 0.4, 'a', rng).dealt, 1);
   for (const bad of [0, -5, NaN, 'x', undefined, null]) assert.equal(hitMonster(sp, m.id, bad, 'a', rng).dealt, 0);
-  assert.equal(m.oan, 49);
+  assert.equal(m.oan, 108);
   assert.deepEqual(hitMonster(sp, 12345, 10, 'a', rng), { dead: false, dealt: 0, mon: null, drops: null });
   assert.deepEqual(hitMonster(null, 1, 10), { dead: false, dealt: 0, mon: null, drops: null });
   hitMonster(sp, m.id, 20, 'b', rng);
   r = hitMonster(sp, m.id, 1000, 'b', rng);
-  assert.equal(r.dead, true); assert.equal(r.dealt, 29);
-  assert.equal(m.dmgBy.a, 17); assert.equal(m.dmgBy.b, 49);
+  assert.equal(r.dead, true); assert.equal(r.dealt, 88);
+  assert.equal(m.dmgBy.a, 17); assert.equal(m.dmgBy.b, 108);
   assert.equal(sp.mons.some((x) => x.id === m.id), false);
 });
 

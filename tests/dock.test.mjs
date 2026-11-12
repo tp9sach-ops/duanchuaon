@@ -182,8 +182,8 @@ test('bố cục: hai nút tranh ô A → chiến đấu/câu cá thắng nhặt
 });
 test('hồi chiêu: vòng quay 0..1 theo thời gian còn lại; ngữ cảnh hỏng → 0', () => {
   assert.equal(cooldownFrac('da', { yq: { active: true, stoneCd: 0 } }), 0);
-  assert.ok(Math.abs(cooldownFrac('da', { yq: { active: true, stoneCd: 0.7 } }) - 0.5) < 1e-9, 'STONE.cd = 1.4 s');
-  assert.ok(Math.abs(cooldownFrac('da', { farm: { active: true, stoneCd: 1.4 } }) - 1) < 1e-9, 'quái bãi rừng cũng có vòng');
+  assert.ok(Math.abs(cooldownFrac('da', { yq: { active: true, stoneCd: 0.275 } }) - 0.5) < 1e-9, 'STONE.cd = 0.55 s (Đánh thường, Phiên 127)');
+  assert.ok(Math.abs(cooldownFrac('da', { farm: { active: true, stoneCd: 0.55 } }) - 1) < 1e-9, 'quái bãi rừng cũng có vòng');
   assert.ok(Math.abs(cooldownFrac('thuong', { yq: { active: true, spearCd: 0.35 } }) - 0.5) < 1e-9);
   assert.ok(Math.abs(cooldownFrac('chemkhi', { khi: { cd: 1.5 } }) - 0.5) < 1e-9, 'Chém khí hồi 3 s'); assert.ok(Math.abs(cooldownFrac('thietdau', { head: { cd: 2.5 } }) - 0.5) < 1e-9, 'Thiết đầu công hồi 5 s');
   assert.equal(cooldownFrac('thietdau', { head: { cd: 99 } }), 1, 'không vượt 1'); assert.equal(cooldownFrac('nhay', { yq: { stoneCd: 1 } }), 0);

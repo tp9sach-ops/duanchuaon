@@ -17,7 +17,7 @@ const win = globalThis.window = { LGT: {} };
 const LGT = win.LGT;
 const toasts = []; let sen = 0;
 LGT.addMerit = (n) => { sen += n; };
-LGT.world = { pos: { x: -62, z: 80 } };
+LGT.world = { pos: { x: -62, z: 80 }, dashing: false, dash(to) { this.pos = { x: to.x, z: to.z }; this.dashes = (this.dashes || 0) + 1; return true; } };   // Phiên 127: dash giả để thử Tự động LAO vào quái
 LGT.strength = { value: 40 };
 LGT.night = 1;   // Phiên 116: quái rừng chỉ hiện ban đêm
 const { initFarm } = await import('../js/ui/farm.js');
@@ -44,11 +44,14 @@ test('trong nhà hoặc đang có yêu quái hằng tháng: quái bãi rừng kh
   LGT.yq = { active: true }; assert.equal(api.status().active, false); LGT.yq = undefined;
 });
 
-test('ném đá: có đá bay rồi trừ Oán Khí; hồi chiêu chặn bấm liên tục', () => {
+test('Đánh thường (Phiên 127, thay Ném đá): cận chiến, trúng ngay, không còn đá bay; đứng xa thì báo lại gần; hồi chiêu chặn bấm liên tục', () => {
   step(0.2); const p = LGT.world.pos, near = LGT.farmView.mons.filter((m) => Math.hypot(m.x - p.x, m.z - p.z) <= 18).sort((a, b) => Math.hypot(a.x - p.x, a.z - p.z) - Math.hypot(b.x - p.x, b.z - p.z))[0];
-  assert.ok(near, 'có quái trong tầm 18 m'); assert.equal(api.status().active, true);
-  const before = near.oan; api.stone(); assert.equal(LGT.farmView.stones.length, 1); api.stone(); assert.equal(LGT.farmView.stones.length, 1, 'hồi chiêu');
-  step(1.2); assert.ok(near.oan < before || near.oan === 0, 'đá đã trúng');
+  assert.ok(near, 'có quái trong tầm nhìn 18 m'); assert.equal(api.status().active, true);
+  const keep = { ...LGT.world.pos }; LGT.world.pos = { x: near.x - 12, z: near.z }; step(0.2); toasts.length = 0; const far0 = near.oan; api.stone();
+  assert.ok(toasts.some((t) => /Lại gần/.test(t)), 'xa thì báo lại gần'); assert.equal(near.oan, far0, 'đứng xa: không trúng');
+  LGT.world.pos = { x: near.x + 0.5, z: near.z }; step(0.2); const before = near.oan; api.stone();
+  assert.ok(near.oan < before || near.oan === 0, 'trúng ngay'); assert.equal(LGT.farmView.stones.length, 0, 'không còn đá bay');
+  const mid = near.oan; api.stone(); assert.equal(near.oan, mid, 'hồi chiêu'); step(0.7); LGT.world.pos = keep;
 });
 
 test('đứng xa không đâm được thương (có thông báo), đặt người chơi sát quái thì đâm và thu phục được; có Tu Vi + hạt sen; lưu lgt.farm', () => {
@@ -83,7 +86,7 @@ test('Tự động hàng yêu: không bật khi có yêu quái hằng tháng; h�
 });
 
 test('Phiên 116: ban ngày bãi rừng trống (quái ngủ), tối lại hiện; không còn mục tiêu để đánh', () => {
-  const keep = LGT.night; LGT.night = 0.1; step(0.5);
+  LGT.world.pos = { x: -62, z: 80 }; const keep = LGT.night; LGT.night = 0.1; step(0.5);   // Phiên 127: dash giả của Tự động đã dời người chơi → đặt lại chỗ đứng
   assert.ok(LGT.farmView.mons.every((m) => m.boss), 'ban ngày chỉ còn boss (nằm ngủ)');
   assert.ok(!LGT.farmView.mons.some((m) => !m.boss));
   assert.equal(LGT.farm.status().active, false);

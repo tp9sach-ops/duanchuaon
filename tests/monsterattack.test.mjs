@@ -26,11 +26,11 @@ test('monsterattack: walkable — trong vùng, tránh hình tròn; vùng lạ kh
 
 test('monsterattack: sát thương một đòn — theo Công quái, Thủ, Hệ; có trần 35% Sinh Lực tối đa; tối thiểu 1', () => {
   const dameo = mk(), rue = mk({ type: 'reutinh', elite: true }), ngu = mk({ type: 'lyngu', elite: true, he: 'thuy' });
-  assert.equal(strikeDamage(dameo, { thu: 5, max: 120 }), 9);
-  assert.equal(strikeDamage(dameo, { thu: 5, max: 120, rel: 'loi' }), 12); assert.equal(strikeDamage(dameo, { thu: 5, max: 120, rel: 'bat' }), 7);
-  assert.equal(strikeDamage(rue, { thu: 5, max: 120 }), 32);
+  assert.equal(strikeDamage(dameo, { thu: 5, max: 120 }), 14);
+  assert.equal(strikeDamage(dameo, { thu: 5, max: 120, rel: 'loi' }), 18); assert.equal(strikeDamage(dameo, { thu: 5, max: 120, rel: 'bat' }), 11);
+  assert.equal(strikeDamage(rue, { thu: 5, max: 120 }), 42, 'Rêu Tinh (Phiên 127: sát thương ×1,5) chạm trần 35% × 120');
   assert.equal(strikeDamage(ngu, { thu: 5, max: 120 }), 42, 'quái cấp cao bị chặn ở 35% × 120');
-  assert.equal(strikeDamage(ngu, { thu: 0, max: 1000 }), 109, 'không chạm trần khi Sinh Lực lớn');
+  assert.equal(strikeDamage(ngu, { thu: 0, max: 1000 }), 163, 'không chạm trần khi Sinh Lực lớn');
   assert.equal(strikeDamage(dameo, { thu: 1e6, max: 120 }), 1, 'Thủ cực lớn vẫn mất tối thiểu 1');
   for (const v of [undefined, null, {}, { type: 'xxx' }]) assert.equal(strikeDamage(v), 0, String(v));
 });
@@ -47,7 +47,7 @@ test('monsterattack: bị đánh thì đuổi theo, dừng ở 0,8 × tầm, r�
   const ev = run(m, player, 8);
   const reachN = A.reach.normal;
   assert.ok(Math.abs(Math.hypot(player.x - m.x, player.z - m.z) - reachN * A.stopFrac) < 0.05, 'đứng cách 0,8 × tầm');
-  assert.equal(ev[0].k, 'windup'); assert.equal(ev[1].k, 'strike'); assert.equal(ev[1].dmg, 9);
+  assert.equal(ev[0].k, 'windup'); assert.equal(ev[1].k, 'strike'); assert.equal(ev[1].dmg, 14);
   assert.ok(Math.abs((ev[1].t - ev[0].t) - A.windup) < 0.06, 'đúng thời gian gồng');
   assert.ok(ev[0].t > 2.5, 'phải đi vài giây mới tới nơi (tốc độ 2,6 m/s)');
 });
