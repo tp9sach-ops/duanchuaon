@@ -5,7 +5,7 @@
 import * as THREE from 'three';
 import { DEFAULT_COLOR, colorById, hairById, beardById, cleanName, cleanSay, bubbleLife, poseFor, turnToward, BELL_PROFILE, POLO_LOGOS } from './avatarLogic.js';
 import { swingPose, SWING_S } from './conKhi.js';
-import { comboPose, comboEnd, nextKind, applyStance, KINDS } from './combo.js';
+import { comboPose, comboEnd, nextKind, applyStance, weaponVisible, KINDS } from './combo.js';
 import { chibiPose, CHIBI_H, LM } from './chibiRig.js';
 import { buildChibi, applyChibiPose } from '../scene/chibiBody.js';
 import { logoTexture, casaTexture, makeSprite, nameTexture, bubbleTexture } from './avatar.js';
@@ -84,11 +84,16 @@ export function createChibiAvatar({ name = 'Khách', color = DEFAULT_COLOR, hair
     const vienM = std(col.vien, 0.6), gau = mesh(new THREE.TorusGeometry(0.405, 0.022, 8, 36), vienM, robe, 0, 0.04, 0); gau.rotation.x = Math.PI / 2;
   }
 
-  // Côn (cầm tay phải, chỉ hiện khi vung): gắn vào xương BÀN TAY (cổ tay) nên theo cả khuỷu lẫn cổ tay. Thân dọc theo cánh tay (trục −x của tay phải) → xoay −90° quanh z; dời 0,1 về phía vai để bàn tay nắm đúng giữa phần cán.
-  const staff = new THREE.Group(); staff.visible = false; staff.rotation.z = -Math.PI / 2; staff.position.set(0.1, 0, 0); B.handR.add(staff);
-  { const woodM = std(0x7a4a24, 0.55), capM = std(0xe0a93a, 0.35), bandM = std(0xb3261e, 0.5);
-    mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.3, 8), woodM, staff, 0, -0.85, 0); mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.1, 8), capM, staff, 0, -1.5, 0);
-    mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.1, 8), capM, staff, 0, -0.2, 0); mesh(new THREE.CylinderGeometry(0.038, 0.038, 0.12, 8), bandM, staff, 0, -1.1, 0); }
+  // Côn / thương (cầm tay phải): gắn vào xương BÀN TAY (cổ tay) nên theo cả khuỷu lẫn cổ tay. Thân dọc theo cánh tay (trục −x của tay phải) → xoay −90° quanh z.
+  // Phiên 120: nắm ở GIỪA cán (đuôi cán chỉ thò ngay sau nắm tay vì cánh tay chibi ngắn, đầu thương dài ~1,2 m phía trước) + mũi thương thép và tua đỏ; hiện sẵn khi vào thế chiến đấu, không chỉ lúc vung.
+  const staff = new THREE.Group(); staff.visible = false; staff.rotation.z = -Math.PI / 2; staff.position.set(0.04, 0, 0); B.handR.add(staff);
+  { const woodM = std(0x7a4a24, 0.55), capM = std(0xe0a93a, 0.35), bandM = std(0xb3261e, 0.5), steelM = std(0xdfe6ee, 0.25);
+    mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.33, 8), woodM, staff, 0, -0.585, 0);            // cán: y từ +0,08 (đuôi, ngay sau nắm tay) tới −1,25 (đầu)
+    mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.1, 8), capM, staff, 0, 0.07, 0);                // chụp đuôi
+    mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.1, 8), capM, staff, 0, -1.2, 0);                // chụp dưới mũi thương
+    mesh(new THREE.CylinderGeometry(0.038, 0.038, 0.12, 8), bandM, staff, 0, -0.85, 0);           // dải đỏ
+    const tip = mesh(new THREE.ConeGeometry(0.05, 0.3, 10), steelM, staff, 0, -1.4, 0); tip.rotation.x = Math.PI; tip.scale.set(1, 1, 0.55);   // mũi thương (dẹt)
+    const tassel = mesh(new THREE.ConeGeometry(0.045, 0.2, 8), bandM, staff, 0, -1.3, 0); tassel.rotation.x = Math.PI; }
   let swingT = -1, swingKind = '', lastKind = '', lastEnd = -9;   // Phiên 119: kiểu đòn đang vung, đòn trước + lúc nó kết thúc (để nối chuỗi)
 
   // Mũi tên ▼ (nhân vật của mình), tên, bong bóng chat
@@ -114,10 +119,11 @@ export function createChibiAvatar({ name = 'Khách', color = DEFAULT_COLOR, hair
     const target = poseFor(st.state, clock - st.t0, st.speed), p = st.pose, k = Math.min(1, 14 * dt);
     for (const key of Object.keys(target)) p[key] += (target[key] - p[key]) * (key === 'sit' ? Math.min(1, 6 * dt) : k);
     let swing = null, act = null;
-    if (swingT >= 0) { swingT += dt; swing = comboPose(swingKind, swingT) || swingPose(swingT); staff.visible = swing.vis > 0.3; if (swingT >= (comboEnd(swingKind) || SWING_S + 0.35)) { lastEnd = clock; swingT = -1; swingKind = ''; staff.visible = false; swing = null; } }
+    if (swingT >= 0) { swingT += dt; swing = comboPose(swingKind, swingT) || swingPose(swingT); if (swingT >= (comboEnd(swingKind) || SWING_S + 0.35)) { lastEnd = clock; swingT = -1; swingKind = ''; swing = null; } }
     if (st.act) { st.actT += dt; const len = ACT_S[st.act]; if (st.actT >= len) st.act = null; else act = { name: st.act, k: st.actT / len }; }
     st.walk += ((st.state === 'walk' ? 1 : 0) - st.walk) * Math.min(1, 10 * dt);
     st.stance += ((st.wantStance && (st.state === 'idle' || st.state === 'walk') ? 1 : 0) - st.stance) * Math.min(1, 7 * dt);
+    staff.visible = weaponVisible(st.stance, swing ? swing.vis : 0);   // Phiên 120: cầm sẵn khi vào thế chiến đấu
     const q = applyStance(chibiPose(p, st.state, clock - st.t0, st.speed, { hold: st.hold, swing, act, walk: st.walk }), st.stance, { walk: st.walk, sit: p.sit, hold: st.hold, busy: !!(swing || act) }), ka = Math.min(1, 24 * dt);
     for (const k of SMOOTH_ARM) { const c = st.arms[k] || (st.arms[k] = { ...q[k] }); for (const ax of ['x', 'y', 'z']) c[ax] += (q[k][ax] - c[ax]) * ka; q[k] = c; }   // vai/khuỷu/cổ tay: làm mượt khi đổi tư thế (đứng ↔ chắp tay) để khuỷu không "bật" cái rụp; vẫn đủ nhanh cho gõ mõ, vung côn, ném
     applyChibiPose(B, q);
