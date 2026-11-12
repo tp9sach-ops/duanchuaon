@@ -9,11 +9,11 @@ export const BOTTOM_MENU = [
   { id: 'tuido',     label: 'Túi đồ',      icon: 'bag',    status: 'ready', action: 'bag' },
   { id: 'cuahang',   label: 'Cửa hàng',    icon: 'shop',   status: 'ready', action: 'shop' },
   { id: 'congdong',  label: 'Cộng đồng',   icon: 'people', status: 'ready', action: 'chat' },
-  { id: 'xephang',   label: 'Xếp hạng',    icon: 'rank',   status: 'soon' },
+  { id: 'xephang',   label: 'Xếp hạng',    icon: 'rank',   status: 'ready', action: 'rank' },
   { id: 'bando',     label: 'Bản đồ chùa', icon: 'map',    status: 'ready', action: 'map' },
   { id: 'thienphai', label: 'Thiền phái',  icon: 'lotus',  status: 'soon' },
   { id: 'gopy',      label: 'Góp ý',       icon: 'chat',   status: 'soon' },
-  { id: 'caidat',    label: 'Cài đặt',     icon: 'gear',   status: 'soon' },
+  { id: 'caidat',    label: 'Cài đặt',    icon: 'gear',   status: 'soon' },
 ];
 
 /** Lưới 3×2 nút hành động phải-dưới. "Dâng lễ" mở bảng thắp nhang 1/3/9 (js/ui/den.js, Phiên 14c); Linh thú còn khóa. */
@@ -71,7 +71,7 @@ export function pressResult(item) {
   if (!item) return { kind: 'none' };
   if (!isReady(item)) return { kind: 'soon', text: soonText(item) };
   if (item.action === 'goto') return { kind: 'goto', id: item.target };
-  if (['map', 'share', 'help', 'bow', 'meditate', 'le', 'den', 'chat', 'quest', 'beads', 'chant', 'bag', 'shop', 'fish'].includes(item.action)) return { kind: item.action };
+  if (['map', 'share', 'help', 'bow', 'meditate', 'le', 'den', 'chat', 'quest', 'beads', 'chant', 'bag', 'shop', 'fish', 'rank'].includes(item.action)) return { kind: item.action };
   return { kind: 'soon', text: soonText(item) };
 }
 
