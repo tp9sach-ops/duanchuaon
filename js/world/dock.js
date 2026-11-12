@@ -5,6 +5,9 @@ import { furnitureById } from './furniture.js';
 import { houseLevel } from './land.js';
 import { KHINH_TEN, MAX_BAC } from './skills.js';
 import { BOARD } from './board.js';
+import { STONE, SPEAR } from './yeuquai.js';
+import { COOLDOWN_S as KHI_CD } from './conKhi.js';
+import { COOLDOWN_S as DAU_CD } from './thietDau.js';
 
 const isObj = (o) => o && typeof o === 'object' && !Array.isArray(o);
 const num = (x) => (Number.isFinite(+x) ? Math.max(0, Math.floor(+x)) : 0);
@@ -120,4 +123,53 @@ export function bagSections(ctx = {}) {
   const bl = isObj(c.bell) ? c.bell : {}, shardRow = (id, ten, hint) => ({ ten, mo: bl[id] ? 'đã có · giữ cho lễ đúc chuông' : hint, ic: { k: 'bell', c: bl[id] ? ({ da: '#b9b2a4', nuoc: '#6fb7e8', lua: '#f26a3d' })[id] : '#4b4f57' }, n: bl[id] ? 1 : 0 });
   S.push({ title: 'Mảnh chuông Diệu Giang', rows: [shardRow('da', 'Mảnh Đá', 'chưa có · tìm ở vách Đại Phật (Cốt truyện chương 2)'), shardRow('nuoc', 'Mảnh Nước', 'chưa có · sẽ mở ở chương sau'), shardRow('lua', 'Mảnh Lửa', 'chưa có · sẽ mở ở chương sau')] });
   return S;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------------------
+// BỐ CỤC Ô CỐ ĐỊNH (Phiên 109). Trước đây các nút xếp thành MỘT CỘT dài và nút đầu cột đổi theo hoàn cảnh: yêu quái/quái vừa tới là "Ném đá" chen xuống đáy,
+// đẩy "Nhảy" lên cao → ngón cái bấm nhầm. Giờ mỗi nút có MỘT Ô CỐ ĐỊNH trong lưới 3 cột × 3 hàng sát góc phải-dưới; nút nào không có thì để trống ô đó, không bao giờ dời chỗ.
+//
+//   hàng 3 (tiện ích, nhỏ):  [T1 Ván]      [T2 Kỹ năng]   [T3 Túi đồ]
+//   hàng 2:                  [F  Tự động]  [D  Thiết đầu] [C  Nhảy]
+//   hàng 1 (sát ngón cái):   [E  Chém khí] [B  Thương]    [A  HÀNH ĐỘNG CHÍNH]
+//
+// A = việc đang làm: Ném đá / Bấm! / Thả cầu / Thu cá / Khiêng / Ném / Lặn. B = việc phụ cùng hoàn cảnh: Thương / Phóng sinh / Đặt xuống / Thả xuống.
+// Phím tắt trên máy tính: 1=A 2=B 3=E 4=D 5=F, Space=Nhảy (C), B=Túi đồ.
+export const SLOT_POS = { A: { r: 1, c: 3 }, B: { r: 1, c: 2 }, E: { r: 1, c: 1 }, C: { r: 2, c: 3 }, D: { r: 2, c: 2 }, F: { r: 2, c: 1 }, T3: { r: 3, c: 3 }, T2: { r: 3, c: 2 }, T1: { r: 3, c: 1 } };
+export const SLOT_OF = {
+  tap: 'A', cast: 'A', thu: 'A', khieng: 'A', nem: 'A', nemnguoi: 'A', lan: 'A', da: 'A',
+  phong: 'B', ha: 'B', thanguoi: 'B', thuong: 'B',
+  nhay: 'C', thietdau: 'D', chemkhi: 'E', khiengnguoi: 'E', nemnpc: 'E', tudong: 'F', nemyq: 'F',
+  tui: 'T3', kynang: 'T2', vantruot: 'T1',
+};
+/** Khi nhiều nút cùng muốn ô A: người đứng trước được ô. Đánh nhau/câu cá đứng trước nhặt đồ. */
+export const A_PRIORITY = ['tap', 'thu', 'nemnguoi', 'nem', 'da', 'cast', 'lan', 'khieng'];
+const FALLBACK = ['B', 'E', 'D', 'F', 'C', 'T1', 'T2', 'T3'];   // nút thua tranh ô → ô trống đầu tiên theo thứ tự này
+export const SLOT_KEY = { A: '1', B: '2', E: '3', D: '4', F: '5', C: 'Space', T3: 'B' };   // chữ hiện trên nút (máy tính)
+export const SLOT_CODES = { A: ['Digit1', 'Numpad1'], B: ['Digit2', 'Numpad2'], E: ['Digit3', 'Numpad3'], D: ['Digit4', 'Numpad4'], F: ['Digit5', 'Numpad5'], T3: ['KeyB'] };   // Space do js/ui/skill.js lo
+
+/** Đặt nút vào ô. list = kết quả dockButtons. Trả [{ id, slot, r, c, size: 'big'|'mid'|'small', key }]; hai nút không bao giờ trùng ô. */
+export function dockLayout(list) {
+  const items = (Array.isArray(list) ? list : []).filter((b) => b && typeof b.id === 'string');
+  const prio = (id) => { const i = A_PRIORITY.indexOf(id); return i < 0 ? 99 : i; };
+  const nat = {}, out = new Map(), losers = [];
+  for (const b of items) { const s = SLOT_OF[b.id]; if (s) (nat[s] = nat[s] || []).push(b.id); else losers.push(b.id); }
+  for (const s of Object.keys(nat)) { const ids = nat[s].slice().sort((x, y) => prio(x) - prio(y)); out.set(ids[0], s); losers.push(...ids.slice(1)); }
+  const free = FALLBACK.filter((s) => !nat[s]); let over = 4;
+  for (const id of losers) { const s = free.shift(); if (s) out.set(id, s); else out.set(id, 'X' + (over++)); }   // hết ô (rất hiếm): xếp thêm hàng phía trên
+  return items.map((b) => {
+    const slot = out.get(b.id), pos = SLOT_POS[slot] || { r: Number(String(slot).slice(1)) || 4, c: 3 };
+    return { id: b.id, slot, r: pos.r, c: pos.c, size: slot === 'A' ? 'big' : /^T\d$/.test(slot) ? 'small' : 'mid', key: SLOT_KEY[slot] || '' };
+  });
+}
+
+/** Phần hồi chiêu còn lại của nút, 0..1 (1 = vừa bấm xong, 0 = dùng được). c = cùng ngữ cảnh đưa cho dockButtons. Vẽ vòng quay trên nút. */
+export function cooldownFrac(id, c = {}) {
+  const k = isObj(c) ? c : {}, yq = isObj(k.yq) ? k.yq : {}, fm = isObj(k.farm) ? k.farm : {};
+  const f = (left, max) => (Number.isFinite(+left) && +left > 0 && max > 0 ? Math.min(1, +left / max) : 0);
+  if (id === 'da') return f(yq.active ? yq.stoneCd : fm.stoneCd, STONE.cd);
+  if (id === 'thuong') return f(yq.active ? yq.spearCd : fm.spearCd, SPEAR.cd);
+  if (id === 'chemkhi') return f(isObj(k.khi) ? k.khi.cd : 0, KHI_CD);
+  if (id === 'thietdau') return f(isObj(k.head) ? k.head.cd : 0, DAU_CD);
+  return 0;
 }
