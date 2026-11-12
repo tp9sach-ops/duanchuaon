@@ -8,11 +8,12 @@ import { DEFAULT_COLOR, colorById, hairById, beardById, cleanName, cleanSay, bub
 import { swingPose, SWING_S } from './conKhi.js';
 import { comboPose, comboEnd, nextKind, applyStance, weaponVisible, KINDS } from './combo.js';
 import { chibiPose, CHIBI_H, LM } from './chibiRig.js';
+import { showPose, SHOW_S } from './fishPose.js';   // Phiên 128: giơ cá bằng hai tay
 import { buildChibi, applyChibiPose } from '../scene/chibiBody.js';
 import { logoTexture, casaTexture, makeSprite, nameTexture, bubbleTexture } from './avatar.js';
 
 const SKIN = 0xe8934c, HAIR = 0x1f1511, OUTLINE = 0x3a2314;
-const ACT_S = { throw: 0.55, grab: 0.8 };   // giây của từng động tác một lần
+const ACT_S = { throw: 0.55, grab: 0.8, show: SHOW_S };   // giây của từng động tác một lần
 const SMOOTH_ARM = ['armL', 'armR', 'foreL', 'foreR', 'handL', 'handR'];
 
 export function createChibiAvatar({ name = 'Khách', color = DEFAULT_COLOR, hair: hairId = 'troc', beard: beardId = '', mine = false } = {}) {
@@ -141,7 +142,7 @@ export function createChibiAvatar({ name = 'Khách', color = DEFAULT_COLOR, hair
     staff.visible = weaponVisible(st.stance, swing ? swing.vis : 0);   // Phiên 120: cầm sẵn khi vào thế chiến đấu
     staff.rotation.y = swing && swing.spin ? swing.spin : 0;           // Phiên 126: múa côn quanh bàn tay
     if (gourdPulse > 0) { gourdPulse = Math.max(0, gourdPulse - dt * 3); gourd.scale.setScalar(1 + 0.45 * Math.sin(gourdPulse * Math.PI)); }
-    const q = applyStance(chibiPose(p, st.state, clock - st.t0, st.speed, { hold: st.hold, swing, act, walk: st.walk }), st.stance, { walk: st.walk, sit: p.sit, hold: st.hold, busy: !!(swing || act) }), ka = Math.min(1, 24 * dt);
+    const q = showPose(applyStance(chibiPose(p, st.state, clock - st.t0, st.speed, { hold: st.hold, swing, act, walk: st.walk }), st.stance, { walk: st.walk, sit: p.sit, hold: st.hold, busy: !!(swing || act) }), act), ka = Math.min(1, 24 * dt);
     for (const k of SMOOTH_ARM) { const c = st.arms[k] || (st.arms[k] = { ...q[k] }); for (const ax of ['x', 'y', 'z']) c[ax] += (q[k][ax] - c[ax]) * ka; q[k] = c; }   // vai/khuỷu/cổ tay: làm mượt khi đổi tư thế (đứng ↔ chắp tay) để khuỷu không "bật" cái rụp; vẫn đủ nhanh cho gõ mõ, vung côn, ném
     applyChibiPose(B, q);
     rig.position.y = p.dy;
