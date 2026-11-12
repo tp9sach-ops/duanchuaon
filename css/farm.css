@@ -7,3 +7,10 @@
 .fm-hud.kim .fm-bar i{background:#f0d060}.fm-hud.calm .fm-bar i{background:#62c8ff}
 .fm-sub{display:flex;justify-content:space-between;gap:8px;color:#b9c2d0;font-weight:400;font-size:11px}
 .fm-tag{font-weight:400;color:#aeb3c2}
+/* Sinh Lực người chơi khi quái đánh trả (Phiên 115): nằm ngay dưới khung mục tiêu. */
+.fm-hp{position:absolute;left:50%;top:max(140px,calc(env(safe-area-inset-top) + 132px));transform:translateX(-50%);width:min(240px,calc(100vw - 150px));display:flex;flex-direction:column;gap:3px;padding:6px 10px;border-radius:10px;background:rgba(8,10,20,.72);border:1px solid rgba(255,190,150,.55);color:#fbece6;font:500 11px/1.2 var(--sans,system-ui,sans-serif);pointer-events:none;z-index:6}
+.fm-hp[hidden]{display:none!important}
+.fm-hpbar{display:block;height:8px;border-radius:5px;background:rgba(255,255,255,.15);overflow:hidden}
+.fm-hpbar i{display:block;height:100%;width:100%;background:#7fe08a;transition:width .12s linear}
+.fm-hp.low .fm-hpbar i{background:#ff8a6b}
+.fm-hp.hurt{border-color:#ff6b4a;box-shadow:0 0 10px rgba(255,107,74,.6)}
