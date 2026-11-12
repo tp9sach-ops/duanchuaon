@@ -13,6 +13,8 @@ export const ATTACK_CFG = Object.freeze({
   leash: 22,                                               // m: người chơi chạy xa hơn thì quái bỏ đuổi
   giveUp: 12,                                              // giây: quá ngần này không bị đánh và người chơi cách > 2 × reach thì quái bỏ đuổi
 });
+// Phiên 125: chiêu thứ hai của BOSS vùng — "Giậm Đất": cứ `slamEvery` đòn thì một đòn là giậm đất, gồng LÂU hơn (báo bằng vòng đỏ to), trúng mọi người trong bán kính `slamReach` (quay vòng, không chỉ trước mặt). Chạy ra ngoài vòng (hoặc nhảy khinh công) là né được. TẠM.
+export const BOSS_ATTACK_CFG = Object.freeze({ tam: true, slamEvery: 3, slamWindup: 1.3, slamReach: 7.5, slamHeSo: 1.2 });
 export const VITALS_CFG = Object.freeze({
   tam: true,
   regenDelay: 6,           // giây không giao tranh thì bắt đầu hồi Sinh Lực

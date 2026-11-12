@@ -1,7 +1,7 @@
 // Cảnh 3D quái cố định ở bãi rừng (Phiên 107, G1.6a): thân khối đơn giản theo từng loại, thanh Oán Khí, vòng dưới chân quái tinh anh, vòng chọn mục tiêu, đá đang bay.
 // Chỉ VẼ; trạng thái do js/ui/farm.js cập nhật vào LGT.farmView = { mons: [{ id, type, x, z, ry, oan, max, he, elite, flash }], target (id hoặc 0), stones: [{ x0, z0, x1, z1, t, dur }] }.
 // Mô hình tạm (khối) — chờ bản GLB/hoạ sĩ. Dùng lại hình học/vật liệu giữa các con (clone nông) nên rẻ; tối đa POOL con cùng lúc (hai vùng × 12 là 24; chỉ vùng gần người chơi được đưa vào view).
-import { ATTACK_CFG } from '../data/monsterAI.js';
+import { ATTACK_CFG, BOSS_ATTACK_CFG } from '../data/monsterAI.js';
 import * as THREE from 'three';
 import { FARM_CFG } from '../data/monsters.js';
 
@@ -96,7 +96,7 @@ export function buildFarm() {
         s.bar.visible = hurt || isT; s.bar.position.y = h; if (camera) s.bar.quaternion.copy(camera.quaternion);
         const pct = Math.max(0, Math.min(1, m.oan / Math.max(1, m.max))); s.fill.scale.set(1.16 * pct, 0.1, 1); s.fill.position.x = -0.58 * (1 - pct);
         s.fillMat.color.setHex(pct <= 0.25 ? 0x62c8ff : (HE_COLOR[m.he] || 0xffffff));   // ≤ 25%: xanh dương = sắp thu phục
-        if (m.wind > 0) { const R = ATTACK_CFG.reach[(m.elite || m.boss) ? 'elite' : 'normal'] * ATTACK_CFG.missSlack, u = Math.max(0, Math.min(1, 1 - m.wind / ATTACK_CFG.windup)); s.danger.visible = true; s.danger.scale.setScalar(R * (0.35 + 0.65 * u)); s.danger.material.opacity = 0.18 + 0.32 * u; } else s.danger.visible = false;
+        if (m.wind > 0) { const R = m.slam ? BOSS_ATTACK_CFG.slamReach : ATTACK_CFG.reach[(m.elite || m.boss) ? 'elite' : 'normal'] * ATTACK_CFG.missSlack, u = Math.max(0, Math.min(1, 1 - m.wind / (m.slam ? BOSS_ATTACK_CFG.slamWindup : ATTACK_CFG.windup))); s.danger.visible = true; s.danger.scale.setScalar(R * (0.35 + 0.65 * u)); s.danger.material.opacity = 0.18 + 0.32 * u; } else s.danger.visible = false;
         s.ring.visible = !!(m.elite || m.boss); if (m.elite || m.boss) s.ring.material.color.setHex(HE_COLOR[m.he] || 0xffffff);
         if (isT) tg = m;
       });

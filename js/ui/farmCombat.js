@@ -47,6 +47,7 @@ export function initFarmCombat(hud, { toast = () => {} } = {}) {
       if (m.wind > 0) m.flash = Math.max(m.flash || 0, 0.55);   // phồng lên báo trước (scene/farm.js vẽ theo m.flash)
       if (!ev) continue;
       if (ev.k === 'calm') engaged.delete(m.uid);
+      else if (ev.k === 'windup' && ev.slam) toast(`${m.ten} gồng Giậm Đất! Chạy ra khỏi vòng đỏ.`, 1500);
       else if (ev.k === 'strike') { const r = vit.take(ev.dmg); if (r.taken > 0) { hudUntil = now + 3000; box.classList.add('hurt'); setTimeout(() => box.classList.remove('hurt'), 220); } if (r.down) { defeat(); break; } }
     }
     vit.step(dt);

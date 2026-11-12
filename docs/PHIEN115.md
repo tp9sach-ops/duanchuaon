@@ -61,3 +61,8 @@ Yêu cầu ptg (12/11): chỗ có cây/đất trống mà không đến được
 - `js/scene/farm.js`: mỗi ô quái có đĩa đỏ `danger` (CircleGeometry) hiện khi `m.wind > 0` (đang gồng): bán kính = `ATTACK_CFG.reach[loại] × missSlack` (đúng vùng trúng đòn của `stepMonster`), lớn dần 35%→100% và đậm dần theo tiến độ gồng (0,7 s). Hết gồng mà đứng ngoài đĩa = né được (trùng logic `miss`). Áp dụng cho MỌI quái, boss có đĩa to hơn vì tầm tinh anh.
 - Kiểm: game tải không lỗi trang (Chromium giả lập, three cục bộ); boss Lão Mộc Tinh hiện trong bãi Bắc. CHƯA thấy được vòng đỏ trong ảnh chụp (hộp "Tạo nhân vật" + camera sát bụi che; dịch tới `LGT.world.teleport` không đổi góc nhìn) → ptg cần xem thật trong game. Không có test tự động cho phần vẽ.
 - Việc kế: boss dùng chung qua Firebase; rơi Linh Ấn/Huyền Tinh; hai chiêu riêng của boss (hiện chỉ một kiểu đòn); G2.5 thanh kỹ năng; Đồi Bảo Tháp.
+
+## Phiên 125 — Boss có chiêu thứ hai "Giậm Đất"
+- `js/data/monsterAI.js`: `BOSS_ATTACK_CFG { slamEvery: 3, slamWindup: 1.3, slamReach: 7.5, slamHeSo: 1.2 }` (TẠM). `js/world/monsterAttack.js`: boss (m.boss) cứ 3 đòn có 1 đòn giậm đất: gồng 1,3 s (sự kiện `{k:'windup', slam:true}`), trúng mọi người trong bán kính 7,5 m (kể cả đứng xa hơn tầm thường 3,4×1,3), hệ số 1,2, vẫn bị trần 35% Sinh Lực/đòn; `m.slam`/`m.atkN`; `calm` xóa slam. Quái thường không bao giờ giậm.
+- `js/scene/farm.js`: vòng đỏ dùng bán kính/thời gian gồng của chiêu giậm (to hơn). `js/ui/farmCombat.js`: báo "<tên> gồng Giậm Đất! Chạy ra khỏi vòng đỏ." Test: `tests/monsterattack.test.mjs` (+1, 14/14). `sw.js` dgt-v118.
+- Chưa xem trong game thật (vòng đỏ chưa kiểm bằng mắt từ Phiên 124). Còn: boss chung qua Firebase, Linh Ấn/Huyền Tinh, G2.5 thanh kỹ năng, Đồi Bảo Tháp.

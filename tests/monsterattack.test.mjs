@@ -1,7 +1,7 @@
 // Test quái bãi rừng đánh trả + Sinh Lực người chơi (Phiên 115). Chạy: node --test tests/monsterattack.test.mjs
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { ATTACK_CFG as A, VITALS_CFG as V } from '../js/data/monsterAI.js';
+import { ATTACK_CFG as A, BOSS_ATTACK_CFG, VITALS_CFG as V } from '../js/data/monsterAI.js';
 import { FARM_ZONES } from '../js/data/monsters.js';
 import { walkable, provoke, calm, strikeDamage, stepMonster, createVitals } from '../js/world/monsterAttack.js';
 
@@ -120,4 +120,22 @@ test('vitals: đổi Tu Vi đổi Sinh Lực tối đa và giữ tỉ lệ; khô
   assert.equal(v.max, 345); assert.ok(Math.abs(v.hp - 172) <= 1, `giữ tỉ lệ 50% (${v.hp})`);
   const w = createVitals({ tuvi: 10 }); w.setTuVi(1); assert.equal(w.max, 120); assert.equal(w.hp, 120);
   for (const t of [undefined, null, 'x', NaN]) assert.ok(createVitals({ tuvi: t }).max >= 1, String(t));
+});
+
+test('Phiên 125: boss cứ 3 đòn có 1 đòn Giậm Đất — gồng lâu, vòng to, trúng cả khi đứng xa hơn tầm thường; quái thường không bao giờ giậm', () => {
+  const B = BOSS_ATTACK_CFG, boss = mk({ type: 'laomoc', boss: true, he: 'moc', zone: 'biaRungThong' }); provoke(boss);
+  const p = { x: -62 + 2, z: 60 }, ctx = { thu: 5, max: 1000 }; const evs = [];
+  for (let t = 0; t < 40 && evs.filter((e) => e.k !== 'windup').length < 3; t += 0.1) { const e = stepMonster(boss, 0.1, p, ctx); if (e) evs.push({ ...e, t }); }
+  const strikes = evs.filter((e) => e.k === 'strike'), winds = evs.filter((e) => e.k === 'windup');
+  assert.equal(strikes.length, 3); assert.deepEqual(winds.map((w) => !!w.slam), [false, false, true]); assert.equal(strikes[2].slam, true); assert.ok(!strikes[0].slam);
+  assert.ok(Math.abs((strikes[2].t - winds[2].t) - B.slamWindup) < 0.15, 'gồng lâu hơn'); assert.ok(strikes[2].dmg > strikes[0].dmg, 'giậm đau hơn');
+  assert.equal(boss.slam, false, 'đòn sau lại thường');
+  // đứng ở 6 m: ngoài tầm thường (3,4 × 1,3) nhưng trong vòng giậm (7,5) → trúng; ở 9 m: né
+  for (const [d, hit] of [[6, true], [9, false]]) {
+    const b = mk({ type: 'laomoc', boss: true, he: 'moc', x: -62, z: 60 }); provoke(b); b.slam = true; b.wind = 0.05; b.atkN = 2;
+    const e = stepMonster(b, 0.1, { x: -62 + d, z: 60 }, ctx); assert.equal(e.k, hit ? 'strike' : 'miss'); assert.equal(e.slam, true);
+  }
+  const n = mk(); provoke(n); let slams = 0; for (let t = 0; t < 60; t += 0.1) { const e = stepMonster(n, 0.1, { x: -61, z: 60 }, ctx); if (e && e.slam) slams++; }
+  assert.equal(slams, 0);
+  calm(boss); assert.equal(boss.slam, false);
 });
