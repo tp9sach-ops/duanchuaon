@@ -28,13 +28,14 @@ export const SPAWN_CFG = Object.freeze({ minGap: 3, minFromPlayer: 6, tries: 30,
 // Ba vùng (hai vùng đầu Phiên 107, vùng Hồ Thác Phiên 114). `rects` NẰM TRỌN trong vùng đi bộ OUT_WALKS (js/world/outside.js), chừa lề ≥ 1 m; `avoid` = hình tròn tránh (miếu, cổ thụ, hồ + thủy tạ).
 // Các hình chữ nhật của hai vùng KHÔNG chồng nhau. cap = tối đa số quái cùng lúc (GDD: ~12); eliteMax ≤ cap.
 export const FARM_ZONES = Object.freeze({
+  // Phiên 119: vùng Mộc cũng DỜI khỏi bãi rừng thông (miếu, cổ thụ, Hồ Rừng + thủy tạ để chụp hình) vào khoảng đất trống 'rung-sau-bac'. Id giữ nguyên.
   biaRungThong: Object.freeze({
-    id: 'biaRungThong', nightOnly: true, ten: 'Bìa Rừng Thông', lvMin: 3, lvMax: 20, he: 'moc', cap: 12, eliteMax: 1,
+    id: 'biaRungThong', nightOnly: true, ten: 'Rừng Sâu Phía Bắc', lvMin: 3, lvMax: 20, he: 'moc', cap: 12, eliteMax: 1,
     normal: Object.freeze(['dameo']), elite: Object.freeze(['reutinh']),
-    rects: Object.freeze([{ x0: -117, x1: -91, z0: 73, z1: 107 }, { x0: -90, x1: -72, z0: 85, z1: 93 }]),
-    avoid: Object.freeze([{ x: -100.5, z: 75.5, r: 3.2 }, { x: -106, z: 90, r: 3.6 }, { x: -110, z: 102, r: 8.5 }]),
+    rects: Object.freeze([{ x0: -76.5, x1: -47.5, z0: 51.5, z1: 76.5 }]),
+    avoid: Object.freeze([]),
   }),
-  // Phiên 118: hai vùng này DỜI khỏi đường mòn và bãi dưới thác (để đường thông thoáng, Đại Phật + thác để chụp hình) vào hai khoảng đất trống rừng sâu mới (OUT_WALKS 'rung-sau-dong' / 'rung-sau-tay'). Id giữ nguyên để lưu/test không đổi.
+  // Phiên 118: hai vùng sau DỜI khỏi đường mòn và bãi dưới thác (để đường thông thoáng, Đại Phật + thác để chụp hình) vào hai khoảng đất trống rừng sâu mới (OUT_WALKS 'rung-sau-dong' / 'rung-sau-tay'). Id giữ nguyên để lưu/test không đổi.
   duongMon: Object.freeze({
     id: 'duongMon', nightOnly: true, ten: 'Rừng Sâu Phía Đông', lvMin: 12, lvMax: 25, he: 'kim', cap: 12, eliteMax: 1,
     normal: Object.freeze(['daotac']), elite: Object.freeze(['cuopduong']),

@@ -29,19 +29,15 @@ test('dữ liệu: tên/cấp/Hệ đúng GDD mục 8; mỗi vùng chỉ dùng q
 test('vùng nằm TRỌN trong vùng đi bộ OUT_WALKS; hai vùng không chồng nhau; avoid che miếu, cổ thụ, hồ và thủy tạ', () => {
   for (const z of ZS) {
     for (const r of z.rects) assert.ok(OUT_WALKS.some((w) => inside(r, w)), `${z.id} ${JSON.stringify(r)} ra ngoài lối đi`);
-    for (const [x, zz] of corners(MIEU)) assert.ok(z.id !== 'biaRungThong' || inAvoid(z, x, zz), 'miếu');
+    for (const [x, zz] of [...corners(MIEU), [CO_THU.x, CO_THU.z], [LAKE.x, LAKE.z], ...THUY_TA.posts]) assert.ok(!z.rects.some((r) => x >= r.x0 - 3 && x <= r.x1 + 3 && zz >= r.z0 - 3 && zz <= r.z1 + 3), `${z.id} sát miếu/cổ thụ/hồ`);
   }
-  const brt = FARM_ZONES.biaRungThong;
-  assert.ok(brt.avoid.some((c) => Math.hypot(CO_THU.x - c.x, CO_THU.z - c.z) + CO_THU.r <= c.r), 'cổ thụ');
-  assert.ok(brt.avoid.some((c) => Math.hypot(LAKE.x - c.x, LAKE.z - c.z) + LAKE.r <= c.r), 'hồ');
-  for (const part of [THUY_TA.deck, THUY_TA.pier]) for (const [x, zz] of corners(part)) assert.ok(inAvoid(brt, x, zz), 'thủy tạ');
   const all = ZS.flatMap((z) => z.rects.map((r) => ({ z: z.id, r })));
   for (let i = 0; i < all.length; i++) for (let j = i + 1; j < all.length; j++) { const a = all[i].r, b = all[j].r; assert.ok(a.x1 <= b.x0 || b.x1 <= a.x0 || a.z1 <= b.z0 || b.z1 <= a.z0, `chồng ${all[i].z}/${all[j].z}`); }
 });
 
 test('zoneAt: nhận đúng vùng, ngoài vùng và toạ độ lạ → null', () => {
-  assert.equal(zoneAt(-100, 90), 'biaRungThong');
-  assert.equal(zoneAt(-80, 89), 'biaRungThong');
+  assert.equal(zoneAt(-100, 90), null, 'bãi rừng thông cũ (miếu, cổ thụ, hồ) không còn quái');
+  assert.equal(zoneAt(-62, 64), 'biaRungThong');
   assert.equal(zoneAt(-40, 89), null, 'đường mòn thông thoáng, không còn quái');
   assert.equal(zoneAt(50, 104), null, 'đường mòn thác không còn quái'); assert.equal(zoneAt(52, 130), 'duongMon'); assert.equal(zoneAt(-60, 115), 'hoThac');
   assert.equal(zoneAt(0, 0), null);

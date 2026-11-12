@@ -5,7 +5,7 @@ import { ATTACK_CFG as A, VITALS_CFG as V } from '../js/data/monsterAI.js';
 import { FARM_ZONES } from '../js/data/monsters.js';
 import { walkable, provoke, calm, strikeDamage, stepMonster, createVitals } from '../js/world/monsterAttack.js';
 
-const mk = (o = {}) => ({ id: 1, type: 'dameo', he: 'moc', elite: false, zone: 'biaRungThong', x: -100, z: 80, oan: 66, max: 66, ...o });
+const mk = (o = {}) => ({ id: 1, type: 'dameo', he: 'moc', elite: false, zone: 'biaRungThong', x: -62, z: 60, oan: 66, max: 66, ...o });
 const run = (m, player, secs, ctx = { thu: 5, max: 120 }, dt = 0.05) => { const ev = []; for (let t = 0; t < secs - 1e-9; t += dt) { const e = stepMonster(m, dt, player, ctx); if (e) ev.push({ ...e, t: Math.round((t + dt) * 100) / 100 }); } return ev; };
 
 test('monsterattack: cấu hình TẠM, đóng băng, số hợp lý', () => {
@@ -15,8 +15,8 @@ test('monsterattack: cấu hình TẠM, đóng băng, số hợp lý', () => {
 });
 
 test('monsterattack: walkable — trong vùng, tránh hình tròn; vùng lạ không chặn', () => {
-  assert.equal(walkable('biaRungThong', -100, 90), true);
-  assert.equal(walkable('biaRungThong', -110, 102), false, 'trong vòng tránh');
+  assert.equal(walkable('biaRungThong', -62, 64), true);
+  assert.equal(walkable('biaRungThong', -100, 90), false, 'bãi rừng thông cũ không còn quái');
   assert.equal(walkable('biaRungThong', 0, 0), false, 'ngoài vùng');
   assert.equal(walkable('hoThac', 106, 104), false, 'bãi thác không còn là vùng quái'); assert.equal(walkable('hoThac', -60, 115), true);
   assert.equal(walkable('khong-co', 0, 0), true);
@@ -36,14 +36,14 @@ test('monsterattack: sát thương một đòn — theo Công quái, Thủ, Hệ
 });
 
 test('monsterattack: quái chưa bị đánh thì đứng yên, không đánh', () => {
-  const m = mk(); assert.equal(stepMonster(m, 0.1, { x: -99, z: 80 }), null); assert.deepEqual([m.x, m.z], [-100, 80]);
-  assert.deepEqual(run(m, { x: -99.5, z: 80 }, 10), []);
+  const m = mk(); assert.equal(stepMonster(m, 0.1, { x: -61, z: 60 }), null); assert.deepEqual([m.x, m.z], [-62, 60]);
+  assert.deepEqual(run(m, { x: -61.5, z: 60 }, 10), []);
   assert.equal(stepMonster(null, 0.1, { x: 0, z: 0 }), null); provoke(m); assert.equal(stepMonster(m, 0.1, null), null);
 });
 
 test('monsterattack: bị đánh thì đuổi theo, dừng ở 0,8 × tầm, rồi gồng chiêu → trúng', () => {
   const m = mk(); provoke(m);
-  const player = { x: -90, z: 80 };                              // cách 10 m
+  const player = { x: -52, z: 60 };                              // cách 10 m
   const ev = run(m, player, 8);
   const reachN = A.reach.normal;
   assert.ok(Math.abs(Math.hypot(player.x - m.x, player.z - m.z) - reachN * A.stopFrac) < 0.05, 'đứng cách 0,8 × tầm');
@@ -53,43 +53,43 @@ test('monsterattack: bị đánh thì đuổi theo, dừng ở 0,8 × tầm, r�
 });
 
 test('monsterattack: né được — chạy ra khỏi tầm trong lúc gồng chiêu thì trượt', () => {
-  const m = mk(); provoke(m); const p = { x: -99, z: 80 };
+  const m = mk(); provoke(m); const p = { x: -61, z: 60 };
   let e = stepMonster(m, 0.1, p, { thu: 5, max: 120 }); assert.equal(e.k, 'windup');
-  p.x = -90;                                                      // chạy ra xa 10 m
+  p.x = -52;                                                      // chạy ra xa 10 m
   let last = null; for (let i = 0; i < 12; i++) { const r = stepMonster(m, 0.1, p, { thu: 5, max: 120 }); if (r) { last = r; break; } }
   assert.deepEqual(last, { k: 'miss' });
 });
 
 test('monsterattack: hồi chiêu giữa hai đòn đúng khoảng; tinh anh nhanh hơn và tầm xa hơn', () => {
-  const m = mk(); provoke(m); const ev = run(m, { x: -99, z: 80 }, 12).filter((e) => e.k === 'windup');
+  const m = mk(); provoke(m); const ev = run(m, { x: -61, z: 60 }, 12).filter((e) => e.k === 'windup');
   assert.ok(ev.length >= 4); assert.ok(Math.abs((ev[1].t - ev[0].t) - (A.windup + A.interval.normal)) < 0.1, `cách nhau ${ev[1].t - ev[0].t}`);
   const e1 = mk({ type: 'reutinh', elite: true }), e2 = mk(); provoke(e1); provoke(e2);
-  run(e1, { x: -80, z: 80 }, 2); run(e2, { x: -80, z: 80 }, 2);
+  run(e1, { x: -42, z: 60 }, 2); run(e2, { x: -42, z: 60 }, 2);
   assert.ok(e1.x > e2.x, 'tinh anh chạy nhanh hơn');
-  const p = { x: -97.2, z: 80 }; const a = mk({ type: 'reutinh', elite: true }), b = mk(); provoke(a); provoke(b);   // cách 2,8 m: ngoài tầm thường (2,4), trong tầm tinh anh (3,4)
-  assert.equal(stepMonster(a, 0.05, p).k, 'windup'); assert.equal(stepMonster(b, 0.05, p) === null || b.x > -100, true);
+  const p = { x: -59.2, z: 60 }; const a = mk({ type: 'reutinh', elite: true }), b = mk(); provoke(a); provoke(b);   // cách 2,8 m: ngoài tầm thường (2,4), trong tầm tinh anh (3,4)
+  assert.equal(stepMonster(a, 0.05, p).k, 'windup'); assert.equal(stepMonster(b, 0.05, p) === null || b.x > -62, true);
 });
 
 test('monsterattack: không ra khỏi vùng của mình khi đuổi', () => {
   const zone = FARM_ZONES.biaRungThong, r = zone.rects[0];
-  const m = mk({ x: r.x1 - 1, z: 90 }); provoke(m);
-  run(m, { x: r.x1 + 10, z: 90 }, 6);                              // người chơi đứng ngoài vùng, trong tầm bỏ cuộc? (cách ≈ 11 m < 22)
-  assert.ok(m.x <= r.x1 + 1e-9 || !(m.x > -91 && m.x < -90), 'không vượt rìa vùng thứ nhất');
+  const m = mk({ x: r.x1 - 1, z: 60 }); provoke(m);
+  run(m, { x: r.x1 + 10, z: 60 }, 6);                              // người chơi đứng ngoài vùng, trong tầm bỏ cuộc? (cách ≈ 11 m < 22)
+  assert.ok(m.x <= r.x1 + 1e-9, 'không vượt rìa vùng');
   assert.equal(walkable(m.zone, m.x, m.z) || m.x > r.x1, true);
-  const m2 = mk({ x: -100, z: 80 }); provoke(m2); run(m2, { x: -100, z: 50 }, 4);   // người chơi ở ngoài vùng phía dưới z < 73
-  assert.ok(m2.z >= 73 - 1e-9, `quái dừng ở rìa vùng (z=${m2.z})`);
+  const m2 = mk({ x: -62, z: 56 }); provoke(m2); run(m2, { x: -62, z: 40 }, 4);   // người chơi ở ngoài vùng, phía z < 51,5
+  assert.ok(m2.z >= 51.5 - 1e-9, `quái dừng ở rìa vùng (z=${m2.z})`);
 });
 
 test('monsterattack: bỏ cuộc khi người chơi chạy quá xa hoặc quá lâu không bị đánh', () => {
-  const m = mk(); provoke(m); assert.deepEqual(stepMonster(m, 0.1, { x: -60, z: 80 }), { k: 'calm' }); assert.equal(m.eng, false);
-  const n = mk(); provoke(n); n.engT = A.giveUp + 1; assert.deepEqual(stepMonster(n, 0.1, { x: -90, z: 80 }), { k: 'calm' });   // xa hơn 2 × tầm
-  const k = mk(); provoke(k); k.engT = A.giveUp + 1; assert.notEqual(stepMonster(k, 0.1, { x: -99, z: 80 }), { k: 'calm' }); assert.equal(k.eng, true);   // đang đứng sát thì không bỏ
-  const w = mk(); provoke(w); stepMonster(w, 0.1, { x: -99, z: 80 }); assert.ok(w.wind > 0); calm(w); assert.equal(w.wind, 0); assert.equal(w.eng, false);
+  const m = mk(); provoke(m); assert.deepEqual(stepMonster(m, 0.1, { x: 20, z: 60 }), { k: 'calm' }); assert.equal(m.eng, false);
+  const n = mk(); provoke(n); n.engT = A.giveUp + 1; assert.deepEqual(stepMonster(n, 0.1, { x: -52, z: 60 }), { k: 'calm' });   // xa hơn 2 × tầm
+  const k = mk(); provoke(k); k.engT = A.giveUp + 1; assert.notEqual(stepMonster(k, 0.1, { x: -61, z: 60 }), { k: 'calm' }); assert.equal(k.eng, true);   // đang đứng sát thì không bỏ
+  const w = mk(); provoke(w); stepMonster(w, 0.1, { x: -61, z: 60 }); assert.ok(w.wind > 0); calm(w); assert.equal(w.wind, 0); assert.equal(w.eng, false);
 });
 
 test('monsterattack: đầu vào lạ (dt, vị trí) không làm hỏng quái', () => {
   const m = mk(); provoke(m);
-  for (const dt of [NaN, -1, undefined, 'x', 99]) stepMonster(m, dt, { x: -95, z: 80 }, {});
+  for (const dt of [NaN, -1, undefined, 'x', 99]) stepMonster(m, dt, { x: -57, z: 60 }, {});
   assert.ok(Number.isFinite(m.x) && Number.isFinite(m.z) && Number.isFinite(m.ry));
   stepMonster(m, 0.1, { x: NaN, z: undefined }); assert.ok(Number.isFinite(m.x));
 });

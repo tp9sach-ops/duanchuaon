@@ -17,7 +17,7 @@ const win = globalThis.window = { LGT: {} };
 const LGT = win.LGT;
 const toasts = []; let sen = 0;
 LGT.addMerit = (n) => { sen += n; };
-LGT.world = { pos: { x: -100, z: 80 } };
+LGT.world = { pos: { x: -62, z: 80 } };
 LGT.strength = { value: 40 };
 LGT.night = 1;   // Phiên 116: quái rừng chỉ hiện ban đêm
 const { initFarm } = await import('../js/ui/farm.js');
@@ -65,13 +65,13 @@ test('đứng xa không đâm được thương (có thông báo), đặt ngư�
 });
 
 test('quái bị thu phục hồi sinh sau 30–60 giây (cục bộ)', () => {
-  LGT.world.pos = { x: -100, z: 80 }; step(1);
+  LGT.world.pos = { x: -62, z: 80 }; step(1);
   step(60);   // 60 giây (mỗi nhịp 0,1 giây như vòng lặp thật)
   assert.ok(LGT.farmView.mons.filter((m) => m.zone === 'biaRungThong' && !m.elite).length >= 10, 'quái thường đã hồi sinh đủ');
 });
 
 test('Tự động hàng yêu: bật thì tự đánh quái trong 15 m và thu phục; mở bảng thì dừng; tính giờ và lưu lgt.farmauto', () => {
-  LGT.world.pos = { x: -100, z: 80 }; step(1); toasts.length = 0;
+  LGT.world.pos = { x: -62, z: 80 }; step(1); toasts.length = 0;
   const k0 = api.state.kills; api.toggleAuto(); assert.equal(api.status().auto, true); assert.ok(toasts.some((t) => /BẬT/.test(t)));
   step(30); assert.ok(api.state.kills > k0, 'tự đánh thu phục được quái'); const left = api.status().autoLeft;
   LGT.panelOpen = true; step(0.3); assert.equal(api.status().auto, false, 'mở bảng thì dừng'); LGT.panelOpen = false;

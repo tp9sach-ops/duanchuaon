@@ -20,6 +20,8 @@ export const OUT_WALKS = [
   { id: 'rung-sau-dong', x0: 36, x1: 68, z0: 120, z1: 142 },      // khoảng đất trống rừng sâu phía Đông (bãi Kim)
   { id: 'loi-rung-tay', x0: -64, x1: -58, z0: 93, z1: 105 },      // lối từ đường mòn rừng (rẽ trái, nam) vào rừng sâu phía Tây
   { id: 'rung-sau-tay', x0: -78, x1: -46, z0: 104, z1: 130 },     // khoảng đất trống rừng sâu phía Tây (bãi Thủy)
+  { id: 'loi-rung-bac', x0: -64, x1: -58, z0: 77, z1: 85 },       // lối từ đường mòn rừng (rẽ trái, bắc) vào rừng sâu phía Bắc
+  { id: 'rung-sau-bac', x0: -78, x1: -46, z0: 50, z1: 78 },       // khoảng đất trống rừng sâu phía Bắc (bãi Mộc)
   ...LAND_WALKS,                                                 // Phiên 36: đường xuống xóm + khu dân cư (js/world/land.js)
 ];
 

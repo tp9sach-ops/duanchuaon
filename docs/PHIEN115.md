@@ -36,3 +36,9 @@ Yêu cầu ptg (12/11): chỗ có cây/đất trống mà không đến được
 - Kiểm trình duyệt headless (Chromium + three cục bộ): game tải không lỗi trang, dịch tới (52,126) và (−60,110) được, quái hiện 24 con ban đêm (`?dem=1`), thấy bụi/cỏ trong khoảng trống. Chưa xem kỹ từng góc/điện thoại; hộp "Tạo nhân vật" che màn hình nên ảnh chụp chưa đầy đủ.
 - Lưu ý: quái vẫn CHỈ hiện ban đêm (Phiên 117). Nếu ptg muốn quái ngủ thấy được cả ban ngày trong bụi (chỉ bị đánh mới dậy) → bỏ `nightOnly` trong `js/data/monsters.js`.
 - Việc kế: dời nốt `biaRungThong`; thêm boss to (G4.1); ao nhỏ cho bãi Thủy; chụp ảnh điện thoại; kiểm quái không đứng kẹt dưới gốc cây (cây trang trí không chặn).
+
+## Phiên 119 — Bước 3: dời nốt bãi Mộc (biaRungThong) vào đất trống phía Bắc
+- `js/world/outside.js`: thêm `loi-rung-bac` (x−64…−58, z77–85) + `rung-sau-bac` (x−78…−46, z50–78) nối đường mòn rừng. `js/scene/outside.js`: hàng thông z≈80.5 chừa lối, bỏ 1 đèn đá ở lối (x≈−59), `buildDeepWoods` phủ cả khoảng Bắc.
+- `js/data/monsters.js`: `biaRungThong` → "Rừng Sâu Phía Bắc", rect x−76.5…−47.5, z51.5…76.5, avoid rỗng. Bãi rừng thông cũ (miếu, cổ thụ, Hồ Rừng, thủy tạ) và đường mòn, bãi thác: KHÔNG còn quái. `js/world/tutorial.js` mô tả lại vị trí ba vùng.
+- Test: sửa tọa độ ở `farmui`, `monsterattack`, `spawn`. 1009/1010; còn `tests/combo.test.mjs` ("mọi kiểu đòn…", nhảy tay @0.18) lỗi CÓ SẴN từ upstream Phiên 120 (đã xác nhận bằng stash, không do phần này). `fireflies.test` thỉnh thoảng chập chờn (ngẫu nhiên), chạy lại thì đạt. `sw.js` dgt-v114.
+- Tin nhắn ptg 12/11 14:31 bị cụt: "…phục quái, đều có thể tăng thêm kinh nghiệm" → cần hỏi lại: muốn mọi hành động (thu phục quái, nhặt vật, chụp hình check-in, đi tới cảnh đẹp…) cộng thêm Tu Vi/kinh nghiệm? Chưa làm.
