@@ -27,13 +27,29 @@ export const keyboardOpen = (layoutH, vv) => !!(vv && isFinite(vv.height) && num
 /** Hệ số co giãn HUD 0,78–1,12 theo cạnh nhỏ nhất của khung nhìn nhìn thấy (390×700 = 1). */
 export const hudScale = (w, h) => Math.round(clamp(Math.min(num(w, 390) / 390, num(h, 700) / 700), 0.78, 1.12) * 100) / 100;
 
-/** Tất cả giá trị cần ghi ra :root (--vvw, --vvh, --vv-bar, --hud-s) và data-* (vp, orient, short, tall, square, kbd). */
-export function viewportState({ innerW, innerH, vv } = {}) {
-  const w = num(vv && vv.width, num(innerW, 390)), h = num(vv && vv.height, num(innerH, 800));
-  const c = classify(w, h), kbd = keyboardOpen(innerH, vv);
+/** Khung game nằm trong iframe (Google Sites, trang khung...): khung có thể CAO hơn phần màn hình thật sự nhìn thấy (thanh địa chỉ, thanh dưới, trang cha cuộn).
+ *  rect = vùng của khung đang nhìn thấy theo toạ độ trong khung { top, bottom } (lấy từ IntersectionObserver hoặc trang cha gửi qua postMessage).
+ *  Trả { top, bottom } đã kẹp trong [0, innerH]; null nếu khung nhìn thấy đủ (lệch ≤ 2px) hoặc số liệu hỏng → giữ cách đo cũ. Vùng < 160px coi là hỏng (khung chưa dựng xong). */
+export function frameClip(innerH, rect) {
+  const H = num(innerH, 0);
+  if (!H || !rect || !isFinite(rect.top) || !isFinite(rect.bottom)) return null;
+  const top = clamp(rect.top, 0, H), bottom = clamp(rect.bottom, 0, H);
+  if (bottom - top < 160) return null;
+  if (top <= 2 && H - bottom <= 2) return null;
+  return { top: Math.round(top), bottom: Math.round(bottom) };
+}
+
+/** Tất cả giá trị cần ghi ra :root (--vvw, --vvh, --vv-top, --vv-bar, --hud-s) và data-* (vp, orient, short, tall, square, kbd, frame). */
+export function viewportState({ innerW, innerH, vv, frame } = {}) {
+  let w = num(vv && vv.width, num(innerW, 390)), h = num(vv && vv.height, num(innerH, 800));
+  const c0 = classify(w, h), kbd = keyboardOpen(innerH, vv);
+  const clip = kbd ? null : frameClip(innerH, frame);   // bàn phím ảo mở thì không cắt theo khung
+  let top = 0, bar = bottomBar(innerH, vv);
+  if (clip) { top = clip.top; h = Math.min(h, clip.bottom - clip.top); bar = 0; }
+  const c = clip ? classify(w, h) : c0;
   return {
-    vars: { '--vvw': w + 'px', '--vvh': h + 'px', '--vv-bar': bottomBar(innerH, vv) + 'px', '--hud-s': String(hudScale(w, kbd ? Math.max(h, 520) : h)) },
-    data: { vp: c.size, orient: c.landscape ? 'landscape' : 'portrait', short: String(c.short && !kbd), tall: String(c.tall), square: String(c.square), kbd: String(kbd) },
+    vars: { '--vvw': w + 'px', '--vvh': h + 'px', '--vv-top': top + 'px', '--vv-bar': bar + 'px', '--hud-s': String(hudScale(w, kbd ? Math.max(h, 520) : h)) },
+    data: { vp: c.size, orient: c.landscape ? 'landscape' : 'portrait', short: String(c.short && !kbd), tall: String(c.tall), square: String(c.square), kbd: String(kbd), frame: String(!!clip) },
     cls: c,
   };
 }

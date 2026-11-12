@@ -37,3 +37,24 @@ test('viewportState ghi đủ biến và data-*; bàn phím mở thì không coi
   assert.equal(k.data.kbd, 'true'); assert.equal(k.data.short, 'false');
   const d = viewportState(); assert.equal(d.data.vp, 'sm'); assert.ok(Number(d.vars['--hud-s']) >= 0.78);
 });
+
+import { frameClip } from '../js/ui/viewportLogic.js';
+test('khung iframe: cắt theo vùng nhìn thấy, bỏ qua khi đủ hoặc số liệu hỏng', () => {
+  assert.equal(frameClip(800, { top: 0, bottom: 800 }), null);
+  assert.equal(frameClip(800, { top: 0, bottom: 700 }).bottom, 700);
+  assert.equal(frameClip(800, { top: 90, bottom: 800 }).top, 90);
+  assert.equal(frameClip(800, { top: 0, bottom: 50 }), null);       // vùng quá nhỏ = hỏng
+  assert.equal(frameClip(800, null), null); assert.equal(frameClip(0, { top: 0, bottom: 5 }), null);
+  assert.equal(frameClip(800, { top: NaN, bottom: 700 }), null);
+  assert.equal(frameClip(800, { top: -50, bottom: 1200 }), null);   // kẹp về [0,800] = đủ
+});
+test('viewportState với frame: thu --vvh, đặt --vv-top; bàn phím mở thì bỏ qua', () => {
+  const s = viewportState({ innerW: 390, innerH: 800, vv: { width: 390, height: 800, offsetTop: 0 }, frame: { top: 0, bottom: 690 } });
+  assert.equal(s.vars['--vvh'], '690px'); assert.equal(s.vars['--vv-top'], '0px'); assert.equal(s.data.frame, 'true');
+  const t = viewportState({ innerW: 390, innerH: 800, vv: { width: 390, height: 800, offsetTop: 0 }, frame: { top: 60, bottom: 800 } });
+  assert.equal(t.vars['--vvh'], '740px'); assert.equal(t.vars['--vv-top'], '60px');
+  const k = viewportState({ innerW: 390, innerH: 800, vv: { width: 390, height: 400, offsetTop: 0 }, frame: { top: 0, bottom: 690 } });
+  assert.equal(k.data.frame, 'false'); assert.equal(k.vars['--vvh'], '400px');
+  const n = viewportState({ innerW: 390, innerH: 800, vv: { width: 390, height: 750, offsetTop: 0 } });
+  assert.equal(n.data.frame, 'false'); assert.equal(n.vars['--vv-top'], '0px'); assert.equal(n.vars['--vv-bar'], '50px');
+});

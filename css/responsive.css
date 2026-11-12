@@ -9,7 +9,7 @@ button,[role=button],a,.hm-mi,.hm-act,.hm-ic,.hud-btn,.sw,.hr{touch-action:manip
 input,textarea,select{font-size:max(16px,1em)}   /* iOS Safari tự phóng to khi ô nhập < 16px */
 body.is-locked{height:100vh;height:var(--vvh)}
 #gl{position:fixed;left:0;top:0;width:100%;height:100%;display:block}
-.hud,.enter{height:100vh;height:var(--vvh);bottom:auto}
+.hud,.enter{height:100vh;height:var(--vvh);bottom:auto;top:var(--vv-top,0px)}   /* Phiên 129: khung iframe bị cắt thì --vv-top/--vvh thu HUD vào đúng vùng nhìn thấy */
 @supports (height:100svh){.hero,.fin{min-height:100svh}}
 /* Mục tiêu chạm ≥ 40px trên màn cảm ứng */
 @media (pointer:coarse){
