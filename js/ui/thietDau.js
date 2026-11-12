@@ -7,6 +7,7 @@ import { loadSettings } from './soundLogic.js';
 import { sfxGain } from '../world/celebrate.js';
 import { prefersReduced } from '../util.js';
 import { initConKhi } from './conKhi.js';
+import { initCombatPose } from './combatPose.js';
 
 export function initThietDau({ toast = () => {} } = {}) {
   const LGT = window.LGT || (window.LGT = {});
@@ -37,5 +38,6 @@ export function initThietDau({ toast = () => {} } = {}) {
   setInterval(() => { const now = performance.now(); cd = tickCd(cd, (now - last) / 1000); last = now; }, 200);
   LGT.thietDau = { status, dash };
   try { initConKhi({ toast }); } catch (e) { console.warn('[Diệu Giang Tự] Côn Khí Trảm lỗi:', e && e.message); }   // Phiên 93: kỹ năng chiến đấu thứ hai (nút Chém khí); lỗi thì Thiết đầu công vẫn chạy
+  try { initCombatPose(); } catch (e) { console.warn('[Diệu Giang Tự] Tư thế chiến đấu lỗi:', e && e.message); }   // Phiên 119: thế sẵn sàng + chuỗi đòn + vệt chém theo clip mẫu; lỗi thì nhân vật vẫn đánh như cũ
   return LGT.thietDau;
 }

@@ -1,9 +1,11 @@
 // Nhân vật chibi dùng thân GLB có xương (Phiên 99; bản khớp: khuỷu tay, cổ tay, gối, cổ chân). Cùng giao diện với createAvatar cũ: { group, setState, setFacing, say, setBeadCount, swing, update, dispose, state, swinging } + MỚI: setHold(bool) (giơ tay khiêng vật), act('throw'|'grab').
 // Tư thế lấy từ poseFor (avatarLogic.js) rồi đổi thành góc xương bằng chibiPose (chibiRig.js, có test) → mọi trạng thái cũ (đứng, đi, ngồi, gõ mõ, lần hạt, lạy, vung côn) giữ nguyên nhịp, chỉ đổi hình dáng.
+// Phiên 119 (theo clip mẫu): swing() nhận kiểu đòn — không đối số = tự nối chuỗi ngang → ngược → xoay (đánh thường); số (skill Chém khí) = 'khi' (giơ cao bổ xuống); chuỗi tên = đúng kiểu đó; trả về tên kiểu đã chọn. setStance(bool) = thế sẵn sàng chiến đấu (khom, chân trước/sau, chạy nghiêng người). Logic: world/combo.js.
 // Mặt (mắt cười, miệng, má hồng), râu, tóc búi, hào quang gắn vào xương đầu; áo polo 9 Sạch = vùng màu trên thân + cổ áo + logo; cà sa = vỏ chuông gắn vào hông. Lỗi/chưa nạp GLB thì avatar.js dùng bản dựng khối.
 import * as THREE from 'three';
 import { DEFAULT_COLOR, colorById, hairById, beardById, cleanName, cleanSay, bubbleLife, poseFor, turnToward, BELL_PROFILE, POLO_LOGOS } from './avatarLogic.js';
 import { swingPose, SWING_S } from './conKhi.js';
+import { comboPose, comboEnd, nextKind, applyStance, KINDS } from './combo.js';
 import { chibiPose, CHIBI_H, LM } from './chibiRig.js';
 import { buildChibi, applyChibiPose } from '../scene/chibiBody.js';
 import { logoTexture, casaTexture, makeSprite, nameTexture, bubbleTexture } from './avatar.js';
@@ -87,7 +89,7 @@ export function createChibiAvatar({ name = 'Khách', color = DEFAULT_COLOR, hair
   { const woodM = std(0x7a4a24, 0.55), capM = std(0xe0a93a, 0.35), bandM = std(0xb3261e, 0.5);
     mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.3, 8), woodM, staff, 0, -0.85, 0); mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.1, 8), capM, staff, 0, -1.5, 0);
     mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.1, 8), capM, staff, 0, -0.2, 0); mesh(new THREE.CylinderGeometry(0.038, 0.038, 0.12, 8), bandM, staff, 0, -1.1, 0); }
-  let swingT = -1;
+  let swingT = -1, swingKind = '', lastKind = '', lastEnd = -9;   // Phiên 119: kiểu đòn đang vung, đòn trước + lúc nó kết thúc (để nối chuỗi)
 
   // Mũi tên ▼ (nhân vật của mình), tên, bong bóng chat
   let arrow = null; if (mine) { arrow = mesh(new THREE.ConeGeometry(0.11, 0.2, 4), basic(0xf2c14e), group, 0, 1.86, 0); arrow.rotation.x = Math.PI; }
@@ -95,7 +97,7 @@ export function createChibiAvatar({ name = 'Khách', color = DEFAULT_COLOR, hair
   let bubble = null, bubbleTex = null, bubbleUntil = 0, clock = 0;
   group.traverse((o) => { if (o.isMesh && !o.material.isMeshBasicMaterial) o.castShadow = true; });
 
-  const st = { state: 'idle', speed: 0, ry: 0, targetRy: 0, pose: poseFor('idle', 0), halo: 0, t0: 0, hold: false, act: null, actT: 0, walk: 0, arms: {} };   // walk: mức "đang đi" 0..1, làm mượt để gối/chạm đất không giật khi bắt đầu hoặc dừng bước
+  const st = { state: 'idle', speed: 0, ry: 0, targetRy: 0, pose: poseFor('idle', 0), halo: 0, t0: 0, hold: false, act: null, actT: 0, walk: 0, stance: 0, wantStance: false, arms: {} };   // walk: mức "đang đi" 0..1, làm mượt để gối/chạm đất không giật khi bắt đầu hoặc dừng bước; stance: thế sẵn sàng chiến đấu 0..1
   function setState(s, speed = 0) { if (s !== st.state) st.t0 = clock; st.state = s; st.speed = speed; }
   function setFacing(ry, instant = false) { st.targetRy = ry; if (instant) { st.ry = ry; group.rotation.y = ry; } }
   function say(text) {
@@ -112,13 +114,15 @@ export function createChibiAvatar({ name = 'Khách', color = DEFAULT_COLOR, hair
     const target = poseFor(st.state, clock - st.t0, st.speed), p = st.pose, k = Math.min(1, 14 * dt);
     for (const key of Object.keys(target)) p[key] += (target[key] - p[key]) * (key === 'sit' ? Math.min(1, 6 * dt) : k);
     let swing = null, act = null;
-    if (swingT >= 0) { swingT += dt; swing = swingPose(swingT); staff.visible = swing.vis > 0.3; if (swingT >= SWING_S + 0.35) { swingT = -1; staff.visible = false; swing = null; } }
+    if (swingT >= 0) { swingT += dt; swing = comboPose(swingKind, swingT) || swingPose(swingT); staff.visible = swing.vis > 0.3; if (swingT >= (comboEnd(swingKind) || SWING_S + 0.35)) { lastEnd = clock; swingT = -1; swingKind = ''; staff.visible = false; swing = null; } }
     if (st.act) { st.actT += dt; const len = ACT_S[st.act]; if (st.actT >= len) st.act = null; else act = { name: st.act, k: st.actT / len }; }
     st.walk += ((st.state === 'walk' ? 1 : 0) - st.walk) * Math.min(1, 10 * dt);
-    const q = chibiPose(p, st.state, clock - st.t0, st.speed, { hold: st.hold, swing, act, walk: st.walk }), ka = Math.min(1, 24 * dt);
+    st.stance += ((st.wantStance && (st.state === 'idle' || st.state === 'walk') ? 1 : 0) - st.stance) * Math.min(1, 7 * dt);
+    const q = applyStance(chibiPose(p, st.state, clock - st.t0, st.speed, { hold: st.hold, swing, act, walk: st.walk }), st.stance, { walk: st.walk, sit: p.sit, hold: st.hold, busy: !!(swing || act) }), ka = Math.min(1, 24 * dt);
     for (const k of SMOOTH_ARM) { const c = st.arms[k] || (st.arms[k] = { ...q[k] }); for (const ax of ['x', 'y', 'z']) c[ax] += (q[k][ax] - c[ax]) * ka; q[k] = c; }   // vai/khuỷu/cổ tay: làm mượt khi đổi tư thế (đứng ↔ chắp tay) để khuỷu không "bật" cái rụp; vẫn đủ nhanh cho gõ mõ, vung côn, ném
     applyChibiPose(B, q);
     rig.position.y = p.dy;
+    rig.rotation.y = swing && swing.yaw ? swing.yaw : 0; rig.position.z = swing && swing.lunge ? swing.lunge : 0;   // Phiên 119: xoay thân khi chém ngang/xoay + lao người tới trước
     shadow.scale.setScalar(1 - Math.min(0.3, p.dy * 4));
     const wantHalo = st.state === 'sit' || st.state === 'mo' || st.state === 'beads' ? 0.9 : 0; st.halo += (wantHalo - st.halo) * Math.min(1, 5 * dt); haloMat.opacity = st.halo;
     mala.visible = st.state === 'beads'; malaCur += (malaTarget - malaCur) * Math.min(1, 12 * dt); mala.rotation.z = malaCur;
@@ -127,10 +131,16 @@ export function createChibiAvatar({ name = 'Khách', color = DEFAULT_COLOR, hair
   }
   function dispose() { say(''); label.material.dispose(); nameTex.dispose(); haloMat.dispose(); haloTex.dispose(); ch.dispose(); geos.forEach((g) => g.dispose()); mats.forEach((m) => m.dispose()); }
   function setBeadCount(n) { malaTarget = -(Math.max(0, +n || 0) / 108) * Math.PI * 2; }
-  function swing() { swingT = 0; }
+  /** Vung côn. Không đối số: đánh thường, tự nối chuỗi ngang → ngược → xoay. Số (skill Chém khí): kiểu 'khi'. Chuỗi: đúng kiểu đó. Trả về tên kiểu đã chọn. */
+  function swing(arg) {
+    const kind = typeof arg === 'string' && KINDS[arg] ? arg : typeof arg === 'number' ? 'khi' : nextKind(lastKind, swingT >= 0 ? -1 : clock - lastEnd);
+    swingKind = kind; lastKind = kind; swingT = 0; return kind;
+  }
+  /** Bật/tắt thế sẵn sàng chiến đấu (khom, chân trước/sau, chạy nghiêng người). */
+  function setStance(on) { st.wantStance = !!on; }
   /** Giơ hai tay đỡ vật trên đầu (khiêng). */
   function setHold(on) { st.hold = !!on; }
   /** Động tác một lần: 'throw' (ném), 'grab' (cúi nhặt). Tên lạ: bỏ qua. */
   function act(nm) { if (ACT_S[nm]) { st.act = nm; st.actT = 0; } }
-  return { group, setState, setFacing, say, setBeadCount, swing, setHold, act, update, dispose, get state() { return st.state; }, get swinging() { return swingT >= 0; }, get holding() { return st.hold; } };
+  return { group, setState, setFacing, say, setBeadCount, swing, setStance, setHold, act, update, dispose, get state() { return st.state; }, get swinging() { return swingT >= 0; }, get holding() { return st.hold; } };
 }
