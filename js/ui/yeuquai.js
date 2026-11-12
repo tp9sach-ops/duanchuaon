@@ -54,8 +54,8 @@ export function initYeuQuai(hud, { toast = () => {} } = {}) {
 
   function stone() {
     if (!boss || boss.dead) { if (LGT.farm) LGT.farm.stone(); return; }   // Phiên 107: không có yêu quái hằng tháng → ném vào quái bãi rừng
-    if (!here() || cdStone > 0) return; const d = distBoss(); if (d > STONE.range + YQ[boss.type].body) { toast('Yêu quái còn xa quá, lại gần hơn để ném đá.', 1800); return; }
-    cdStone = STONE.cd; if (LGT.sfx) LGT.sfx.play('nem-da'); const p = pos(), dmg = stoneDamage(str()); view.stones.push({ x0: p.x, z0: p.z, x1: boss.x, z1: boss.z, t: 0, dur: Math.max(0.15, d / STONE.speed), dmg });
+    if (!here() || cdStone > 0) return; const d = distBoss(); if (d > STONE.range + YQ[boss.type].body) { toast('Yêu quái còn xa quá, lại gần hơn để đánh.', 1800); return; }
+    cdStone = STONE.cd; if (LGT.sfx) LGT.sfx.play('nem-da'); hit(stoneDamage(str()));   // Phiên 127: Đánh thường = đòn cận chiến trúng ngay (không còn ném đá)
   }
   function spear() {
     if (!boss || boss.dead) { if (LGT.farm) LGT.farm.spear(); return; }   // Phiên 107

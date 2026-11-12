@@ -7,13 +7,15 @@ import { createSpawner, tickSpawner, hitMonster, nearestMonster, zoneOpen, ZONE_
 import { loadFarm, settleKill, settleBoss, senLeft, tuViOf } from '../world/farm.js';
 import { STONE, SPEAR, stoneDamage, spearDamage, rngSeed } from '../world/yeuquai.js';
 import { mapAvailable } from '../world/minimap.js';
-import { loadAuto, autoLeft, addAutoTime, nextAction } from '../world/autoHunt.js';
+import { loadAuto, autoLeft, addAutoTime, nextAction, rushTarget } from '../world/autoHunt.js';
+import { blocked } from '../world/layout.js';
 
 const KEY = 'lgt.farm', AKEY = 'lgt.farmauto';
 const HE_TEN = { kim: 'Kim', moc: 'Mộc', thuy: 'Thủy', hoa: 'Hỏa', tho: 'Thổ' };
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
 const rectDist = (r, x, z) => Math.hypot(Math.max(r.x0 - x, 0, x - r.x1), Math.max(r.z0 - z, 0, z - r.z1));
 const zoneDist = (id, p) => Math.min(...FARM_ZONES[id].rects.map((r) => rectDist(r, p.x, p.z)));
+const SIGHT = 18;   // m: tầm nhìn để chọn mục tiêu + hiện thanh Oán Khí (Phiên 127: đòn đánh thường giờ cận chiến nên không dùng STONE.range nữa)
 const bodyOf = (m) => (m.boss ? 1.8 : m.elite ? 1.1 : 0.55);   // bán kính thân (m) để tính tầm Thương
 
 /** hud: phần tử HUD. opts: { toast }. */
@@ -39,7 +41,7 @@ export function initFarm(hud, { toast = () => {} } = {}) {
   const all = () => ZONE_IDS.filter((id) => spawners[id]).flatMap((id) => spawners[id].mons);
   const spOf = (m) => spawners[m.zone];
   const gap = (m, p) => Math.hypot(m.x - p.x, m.z - p.z);
-  const target = () => { const p = pos(); if (!p || !here() || bossOn()) return null; let best = null, bd = STONE.range + 1; for (const m of view.mons) { const d = gap(m, p); if (d <= bd) { bd = d; best = m; } } return best; };
+  const target = () => { const p = pos(); if (!p || !here() || bossOn()) return null; let best = null, bd = SIGHT + 1; for (const m of view.mons) { const d = gap(m, p); if (d <= bd) { bd = d; best = m; } } return best; };
 
   function reward(r) {
     const mon = r.mon, now = Date.now(), s = settleKill(farm, MONSTERS[mon.type], r.drops, now); farm = s.farm; save();
@@ -65,26 +67,25 @@ export function initFarm(hud, { toast = () => {} } = {}) {
   function aim(needNear) {
     const t = target();
     if (!t) { toast('Chưa có quái nào gần. Quái rừng chỉ hiện khi trời tối: chờ đêm rồi đi vào bãi rừng (phía tây làng) hoặc đường mòn để luyện.', 2600); return null; }
-    if (needNear && gap(t, pos()) - bodyOf(t) > SPEAR.range) { toast('Lại gần quái hơn mới đâm được thương.', 1800); return null; }
+    if (needNear && gap(t, pos()) - bodyOf(t) > SPEAR.range) { toast('Lại gần quái hơn mới đánh được.', 1800); return null; }
     return t;
   }
   function stone() {
-    if (!here() || bossOn() || cdStone > 0) return; const t = aim(false); if (!t) return;
-    const p = pos(), d = gap(t, p); cdStone = STONE.cd; if (LGT.sfx) LGT.sfx.play('nem-da');
-    view.stones.push({ x0: p.x, z0: p.z, x1: t.x, z1: t.z, t: 0, dur: Math.max(0.15, d / STONE.speed), uid: t.uid, dmg: stoneDamage(str()) });
+    if (!here() || bossOn() || cdStone > 0) return; const t = aim(true); if (!t) return;
+    cdStone = STONE.cd; if (LGT.sfx) LGT.sfx.play('nem-da'); hit(t.uid, stoneDamage(str()));   // Phiên 127: Đánh thường = đòn cận chiến trúng ngay (không còn ném đá)
   }
   function spear() {
     if (!here() || bossOn() || cdSpear > 0) return; const t = aim(true); if (!t) return;
     cdSpear = SPEAR.cd; if (LGT.sfx) LGT.sfx.play('thuong'); hit(t.uid, spearDamage(str()));
   }
 
-  // Tự Động Hàng Yêu (Phiên 108): tự Thương/Ném đá quái trong tầm autoRange, không tự đi. Dừng khi mở bảng, rời tab, vào nhà, có yêu quái hằng tháng, hoặc hết 60 phút hôm nay.
+  // Tự Động Hàng Yêu (Phiên 108; Phiên 127: tự LAO tới quái rồi Thương/Đánh thường, trong tầm autoRange). Dừng khi mở bảng, rời tab, vào nhà, có yêu quái hằng tháng, hoặc hết 60 phút hôm nay.
   function stopAuto(msg) { if (!running) return; running = false; saveAuto(); if (msg) toast(msg, 3200); }
   function toggleAuto() {
     if (running) { stopAuto('Đã tắt tự động hàng yêu.'); if (LGT.sfx) LGT.sfx.play('tu-dong-tat'); return; }
     if (autoLeft(auto, Date.now()) <= 0) { toast('Hôm nay bạn đã dùng hết thời gian tự động hàng yêu. Mai dùng tiếp, hoặc tự bấm đánh nhé!', 3600); return; }
     if (!here() || bossOn()) return;
-    running = true; if (LGT.sfx) LGT.sfx.play('tu-dong-bat'); toast(`Tự động hàng yêu BẬT: đứng yên, nhân vật tự đánh quái trong ${FARM_CFG.autoRange} m. Mở bảng hoặc rời trang sẽ tự dừng.`, 4200);
+    running = true; if (LGT.sfx) LGT.sfx.play('tu-dong-bat'); toast(`Tự động hàng yêu BẬT: nhân vật tự lao vào quái trong ${FARM_CFG.autoRange} m rồi múa côn đánh. Mở bảng hoặc rời trang sẽ tự dừng.`, 4200);
   }
   function autoStep(dt) {
     if ((typeof document !== 'undefined' && document.hidden) || LGT.panelOpen || LGT.heldBy || (LGT.world && LGT.world.mode && LGT.world.mode !== 'free')) return stopAuto('Tự động hàng yêu đã dừng.');
@@ -94,6 +95,13 @@ export function initFarm(hud, { toast = () => {} } = {}) {
     if (!best) return;
     const act = nextAction({ gap: bd, body: bodyOf(best), stoneReady: cdStone <= 0, spearReady: cdSpear <= 0, spearRange: SPEAR.range });
     if (act === 'spear') spear(); else if (act === 'stone') stone();
+    else if (act === 'rush') rush(best);
+  }
+  // Phiên 127: Tự động LAO vào quái (trong autoRange) — đạp đất chạy nhanh tới sát tầm đâm, không xuyên cây/tường; tới nơi thì autoStep tự Thương/Đánh thường.
+  function rush(m) {
+    const W = LGT.world; if (!W || !W.dash || W.dashing) return;
+    const to = rushTarget(pos(), m, { body: bodyOf(m), stand: 2.2, isBlocked: blocked }); if (!to) return;
+    W.dash(to, Math.max(0.25, Math.min(1.4, to.dist / 9)), { tilt: false }); if (LGT.sfx) LGT.sfx.play('thiet-dau');
   }
 
   function tick() {
