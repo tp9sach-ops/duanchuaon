@@ -10,7 +10,7 @@ For the 9 Sạch monthly-archive project (and any long multi-session build): aft
 - `tests/monsterattack.test.mjs` (13 test) đã thêm vào `npm test`; `sw.js` VERSION dgt-v108.
 
 ## Kiểm chứng
-- 13/13 test mới đạt. Toàn bộ `npm test`: 901/902 — 1 lỗi có sẵn từ trước (`tests/dock.test.mjs` "Tự Động Hàng Yêu": `js/ui/dock.js` thiếu `tudong: () => LGT.farm && LGT.farm.toggleAuto()`), đã xác nhận bằng stash. Chưa sửa (ngoài phạm vi).
+- 13/13 test mới đạt. Toàn bộ `npm test`: 976/976 sau khi gộp với bản mới nhất trên GitHub (lỗi dock "Tự động" ở bản cũ đã được sửa phía upstream).
 - CHƯA chơi thử trên trình duyệt thật, chưa có test DOM cho `farmCombat.js`.
 
 ## Việc tiếp
