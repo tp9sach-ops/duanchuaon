@@ -49,6 +49,9 @@ export const SLASH = {
   xoay: { a: 0.12, b: 0.6, arc: TAU, reach: 4.2, side: 1, tilt: 0.12, tint: 0xfff2c0 },
 };
 
+/** Côn/thương có hiện trên tay không (Phiên 120): đang vung (vis > 0,3) HOẶC đang ở thế chiến đấu (stance > 0,3) → cầm sẵn trên tay phải, không chỉ hiện lúc vung. */
+export const weaponVisible = (stance, swingVis = 0) => (+swingVis || 0) > 0.3 || (+stance || 0) > 0.3;
+
 const reachOf = (leg, knee) => LIMB.ankleH + LIMB.thigh * Math.cos(-leg.x) + LIMB.shin * Math.cos(-leg.x - knee);
 const flatFoot = (leg, shin) => { const d = -leg.x - shin.x; return { x: clamp(d < 0 ? d * 0.55 : d, -0.6, 0.6), y: 0, z: 0 }; };
 
@@ -62,8 +65,8 @@ export function applyStance(q, s, o = {}) {
   if (!(k > 0.001)) return q;
   const st = k * (1 - w), out = { ...q };
   out.spine = { ...q.spine, x: q.spine.x + 0.2 * k };
-  if (!o.busy && !o.hold) {
-    out.armR = mixV(q.armR, armAngle(-1, 0.85, 0.22), k); out.foreR = mixV(q.foreR, elbowAngle(-1, 1.15, 0), k); out.handR = mixV(q.handR, wristAngle(-1, 1.15), k);
+  if (!o.busy && !o.hold) {   // tay phải cầm côn đưa trước; chạy nghiêng người thì nâng tay thêm (0,8 × độ nghiêng) để mũi côn vẫn chếch lên
+    out.armR = mixV(q.armR, armAngle(-1, 0.85 + 0.8 * Math.max(0, q.spine.x - 0.1), 0.22), k); out.foreR = mixV(q.foreR, elbowAngle(-1, 1.15, 0), k); out.handR = mixV(q.handR, wristAngle(-1, 1.15), k);
     out.armL = mixV(q.armL, armAngle(1, 0.55, 0.25), st); out.foreL = mixV(q.foreL, elbowAngle(1, 1.0, 0.1), k);
   }
   const legL = { ...q.legL, x: q.legL.x - 0.45 * st, z: q.legL.z + 0.16 * st }, legR = { ...q.legR, x: q.legR.x + 0.4 * st, z: q.legR.z - 0.16 * st };
