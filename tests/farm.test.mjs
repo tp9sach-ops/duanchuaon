@@ -1,9 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { FARM_CFG, MONSTERS } from '../js/data/monsters.js';
-import { emptyFarm, loadFarm, senLeft, tuViOf, settleKill } from '../js/world/farm.js';
+import { emptyFarm, loadFarm, senLeft, tuViOf, settleKill, settleBoss, expLeft } from '../js/world/farm.js';
 import { createSpawner, tickSpawner, hitMonster } from '../js/world/spawn.js';
 import { rngSeed } from '../js/world/yeuquai.js';
+import { NGUON_CFG } from '../js/data/nguon.js';
+import { dayKeyVN } from '../js/world/nguonTuVi.js';
 import { expToNext, totalExpFor } from '../js/world/stats.js';
 
 const T0 = Date.UTC(2026, 10, 11, 5, 0, 0);          // 12:00 giờ VN, 11/11/2026
@@ -25,12 +27,24 @@ test('không sửa trạng thái đầu vào (trả bản mới)', () => {
   const f = emptyFarm(T0), snap = JSON.stringify(f); settleKill(f, { lv: 3 }, { hatSen: 1 }, T0); assert.equal(JSON.stringify(f), snap);
 });
 
-test('trần hạt sen mỗi ngày: vượt trần vẫn được Tu Vi, không thêm hạt sen; sang ngày mới (giờ VN) đếm lại', () => {
-  let f = emptyFarm(T0), sen = 0, capped = 0;
-  for (let i = 0; i < 500; i++) { const r = settleKill(f, { lv: 3 }, { hatSen: 1 }, T0); f = r.farm; sen += r.senGain; if (r.senCapped) capped++; assert.ok(r.expGain >= 1, 'vẫn có EXP khi hết trần sen'); }
+test('trần hạt sen mỗi ngày: vượt trần không thêm hạt sen; trần Tu Vi hàng yêu 30 lần/ngày; sang ngày mới (giờ VN) đếm lại', () => {
+  const CAP = NGUON_CFG.tranNgay.hangYeu; let f = emptyFarm(T0), sen = 0, capped = 0, exps = 0;
+  for (let i = 0; i < 500; i++) { const r = settleKill(f, { lv: 3 }, { hatSen: 1 }, T0); f = r.farm; sen += r.senGain; if (r.senCapped) capped++; if (r.expGain > 0) exps++; if (i >= CAP) { assert.equal(r.expGain, 0, 'hết trần Tu Vi'); assert.equal(r.expCapped, true); } }
+  assert.equal(exps, CAP); assert.equal(expLeft(f, 'hangYeu', T0), 0);
   assert.equal(sen, FARM_CFG.senCapNgay); assert.equal(capped, 500 - FARM_CFG.senCapNgay); assert.equal(senLeft(f, T0), 0); assert.equal(f.kills, 500);
   const r2 = settleKill(f, { lv: 3 }, { hatSen: 2 }, T0 + DAY); assert.equal(r2.senGain, 2); assert.equal(senLeft(r2.farm, T0 + DAY), FARM_CFG.senCapNgay - 2);
-  assert.equal(r2.farm.exp > f.exp, true, 'EXP không bị reset khi sang ngày');
+  assert.equal(r2.farm.exp > f.exp, true, 'sang ngày mới lại có Tu Vi, EXP không bị reset'); assert.equal(expLeft(r2.farm, 'hangYeu', T0 + DAY), CAP - 1);
+});
+
+test('thu phục yêu quái hằng tháng cộng Tu Vi nguồn boss: 15% cấp kế, tối đa 3 lần/ngày, ngày mới đếm lại; không sửa đầu vào', () => {
+  const f0 = emptyFarm(T0), snap = JSON.stringify(f0), need = expToNext(1);
+  const r = settleBoss(f0, T0); assert.equal(JSON.stringify(f0), snap); assert.equal(r.expGain, Math.round(need * 0.15)); assert.equal(r.farm.cnt.boss, 1); assert.equal(r.expCapped, false);
+  let f = r.farm; for (let i = 0; i < 5; i++) f = settleBoss(f, T0).farm;
+  const over = settleBoss(f, T0); assert.equal(over.expGain, 0); assert.equal(over.expCapped, true); assert.equal(over.farm.cnt.boss, NGUON_CFG.tranNgay.boss); assert.equal(expLeft(f, 'boss', T0), 0);
+  const next = settleBoss(f, T0 + DAY); assert.ok(next.expGain > 0 && next.farm.cnt.boss === 1, 'ngày mới');
+  assert.equal(loadFarm({ exp: 5, cnt: { day: '1999-01-01', hangYeu: 9, boss: 9 } }, T0).cnt.hangYeu, 0, 'đếm cũ sang ngày mới bị bỏ');
+  assert.equal(loadFarm({ exp: 5, cnt: { day: dayKeyVN(T0), hangYeu: 9999, boss: -4 } }, T0).cnt.hangYeu, NGUON_CFG.tranNgay.hangYeu, 'dữ liệu hỏng bị kẹp');
+  assert.equal(loadFarm('{hỏng', T0).cnt.boss, 0);
 });
 
 test('quà bị cắt một phần ở sát trần (còn 1, rơi 3 → nhận 1)', () => {

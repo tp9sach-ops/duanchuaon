@@ -89,3 +89,10 @@ test('Phiên 116: ban ngày bãi rừng trống (quái ngủ), tối lại hiệ
   LGT.night = keep; step(0.5);
   assert.ok(LGT.farmView.mons.length > 0, 'ban đêm quái hiện lại');
 });
+
+test('Phiên 122: grantBoss cộng Tu Vi từ thu phục yêu quái, tối đa 3 lần/ngày rồi báo hết trần', () => {
+  const e0 = LGT.farm.state.exp; toasts.length = 0;
+  const r1 = LGT.farm.grantBoss(); assert.ok(r1.expGain > 0 && LGT.farm.state.exp > e0, 'có Tu Vi');
+  LGT.farm.grantBoss(); LGT.farm.grantBoss(); const r4 = LGT.farm.grantBoss();
+  assert.equal(r4.expGain, 0); assert.equal(r4.expCapped, true); assert.ok(toasts.some((t) => /đủ Tu Vi từ thu phục yêu quái/.test(String(t.msg || t))), 'có báo hết trần');
+});

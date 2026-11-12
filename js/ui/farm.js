@@ -4,7 +4,7 @@
 // Quái không đánh trả (bãi rừng an toàn để luyện); đòn dùng stoneDamage/spearDamage theo sức mạnh như khi đánh yêu quái. Chưa có Hệ người chơi nên chưa tính khắc/sinh (G2).
 import { MONSTERS, FARM_ZONES, FARM_CFG } from '../data/monsters.js';
 import { createSpawner, tickSpawner, hitMonster, nearestMonster, zoneOpen, ZONE_IDS } from '../world/spawn.js';
-import { loadFarm, settleKill, senLeft, tuViOf } from '../world/farm.js';
+import { loadFarm, settleKill, settleBoss, senLeft, tuViOf } from '../world/farm.js';
 import { STONE, SPEAR, stoneDamage, spearDamage, rngSeed } from '../world/yeuquai.js';
 import { mapAvailable } from '../world/minimap.js';
 import { loadAuto, autoLeft, addAutoTime, nextAction } from '../world/autoHunt.js';
@@ -26,7 +26,7 @@ export function initFarm(hud, { toast = () => {} } = {}) {
   let auto = loadAuto(null, Date.now()); try { auto = loadAuto(localStorage.getItem(AKEY), Date.now()); } catch (_) { /* riêng tư */ }
   const saveAuto = () => { try { localStorage.setItem(AKEY, JSON.stringify(auto)); } catch (_) { /* bỏ qua */ } };
   let running = false, autoSaved = 0;
-  let cdStone = 0, cdSpear = 0, lastT = performance.now(), capToast = '', hudUntil = 0;
+  let cdStone = 0, cdSpear = 0, lastT = performance.now(), capToast = '', capExp = '', hudUntil = 0;
 
   const box = el('div', 'fm-hud'); box.hidden = true;
   const nm = el('b', 'fm-name'), bar = el('i', 'fm-bar'), fill = el('i'), sub = el('div', 'fm-sub'), tvEl = el('span'), senEl = el('span');
@@ -47,7 +47,15 @@ export function initFarm(hud, { toast = () => {} } = {}) {
     const bits = [`Thu phục ${mon.ten}!`]; if (s.senGain > 0) bits.push(`+${s.senGain} hạt sen`); if (s.expGain > 0) bits.push(`+${s.expGain} Tu Vi`);
     toast(bits.join(' '), 2600); if (LGT.sfx) LGT.sfx.play('quai-ha');
     if (s.leveledUp) setTimeout(() => toast(`Tu Vi lên cấp ${s.tuvi}! Công và Thủ của bạn tăng.`, 4200), 1200);
+    if (s.expCapped && capExp !== farm.cnt.day) { capExp = farm.cnt.day; setTimeout(() => toast('Hôm nay bạn đã nhận đủ Tu Vi từ hàng yêu. Vẫn nhận hạt sen theo trần riêng — mai quay lại nhận tiếp!', 5200), 2200); }
     if (s.senCapped && capToast !== farm.sen.day) { capToast = farm.sen.day; setTimeout(() => toast('Hôm nay bạn đã nhận đủ hạt sen từ hàng yêu. Vẫn được Tu Vi — mai quay lại nhận tiếp!', 5200), 2800); }
+  }
+  // Thu phục yêu quái hằng tháng (js/ui/yeuquai.js gọi khi đóng góp đủ): cộng Tu Vi nguồn 'boss', trần theo ngày.
+  function grantBoss() {
+    const s = settleBoss(farm, Date.now()); farm = s.farm; save();
+    if (s.expGain > 0) { toast(`+${s.expGain} Tu Vi từ thu phục yêu quái.`, 3000); if (s.leveledUp) setTimeout(() => toast(`Tu Vi lên cấp ${s.tuvi}! Công và Thủ của bạn tăng.`, 4200), 1200); }
+    else if (s.expCapped) toast('Hôm nay bạn đã nhận đủ Tu Vi từ thu phục yêu quái. Mai quay lại nhận tiếp!', 3600);
+    return s;
   }
   function hit(uid, dmg) {
     const m = view.mons.find((x) => x.uid === uid), sp = m && spOf(m); if (!m || !sp) return;
@@ -120,7 +128,7 @@ export function initFarm(hud, { toast = () => {} } = {}) {
   setInterval(tick, 100);
 
   LGT.farm = {
-    stone, spear, toggleAuto,
+    stone, spear, toggleAuto, grantBoss,
     get tuvi() { return tuViOf(farm).tuvi; }, get state() { return farm; },
     status() { const t = target(); return { active: !!t || running, ten: t ? t.ten : '', stoneCd: cdStone, spearCd: cdSpear, canAuto: true, auto: running, autoLeft: Math.floor(autoLeft(auto, Date.now()) / 60) }; },
   };

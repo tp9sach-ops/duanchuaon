@@ -14,5 +14,7 @@ export const NGUON_CFG = Object.freeze({
   // Chống cày quái quá yếu (chỉ hàng yêu, khi biết cấp quái): chênh ≤ mienGiam cấp → đủ EXP;
   // mỗi cấp chênh vượt mức đó giảm giamMoiCap (trừ vào hệ số), thấp nhất `san`.
   chenhLech: Object.freeze({ mienGiam: 5, giamMoiCap: 0.1, san: 0.1 }),
+  // Phiên 122: TRẦN Tu Vi mỗi ngày (giờ VN) cho các nguồn có thể cày lặp: hàng yêu bãi rừng tối đa 30 lần có EXP/ngày (= 60% một cấp ở mức 2%/lần), thu phục yêu quái hằng tháng tối đa 3 lần/ngày. Quá trần vẫn đánh được, vẫn nhận hạt sen theo trần riêng, chỉ không thêm Tu Vi. TẠM, chờ ptg duyệt.
+  tranNgay: Object.freeze({ hangYeu: 30, boss: 3 }),
   muiGio: 7,   // Việt Nam UTC+7
 });

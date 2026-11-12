@@ -48,7 +48,7 @@ export function initYeuQuai(hud, { toast = () => {} } = {}) {
     const t = YQ[boss.type], share = shareOf(boss, 'ban'), rw = rewardFor(share, boss.diff);
     if (!coopOn) drops = lootDrops(boss.x, boss.z, 1, rng, boss.diff);   // đánh chung: túi lá do máy chủ chia (cùng hạt giống cho mọi người)
     view.loot = drops; stat.done[key] = true; stat.kills++;
-    if (rw.xp) { if (LGT.addXp) LGT.addXp(rw.xp); stat.bonus = Math.min(100, stat.bonus + rw.strength); }
+    if (rw.xp) { if (LGT.addXp) LGT.addXp(rw.xp); if (LGT.farm && LGT.farm.grantBoss) { try { LGT.farm.grantBoss(); } catch (_) {} } stat.bonus = Math.min(100, stat.bonus + rw.strength); }
     save(); toast(rw.xp ? `Bạn đã thu phục ${t.ten}! +${rw.xp} điểm, +${rw.strength} sức mạnh. Nhặt nhanh những túi lá bồ đề rơi quanh đó!` : `${t.ten} đã bị thu phục. Bạn đánh chưa đủ ${Math.round(MIN_SHARE * 100)}% nên chưa có thưởng — nhưng vẫn nhặt được lá rơi!`, 7000);
   }
 

@@ -42,3 +42,10 @@ Yêu cầu ptg (12/11): chỗ có cây/đất trống mà không đến được
 - `js/data/monsters.js`: `biaRungThong` → "Rừng Sâu Phía Bắc", rect x−76.5…−47.5, z51.5…76.5, avoid rỗng. Bãi rừng thông cũ (miếu, cổ thụ, Hồ Rừng, thủy tạ) và đường mòn, bãi thác: KHÔNG còn quái. `js/world/tutorial.js` mô tả lại vị trí ba vùng.
 - Test: sửa tọa độ ở `farmui`, `monsterattack`, `spawn`. 1009/1010; còn `tests/combo.test.mjs` ("mọi kiểu đòn…", nhảy tay @0.18) lỗi CÓ SẴN từ upstream Phiên 120 (đã xác nhận bằng stash, không do phần này). `fireflies.test` thỉnh thoảng chập chờn (ngẫu nhiên), chạy lại thì đạt. `sw.js` dgt-v114.
 - Tin nhắn ptg 12/11 14:31 bị cụt: "…phục quái, đều có thể tăng thêm kinh nghiệm" → cần hỏi lại: muốn mọi hành động (thu phục quái, nhặt vật, chụp hình check-in, đi tới cảnh đẹp…) cộng thêm Tu Vi/kinh nghiệm? Chưa làm.
+
+## Phiên 122 — Mọi cách thu phục đều cộng Tu Vi, số nhỏ, có trần mỗi ngày (ptg 12/11 15:13)
+- `js/data/nguon.js`: `tranNgay: { hangYeu: 30, boss: 3 }` (TẠM). `js/world/farm.js`: bộ đếm `cnt { day, hangYeu, boss }` (lưu cùng `lgt.farm`, sang ngày VN reset, dữ liệu hỏng bị kẹp), `expLeft`, `settleKill` hết trần → 0 Tu Vi (`expCapped`; hạt sen vẫn theo trần riêng 100/ngày), `settleBoss` (nguồn boss, 15% cấp kế/lần, 3 lần/ngày).
+- `js/ui/farm.js`: toast khi hết trần Tu Vi hàng yêu (1 lần/ngày); `LGT.farm.grantBoss()`. `js/ui/yeuquai.js`: thu phục yêu quái hằng tháng (đóng góp đủ, `rw.xp`) gọi `grantBoss()` — trước đây chỉ cộng điểm cũ `LGT.addXp`, không cộng Tu Vi.
+- Mọi đường đánh quái bãi rừng (ném đá, thương, tự động) đều qua `reward → settleKill` nên đều cộng Tu Vi; chưa có cơ chế "thuần phục" riêng trong game.
+- Test: `tests/farm.test.mjs` viết lại (trần 30 + boss), `tests/farmui.test.mjs` (+1). 1011 test, chỉ còn `combo.test.mjs` lỗi có sẵn từ upstream. `sw.js` dgt-v115.
+- Cần ptg duyệt: 30 lần/ngày (≈60% một cấp), boss 3 lần/ngày × 15%.
