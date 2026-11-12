@@ -56,3 +56,8 @@ Yêu cầu ptg (12/11): chỗ có cây/đất trống mà không đến được
 - `js/ui/farm.js`: boss HIỆN CẢ BAN NGÀY (quái thường vẫn chỉ ban đêm), nằm ngủ; thân to 1,8 m, nhãn "Boss vùng". `js/scene/farm.js`: boss vẽ to ×1,7, vòng Hệ như tinh anh.
 - Test: `spawn.test` (+1, sửa đếm cap loại boss), `farm.test` (+1), `farmui.test` (ban ngày còn boss). `sw.js` dgt-v116.
 - GIỚI HẠN / việc kế: boss sinh LOCAL theo từng người, CHƯA chung phòng qua Firebase (GDD: "boss vùng dùng chung cả phòng"); CHƯA có vòng đỏ báo hiệu dưới đất (chỉ gồng chiêu như quái thường); chưa có rơi Linh Ấn/Huyền Tinh (chờ hệ vật phẩm); chưa chơi thử trình duyệt. Đồi Bảo Tháp (Thổ) và boss Thạch Linh Hộ Tháp chưa có vùng.
+
+## Phiên 124 — Vòng đỏ báo đòn
+- `js/scene/farm.js`: mỗi ô quái có đĩa đỏ `danger` (CircleGeometry) hiện khi `m.wind > 0` (đang gồng): bán kính = `ATTACK_CFG.reach[loại] × missSlack` (đúng vùng trúng đòn của `stepMonster`), lớn dần 35%→100% và đậm dần theo tiến độ gồng (0,7 s). Hết gồng mà đứng ngoài đĩa = né được (trùng logic `miss`). Áp dụng cho MỌI quái, boss có đĩa to hơn vì tầm tinh anh.
+- Kiểm: game tải không lỗi trang (Chromium giả lập, three cục bộ); boss Lão Mộc Tinh hiện trong bãi Bắc. CHƯA thấy được vòng đỏ trong ảnh chụp (hộp "Tạo nhân vật" + camera sát bụi che; dịch tới `LGT.world.teleport` không đổi góc nhìn) → ptg cần xem thật trong game. Không có test tự động cho phần vẽ.
+- Việc kế: boss dùng chung qua Firebase; rơi Linh Ấn/Huyền Tinh; hai chiêu riêng của boss (hiện chỉ một kiểu đòn); G2.5 thanh kỹ năng; Đồi Bảo Tháp.

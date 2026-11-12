@@ -1,6 +1,7 @@
 // Cảnh 3D quái cố định ở bãi rừng (Phiên 107, G1.6a): thân khối đơn giản theo từng loại, thanh Oán Khí, vòng dưới chân quái tinh anh, vòng chọn mục tiêu, đá đang bay.
 // Chỉ VẼ; trạng thái do js/ui/farm.js cập nhật vào LGT.farmView = { mons: [{ id, type, x, z, ry, oan, max, he, elite, flash }], target (id hoặc 0), stones: [{ x0, z0, x1, z1, t, dur }] }.
 // Mô hình tạm (khối) — chờ bản GLB/hoạ sĩ. Dùng lại hình học/vật liệu giữa các con (clone nông) nên rẻ; tối đa POOL con cùng lúc (hai vùng × 12 là 24; chỉ vùng gần người chơi được đưa vào view).
+import { ATTACK_CFG } from '../data/monsterAI.js';
 import * as THREE from 'three';
 import { FARM_CFG } from '../data/monsters.js';
 
@@ -65,13 +66,15 @@ function buildType(type) {
 export function buildFarm() {
   const group = new THREE.Group(); group.name = 'farm-monsters';
   const tpl = {}, barBack = new THREE.MeshBasicMaterial({ color: 0x10141a, transparent: true, opacity: 0.75, depthTest: false, fog: false }), planeGeo = new THREE.PlaneGeometry(1, 1);
-  const eliteGeo = new THREE.RingGeometry(1.2, 1.5, 36), tgtGeo = new THREE.RingGeometry(0.85, 1.0, 32);
+  const dangerGeo = new THREE.CircleGeometry(1, 40), eliteGeo = new THREE.RingGeometry(1.2, 1.5, 36), tgtGeo = new THREE.RingGeometry(0.85, 1.0, 32);
   const slots = Array.from({ length: POOL }, () => {
     const root = new THREE.Group(), body = new THREE.Group(); root.visible = false; root.add(body);
     const bar = new THREE.Group(), back = new THREE.Mesh(planeGeo, barBack), fillMat = new THREE.MeshBasicMaterial({ color: 0x6fe08a, depthTest: false, fog: false }), fill = new THREE.Mesh(planeGeo, fillMat);
     back.scale.set(1.2, 0.14, 1); fill.position.z = 0.001; back.renderOrder = 998; fill.renderOrder = 999; bar.add(back, fill); root.add(bar);
     const ring = new THREE.Mesh(eliteGeo, new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.55, side: THREE.DoubleSide, depthWrite: false, fog: false })); ring.rotation.x = -Math.PI / 2; ring.position.y = 0.05; ring.visible = false; root.add(ring);
-    group.add(root); return { root, body, bar, fill, fillMat, ring, type: '', id: 0 };
+    // Phiên 124: VÒNG ĐỎ báo đòn — hiện khi quái gồng chiêu, đúng bán kính trúng đòn (tầm × missSlack); đứng ngoài vòng khi hết gồng là né được. Lớn dần theo tiến độ gồng.
+    const danger = new THREE.Mesh(dangerGeo, new THREE.MeshBasicMaterial({ color: 0xff2a2a, transparent: true, opacity: 0.3, side: THREE.DoubleSide, depthWrite: false, fog: false })); danger.rotation.x = -Math.PI / 2; danger.position.y = 0.06; danger.visible = false; root.add(danger);
+    group.add(root); return { root, body, bar, fill, fillMat, ring, danger, type: '', id: 0 };
   });
   const tgt = new THREE.Mesh(tgtGeo, new THREE.MeshBasicMaterial({ color: 0xfff2a8, transparent: true, opacity: 0.85, side: THREE.DoubleSide, depthWrite: false, fog: false })); tgt.rotation.x = -Math.PI / 2; tgt.visible = false; group.add(tgt);
   const stoneGeo = new THREE.DodecahedronGeometry(0.2, 0), stones = [0, 1, 2, 3].map(() => { const m = new THREE.Mesh(stoneGeo, mat(0x8c9096)); m.visible = false; group.add(m); return m; });
@@ -93,6 +96,7 @@ export function buildFarm() {
         s.bar.visible = hurt || isT; s.bar.position.y = h; if (camera) s.bar.quaternion.copy(camera.quaternion);
         const pct = Math.max(0, Math.min(1, m.oan / Math.max(1, m.max))); s.fill.scale.set(1.16 * pct, 0.1, 1); s.fill.position.x = -0.58 * (1 - pct);
         s.fillMat.color.setHex(pct <= 0.25 ? 0x62c8ff : (HE_COLOR[m.he] || 0xffffff));   // ≤ 25%: xanh dương = sắp thu phục
+        if (m.wind > 0) { const R = ATTACK_CFG.reach[(m.elite || m.boss) ? 'elite' : 'normal'] * ATTACK_CFG.missSlack, u = Math.max(0, Math.min(1, 1 - m.wind / ATTACK_CFG.windup)); s.danger.visible = true; s.danger.scale.setScalar(R * (0.35 + 0.65 * u)); s.danger.material.opacity = 0.18 + 0.32 * u; } else s.danger.visible = false;
         s.ring.visible = !!(m.elite || m.boss); if (m.elite || m.boss) s.ring.material.color.setHex(HE_COLOR[m.he] || 0xffffff);
         if (isT) tg = m;
       });
