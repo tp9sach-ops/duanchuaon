@@ -14,6 +14,7 @@ import { initPlanets } from './ui/planets.js';
 import { initVision } from './ui/vision.js';
 import { initStage } from './ui/stage.js';
 import { initHud } from './ui/hud.js';
+import { initCompact } from './ui/compact.js';
 import { initRoom } from './net/room.js';
 import { initZones } from './world/zoneRuntime.js';
 import { isNpcSpot } from './world/spots.js';
@@ -86,6 +87,7 @@ async function boot() {
   stage = initAll(created.rail);
   try { initWind(created.scene); } catch (e) { console.warn('[Diệu Giang Tự] Gió lỗi:', e && e.message); }   // cây lung lay; lỗi thì cây đứng yên
   try { initHud(); } catch (e) { console.warn('[Diệu Giang Tự] HUD lỗi:', e && e.message); }   // màn vào cửa + HUD; lỗi thì giữ giao diện cũ
+  try { initCompact(); } catch (e) { console.warn('[Diệu Giang Tự] Giao diện gọn lỗi:', e && e.message); }   // ẩn/hiện nút, sửa HUD bị che trong khung/màn thấp, nút camera (chạy SAU initHud)
   try { initZones(localStorage, () => (window.LGT && window.LGT.world ? window.LGT.world.pos : null)); } catch (e) { console.warn('[Diệu Giang Tự] Khu vực lỗi:', e && e.message); }
   try { import('./ui/zoneGate.js').then((m) => m.initZoneGate({ toast: (t, ms) => window.LGT.toast && window.LGT.toast(t, ms) })).catch((e) => console.warn('[Diệu Giang Tự] Cổng zone lỗi:', e && e.message)); } catch (_) { /* bỏ qua */ }
   try { initRoom(); } catch (e) { console.warn('[Diệu Giang Tự] Đa người lỗi:', e && e.message); }   // thấy người khác trong chùa; lỗi thì vẫn chơi một mình
