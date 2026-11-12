@@ -1,5 +1,7 @@
 # HANDOFF — Web tâm linh "DIỆU GIANG TỰ" (chùa Việt 3D) — tên cũ: Linh Giang Tự (Phiên 5 đổi tên theo ptg)
 
+> **Cập nhật Phiên 127 (2026-11-12): BỎ NÉM ĐÁ (nút `da` = Đánh thường cận chiến) + TỰ ĐỘNG LAO vào quái + QUÁI TRÂU HƠN — ĐỌC `docs/PHIEN127.md` (có "VIỆC KẾ": chiêu theo hệ phái, Chân khí thật). Phiên 126: `docs/PHIEN126.md` (múa côn, hồ lô, hồn bay vào hồ lô, thanh máu/mana). `sw.js` = `dgt-v119`.**
+
 > **Cập nhật Phiên 100 (2026-11-11): CHIẾN ĐẤU YÊU QUÁI DỰNG LẠI (mô hình, hiệu ứng, thanh máu, nút chiến đấu) — ĐỌC `docs/PHIEN100.md`. `sw.js` = `dgt-v107`. 4 test đỏ là LỖI CÓ SẴN (#322, #328, #355, #767).**
 
 > **Cập nhật Phiên 99 (2026-11-11): NHÂN VẬT MỚI từ mô hình GLB có xương (chibi) + tư thế đi/ngồi/lạy/vung côn/giơ tay khiêng/ném/nhặt — ĐỌC `docs/PHIEN99.md` TRƯỚC (có mục "Gp phải làm": tải 2 file GLB lên `assets/models/chibi/`). `sw.js` = `dgt-v106`. 4 test đỏ là LỖI CÓ SẴN (#322, #328, #355, #767).**
