@@ -2,7 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { dockButtons, pickHint, loadSeen, bagSections, HINTS } from '../js/world/dock.js';
+import { dockButtons, pickHint, loadSeen, bagSections, HINTS, dockLayout, cooldownFrac, SLOT_OF, SLOT_POS, SLOT_KEY, SLOT_CODES, A_PRIORITY } from '../js/world/dock.js';
 
 const ids = (c) => dockButtons(c).map((b) => b.id);
 const read = (p) => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
@@ -49,7 +49,7 @@ test('nối dây: dock + bag trong hudMenu, câu cá chạy khi bảng đóng, n
   const h = read('js/ui/hudMenu.js'), f = read('js/ui/fishing.js'), s = read('js/ui/skill.js'), d = read('js/ui/dock.js'), css = read('css/dock.css'), html = read('index.html');
   assert.match(h, /initDock\(hud/); assert.match(h, /initBag\(hud\)/); assert.match(h, /!LGT\.inHouse && LGT\.bag\) \? LGT\.bag\.open\(\)/);
   assert.match(f, /cast: castQuick, tap: pressTap, keep, release, status/); assert.ok(!/raf = 0; if \(!sess \|\| box\.hidden\)/.test(f), 'vòng câu không dừng khi đóng bảng'); assert.ok(!/fs-fab/.test(f));
-  assert.match(s, /get canTrain\(\)/); assert.match(css, /body\.has-dock #jump-btn/); assert.match(css, /\.dk\{position:absolute;right:/); assert.match(html, /css\/dock\.css/);
+  assert.match(s, /get canTrain\(\)/); assert.match(css, /body\.has-dock #jump-btn/); assert.match(css, /\.dk\{[^}]*position:absolute;right:/); assert.match(html, /css\/dock\.css/);
   assert.ok(!/innerHTML/.test(d), 'dock không dùng innerHTML'); assert.match(d, /pointerdown/);
 });
 
@@ -74,7 +74,7 @@ test('yêu quái: có yêu quái → Ném đá + Thương (+ Ném yêu quái n�
 test('nối dây: nút yêu quái + tự co lại không đè menu + Nhảy mờ chỉ cách mở', () => {
   const d = read('js/ui/dock.js'), css = read('css/dock.css');
   assert.match(d, /da: \(\) => LGT\.yq && LGT\.yq\.stone\(\)/); assert.match(d, /thuong: \(\) => LGT\.yq && LGT\.yq\.spear\(\)/); assert.match(d, /nemyq: \(\) => LGT\.yq && LGT\.yq\.throwBoss\(\)/);
-  assert.match(d, /function fit\(\)/); assert.match(d, /\['wrap', 'small'\]/); assert.match(css, /\.dk\.wrap/); assert.match(css, /\.dk-b\.lock/); assert.match(d, /Khinh thân chưa mở/);
+  assert.match(d, /function fit\(\)/); assert.match(d, /classList\.add\('small'\)/); assert.match(css, /\.dk\.small\{/); assert.match(css, /\.dk-b\.lock/); assert.match(d, /Khinh thân chưa mở/);
 });
 
 test('đang đánh yêu quái: chỉ còn Ném đá/Thương/(Ném yêu quái)/Nhảy; có trạng thái chờ hồi chiêu', () => {
@@ -127,4 +127,76 @@ test('Tự Động Hàng Yêu (Phiên 108): nút "Tự động" chỉ hiện khi
   assert.ok(HINTS.tudong && HINTS.tudong.length > 20);
   assert.deepEqual(ids({ ...base, farm: { active: true } }), ['da', 'thuong', 'nhay', 'kynang', 'tui'], 'không canAuto: không có nút');
   assert.match(read('js/ui/dock.js'), /tudong: \(\) => LGT\.farm && LGT\.farm\.toggleAuto\(\)/);
+});
+
+// ------------------------------------------------------------------ Phiên 109: bố cục ô cố định
+// Các hoàn cảnh để thử: duyệt mọi tổ hợp cờ chính (đủ để bắt lỗi trùng ô / nút dời chỗ).
+function contexts() {
+  const out = [];
+  const bools = [false, true];
+  for (const khinh of [0, 1, 5]) for (const water of bools) for (const yq of bools) for (const farm of bools) for (const near of bools) for (const hold of ['', 'carry', 'ply']) for (const head of bools) for (const ply of bools) {
+    out.push({ free: true, khinh, canTrain: khinh > 0, water, fish: { phase: 'idle', hasOrb: true }, yq: yq ? { active: true, ten: 'Yêu Đá', canThrow: near, stoneCd: 0.5, spearCd: 0 } : { active: false }, farm: farm ? { active: true, ten: 'Heo rừng', canAuto: true, auto: false, autoLeft: 30, stoneCd: 0, spearCd: 0.2 } : { active: false },
+      carry: { holding: hold === 'carry', heldName: 'Bình', near: near ? 'Bình' : '' }, ply: { holding: hold === 'ply', near: ply ? 'Lan' : '', heldName: 'Lan', left: 2 }, npc: { near: near ? 'Bác Tư' : '' },
+      head: head ? { open: true, wait: false, cd: 0, dist: 6, dmg: 40 } : { open: false }, khi: { cd: 1 }, board: { own: near, on: false }, swim: { mode: 'land' } });
+  }
+  out.push({ free: true, swim: { mode: 'swim' } }, { free: true, swim: { mode: 'dive' } }, { free: true, fish: { phase: 'wait' } }, { free: true, fish: { phase: 'lotus' } }, { free: true, fish: { phase: 'caught' } });
+  return out;
+}
+
+test('bố cục: mọi nút dockButtons có ô cố định; không hai nút nào trùng ô trong mọi hoàn cảnh', () => {
+  let checked = 0;
+  for (const c of contexts()) {
+    const list = dockButtons(c), lay = dockLayout(list);
+    assert.equal(lay.length, list.length); const cells = new Set();
+    for (const L of lay) { assert.ok(L.slot, 'nút ' + L.id + ' phải có ô'); const k = L.r + ',' + L.c; assert.ok(!cells.has(k), `trùng ô ${k} (${L.id}) ở ${JSON.stringify(list.map((b) => b.id))}`); cells.add(k); assert.ok(['big', 'mid', 'small'].includes(L.size)); }
+    for (const b of list) assert.ok(SLOT_OF[b.id], 'chưa gán ô cho nút ' + b.id); checked++;
+  }
+  assert.ok(checked > 500, 'thử đủ nhiều hoàn cảnh: ' + checked);
+});
+test('bố cục: nút KHÔNG dời chỗ — Nhảy, Túi đồ, Thương, Tự động... luôn ở đúng một ô dù hoàn cảnh nào', () => {
+  const seenCell = {};
+  for (const c of contexts()) for (const L of dockLayout(dockButtons(c))) {
+    if (L.slot.startsWith('X')) continue;   // ô tràn (rất hiếm) không tính
+    const k = L.r + ',' + L.c; if (!(L.id in seenCell)) seenCell[L.id] = new Set(); seenCell[L.id].add(k);
+  }
+  for (const id of ['nhay', 'tui', 'kynang', 'thietdau', 'chemkhi', 'tudong', 'tap', 'thu', 'phong', 'cast', 'lan', 'nem', 'ha', 'nemnguoi', 'thanguoi', 'nemyq', 'da']) assert.ok(seenCell[id], id + ' có xuất hiện');
+  // các nút này không bao giờ phải nhường ô: chỉ đúng một ô ở mọi hoàn cảnh
+  for (const id of ['nhay', 'tui', 'kynang', 'thietdau', 'chemkhi', 'tudong', 'thuong', 'da', 'tap', 'thu', 'phong', 'nem', 'nemnguoi', 'nemyq', 'lan']) assert.equal(seenCell[id].size, 1, id + ' luôn ở đúng một ô (không bao giờ phải nhường ô)');
+});
+test('bố cục: ô A là hành động chính ở góc dưới-phải; Nhảy ngay phía trên; nút nhỏ ở hàng trên cùng', () => {
+  assert.deepEqual(SLOT_POS.A, { r: 1, c: 3 }); assert.deepEqual(SLOT_POS.C, { r: 2, c: 3 });
+  const lay = (c) => Object.fromEntries(dockLayout(dockButtons(c)).map((L) => [L.id, L]));
+  const L = lay({ free: true, khinh: 3, canTrain: true, farm: { active: true, ten: 'Heo', canAuto: true, autoLeft: 60 }, head: { open: true } });
+  assert.equal(L.da.slot, 'A'); assert.equal(L.da.size, 'big'); assert.equal(L.thuong.slot, 'B'); assert.equal(L.nhay.slot, 'C'); assert.equal(L.thietdau.slot, 'D'); assert.equal(L.tudong.slot, 'F');
+  assert.equal(L.tui.size, 'small'); assert.equal(L.kynang.size, 'small'); assert.equal(L.tui.r, 3);
+  // người mới (chưa có quái): Nhảy mờ vẫn đúng ô C, không bị kéo xuống đáy
+  assert.equal(lay({ free: true }).nhay.slot, 'C'); assert.equal(lay({ free: true }).nhay.r, 2);
+});
+test('bố cục: hai nút tranh ô A → chiến đấu/câu cá thắng nhặt đồ; nút thua vào ô trống, không mất', () => {
+  const lay = dockLayout([{ id: 'khieng' }, { id: 'da' }, { id: 'nhay' }]);
+  const by = Object.fromEntries(lay.map((L) => [L.id, L])); assert.equal(by.da.slot, 'A'); assert.notEqual(by.khieng.slot, 'A'); assert.notEqual(by.khieng.slot, by.nhay.slot); assert.equal(by.khieng.slot, 'B', 'ô trống đầu tiên theo thứ tự dự phòng');
+  assert.equal(dockLayout([{ id: 'khieng' }, { id: 'tap' }]).find((L) => L.id === 'tap').slot, 'A');
+  assert.ok(A_PRIORITY.indexOf('da') < A_PRIORITY.indexOf('khieng'));
+  // nút lạ không làm sập, vẫn được ô trống; đầu vào hỏng → mảng rỗng
+  assert.ok(dockLayout([{ id: 'la-hoac' }])[0].slot); for (const bad of [undefined, null, 5, 'x', {}, [null, 7]]) assert.deepEqual(dockLayout(bad), []);
+});
+test('hồi chiêu: vòng quay 0..1 theo thời gian còn lại; ngữ cảnh hỏng → 0', () => {
+  assert.equal(cooldownFrac('da', { yq: { active: true, stoneCd: 0 } }), 0);
+  assert.ok(Math.abs(cooldownFrac('da', { yq: { active: true, stoneCd: 0.7 } }) - 0.5) < 1e-9, 'STONE.cd = 1.4 s');
+  assert.ok(Math.abs(cooldownFrac('da', { farm: { active: true, stoneCd: 1.4 } }) - 1) < 1e-9, 'quái bãi rừng cũng có vòng');
+  assert.ok(Math.abs(cooldownFrac('thuong', { yq: { active: true, spearCd: 0.35 } }) - 0.5) < 1e-9);
+  assert.ok(Math.abs(cooldownFrac('chemkhi', { khi: { cd: 1.5 } }) - 0.5) < 1e-9, 'Chém khí hồi 3 s'); assert.ok(Math.abs(cooldownFrac('thietdau', { head: { cd: 2.5 } }) - 0.5) < 1e-9, 'Thiết đầu công hồi 5 s');
+  assert.equal(cooldownFrac('thietdau', { head: { cd: 99 } }), 1, 'không vượt 1'); assert.equal(cooldownFrac('nhay', { yq: { stoneCd: 1 } }), 0);
+  for (const bad of [undefined, null, 5, 'x']) assert.equal(cooldownFrac('da', bad), 0); assert.equal(cooldownFrac('da', { farm: { stoneCd: 'abc' } }), 0);
+});
+test('phím tắt: 1–5 và B trỏ đúng ô, không đụng WASD/Space/M/Shift/Esc', () => {
+  assert.deepEqual(Object.keys(SLOT_CODES).sort(), ['A', 'B', 'D', 'E', 'F', 'T3']);
+  const all = Object.values(SLOT_CODES).flat(); for (const bad of ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'Space', 'KeyM', 'ShiftLeft', 'Escape']) assert.ok(!all.includes(bad), bad);
+  assert.equal(SLOT_KEY.A, '1'); assert.equal(SLOT_KEY.C, 'Space'); assert.equal(new Set(all).size, all.length, 'không phím nào gán hai ô');
+});
+test('nối dây Phiên 109: dock dùng ô cố định + phím tắt + vòng hồi chiêu; CSS có lưới, vòng quay, bong bóng gộp', () => {
+  const d = read('js/ui/dock.js'), css = read('css/dock.css');
+  assert.match(d, /dockLayout\(list\)/); assert.match(d, /cooldownFrac\(L\.id, c\)/); assert.match(d, /SLOT_CODES/); assert.match(d, /gridRow/); assert.ok(!/innerHTML/.test(d));
+  assert.match(css, /\.dk-grid\{display:grid/); assert.match(css, /conic-gradient/); assert.match(css, /\.dk-tips\{/); assert.match(css, /\.dk\.kb \.dk-key/);
+  for (const id of ['thuong', 'chemkhi', 'thietdau']) assert.match(d, new RegExp("'" + id + "'"), id + ' phải nằm trong FAST (bấm xuống là chạy)');
 });
