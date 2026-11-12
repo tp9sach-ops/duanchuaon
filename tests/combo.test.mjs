@@ -1,4 +1,4 @@
-// Tư thế chiến đấu theo clip mẫu (Phiên 119): js/world/combo.js
+// Tư thế chiến đấu theo clip mẫu (Phiên 119, mở rộng Phiên 126): js/world/combo.js
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { KINDS, CHAIN, CHAIN_GAP, SLASH, nextKind, comboEnd, hitAt, comboPose, applyStance } from '../js/world/combo.js';
@@ -8,14 +8,15 @@ import { armAngle, elbowAngle, wristAngle, kneeAngle, legPoints, LM, CHIBI_H } f
 const TAU = Math.PI * 2, Z = () => ({ x: 0, y: 0, z: 0 });
 const base = () => ({ spine: Z(), head: { x: 0 }, armL: armAngle(1, 0.12, 0.14), armR: armAngle(-1, 0.12, 0.14), foreL: elbowAngle(1, 0.2), foreR: elbowAngle(-1, 0.2), handL: wristAngle(1, 0.2), handR: wristAngle(-1, 0.2), legL: Z(), legR: Z(), shinL: kneeAngle(0.06), shinR: kneeAngle(0.06), footL: Z(), footR: Z(), hipsDrop: 0 });
 
-test('chuỗi đòn: ngang → ngược → xoay, quá hạn hoặc xong đòn cuối thì về đầu', () => {
-  assert.deepEqual(CHAIN, ['ngang', 'nguoc', 'xoay']);
-  assert.equal(nextKind('', 0), 'ngang');
+test('chuỗi đòn: múa → ngang → ngược → xoay, quá hạn hoặc xong đòn cuối thì về đầu', () => {
+  assert.deepEqual(CHAIN, ['mua', 'ngang', 'nguoc', 'xoay']);
+  assert.equal(nextKind('', 0), 'mua');
+  assert.equal(nextKind('mua', 0.2), 'ngang');
   assert.equal(nextKind('ngang', 0.2), 'nguoc');
   assert.equal(nextKind('nguoc', -0.1), 'xoay');
-  assert.equal(nextKind('xoay', 0.1), 'ngang');
-  assert.equal(nextKind('ngang', CHAIN_GAP + 0.01), 'ngang');
-  assert.equal(nextKind('khi', 0), 'ngang');
+  assert.equal(nextKind('xoay', 0.1), 'mua');
+  assert.equal(nextKind('ngang', CHAIN_GAP + 0.01), 'mua');
+  assert.equal(nextKind('khi', 0), 'mua');
 });
 
 test('mọi kiểu đòn: liên tục, hữu hạn, đầu và cuối về tư thế nghỉ', () => {
@@ -25,16 +26,18 @@ test('mọi kiểu đòn: liên tục, hữu hạn, đầu và cuối về tư t
     let prev = comboPose(k, 0);
     for (let t = 0; t <= end + 0.2; t += 0.01) {
       const p = comboPose(k, t);
-      for (const f of ['arm', 'lean', 'yaw', 'lunge', 'vis']) assert.ok(Number.isFinite(p[f]), `${k} ${f} @${t}`);
+      for (const f of ['arm', 'lean', 'yaw', 'lunge', 'spin', 'vis']) assert.ok(Number.isFinite(p[f]), `${k} ${f} @${t}`);
       assert.ok(p.arm >= -3.2 && p.arm <= -0.3, `${k} arm @${t}`);
       assert.ok(Math.abs(p.yaw - prev.yaw) < 0.25, `${k} yaw nhảy @${t}`);
       assert.ok(Math.abs(p.arm - prev.arm) < 0.35, `${k} arm nhảy @${t}`);
+      assert.ok(Math.abs(p.spin - prev.spin) < 0.7, `${k} côn xoay quá nhanh @${t}`);
       prev = p;
     }
     const a = comboPose(k, 0), z = comboPose(k, end);
     assert.ok(Math.abs(a.arm + 1.2) < 1e-9 && Math.abs(a.yaw) < 1e-9 && a.lunge === 0);
     assert.equal(z.vis, 0); assert.ok(Math.abs(z.lunge) < 1e-9);
     const turns = z.yaw / TAU; assert.ok(Math.abs(turns - Math.round(turns)) < 1e-9, `${k} yaw cuối không về 0 (mod 2π)`);
+    const sp = z.spin / TAU; assert.ok(Math.abs(sp - Math.round(sp)) < 1e-9 && a.spin === 0, `${k} côn xoay không về đúng vị trí`);
   }
   assert.equal(comboPose('la', 0.1), null); assert.equal(comboEnd('la'), 0); assert.equal(hitAt('la'), 0);
 });
@@ -48,9 +51,18 @@ test('xoay quay đủ một vòng và luôn tăng; ngang/ngược quét ngược
   assert.ok(comboPose('khi', RELEASE_S * 0.65).arm < -2.6 && comboPose('khi', RELEASE_S).arm > -0.8);   // skill: giơ cao rồi bổ xuống đúng lúc khí rời côn
 });
 
-test('vệt chém: có cho ngang/ngược/xoay, khoảng quét hợp lệ', () => {
-  for (const k of CHAIN) { const s = SLASH[k]; assert.ok(s.a < s.b && s.b < comboEnd(k) && s.arc > 1 && s.reach > 2 && Math.abs(s.side) === 1, k); }
+test('vệt chém: có cho ngang/ngược/xoay, khoảng quét hợp lệ; múa côn không có vệt ngang', () => {
+  assert.deepEqual(Object.keys(SLASH).sort(), ['nguoc', 'ngang', 'xoay'].sort());
+  assert.equal(SLASH.mua, undefined);
+  for (const k of Object.keys(SLASH)) { const s = SLASH[k]; assert.ok(s.a < s.b && s.b < comboEnd(k) && s.arc > 1 && s.reach > 2 && Math.abs(s.side) === 1, k); }
   assert.equal(SLASH.khi, undefined);
+});
+
+test('múa côn: xoay hai vòng liên tục trước người; xoay 360° cũng xoay côn 2 vòng', () => {
+  let last = -1; for (let t = 0.08; t <= 0.4; t += 0.01) { const sp = comboPose('mua', t).spin; assert.ok(sp >= last - 1e-9); last = sp; }
+  assert.ok(comboPose('mua', 0.4).spin > 2 * TAU - 1e-6 && comboPose('mua', 0.08).spin === 0);
+  assert.ok(comboPose('xoay', 0.58).spin > 2 * TAU - 1e-6);
+  assert.equal(comboPose('ngang', 0.2).spin, 0); assert.equal(comboPose('khi', 0.2).spin, 0);
 });
 
 test('thế sẵn sàng: s = 0 giữ nguyên; s = 1 đứng yên → khom, chân trước/sau, gối gập, tay côn đưa trước', () => {
