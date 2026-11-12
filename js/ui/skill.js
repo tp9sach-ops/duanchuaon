@@ -37,6 +37,7 @@ export function initSkill(hud, { toast = () => {}, getSen = () => 0, spendSen = 
     const lv = level();
     if (!canJump({ level: lv, mode: W.mode, panelOpen: !!LGT.panelOpen, dialogOpen: dialogOpen() })) return false;
     const ok = jump.start(jumpHeightAt(lv, !!LGT.inHouse));
+    if (ok) { if (LGT.sfx) LGT.sfx.play('nhay'); }
     if (ok && LGT.act) LGT.act('khinhthan');   // Phiên 52: nhiệm vụ “Thử Khinh thân” (3 lần nhảy)
     return ok;
   }
@@ -105,7 +106,7 @@ export function initSkill(hud, { toast = () => {}, getSen = () => 0, spendSen = 
   function train() {
     const p = plan(); if (!p.ok) { toast(why(p) || 'Chưa thể luyện.', 2800); return; }
     if (!spendSen(p.sen)) { toast('Chưa đủ hạt sen.', 2500); return; }
-    luyen = p.next; saveLuyen(); draw(); paintChip();
+    luyen = p.next; saveLuyen(); draw(); paintChip(); if (LGT.sfx) LGT.sfx.play('len-bac');
     toast(`Khinh thân lên bậc ${p.next} — ${KHINH_TEN[p.next]}. Nhảy cao ${jumpHeightAt(p.next, false)} m.`, 4200);
   }
   const openBox = () => { if (LGT.panelOpen) return; draw(); box.hidden = false; (go.disabled ? xb : go).focus({ preventScroll: true }); };

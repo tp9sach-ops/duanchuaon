@@ -18,7 +18,7 @@ export function initNpcThrow({ toast = () => {} } = {}) {
     const plan = planNpcThrow({ att: { str: LGT.strength ? LGT.strength.value : 0, x: p.x, z: p.z }, ry, npc: n, cd });
     if (!plan.ok) { toast(reasonText(plan.reason, plan.wait), 3000); return; }
     if (!ctl().launch(n.id, plan.land)) return;
-    cd = markNpc(cd, n.id); toast(`Bạn nhấc ${n.ten} lên và ném ra xa khoảng ${Math.round(plan.land.dist)} m! ${n.ten} rơi xuống an toàn rồi sẽ tự quay về.`, 3600);
+    cd = markNpc(cd, n.id); if (LGT.sfx) LGT.sfx.play('nem'); toast(`Bạn nhấc ${n.ten} lên và ném ra xa khoảng ${Math.round(plan.land.dist)} m! ${n.ten} rơi xuống an toàn rồi sẽ tự quay về.`, 3600);
     if (LGT.act) LGT.act('nemnpc');
   }
   setInterval(() => { const now = performance.now(); cd = tickCooldown(cd, (now - last) / 1000); last = now; }, 500);

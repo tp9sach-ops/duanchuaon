@@ -23,14 +23,14 @@ export function initCarry({ toast = () => {} } = {}) {
   function pickup() {
     if (!usable()) return; const near = world.nearest(pos()); if (!near) { toast('Không có vật nào ở gần để khiêng.', 2200); return; }
     const r = world.pickup(near.id, str(), pos());
-    if (r.ok) { try { av() && av().act('grab'); } catch (_) { /* bỏ qua */ } toast(`Bạn khiêng ${near.def.ten} (${near.def.kg} kg). Bấm “Ném” hoặc “Đặt xuống”.`, 3200); return; }
+    if (r.ok) { try { av() && av().act('grab'); } catch (_) { /* bỏ qua */ } if (LGT.sfx) LGT.sfx.play('khieng'); toast(`Bạn khiêng ${near.def.ten} (${near.def.kg} kg). Bấm “Ném” hoặc “Đặt xuống”.`, 3200); return; }
     if (r.reason === 'heavy') toast(`${near.def.ten} nặng ${near.def.kg} kg — cần sức mạnh ${r.need}, bạn mới có ${str()} (${tierOf(str())}). Tăng cấp, luyện Khinh thân và tích công đức để khỏe hơn.`, 5200);
     else if (r.reason === 'busy') toast('Tay bạn đang khiêng một vật rồi.', 2200);
   }
   function throwIt() {
     const p = pos(); if (!p || !world.held) return; const it = world.held, s = str();
     const r = world.throwHeld(p, ry(), s); if (!r.ok) return;
-    try { av() && av().act('throw'); } catch (_) { /* bỏ qua */ }   // Phiên 99: tay phải vung ném
+    try { av() && av().act('throw'); } catch (_) { /* bỏ qua */ } if (LGT.sfx) LGT.sfx.play('nem');   // Phiên 99: tay phải vung ném
     toast(`Bạn ném ${it.def.ten} ra xa khoảng ${Math.round(r.to ? Math.hypot(r.to.x - p.x, r.to.z - p.z) : r.range)} m.`, 2400);
   }
   function drop() { const p = pos(); if (!p || !world.held) return; const it = world.drop(p, ry()); if (it) toast(`Đã đặt ${it.def.ten} xuống.`, 1800); }

@@ -26,6 +26,7 @@ import { initBoard } from './board.js';
 import { initBag } from './bag.js';
 import { initEdit } from './editmode.js';
 import { initSkill } from './skill.js';
+import { initSfx } from './sfx.js';
 import { initMinimap } from './minimap.js';
 import { initTutorial } from './tutorial.js';
 import { initCoach } from './coach.js';
@@ -138,6 +139,7 @@ export function initHudMenu(hud) {
   try { initStory(hud, { toast, addMerit }); } catch (e) { console.warn('[Diệu Giang Tự] Cốt truyện lỗi:', e && e.message); }   // hộp thoại + mục tiêu chương 1 (Phiên 32); lỗi thì NPC vẫn nói lời thường
   try { initTutorial(hud, { toast }); } catch (e) { console.warn('[Diệu Giang Tự] Sổ tay hướng dẫn lỗi:', e && e.message); }   // hướng dẫn chơi + gợi ý việc kế tiếp (Phiên 39)
   try { initCoach(hud); } catch (e) { console.warn('[Diệu Giang Tự] Hướng dẫn lần đầu lỗi:', e && e.message); }   // Phiên 70: màn hướng dẫn lần đầu 3 bước có mũi tên
+  try { initSfx(); } catch (e) { console.warn('[Diệu Giang Tự] Tiếng kỹ năng lỗi:', e && e.message); }   // Phiên 109: tiếng kỹ năng/chiến đấu từ assets/sfx; phải khởi tạo TRƯỚC các kỹ năng
   try { initSkill(hud, { toast, getSen: () => wallet.sen, spendSen: spendMerit }); } catch (e) { console.warn('[Diệu Giang Tự] Kỹ năng lỗi:', e && e.message); }   // Khinh thân: phím Space / nút Nhảy khi đã mở bậc 1 (Phiên 4)
   try { initBag(hud); } catch (e) { console.warn('[Diệu Giang Tự] Túi đồ lỗi:', e && e.message); }   // Phiên 62
   try { initCarry({ toast }); } catch (e) { console.warn('[Diệu Giang Tự] Khiêng/ném lỗi:', e && e.message); }   // Phiên 63: sức mạnh, khiêng và ném vật nặng

@@ -45,7 +45,7 @@ export function initFarm(hud, { toast = () => {} } = {}) {
     const mon = r.mon, now = Date.now(), s = settleKill(farm, MONSTERS[mon.type], r.drops, now); farm = s.farm; save();
     if (s.senGain > 0 && LGT.addMerit) LGT.addMerit(s.senGain);
     const bits = [`Thu phục ${mon.ten}!`]; if (s.senGain > 0) bits.push(`+${s.senGain} hạt sen`); if (s.expGain > 0) bits.push(`+${s.expGain} Tu Vi`);
-    toast(bits.join(' '), 2600);
+    toast(bits.join(' '), 2600); if (LGT.sfx) LGT.sfx.play('quai-ha');
     if (s.leveledUp) setTimeout(() => toast(`Tu Vi lên cấp ${s.tuvi}! Công và Thủ của bạn tăng.`, 4200), 1200);
     if (s.senCapped && capToast !== farm.sen.day) { capToast = farm.sen.day; setTimeout(() => toast('Hôm nay bạn đã nhận đủ hạt sen từ hàng yêu. Vẫn được Tu Vi — mai quay lại nhận tiếp!', 5200), 2800); }
   }
@@ -62,21 +62,21 @@ export function initFarm(hud, { toast = () => {} } = {}) {
   }
   function stone() {
     if (!here() || bossOn() || cdStone > 0) return; const t = aim(false); if (!t) return;
-    const p = pos(), d = gap(t, p); cdStone = STONE.cd;
+    const p = pos(), d = gap(t, p); cdStone = STONE.cd; if (LGT.sfx) LGT.sfx.play('nem-da');
     view.stones.push({ x0: p.x, z0: p.z, x1: t.x, z1: t.z, t: 0, dur: Math.max(0.15, d / STONE.speed), uid: t.uid, dmg: stoneDamage(str()) });
   }
   function spear() {
     if (!here() || bossOn() || cdSpear > 0) return; const t = aim(true); if (!t) return;
-    cdSpear = SPEAR.cd; hit(t.uid, spearDamage(str()));
+    cdSpear = SPEAR.cd; if (LGT.sfx) LGT.sfx.play('thuong'); hit(t.uid, spearDamage(str()));
   }
 
   // Tự Động Hàng Yêu (Phiên 108): tự Thương/Ném đá quái trong tầm autoRange, không tự đi. Dừng khi mở bảng, rời tab, vào nhà, có yêu quái hằng tháng, hoặc hết 60 phút hôm nay.
   function stopAuto(msg) { if (!running) return; running = false; saveAuto(); if (msg) toast(msg, 3200); }
   function toggleAuto() {
-    if (running) { stopAuto('Đã tắt tự động hàng yêu.'); return; }
+    if (running) { stopAuto('Đã tắt tự động hàng yêu.'); if (LGT.sfx) LGT.sfx.play('tu-dong-tat'); return; }
     if (autoLeft(auto, Date.now()) <= 0) { toast('Hôm nay bạn đã dùng hết thời gian tự động hàng yêu. Mai dùng tiếp, hoặc tự bấm đánh nhé!', 3600); return; }
     if (!here() || bossOn()) return;
-    running = true; toast(`Tự động hàng yêu BẬT: đứng yên, nhân vật tự đánh quái trong ${FARM_CFG.autoRange} m. Mở bảng hoặc rời trang sẽ tự dừng.`, 4200);
+    running = true; if (LGT.sfx) LGT.sfx.play('tu-dong-bat'); toast(`Tự động hàng yêu BẬT: đứng yên, nhân vật tự đánh quái trong ${FARM_CFG.autoRange} m. Mở bảng hoặc rời trang sẽ tự dừng.`, 4200);
   }
   function autoStep(dt) {
     if ((typeof document !== 'undefined' && document.hidden) || LGT.panelOpen || LGT.heldBy || (LGT.world && LGT.world.mode && LGT.world.mode !== 'free')) return stopAuto('Tự động hàng yêu đã dừng.');
@@ -103,7 +103,7 @@ export function initFarm(hud, { toast = () => {} } = {}) {
       for (const m of sp.mons) { m.zone = id; m.uid = `${id}:${m.id}`; m.flash = Math.max(0, (m.flash || 0) - dt); mons.push(m); }
     }
     view.mons = mons;
-    view.stones = view.stones.filter((s) => { s.t += dt; if (s.t < s.dur) return true; hit(s.uid, s.dmg); return false; });
+    view.stones = view.stones.filter((s) => { s.t += dt; if (s.t < s.dur) return true; hit(s.uid, s.dmg); if (LGT.sfx) LGT.sfx.play('da-trung'); return false; });
     if (running) autoStep(dt);
     const t = target(); view.target = t ? t.uid : '';
     const show = !!t && !bossOn(); box.hidden = !show && now > hudUntil || bossOn();

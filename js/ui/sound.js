@@ -1,6 +1,7 @@
 // Âm thanh tổng hợp bằng Web Audio (mõ, chuông, tiếng hạt). Chỉ tạo AudioContext sau lần bấm đầu tiên (luật autoplay).
 let ac = null;
 const audio = () => { if (!ac) { try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (_) { return null; } } if (ac.state === 'suspended') ac.resume(); return ac; };
+export const audioCtx = audio;   // Phiên 109: js/ui/sfx.js dùng chung AudioContext này để phát tiếng kỹ năng
 export function tone(freq, dur, { type = 'sine', gain = 0.3, decay = dur, slide = 0 } = {}) {
   const c = audio(); if (!c) return;
   const o = c.createOscillator(), g = c.createGain(), t = c.currentTime;

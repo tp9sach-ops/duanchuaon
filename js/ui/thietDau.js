@@ -7,7 +7,6 @@ import { loadSettings } from './soundLogic.js';
 import { sfxGain } from '../world/celebrate.js';
 import { prefersReduced } from '../util.js';
 import { initConKhi } from './conKhi.js';
-import { initKhaiNgo } from './khaiNgo.js';
 
 export function initThietDau({ toast = () => {} } = {}) {
   const LGT = window.LGT || (window.LGT = {});
@@ -17,6 +16,7 @@ export function initThietDau({ toast = () => {} } = {}) {
   const usable = () => !!W() && !!S() && !LGT.panelOpen && !LGT.inHouse && !(LGT.swim && LGT.swim.active) && !W().dashing;
   function status() { const open = usable() && buttonOpen(ctx()); const bac = S() ? S().level : 0; return { open, wait: cd > 0, cd, bac, dist: dashDistance(bac), dmg: dashDamage(bac, LGT.strength ? LGT.strength.value : 0) }; }
   function sfx(kind) {
+    if (LGT.sfx) { LGT.sfx.play({ go: 'thiet-dau' }[kind] || 'thiet-dau-trung'); return; }   // Phiên 109: tiếng thật (js/ui/sfx.js); không có thì dùng tiếng tổng hợp bên dưới
     let gv = 1; try { gv = sfxGain(loadSettings(localStorage)); } catch (_) { /* mặc định */ } if (!gv) return;
     if (kind === 'go') tone(900, 0.3, { type: 'sawtooth', gain: 0.07 * gv, decay: 0.28, slide: -700 }); else { tone(110, 0.35, { type: 'square', gain: 0.18 * gv, decay: 0.3, slide: -60 }); tone(1500, 0.18, { gain: 0.06 * gv, decay: 0.15 }); }
   }
@@ -37,6 +37,5 @@ export function initThietDau({ toast = () => {} } = {}) {
   setInterval(() => { const now = performance.now(); cd = tickCd(cd, (now - last) / 1000); last = now; }, 200);
   LGT.thietDau = { status, dash };
   try { initConKhi({ toast }); } catch (e) { console.warn('[Diệu Giang Tự] Côn Khí Trảm lỗi:', e && e.message); }   // Phiên 93: kỹ năng chiến đấu thứ hai (nút Chém khí); lỗi thì Thiết đầu công vẫn chạy
-  try { initKhaiNgo({ toast }); } catch (e) { console.warn('[Diệu Giang Tự] Lễ Khai Ngộ lỗi:', e && e.message); }   // Phiên 113 (G2.4b): ngồi bồ đoàn Ngũ Hành chọn Hệ; lỗi thì Thiết đầu công vẫn chạy
   return LGT.thietDau;
 }

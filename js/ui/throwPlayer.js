@@ -80,7 +80,7 @@ export function initThrowPlayer({ toast = () => {} } = {}) {
     if (hold !== h || !h.ok) return;   // khiêng không thành
     const me = meNow(), W0 = W(), ry = Number.isFinite(W0.facing) ? W0.facing : 0, plan = planHeldThrow({ pageId: room().id, name: base().n, me, tgtId: h.id, ry });
     try { if (room() && room().toss) room().toss(h.id, plan.land); } catch (_) { /* bỏ qua */ }   // hình: người đó bay vòng cung tới điểm rơi
-    setHold(null);
+    setHold(null); if (LGT.sfx) LGT.sfx.play('nem');
     try {
       const res = await callApi('thr', { ...base(), ty: h.id, lx: plan.land.x, lz: plan.land.z });
       if (res && res.ok && res.thrown) { cd = markThrown(cd, room().id, h.id); if (LGT.spendSen) LGT.spendSen(THROW_COST_SEN); toast(`Bạn ném ${h.n} đi xa ${Math.round(plan.land.dist)} m! (−${THROW_COST_SEN} hạt sen)`, 3200); if (LGT.act) LGT.act('nemnguoi'); }

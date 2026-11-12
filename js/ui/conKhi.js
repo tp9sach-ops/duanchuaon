@@ -21,6 +21,7 @@ export function initConKhi({ toast = () => {} } = {}) {
 
   function status() { const b = boss(), p = W() && W().pos, g = b && p ? gapTo(p, b, bodyOf(b)) : null; return { cd: cdLeft(), wait: cdLeft() > 0, far: g !== null && g > RANGE, dmg: khiDamage(LGT.strength ? LGT.strength.value : 0) }; }
   function sfx(kind) {
+    if (LGT.sfx) { LGT.sfx.play({ swing: 'chem-khi-vung', go: 'chem-khi' }[kind] || 'chem-khi-trung'); return; }   // Phiên 109: tiếng thật (js/ui/sfx.js); không có thì dùng tiếng tổng hợp bên dưới
     let gv = 1; try { gv = sfxGain(loadSettings(localStorage)); } catch (_) { /* mặc định */ } if (!gv) return;
     if (kind === 'swing') tone(700, 0.22, { type: 'sawtooth', gain: 0.06 * gv, decay: 0.2, slide: -450 });
     else if (kind === 'go') { tone(1200, 0.3, { type: 'triangle', gain: 0.07 * gv, decay: 0.28, slide: -700 }); tone(300, 0.25, { type: 'sawtooth', gain: 0.04 * gv, decay: 0.22, slide: -150 }); }
@@ -34,7 +35,7 @@ export function initConKhi({ toast = () => {} } = {}) {
     if (!plan.hit || !b) return;
     const dmg = khiDamage(LGT.strength ? LGT.strength.value : 0);
     setTimeout(() => {   // khí tới nơi
-      if (LGT.yq && LGT.yq.ramHit(dmg, 'khi')) { sfx('hit'); toast(`Côn Khí Trảm! Trúng ${YQ[b.type].ten}: −${dmg} máu.`, 1800); try { if (!prefersReduced() && navigator.vibrate) navigator.vibrate([30, 20, 60]); } catch (_) { /* bỏ qua */ } }
+      if (LGT.yq && LGT.yq.ramHit(dmg)) { sfx('hit'); toast(`Côn Khí Trảm! Trúng ${YQ[b.type].ten}: −${dmg} máu.`, 1800); try { if (!prefersReduced() && navigator.vibrate) navigator.vibrate([30, 20, 60]); } catch (_) { /* bỏ qua */ } }
     }, plan.dur * 1000);
   }
   function cast() {
