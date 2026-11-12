@@ -29,12 +29,11 @@ import { initEdit } from './editmode.js';
 import { initSkill } from './skill.js';
 import { initSfx } from './sfx.js';
 import { initMinimap } from './minimap.js';
+import { initRank } from './rank.js';
+import { lifetimeSen } from '../world/merit.js';
 import { initTutorial } from './tutorial.js';
 import { initCoach } from './coach.js';
-import { lifetimeSen } from '../world/merit.js';
 import { loadWallet, addSen } from '../engines/kinh.js';
-import { callApi, apiEnabled, getUserKey } from '../api.js';
-import { loadProfile } from './hudLogic.js';
 import { BOTTOM_MENU, ACTIONS, TOP_ICONS, WALLET_PLACEHOLDER, HELP_TEXT, WELCOME_TEXT, pressResult, ariaLabel, OUTSIDE_TEXT, captionOf, LONG_PRESS_MS, isReady, mapEntries, formatCount, createToastState } from './menuLogic.js';
 
 const P = {
@@ -105,17 +104,12 @@ export function initHudMenu(hud) {
   }
   LGT.toast = toast;
   let scoreTimer = 0;
-  const pushScore = async () => {   // gửi điểm lên Sheet, chờ 4 giây sau lần cộng cuối để đỡ gọi nhiều
-    if (!apiEnabled()) return;
-    try {
-      const prof = loadProfile(localStorage);
-      const spent = (LGT.merit && LGT.merit.leaf) || null, total = lifetimeSen(wallet.sen, spent);   // điểm xếp hạng = tổng sen từng kiếm (đổi lá không làm tụt)
-      const res = await callApi('saveScore', { userKey: getUserKey(), n: prof.name, sen: total });
-      if (res && res.ok && Number(res.sen) > total) { wallet = { ...wallet, sen: wallet.sen + (Number(res.sen) - total) }; localStorage.setItem('lgt.wallet', JSON.stringify(wallet)); const b = root.querySelector('#hm-sen'); if (b) b.textContent = formatCount(wallet.sen); }
-    } catch (_) { /* mạng lỗi: lần cộng sau sẽ gửi lại */ }
+  const pushScore = async () => {   // Phiên 2: gửi điểm + cấp + chi tiết lên bảng xếp hạng (js/ui/rank.js). Không đọc số sen máy chủ trả về → không cộng/hoàn sen ngoài ý muốn.
+    try { const R = window.LGT && window.LGT.rank; if (R) await R.push(); } catch (_) { /* mạng lỗi: lần cộng sau sẽ gửi lại */ }
   };
   const addMerit = (n) => { wallet = addSen(wallet, n); try { localStorage.setItem('lgt.wallet', JSON.stringify(wallet)); } catch (_) { /* bỏ qua */ } const b = root.querySelector('#hm-sen'); if (b) b.textContent = formatCount(wallet.sen); clearTimeout(scoreTimer); scoreTimer = setTimeout(pushScore, 4000); };
   LGT.addMerit = addMerit;
+  LGT.totalSen = () => lifetimeSen(wallet.sen, (LGT.merit && LGT.merit.leaf) || null);   // Phiên 2: điểm xếp hạng = tổng sen từng kiếm (đổi lá không làm tụt), js/ui/rank.js đọc số này
   LGT.getSen = () => wallet.sen;   // Phiên 39: sổ tay hướng dẫn đọc số hạt sen để gợi ý việc kế tiếp
   /** Trừ hạt sen khi tiêu (đổi lá bồ đề...). Trả false nếu không đủ. */
   const spendMerit = (n) => {
@@ -130,6 +124,7 @@ export function initHudMenu(hud) {
   try { initDonate(hud, { toast, addMerit }); } catch (e) { console.warn('[Diệu Giang Tự] Thùng công đức lỗi:', e && e.message); }   // Phiên 80: thùng công đức ở chánh điện
   const chat = initChat(hud, { toast });
   const quest = initQuest(hud, { toast, addMerit, pillHost: root.querySelector('.hm-wallet') });   // nhiệm vụ + cấp độ (Phiên 17)
+  try { initRank(hud, { toast }); } catch (e) { console.warn('[Diệu Giang Tự] Bảng xếp hạng lỗi:', e && e.message); }   // bảng xếp hạng + gửi điểm lên máy chủ (Phiên 2)
   try { initGuide(hud, { toast }); } catch (e) { console.warn('[Diệu Giang Tự] Dẫn đường lỗi:', e && e.message); }   // dẫn đường nhiệm vụ (Phiên 18)
   try { initMerit(hud, { toast, addMerit, getSen: () => wallet.sen, spendSen: spendMerit, pillHost: root.querySelector('.hm-wallet') }); } catch (e) { console.warn('[Diệu Giang Tự] Lá bồ đề lỗi:', e && e.message); }   // đổi hạt sen lấy lá bồ đề (Phiên 35)
   try { initLand(hud, { toast }); } catch (e) { console.warn('[Diệu Giang Tự] Đất ở lỗi:', e && e.message); }   // đất ở + xóm (Phiên 36)
@@ -191,6 +186,7 @@ export function initHudMenu(hud) {
     if (r.kind === 'beads' || r.kind === 'chant') return practice.open(r.kind);
     if (r.kind === 'chat') return chat.toggle();
     if (r.kind === 'quest') return quest.toggle();
+    if (r.kind === 'rank') return LGT.rank ? LGT.rank.toggle() : toast('Bảng xếp hạng chưa sẵn sàng.', 2500);
     if (r.kind === 'bag') return (!LGT.inHouse && LGT.bag) ? LGT.bag.open() : LGT.furni ? LGT.furni.openBag() : toast('Túi đồ chưa sẵn sàng.', 2500);   // Phiên 62: ngoài nhà → xem đồ đang có
     if (r.kind === 'shop') return LGT.furni ? LGT.furni.openShop() : toast('Cửa hàng chưa sẵn sàng.', 2500);
     if (r.kind === 'fish') return LGT.fishing ? LGT.fishing.open('cast') : toast('Câu cá chưa sẵn sàng.', 2500);
