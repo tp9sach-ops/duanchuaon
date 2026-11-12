@@ -22,6 +22,12 @@ export const ELBOW_MAX = 2.6, KNEE_MAX = 2.4;
 export const BONES = ['hips', 'spine', 'head', 'armL', 'armR', 'legL', 'legR', 'foreL', 'foreR', 'handL', 'handR', 'shinL', 'shinR', 'footL', 'footR'];
 export const B = Object.fromEntries(BONES.map((n, i) => [n, i]));
 
+/** CHẠY (Phiên 120): từ tốc độ RUN_FROM (m/s) trở lên bước chân chuyển dần từ ĐI sang CHẠY (nhịp nhanh hơn, sải dài hơn, gối nâng cao, tay co 90° vung mạnh, người chúi tới). Đi bộ (≤ 4 m/s) và bấm-để-đi (4,4) giữ nguyên. */
+export const RUN_FROM = 4.6, RUN_FULL = 7;
+export const runK = (speed) => clamp(((+speed || 0) - RUN_FROM) / (RUN_FULL - RUN_FROM), 0, 1);
+/** Tốc độ quay pha bước chân (rad/s): dùng CHUNG cho poseFor (đùi, tay) và chibiPose (gối, thân) để hai bên không lệch nhịp. */
+export const gaitRate = (speed) => 5 + 4 * clamp((+speed || 0) / 2.2, 0.25, 1.15) + 3.5 * runK(speed);
+
 const sm = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };   // smoothstep, a > b cũng đúng (giảm dần)
 const up = (c, w, v) => sm(c - w, c + w, v);   // 0 dưới (c − w) → 1 trên (c + w): chỗ chuyển mượt quanh một khớp
 
@@ -62,7 +68,7 @@ export function zoneOf(nx, ny) {
   return 'shirt';
 }
 
-// ───────────────────────── GÓC TỪNG KHỚP ─────────────────────────
+// ───────────────────────── GÓC TỪNG KHỞῢP ─────────────────────────
 // Quy ước xoay (three.js Euler 'XYZ' = Rx·Ry·Rz, vector chịu Rz trước, Rx sau cùng).
 
 /** Góc VAI (rad) cho xương cánh tay trên. Xương tay nằm ngang (T) lúc gắn; hạ xuống rồi nhấc về trước. side: +1 trái, −1 phải. fwd: nhấc về trước (0 = buông thẳng, π/2 = ngang, ~π = giơ thẳng lên); out: dạng ra ngoài (âm = khép vào, để chắp tay). */
@@ -133,7 +139,11 @@ export function chibiPose(p, state, clock, speed = 0, opt = {}) {
   const { hold = false, swing = null, act = null } = opt;
   const walk = clamp(opt.walk ?? (state === 'walk' ? 1 : 0), 0, 1);
   const L = armTarget(state, p.armL, hold), R = armTarget(state, p.armR, hold);
-  let lean = p.lean, aL = armAngle(1, L.fwd, L.out), aR = armAngle(-1, R.fwd, R.out);
+  const run = state === 'walk' ? runK(speed) * walk : 0;
+  if (run > 0 && !hold) {   // chạy: hai tay co ~90° và vung mạnh, ngược nhịp chân
+    for (const [A, own] of [[L, p.armL], [R, p.armR]]) { A.fwd = A.fwd * (1 + 0.45 * run) + 0.1 * run; A.out = A.out * (1 - 0.6 * run); A.flex = A.flex * (1 - run) + (1.3 + 0.25 * Math.max(0, own)) * run; }
+  }
+  let lean = p.lean + 0.2 * run, aL = armAngle(1, L.fwd, L.out), aR = armAngle(-1, R.fwd, R.out);
   let eL = { flex: L.flex, adduct: L.adduct }, eR = { flex: R.flex, adduct: R.adduct };
   if (swing) {   // vung côn: tay phải nâng/chém (khuỷu gần thẳng để côn thẳng hàng), tay trái giữ thăng bằng
     const v = clamp(swing.vis * 2, 0, 1);
@@ -150,10 +160,10 @@ export function chibiPose(p, state, clock, speed = 0, opt = {}) {
       lean += k < 0.35 ? -0.2 * wind : 0.4 * Math.sin(Math.PI * (k - 0.35) / 0.65);
     } else if (act.name === 'grab') { lean += 0.7 * e; aL = armAngle(1, 0.9 + 0.8 * e, -0.1); aR = armAngle(-1, 0.9 + 0.8 * e, -0.1); eL = eR = { flex: 0.3 + 0.2 * e, adduct: 0 }; }
   }
-  const kk = clamp(speed / 2.2, 0.25, 1.15), ph = clock * (5 + 4 * kk), sit = p.sit;
+  const kk = clamp(speed / 2.2, 0.25, 1.15), ph = clock * gaitRate(speed), sit = p.sit;
   // Đùi: bước tới/lui + xếp bằng khi ngồi (đùi đưa ra trước ~83°, gối dạng ra ngoài). Cẳng chân: gập gối khi vung chân tới + gập sâu và thu bàn chân vào giữa khi ngồi xếp bằng (đã dò bằng legPoints: bàn chân cách mặt sàn ~1 cm, hai cổ chân cách nhau ~13 cm).
   const swingL = pos15(Math.cos(ph)), swingR = pos15(-Math.cos(ph));   // chân trái vung tới khi cos(ph) > 0 (legL = sin(ph)·a), chân phải ngược lại
-  const stepK = walk * 0.95 * Math.min(1, kk);
+  const stepK = walk * 0.95 * Math.min(1, kk) * (1 + 0.85 * run);   // chạy: gối nâng cao gần gấp đôi
   const kneeL = 0.06 + stepK * swingL + 2.2 * sit, kneeR = 0.06 + stepK * swingR + 2.2 * sit;
   const legL = { x: -p.legL * 1.15 - 1.45 * sit, y: 0, z: 0.5 * sit }, legR = { x: -p.legR * 1.15 - 1.45 * sit, y: 0, z: -0.5 * sit };
   const shinL = kneeAngle(kneeL, -1.0 * sit), shinR = kneeAngle(kneeR, 1.0 * sit);
@@ -164,7 +174,7 @@ export function chibiPose(p, state, clock, speed = 0, opt = {}) {
   const reach = (leg, knee) => LIMB.ankleH + LIMB.thigh * Math.cos(-leg.x) + LIMB.shin * Math.cos(-leg.x - knee);
   const walkDrop = walk * clamp(LM.crotch * CHIBI_H - Math.max(reach(legL, shinL.x), reach(legR, shinR.x)), 0, 0.1);
   return {
-    spine: { x: lean, y: walk > 0.5 ? Math.sin(ph) * 0.08 : 0, z: walk > 0.5 ? Math.sin(ph) * 0.05 : 0 },
+    spine: { x: lean, y: walk > 0.5 ? Math.sin(ph) * (0.08 + 0.07 * run) : 0, z: walk > 0.5 ? Math.sin(ph) * 0.05 : 0 },
     head: { x: p.head },
     armL: aL, armR: aR,
     foreL: elbowAngle(1, eL.flex, eL.adduct), foreR: elbowAngle(-1, eR.flex, eR.adduct),
