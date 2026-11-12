@@ -5,8 +5,8 @@ export const ATTACK_CFG = Object.freeze({
   speed: Object.freeze({ normal: 2.6, elite: 3.2 }),       // m/s khi đuổi theo người chơi
   reach: Object.freeze({ normal: 2.4, elite: 3.4 }),       // m: tầm đánh tính từ tâm quái tới người chơi
   windup: 0.7,                                             // giây gồng chiêu báo trước (quái phồng lên); người chơi chạy ra khỏi tầm trong lúc này thì né được
-  interval: Object.freeze({ normal: 2.4, elite: 2.8 }),    // giây giữa hai lần bắt đầu gồng
-  heSo: Object.freeze({ normal: 0.6, elite: 0.9 }),        // hệ số sát thương lên Sinh Lực người chơi (nhân Công của quái)
+  interval: Object.freeze({ normal: 2.0, elite: 2.3 }),   // Phiên 127: đánh dồn dập hơn (trước 2,4 / 2,8)    // giây giữa hai lần bắt đầu gồng
+  heSo: Object.freeze({ normal: 0.9, elite: 1.35 }),   // Phiên 127: SÁT THƯƠNG CAO HƠN ×1,5 (trước 0,6 / 0,9)        // hệ số sát thương lên Sinh Lực người chơi (nhân Công của quái)
   maxHitPct: 0.35,                                         // một đòn không bao giờ mất quá 35% Sinh Lực tối đa (không bị hạ trong một đòn)
   stopFrac: 0.8,                                           // đuổi tới khi cách người chơi ≤ reach × 0,8 thì đứng lại đánh
   missSlack: 1.3,                                          // cuối gồng chiêu: người chơi còn trong reach × 1,3 mới bị trúng
@@ -14,7 +14,7 @@ export const ATTACK_CFG = Object.freeze({
   giveUp: 12,                                              // giây: quá ngần này không bị đánh và người chơi cách > 2 × reach thì quái bỏ đuổi
 });
 // Phiên 125: chiêu thứ hai của BOSS vùng — "Giậm Đất": cứ `slamEvery` đòn thì một đòn là giậm đất, gồng LÂU hơn (báo bằng vòng đỏ to), trúng mọi người trong bán kính `slamReach` (quay vòng, không chỉ trước mặt). Chạy ra ngoài vòng (hoặc nhảy khinh công) là né được. TẠM.
-export const BOSS_ATTACK_CFG = Object.freeze({ tam: true, slamEvery: 3, slamWindup: 1.3, slamReach: 7.5, slamHeSo: 1.2 });
+export const BOSS_ATTACK_CFG = Object.freeze({ tam: true, slamEvery: 3, slamWindup: 1.3, slamReach: 7.5, slamHeSo: 1.8 });
 export const VITALS_CFG = Object.freeze({
   tam: true,
   regenDelay: 6,           // giây không giao tranh thì bắt đầu hồi Sinh Lực

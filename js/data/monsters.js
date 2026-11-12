@@ -7,7 +7,7 @@ export const MON_CFG = Object.freeze({
   tam: true,
   // Oán Khí tối đa = (oanBase + oanPerLv × cấp) × (tinh anh ? eliteMul : 1). Dã Mèo Rừng cấp 3 = 66.
   // Phiên 123: BOSS vùng = (oanBase + oanPerLv × cấp) × bossMul. Lão Mộc Tinh cấp 20 = (30+240)×8 = 2160.
-  oanBase: 30, oanPerLv: 12, eliteMul: 3, bossMul: 8,
+  oanBase: 50, oanPerLv: 25, eliteMul: 3, bossMul: 5,   // Phiên 127: QUÁI TRÂU HƠN (trước: 30 + 12×cấp, boss ×8). Dã Mèo cấp 3 = 125; Rêu Tinh (tinh anh) = 900; Lão Mộc Tinh = 2750. TẠM, chờ ptg duyệt
 });
 
 // drop: khi quái được thu phục (Oán Khí về 0): xác suất `chance` rơi Hạt Sen trong khoảng [min, max]. Hạt sen là phần "công đức" hàng yêu đem lại (GDD mục 13).
