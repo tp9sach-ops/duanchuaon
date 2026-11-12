@@ -22,6 +22,8 @@ export const OUT_WALKS = [
   { id: 'rung-sau-tay', x0: -78, x1: -46, z0: 104, z1: 130 },     // khoảng đất trống rừng sâu phía Tây (bãi Thủy)
   { id: 'loi-rung-bac', x0: -64, x1: -58, z0: 77, z1: 85 },       // lối từ đường mòn rừng (rẽ trái, bắc) vào rừng sâu phía Bắc
   { id: 'rung-sau-bac', x0: -78, x1: -46, z0: 50, z1: 78 },       // khoảng đất trống rừng sâu phía Bắc (bãi Mộc)
+  { id: 'loi-rung-thap', x0: 60, x1: 66, z0: 55, z1: 69 },        // lối từ sân tháp (rẽ bắc) vào rừng sâu phía Bắc tháp
+  { id: 'rung-sau-thap', x0: 42, x1: 76, z0: 39, z1: 56 },        // khoảng đất trống phía Bắc Bảo Tháp (bãi Thổ), ngoài hàng rào chùa (z 32,2)
   ...LAND_WALKS,                                                 // Phiên 36: đường xuống xóm + khu dân cư (js/world/land.js)
 ];
 

@@ -66,3 +66,9 @@ Yêu cầu ptg (12/11): chỗ có cây/đất trống mà không đến được
 - `js/data/monsterAI.js`: `BOSS_ATTACK_CFG { slamEvery: 3, slamWindup: 1.3, slamReach: 7.5, slamHeSo: 1.2 }` (TẠM). `js/world/monsterAttack.js`: boss (m.boss) cứ 3 đòn có 1 đòn giậm đất: gồng 1,3 s (sự kiện `{k:'windup', slam:true}`), trúng mọi người trong bán kính 7,5 m (kể cả đứng xa hơn tầm thường 3,4×1,3), hệ số 1,2, vẫn bị trần 35% Sinh Lực/đòn; `m.slam`/`m.atkN`; `calm` xóa slam. Quái thường không bao giờ giậm.
 - `js/scene/farm.js`: vòng đỏ dùng bán kính/thời gian gồng của chiêu giậm (to hơn). `js/ui/farmCombat.js`: báo "<tên> gồng Giậm Đất! Chạy ra khỏi vòng đỏ." Test: `tests/monsterattack.test.mjs` (+1, 14/14). `sw.js` dgt-v118.
 - Chưa xem trong game thật (vòng đỏ chưa kiểm bằng mắt từ Phiên 124). Còn: boss chung qua Firebase, Linh Ấn/Huyền Tinh, G2.5 thanh kỹ năng, Đồi Bảo Tháp.
+
+## Phiên 126 — Vùng thứ tư "Đồi Bảo Tháp" (Hệ Thổ)
+- `js/world/outside.js`: `loi-rung-thap` (x60–66, z55–69, nối sân tháp) + `rung-sau-thap` (x42–76, z39–56, NGOÀI hàng rào chùa z 32,2). `js/data/monsters.js`: Thạch Tinh Khổng Lồ (45), Hộ Tháp Thạch Nhân (58, tinh anh), boss Thạch Linh Hộ Tháp (65); vùng `doiBaoThap` (lvMin 40–lvMax 65). `js/scene/outside.js` phủ bụi/cỏ/cây cho khoảng này. Tutorial nói bốn vùng + boss.
+- `tests/hothac.test.mjs` TRƯỚC ĐÂY KHÔNG nằm trong `npm test` → đã thêm vào; viết lại cho 4 vùng + test Đồi Bảo Tháp. 1019/1020 (chỉ `combo.test.mjs` lỗi có sẵn).
+- LƯU Ý khi thử trình duyệt: lúc có sự kiện yêu quái hằng tháng (`LGT.yq.active`) bãi rừng TẠM TẮT (bossOn), nên `LGT.farmView.mons` rỗng — không phải lỗi. Muốn thử thì đợi hết sự kiện hoặc `LGT.yq.active=false`.
+- Thạch Tinh "đi cùng 3 quái nhỏ" (GDD) chưa làm.

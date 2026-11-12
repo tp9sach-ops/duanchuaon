@@ -328,7 +328,7 @@ function buildPineWoods(g) {
 // Chỉ là cảnh (bụi/cỏ không chặn đường); lối vào (loi-rung-*) và đường mòn giữ thông thoáng. Trả { update(t) } cho sương.
 function buildDeepWoods(g) {
   const rnd = mulberry32(1181), bushes = [], tufts = [], trees = [], fogs = [];
-  for (const id of ['rung-sau-dong', 'rung-sau-tay', 'rung-sau-bac']) {
+  for (const id of ['rung-sau-dong', 'rung-sau-tay', 'rung-sau-bac', 'rung-sau-thap']) {
     const w = OUT_WALKS.find((q) => q.id === id); if (!w) continue;
     const area = (w.x1 - w.x0) * (w.z1 - w.z0);
     for (let i = 0; i < Math.round(area / 9); i++) bushes.push({ x: w.x0 + 1 + rnd() * (w.x1 - w.x0 - 2), z: w.z0 + 1 + rnd() * (w.z1 - w.z0 - 2), s: 0.7 + rnd() * 1.1 });

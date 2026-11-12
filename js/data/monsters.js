@@ -19,9 +19,13 @@ export const MONSTERS = Object.freeze({
   // Phiên 114: vùng thứ ba (Hồ Thác Đại Phật, Hệ Thủy). Quy ước TẠM như trên: Lý Ngư Tinh (con sau) là TINH ANH. Hạt sen rơi nhỉnh hơn vùng trước vì cấp cao hơn; vẫn bị trần FARM_CFG.senCapNgay.
   thuyquy: Object.freeze({ id: 'thuyquy', ten: 'Thủy Quỷ Hồ Thác', lv: 28, he: 'thuy', elite: false, drop: Object.freeze({ chance: 0.5, min: 1, max: 3 }) }),
   lyngu: Object.freeze({ id: 'lyngu', ten: 'Lý Ngư Tinh', lv: 38, he: 'thuy', elite: true, drop: Object.freeze({ chance: 1, min: 5, max: 8 }) }),
+  // Phiên 126: vùng thứ tư (Đồi Bảo Tháp, Hệ Thổ). Hộ Tháp Thạch Nhân (con sau) là TINH ANH; Thạch Linh Hộ Tháp là BOSS. GDD: Thạch Tinh đi cùng 3 quái nhỏ — chưa làm nhóm.
+  thachtinh: Object.freeze({ id: 'thachtinh', ten: 'Thạch Tinh Khổng Lồ', lv: 45, he: 'tho', elite: false, drop: Object.freeze({ chance: 0.5, min: 2, max: 3 }) }),
+  hothap: Object.freeze({ id: 'hothap', ten: 'Hộ Tháp Thạch Nhân', lv: 58, he: 'tho', elite: true, drop: Object.freeze({ chance: 1, min: 6, max: 9 }) }),
   // Phiên 123: BOSS VÙNG (GDD mục 8). Mỗi vùng 1 con, hiện CẢ NGÀY LẪN ĐÊM (quái thường mới chỉ ban đêm), nằm ngủ trong bụi; bị đánh mới đứng dậy. Tính là nguồn Tu Vi 'boss' (trần 3 lần/ngày). Hạt sen rơi nhiều hơn, vẫn bị trần ngày.
   laomoc: Object.freeze({ id: 'laomoc', ten: 'Lão Mộc Tinh', lv: 20, he: 'moc', elite: false, boss: true, drop: Object.freeze({ chance: 1, min: 12, max: 20 }) }),
   soncuoc: Object.freeze({ id: 'soncuoc', ten: 'Sơn Cước Đầu Mục', lv: 25, he: 'kim', elite: false, boss: true, drop: Object.freeze({ chance: 1, min: 15, max: 25 }) }),
+  thachlinh: Object.freeze({ id: 'thachlinh', ten: 'Thạch Linh Hộ Tháp', lv: 65, he: 'tho', elite: false, boss: true, drop: Object.freeze({ chance: 1, min: 25, max: 35 }) }),
   thuymau: Object.freeze({ id: 'thuymau', ten: 'Thủy Mẫu Hồ Thác', lv: 45, he: 'thuy', elite: false, boss: true, drop: Object.freeze({ chance: 1, min: 20, max: 30 }) }),
 });
 
@@ -51,6 +55,13 @@ export const FARM_ZONES = Object.freeze({
     id: 'hoThac', nightOnly: true, ten: 'Rừng Sâu Phía Tây', lvMin: 25, lvMax: 45, he: 'thuy', cap: 12, eliteMax: 1,
     normal: Object.freeze(['thuyquy']), elite: Object.freeze(['lyngu']), boss: 'thuymau',
     rects: Object.freeze([{ x0: -76.5, x1: -47.5, z0: 105.5, z1: 128.5 }]),
+    avoid: Object.freeze([]),
+  }),
+  // Phiên 126: vùng thứ tư, khoảng đất trống phía Bắc Bảo Tháp ('rung-sau-thap'). Quái cấp 45–65 — Tu Vi mục tiêu 40–65 (GDD mục 8).
+  doiBaoThap: Object.freeze({
+    id: 'doiBaoThap', nightOnly: true, ten: 'Đồi Bảo Tháp', lvMin: 40, lvMax: 65, he: 'tho', cap: 12, eliteMax: 1,
+    normal: Object.freeze(['thachtinh']), elite: Object.freeze(['hothap']), boss: 'thachlinh',
+    rects: Object.freeze([{ x0: 43.5, x1: 74.5, z0: 40.5, z1: 54.5 }]),
     avoid: Object.freeze([]),
   }),
 });
