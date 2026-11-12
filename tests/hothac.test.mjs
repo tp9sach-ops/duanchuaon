@@ -1,7 +1,7 @@
 // Test hai vùng quái "rừng sâu" (Phiên 114 tạo vùng Thủy ở bãi thác; Phiên 118 DỜI vào khoảng đất trống). Chạy: node --test tests/hothac.test.mjs
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { MONSTERS, FARM_ZONES, FARM_CFG } from '../js/data/monsters.js';
+import { MONSTERS, FARM_ZONES, FARM_CFG, MON_CFG } from '../js/data/monsters.js';
 import { OUT_WALKS, THAC, DINH_NGHI, OUT_ROCKS, DAI_PHAT, BAO_THAP, MIEU, CO_THU } from '../js/world/outside.js';
 import { LAKE, THUY_TA, RIVER } from '../js/world/river.js';
 import { rngSeed } from '../js/world/yeuquai.js';
@@ -16,7 +16,8 @@ test('vùng Thủy: cấp/Hệ đúng GDD mục 8; Lý Ngư Tinh là tinh anh; b
   assert.deepEqual([z.lvMin, z.lvMax, z.he, z.cap, z.eliteMax], [25, 45, 'thuy', 12, 1]);
   assert.deepEqual([...z.normal], ['thuyquy']); assert.deepEqual([...z.elite], ['lyngu']);
   assert.equal(monsterStats('lyngu').elite, true); assert.equal(monsterStats('thuyquy').he, 'thuy');
-  assert.equal(oanKhiMaxOf('thuyquy'), 30 + 12 * 28); assert.equal(oanKhiMaxOf('lyngu'), (30 + 12 * 38) * 3);
+  const base = (lv) => MON_CFG.oanBase + MON_CFG.oanPerLv * lv;   // công thức đọc từ cấu hình (Phiên 127 đổi số)
+  assert.equal(oanKhiMaxOf('thuyquy'), base(28)); assert.equal(oanKhiMaxOf('lyngu'), base(38) * MON_CFG.eliteMul);
 });
 test('Phiên 118: bãi quái nằm trong khoảng đất trống đi tới được, nối đường mòn bằng lối hẹp; KHÔNG chạm cảnh đẹp (thác, Đại Phật, hồ, Bảo tháp, miếu, cổ thụ, đường mòn)', () => {
   for (const [zid, glade, lane] of [['duongMon', 'rung-sau-dong', 'loi-rung-dong'], ['hoThac', 'rung-sau-tay', 'loi-rung-tay'], ['biaRungThong', 'rung-sau-bac', 'loi-rung-bac'], ['doiBaoThap', 'rung-sau-thap', 'loi-rung-thap']]) {
@@ -50,7 +51,7 @@ test('thả quái nhiều lần: quái chỉ ở trong khoảng đất trống; 
 test('Đồi Bảo Tháp (Phiên 126): Hệ Thổ cấp 45–65, ngoài hàng rào chùa, cách tháp, có boss Thạch Linh Hộ Tháp', async () => {
   const z = FARM_ZONES.doiBaoThap, { BOUNDS, GATE } = await import('../js/world/layout.js');
   assert.deepEqual([z.lvMin, z.lvMax, z.he, z.boss, MONSTERS.thachtinh.lv, MONSTERS.hothap.lv, MONSTERS.thachlinh.lv], [40, 65, 'tho', 'thachlinh', 45, 58, 65]);
-  assert.equal(MONSTERS.hothap.elite, true); assert.equal(MONSTERS.thachlinh.boss, true); assert.equal(oanKhiMaxOf('thachlinh'), (30 + 12 * 65) * 8);
+  assert.equal(MONSTERS.hothap.elite, true); assert.equal(MONSTERS.thachlinh.boss, true); assert.equal(oanKhiMaxOf('thachlinh'), (MON_CFG.oanBase + MON_CFG.oanPerLv * 65) * MON_CFG.bossMul);
   for (const r of z.rects) { assert.ok(r.z0 > GATE.z + 3, 'cách hàng rào chùa'); assert.ok(r.x1 < BOUNDS.xMax); assert.ok(!inR(r, BAO_THAP.cx, BAO_THAP.cz, 6), 'không đè tháp'); }
   assert.equal(zoneAt(60, 47), 'doiBaoThap'); assert.equal(zoneAt(62, 79), null, 'sân tháp để chụp hình');
 });
