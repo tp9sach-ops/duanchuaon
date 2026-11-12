@@ -10,12 +10,11 @@ import { findPath } from './path.js';
 import { SEATS, SEAT_Y, pickSeat, seatById, nearestFreeSeat, standPoint, inHall, createActivity } from './seats.js';
 import { damp } from '../util.js';
 import {
-  WALK_SPEED, RUN_SPEED, CLICK_SPEED, CAM_DIST, CAM_PITCH, moveVector, joyVector, walkStep, createNavigator, camPose, clipCamDist, dragCamera, zoomCamera, facingOf,
+  WALK_SPEED, RUN_SPEED, CLICK_SPEED, CAM_DIST, CAM_PITCH, moveVector, joyVector, joyRun, moveKeyOf, walkStep, createNavigator, camPose, clipCamDist, dragCamera, zoomCamera, facingOf,
 } from './worldLogic.js';
 import { shotPose, blendShot } from './fishShot.js';   // Phiên 120: góc camera câu cá / cầm cá
 
 const isEditable = (el) => !!el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName));
-const KEYMAP = { KeyW: 'f', ArrowUp: 'f', KeyS: 'b', ArrowDown: 'b', KeyA: 'l', ArrowLeft: 'l', KeyD: 'r', ArrowRight: 'r' };
 
 function savedName() { try { return localStorage.getItem('lgt.name') || 'Khách'; } catch (_) { return 'Khách'; } }
 function savedHair() { try { return localStorage.getItem('lgt.hair') || 'troc'; } catch (_) { return 'troc'; } }
@@ -30,6 +29,7 @@ export function createWorld({ scene, camera, canvas, coarse = false, LGT = windo
 
   const keys = { f: false, b: false, l: false, r: false, run: false };
   let camD = null, joy = null, yaw = 0, pitch = CAM_PITCH.def, dist = CAM_DIST.def, speedNow = 0;
+  let joyRunning = false, resetJoy = null;   // Phiên 129: kéo cần quá vành = chạy (điện thoại không có Shift); resetJoy gán khi có joystick
   let shot = '', shotK = 0, shotCur = null;   // Phiên 120: góc quay câu cá ('cast' | 'show' | ''); shotK = mức trộn 0..1 (ra/vào mượt)
   const nav = createNavigator(), cam = { x: 0, y: 0, z: 0, lx: 0, ly: 0, lz: 0, init: false };
   const blockedNow = () => !!LGT.panelOpen;
@@ -53,11 +53,13 @@ export function createWorld({ scene, camera, canvas, coarse = false, LGT = windo
     if (isEditable(e.target) || e.ctrlKey || e.metaKey || e.altKey) return;
     if (e.code === 'Escape') { cancelGo(); return; }
     if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') { keys.run = true; return; }
-    const k = KEYMAP[e.code]; if (!k) return;
+    const k = moveKeyOf(e); if (!k) return;   // W/A/S/D = mũi tên ↑←↓→ (cùng một bộ nút, xem worldLogic.moveKeyOf)
     if (!blockedNow()) { release(); keys[k] = true; nav.clear(); arrival.cancel(); showHint(null); e.preventDefault(); }
   });
-  addEventListener('keyup', (e) => { if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') keys.run = false; const k = KEYMAP[e.code]; if (k) keys[k] = false; });
-  addEventListener('blur', () => { keys.f = keys.b = keys.l = keys.r = keys.run = false; });
+  addEventListener('keyup', (e) => { if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') keys.run = false; const k = moveKeyOf(e); if (k) keys[k] = false; });
+  const stopAll = () => { keys.f = keys.b = keys.l = keys.r = keys.run = false; };
+  addEventListener('blur', stopAll);
+  addEventListener('visibilitychange', () => { if (document.hidden) { stopAll(); if (resetJoy) resetJoy(); } });   // chuyển ứng dụng / khóa màn hình giữa lúc đang giữ phím hoặc cần → không bị kẹt đi mãi
 
   // --- chuột / cảm ứng trên cảnh: bấm = đi tới đó, kéo = xoay camera, hai ngón = zoom, cuộn = zoom
   const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), hit = new THREE.Vector3();
@@ -109,15 +111,28 @@ export function createWorld({ scene, camera, canvas, coarse = false, LGT = windo
   // --- joystick cảm ứng (chỉ hiện trên màn hình cảm ứng)
   if (coarse) {
     const st = document.createElement('style');
-    st.textContent = '#joy{position:fixed;left:max(18px,env(safe-area-inset-left));bottom:max(86px,calc(env(safe-area-inset-bottom) + 70px));width:120px;height:120px;border-radius:50%;z-index:9;touch-action:none;background:rgba(6,7,13,.35);border:1px solid rgba(217,178,95,.45)}#joy i{position:absolute;left:38px;top:38px;width:44px;height:44px;border-radius:50%;background:rgba(217,178,95,.55);border:1px solid rgba(217,178,95,.9);pointer-events:none}.panel-open #joy{display:none}';
+    st.textContent = '#joy{position:fixed;left:max(18px,env(safe-area-inset-left));bottom:max(86px,calc(env(safe-area-inset-bottom) + 70px));width:120px;height:120px;border-radius:50%;z-index:9;touch-action:none;background:rgba(6,7,13,.35);border:1px solid rgba(217,178,95,.45)}#joy i{position:absolute;left:38px;top:38px;width:44px;height:44px;border-radius:50%;background:rgba(217,178,95,.55);border:1px solid rgba(217,178,95,.9);pointer-events:none}.panel-open #joy{display:none}'
+      + '#joy{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}'                                   // Phiên 129: giữ lâu không bôi chọn / hiện menu
+      + '#joy::before{content:"";position:absolute;inset:-8px -16px -16px -16px;border-radius:50%}'                    // vùng chạm rộng hơn hình tròn thấy được (ngón cái hay lệch ra ngoài), chừa 8px phía trên cho hàng nút camera
+      + '#joy.run{border-color:rgba(143,214,191,.9)}#joy.run i{background:rgba(143,214,191,.75);border-color:#8fd6bf}'; // đang chạy: cần đổi sang màu ngọc
     document.head.appendChild(st);
     const base = document.createElement('div'); base.id = 'joy'; base.setAttribute('aria-hidden', 'true'); const knob = document.createElement('i'); base.appendChild(knob); document.body.appendChild(base);
     let jid = null, c0 = null;
-    base.addEventListener('pointerdown', (e) => { jid = e.pointerId; const r = base.getBoundingClientRect(); c0 = { x: r.left + r.width / 2, y: r.top + r.height / 2 }; base.setPointerCapture(e.pointerId); release(); nav.clear(); arrival.cancel(); showHint(null); onJoy(e); });
+    resetJoy = () => { jid = null; joy = null; joyRunning = false; knob.style.transform = ''; base.classList.remove('run'); };
+    base.addEventListener('pointerdown', (e) => {
+      if (jid !== null && jid !== e.pointerId) return;   // ngón thứ hai chạm vào cần: bỏ qua, không giật cần đang giữ
+      e.preventDefault(); jid = e.pointerId; const r = base.getBoundingClientRect(); c0 = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+      try { base.setPointerCapture(e.pointerId); } catch (_) { /* bỏ qua */ }
+      release(); nav.clear(); arrival.cancel(); showHint(null); onJoy(e);
+    });
     base.addEventListener('pointermove', (e) => { if (e.pointerId === jid) onJoy(e); });
-    const off = (e) => { if (e.pointerId !== jid) return; jid = null; joy = null; knob.style.transform = ''; };
-    base.addEventListener('pointerup', off); base.addEventListener('pointercancel', off);
-    function onJoy(e) { const j = joyVector(e.clientX - c0.x, e.clientY - c0.y, 56); joy = j.x || j.y ? j : null; knob.style.transform = `translate(${Math.max(-40, Math.min(40, (e.clientX - c0.x) * 0.7))}px,${Math.max(-40, Math.min(40, (e.clientY - c0.y) * 0.7))}px)`; }
+    const off = (e) => { if (e.pointerId !== jid) return; resetJoy(); };
+    base.addEventListener('pointerup', off); base.addEventListener('pointercancel', off); base.addEventListener('lostpointercapture', off);
+    function onJoy(e) {
+      const dx = e.clientX - c0.x, dy = e.clientY - c0.y, j = joyVector(dx, dy, 56);
+      joy = j.x || j.y ? j : null; joyRunning = !!joy && joyRun(dx, dy, 56); base.classList.toggle('run', joyRunning);
+      knob.style.transform = `translate(${Math.max(-40, Math.min(40, dx * 0.7))}px,${Math.max(-40, Math.min(40, dy * 0.7))}px)`;
+    }
   }
 
   /**
@@ -249,7 +264,7 @@ export function createWorld({ scene, camera, canvas, coarse = false, LGT = windo
     }
     if (!blockedNow()) {
       const m = moveVector(keys, joy, yaw);
-      if (m.mag > 0) { v = m; spd = (keys.run ? RUN_SPEED : WALK_SPEED); }
+      if (m.mag > 0) { v = m; spd = (keys.run || joyRunning ? RUN_SPEED : WALK_SPEED); }
       else { const d = nav.dir(P, dt); if (d) { v = d; spd = CLICK_SPEED; } }
     } else { nav.clear(); arrival.cancel(); showHint(null); }
     if (!nav.active) mark.visible = false;

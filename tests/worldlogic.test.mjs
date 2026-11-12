@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import '../js/world/placements.js';
-import { forwardOf, rightOf, facingOf, moveVector, joyVector, walkStep, createNavigator, camPose, dragCamera, zoomCamera, CAM_DIST, CAM_PITCH, WALK_SPEED } from '../js/world/worldLogic.js';
+import { forwardOf, rightOf, facingOf, moveVector, joyVector, joyRun, JOY_RUN_AT, moveKeyOf, walkStep, createNavigator, camPose, dragCamera, zoomCamera, CAM_DIST, CAM_PITCH, WALK_SPEED } from '../js/world/worldLogic.js';
 import { SPAWN, blocked, POND } from '../js/world/layout.js';
 
 const near = (a, b, e = 1e-9) => Math.abs(a - b) < e;
@@ -50,4 +50,20 @@ test('kéo/zoom camera bị kẹp trong giới hạn', () => {
 });
 test('hướng nhìn nhân vật khớp quy ước ry (0 = +z)', () => {
   assert.ok(near(facingOf(0, 1), 0)); assert.ok(near(facingOf(1, 0), Math.PI / 2)); assert.ok(near(Math.abs(facingOf(0, -1)), Math.PI));
+});
+
+test('phím di chuyển (Phiên 129): W/A/S/D = mũi tên ↑←↓→, ưu tiên code, rơi về key; phím khác = null', () => {
+  const pairs = [['KeyW', 'ArrowUp', 'f'], ['KeyA', 'ArrowLeft', 'l'], ['KeyS', 'ArrowDown', 'b'], ['KeyD', 'ArrowRight', 'r']];
+  for (const [w, a, k] of pairs) { assert.equal(moveKeyOf({ code: w }), k); assert.equal(moveKeyOf({ code: a }), k); }
+  // bàn phím AZERTY / trình gõ: code khác nhưng chữ trên phím là w/a/s/d (kể cả hoa) vẫn đi được
+  assert.equal(moveKeyOf({ code: 'KeyZ', key: 'w' }), 'f'); assert.equal(moveKeyOf({ code: 'KeyQ', key: 'A' }), 'l');
+  assert.equal(moveKeyOf({ key: 'S' }), 'b'); assert.equal(moveKeyOf({ key: 'd' }), 'r'); assert.equal(moveKeyOf({ key: 'ArrowLeft' }), 'l');
+  assert.equal(moveKeyOf({ code: 'KeyW', key: 'Process' }), 'f');   // trình gõ tiếng Việt báo key lạ nhưng code đúng
+  for (const x of [null, undefined, {}, { code: 'Space', key: ' ' }, { code: 'KeyE', key: 'e' }, { key: 'toString' }, { code: 'constructor' }]) assert.equal(moveKeyOf(x), null);
+});
+test('joystick chạy (Phiên 129): kéo quá vành mới chạy, trong vành chỉ đi bộ', () => {
+  assert.equal(JOY_RUN_AT, 1.3);
+  assert.equal(joyRun(0, -56, 56), false); assert.equal(joyRun(0, -60, 56), false);
+  assert.equal(joyRun(0, -73, 56), true); assert.equal(joyRun(60, -60, 56), true);
+  assert.equal(joyRun(10, 10, 0), false);
 });

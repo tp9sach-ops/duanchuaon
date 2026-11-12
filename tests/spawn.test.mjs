@@ -86,17 +86,18 @@ test('hồi sinh quái thường 30–60 s, không vượt cap', () => {
   assert.equal(r.dead, true);
   assert.equal(sp.mons.filter((m) => !m.boss).length, z.cap - 1);
   const t = sp.timers[0].t; assert.ok(t >= RESPAWN_CFG.normal[0] && t <= RESPAWN_CFG.normal[1], `t=${t}`);
-  assert.equal(run(sp, RESPAWN_CFG.normal[0] - 1, rng).length, 0);   // chưa tới 30 s
-  let got = []; for (let s = 0; s < 40 && !got.length; s++) got = tickSpawner(sp, 1, rng);
+  assert.equal(run(sp, RESPAWN_CFG.normal[0] - 1, rng).length, 0);   // chưa tới mốc hồi sinh sớm nhất
+  let got = []; for (let s = 0; s < RESPAWN_CFG.normal[1] + 5 && !got.length; s++) got = tickSpawner(sp, 1, rng);
   assert.equal(got.length, 1); assert.equal(got[0].k, 'spawn'); assert.equal(got[0].mon.elite, false);
   assert.equal(sp.mons.filter((m) => !m.boss).length, z.cap); assert.equal(sp.timers.length, 0);
 });
 
-test('tinh anh hồi sinh sau 5 phút', () => {
-  const rng = rngSeed(21), sp = createSpawner('duongMon', rng), el = sp.mons.find((m) => m.elite);
+test('tinh anh hồi sinh theo RESPAWN_CFG.elite (Phiên 129: 120 giây; thường 10–20 giây)', () => {
+  assert.deepEqual([...RESPAWN_CFG.normal], [10, 20]); assert.equal(RESPAWN_CFG.elite[0], 120);
+  const rng = rngSeed(21), sp = createSpawner('duongMon', rng), el = sp.mons.find((m) => m.elite), T = RESPAWN_CFG.elite[0];
   hitMonster(sp, el.id, 1e6, 'ban', rng);
-  assert.equal(sp.timers[0].t, 300);
-  assert.equal(run(sp, 299, rng).length, 0);
+  assert.equal(sp.timers[0].t, T);
+  assert.equal(run(sp, T - 1, rng).length, 0);
   const ev = run(sp, 2, rng); assert.equal(ev.length, 1); assert.equal(ev[0].mon.elite, true); assert.equal(ev[0].mon.type, 'cuopduong');
 });
 

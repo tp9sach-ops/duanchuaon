@@ -22,10 +22,11 @@ test('dayKeyVN: đổi ngày đúng lúc 00:00 giờ VN (17:00 UTC)', () => {
 });
 
 test('expPerAction: tỉ lệ theo EXP cần của cấp; tối thiểu 1; nguồn lạ và cấp 150 → 0', () => {
-  assert.equal(expPerAction('hangYeu', 10), Math.round(expToNext(10) * 0.02));
+  assert.equal(expPerAction('hangYeu', 10), Math.round(expToNext(10) * NGUON_CFG.nguon.hangYeu.moiLan));
+  assert.equal(NGUON_CFG.nguon.hangYeu.moiLan, 0.04);   // Phiên 129: gấp đôi trước đây (0,02)
   assert.equal(expPerAction('boss', 10), Math.round(expToNext(10) * 0.15));
   assert.equal(expPerAction('nhiemVu', 1), Math.round(expToNext(1) * 0.1));
-  assert.equal(expPerAction('hangYeu', 1), 1); // 30×0,02 = 0,6 → tối thiểu 1
+  assert.equal(expPerAction('hangYeu', 1), 1); // 30×0,04 = 1,2 → làm tròn 1
   assert.equal(expPerAction('xyz', 10), 0);
   assert.equal(expPerAction('boss', 150), 0);
 });

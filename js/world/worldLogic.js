@@ -25,6 +25,26 @@ export function moveVector(keys = {}, joy = null, yaw = 0) {
   return { x: f.x * sy + r.x * sx, z: f.z * sy + r.z * sx, mag: Math.min(1, m) };
 }
 
+/**
+ * Phím di chuyển (Phiên 129): W/A/S/D và mũi tên ↑ ← ↓ → là CÙNG MỘT bộ nút lên/trái/xuống/phải. Trả 'f' | 'l' | 'b' | 'r' hoặc null.
+ * Ưu tiên `code` (vị trí phím, không phụ thuộc kiểu gõ); nếu không có thì dùng `key` (chữ w/a/s/d, kể cả hoa) để bàn phím AZERTY/Dvorak
+ * hay trình gõ tiếng Việt vẫn đi được theo đúng nhãn chữ trên phím. `e` = sự kiện keydown/keyup (hoặc đối tượng giả).
+ */
+const MOVE_BY_CODE = { KeyW: 'f', ArrowUp: 'f', KeyS: 'b', ArrowDown: 'b', KeyA: 'l', ArrowLeft: 'l', KeyD: 'r', ArrowRight: 'r' };
+const MOVE_BY_KEY = { w: 'f', s: 'b', a: 'l', d: 'r', arrowup: 'f', arrowdown: 'b', arrowleft: 'l', arrowright: 'r' };
+export function moveKeyOf(e) {
+  if (!e) return null;
+  if (e.code && Object.prototype.hasOwnProperty.call(MOVE_BY_CODE, e.code)) return MOVE_BY_CODE[e.code];
+  const k = typeof e.key === 'string' ? e.key.toLowerCase() : '';
+  return Object.prototype.hasOwnProperty.call(MOVE_BY_KEY, k) ? MOVE_BY_KEY[k] : null;
+}
+
+/** Joystick kéo ra quá vành (≥ 1,3 lần bán kính cần) thì CHẠY (điện thoại không có phím Shift). Dưới mức đó vẫn đi bộ, tốc độ theo độ lệch. */
+export const JOY_RUN_AT = 1.3;
+export function joyRun(dx, dy, radius) {
+  return radius > 0 && Math.hypot(dx, dy) / radius >= JOY_RUN_AT;
+}
+
 /** Joystick cảm ứng: (dx, dy) là độ lệch của ngón tay so với tâm (px), radius là bán kính cần; có vùng chết 12%. */
 export function joyVector(dx, dy, radius) {
   const m = Math.hypot(dx, dy) / radius;

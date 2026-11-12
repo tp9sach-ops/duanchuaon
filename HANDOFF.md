@@ -500,3 +500,11 @@ Môi trường chặn CDN nên cần: `npm i three@0.160.1 playwright-core @spar
 - **"Phân tích"**: không có mã analytics nào trong repo; chờ ptg giải thích.
 - **File rỗng lạc:** `firebase/1`, `js/net/1` (chờ ptg đồng ý xoá).
 
+
+### Phiên 129 (2026-11-12) — 4 yêu cầu của ptg (đã đẩy GitHub, `npm test` 1032/1032)
+- **WASD = mũi tên:** gom về MỘT hàm `moveKeyOf(e)` (`js/world/worldLogic.js`) dùng cho cả keydown lẫn keyup trong `js/world/world.js`: W/A/S/D và ↑←↓→ cùng là bộ nút lên/trái/xuống/phải (đi theo hướng màn hình, camera quay thì hướng đi quay theo). Ưu tiên `e.code`, không có thì rơi về `e.key` (w/a/s/d kể cả hoa) để AZERTY/trình gõ vẫn đi được. Trước đó code đã gán chung KEYMAP; nếu ptg vẫn thấy WASD khác mũi tên ở chế độ nào thì cần ptg mô tả chế độ/thiết bị cụ thể.
+- **Quái hồi sinh nhanh hơn:** `js/data/monsters.js` → `RESPAWN_CFG`: thường 30–60 → **10–20 giây**; tinh anh 300 → **120 giây**; boss vùng giữ 2700 (45 phút). TẠM, chờ ptg duyệt.
+- **EXP thu phục tăng:** `js/data/nguon.js` → `hangYeu` `moiLan` 0,02 → **0,04** (gấp đôi), `lanChuan` 20 → 10 (giữ tỉ lệ GDD 40%: 10 × 0,04). Trần 30 lần/ngày giữ nguyên → tối đa ~120% một cấp/ngày từ hàng yêu (trước 60%). KHÔNG đổi: boss/yêu quái hằng tháng (`boss` 0,15), nhiệm vụ, hoạt động chùa.
+- **Điện thoại:** (1) cần điều khiển: kéo ra quá vành (≥1,3 lần bán kính, `joyRun`) = CHẠY (trước đây điện thoại không chạy được vì không có Shift), cần đổi màu ngọc khi chạy; vùng chạm cần rộng hơn; ngón thứ hai chạm vào cần không làm giật; chuyển ứng dụng/khóa màn hình tự nhả cần và phím (không kẹt đi mãi). (2) `css/compact.css` mục 8: nút cụm thao tác `.dk-b` có vùng chạm rộng thêm 4px mỗi phía, nút camera ≥ 44px, giữ lâu không bôi chọn/hiện menu. (3) `tutorial.js` thêm câu hướng dẫn chạy. KHÔNG đổi cỡ menu dọc phải 38px (dock.js `fit()` và compact.js dựa vào bề rộng cột 89px).
+- `sw.js` VERSION → `dgt-v129`. Test sửa/thêm: `spawn`, `farm`, `farmui`, `nguontuvi` (không còn gắn cứng số cũ, đọc từ cấu hình), `worldlogic` (+`moveKeyOf`, `joyRun`).
+- **Chưa làm / gợi ý phiên sau:** giữ-để-lặp cho nút Ném đá/Thương (cần xem cooldown trong `js/ui/yeuquai.js`/`farm.js`); thử trên máy thật các cỡ màn hình (xs, short, fold) để chỉnh vị trí cần ↔ cụm nút; cân bằng lại EXP/hồi sinh sau playtest.

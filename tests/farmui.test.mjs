@@ -67,9 +67,9 @@ test('đứng xa không đâm được thương (có thông báo), đặt ngư�
   const saved = JSON.parse(store.get('lgt.farm')); assert.equal(saved.kills, api.state.kills); assert.equal(saved.exp, api.state.exp);
 });
 
-test('quái bị thu phục hồi sinh sau 30–60 giây (cục bộ)', () => {
+test('quái bị thu phục hồi sinh nhanh (RESPAWN_CFG: 10–20 giây, cục bộ)', () => {
   LGT.world.pos = { x: -62, z: 80 }; step(1);
-  step(60);   // 60 giây (mỗi nhịp 0,1 giây như vòng lặp thật)
+  step(25);   // 25 giây ≥ 20 giây hồi sinh tối đa (mỗi nhịp 0,1 giây như vòng lặp thật)
   assert.ok(LGT.farmView.mons.filter((m) => m.zone === 'biaRungThong' && !m.elite && !m.boss).length >= 10, 'quái thường đã hồi sinh đủ');
 });
 

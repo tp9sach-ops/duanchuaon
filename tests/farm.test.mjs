@@ -19,7 +19,7 @@ test('trạng thái rỗng: Tu Vi 1, 0 EXP, đủ trần hạt sen; dữ liệu 
 
 test('thu phục Dã Mèo: được EXP đúng công thức hàng yêu, hạt sen theo quà rơi', () => {
   const r = settleKill(emptyFarm(T0), { lv: 3 }, { hatSen: 1 }, T0);
-  assert.equal(r.expGain, Math.max(1, Math.round(expToNext(1) * 0.02))); assert.equal(r.farm.exp, r.expGain); assert.equal(r.senGain, 1); assert.equal(r.senCapped, false);
+  assert.equal(r.expGain, Math.max(1, Math.round(expToNext(1) * NGUON_CFG.nguon.hangYeu.moiLan))); assert.equal(r.farm.exp, r.expGain); assert.equal(r.senGain, 1); assert.equal(r.senCapped, false);
   assert.equal(r.farm.kills, 1); assert.equal(r.farm.sen.n, 1); assert.equal(senLeft(r.farm, T0), FARM_CFG.senCapNgay - 1);
 });
 
@@ -69,7 +69,7 @@ test('farm thử nối spawn: đánh hết Dã Mèo của Bìa Rừng Thông nhi
   const rng = rngSeed(2026), sp = createSpawner('biaRungThong', rng); let f = emptyFarm(T0), sen = 0, kills = 0;
   for (let round = 0; round < 6; round++) {
     for (const m of sp.mons.filter((x) => !x.elite && !x.boss)) { const r = hitMonster(sp, m.id, 9999, 'ban', rng); if (r.dead) { const s = settleKill(f, MONSTERS[r.mon.type], r.drops, T0); f = s.farm; sen += s.senGain; kills++; } }
-    for (let i = 0; i < 70; i++) tickSpawner(sp, 1, rng);   // 70 giây: quái thường (30–60 s) hồi sinh đủ
+    for (let i = 0; i < 70; i++) tickSpawner(sp, 1, rng);   // 70 giây: quái thường (RESPAWN_CFG 10–20 s) hồi sinh đủ
   }
   assert.ok(kills >= 11 * 5, `chỉ ${kills} lần thu phục`); assert.ok(f.exp > 0); assert.ok(sen > 0 && sen <= FARM_CFG.senCapNgay); assert.equal(f.kills, kills); assert.ok(tuViOf(f).tuvi >= 1);
 });

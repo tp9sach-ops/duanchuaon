@@ -18,7 +18,7 @@ const L1 = HOUSE_LEVELS[1], L2 = HOUSE_LEVELS[2], L3 = HOUSE_LEVELS[3];
 export const TOPICS = [
   { id: 'batdau', ten: 'Cách chơi', moTa: 'Đi lại, bản đồ, nút bấm',
     steps: [
-      { text: 'Bấm vào đất để nhân vật đi tới đó. Trên máy tính dùng phím W A S D hoặc mũi tên; trên điện thoại dùng cần điều khiển bên trái.' },
+      { text: 'Bấm vào đất để nhân vật đi tới đó. Trên máy tính dùng phím W A S D hoặc mũi tên; trên điện thoại dùng cần điều khiển bên trái (kéo cần ra quá vành tròn để chạy; máy tính giữ Shift để chạy).' },
       { text: 'Kéo để xoay camera, cuộn hoặc chụm hai ngón để phóng to thu nhỏ. Bấm vào người, tượng, lư hương, cây để tương tác.' },
       { text: 'Bản đồ nhỏ ở góc trái cho thấy bạn (chấm sáng) và mọi nơi. Bấm vào bản đồ nhỏ để mở bản đồ lớn, rồi bấm vào một nơi hoặc một người để được dẫn tới.', go: tap('bando') },
       { text: 'Nút “Nhiệm vụ” liệt kê việc nên làm. Mỗi nhiệm vụ có nút “Dẫn đường”: nhân vật tự đi tới chỗ cần làm.', go: tap('nhiemvu') },

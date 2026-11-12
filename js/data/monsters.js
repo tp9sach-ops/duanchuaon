@@ -1,7 +1,7 @@
 // Số liệu QUÁI CỐ ĐỊNH Ở BÃI RỪNG (GDD v2 mục 8; kế hoạch G3.6). Mọi con số ở đây là QUY ƯỚC TẠM, chờ ptg duyệt và playtest (G8.1).
 // Chỉ sửa số ở file này; logic nằm ở js/world/spawn.js (có test: tests/spawn.test.mjs).
 // Tên quái, cấp và Hệ lấy từ bảng GDD mục 8. GDD ghi chung "Quái thường / tinh anh" mà không chỉ rõ con nào là tinh anh:
-// quy ước TẠM ở đây: con đứng sau trong mỗi vùng (Rêu Tinh, Cướp Đường) là TINH ANH. Quái tinh anh hồi sinh 5 phút (GDD), quái thường 30–60 giây (GDD).
+// quy ước TẠM ở đây: con đứng sau trong mỗi vùng (Rêu Tinh, Cướp Đường) là TINH ANH. Hồi sinh: xem RESPAWN_CFG bên dưới (Phiên 129 làm nhanh hơn GDD: thường 10–20 giây, tinh anh 2 phút).
 // Quái thường sinh CỤC BỘ theo từng người (không đồng bộ mạng): GDD mục 8 và câu 10. Boss vùng (Lão Mộc Tinh, Sơn Cước Đầu Mục) là việc của G4.1, KHÔNG nằm ở đây.
 export const MON_CFG = Object.freeze({
   tam: true,
@@ -25,8 +25,8 @@ export const MONSTERS = Object.freeze({
   thuymau: Object.freeze({ id: 'thuymau', ten: 'Thủy Mẫu Hồ Thác', lv: 45, he: 'thuy', elite: false, boss: true, drop: Object.freeze({ chance: 1, min: 20, max: 30 }) }),
 });
 
-// Hồi sinh (giây, giữ GDD mục 8): thường 30–60, tinh anh 5 phút.
-export const RESPAWN_CFG = Object.freeze({ normal: Object.freeze([30, 60]), elite: Object.freeze([300, 300]), boss: Object.freeze([2700, 2700]) });   // boss vùng 45 phút (GDD mục 8); Phiên 123: sinh LOCAL theo từng người, chung phòng qua Firebase để sau
+// Hồi sinh (giây). Phiên 129: NHANH HƠN theo yêu cầu ptg (trước theo GDD mục 8: thường 30–60, tinh anh 300). Nay: thường 10–20, tinh anh 120. Boss vùng giữ 45 phút. TẠM, chờ ptg duyệt.
+export const RESPAWN_CFG = Object.freeze({ normal: Object.freeze([10, 20]), elite: Object.freeze([120, 120]), boss: Object.freeze([2700, 2700]) });   // boss vùng 45 phút (GDD mục 8); Phiên 123: sinh LOCAL theo từng người, chung phòng qua Firebase để sau
 // Đặt quái: cách nhau ≥ minGap m, cách người chơi ≥ minFromPlayer m, thử tối đa `tries` lần mỗi chỗ, đặt không được thì thử lại sau `retry` giây.
 export const SPAWN_CFG = Object.freeze({ minGap: 3, minFromPlayer: 6, tries: 30, retry: 5 });
 

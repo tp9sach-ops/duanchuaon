@@ -97,7 +97,7 @@ export function rollDrops(typeId, rng) {
 }
 
 /**
- * Gây sát thương lên Oán Khí của quái `id`. Sát thương > 0 luôn trừ ít nhất 1. Oán Khí về 0 → thu phục: quái biến mất, hẹn giờ hồi sinh (30–60 s; tinh anh 300 s), kèm quà rơi.
+ * Gây sát thương lên Oán Khí của quái `id`. Sát thương > 0 luôn trừ ít nhất 1. Oán Khí về 0 → thu phục: quái biến mất, hẹn giờ hồi sinh (theo RESPAWN_CFG ở js/data/monsters.js), kèm quà rơi.
  * Trả { dead, dealt, mon, drops }. Quái không tồn tại hoặc sát thương không hợp lệ → { dead:false, dealt:0, mon:null|mon, drops:null }.
  */
 export function hitMonster(sp, id, dmg, who = 'ban', rng = () => 0.5) {
