@@ -1,5 +1,6 @@
 // Logic thuần của nhân vật (không đụng three.js, có test): màu áo, làm sạch tên/chat, ngắt dòng bong bóng, tư thế theo trạng thái.
 import { clamp } from '../util.js';
+import { runK, gaitRate } from './chibiRig.js';
 
 /** Các màu áo cho người chơi chọn. */
 export const AVATAR_COLORS = [
@@ -102,9 +103,9 @@ export function poseFor(state, t, speed = 0) {
   const P = { legL: 0, legR: 0, armL: 0, armR: 0, lean: 0, sit: 0, dy: 0, head: 0 };
   switch (state) {
     case 'walk': {
-      const k = clamp(speed / 2.2, 0.25, 1.15), ph = t * (5 + 4 * k), a = 0.62 * k;
+      const k = clamp(speed / 2.2, 0.25, 1.15), run = runK(speed), ph = t * gaitRate(speed), a = 0.62 * k * (1 + 0.4 * run);   // Phiên 120: chạy → nhịp nhanh, sải dài, nảy hông cao hơn
       P.legL = Math.sin(ph) * a; P.legR = -P.legL; P.armL = -P.legL * 0.8; P.armR = -P.legR * 0.8;
-      P.dy = Math.abs(Math.sin(ph)) * 0.035 * k; P.lean = 0.06 * k; break;
+      P.dy = Math.abs(Math.sin(ph)) * 0.035 * k * (1 + 0.9 * run); P.lean = 0.06 * k; break;
     }
     case 'sit': {
       P.sit = 1; P.armL = P.armR = -0.55; P.head = Math.sin(t * 0.8) * 0.02; P.dy = Math.sin(t * 1.3) * 0.006; break;   // thở nhẹ
