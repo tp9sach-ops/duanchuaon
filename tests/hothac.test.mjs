@@ -1,41 +1,48 @@
-// Test vùng thứ ba Hồ Thác Đại Phật (Phiên 114). Chạy: node --test tests/hothac.test.mjs
+// Test hai vùng quái "rừng sâu" (Phiên 114 tạo vùng Thủy ở bãi thác; Phiên 118 DỜI vào khoảng đất trống). Chạy: node --test tests/hothac.test.mjs
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { MONSTERS, FARM_ZONES, FARM_CFG } from '../js/data/monsters.js';
-import { THAC, DINH_NGHI, OUT_ROCKS, DAI_PHAT } from '../js/world/outside.js';
+import { OUT_WALKS, THAC, DINH_NGHI, OUT_ROCKS, DAI_PHAT, BAO_THAP, MIEU, CO_THU } from '../js/world/outside.js';
+import { LAKE, THUY_TA, RIVER } from '../js/world/river.js';
 import { rngSeed } from '../js/world/yeuquai.js';
 import { zoneAt, oanKhiMaxOf, monsterStats, createSpawner, ZONE_IDS } from '../js/world/spawn.js';
 
-const corners = (r) => [[r.x0, r.z0], [r.x0, r.z1], [r.x1, r.z0], [r.x1, r.z1]];
-const inAvoid = (z, x, zz) => z.avoid.some((c) => Math.hypot(x - c.x, zz - c.z) <= c.r);
+const inR = (r, x, z, m = 0) => x >= r.x0 - m && x <= r.x1 + m && z >= r.z0 - m && z <= r.z1 + m;
 
-test('Hồ Thác Đại Phật: tên/cấp/Hệ đúng GDD mục 8; Lý Ngư Tinh là tinh anh; ba vùng', () => {
+test('vùng Thủy: cấp/Hệ đúng GDD mục 8; Lý Ngư Tinh là tinh anh; ba vùng', () => {
   const z = FARM_ZONES.hoThac;
   assert.equal(ZONE_IDS.length, 3);
   assert.deepEqual([MONSTERS.thuyquy.ten, MONSTERS.thuyquy.lv, MONSTERS.lyngu.ten, MONSTERS.lyngu.lv], ['Thủy Quỷ Hồ Thác', 28, 'Lý Ngư Tinh', 38]);
-  assert.deepEqual([z.ten, z.lvMin, z.lvMax, z.he, z.cap, z.eliteMax], ['Hồ Thác Đại Phật', 25, 45, 'thuy', 12, 1]);
+  assert.deepEqual([z.lvMin, z.lvMax, z.he, z.cap, z.eliteMax], [25, 45, 'thuy', 12, 1]);
   assert.deepEqual([...z.normal], ['thuyquy']); assert.deepEqual([...z.elite], ['lyngu']);
   assert.equal(monsterStats('lyngu').elite, true); assert.equal(monsterStats('thuyquy').he, 'thuy');
   assert.equal(oanKhiMaxOf('thuyquy'), 30 + 12 * 28); assert.equal(oanKhiMaxOf('lyngu'), (30 + 12 * 38) * 3);
 });
-test('Hồ Thác: avoid che hồ thác (kể cả lề), đình nghỉ chân, bốn đá lớn, bậc đá và đèn trước Đại Phật; chỗ đứng ngắm không bị quái chiếm', () => {
-  const z = FARM_ZONES.hoThac, covers = (c, x, zz, r = 0) => Math.hypot(x - c.x, zz - c.z) + r <= c.r;
-  assert.ok(z.avoid.some((c) => covers(c, THAC.pool.x, THAC.pool.z, THAC.pool.r + 1.5)), 'hồ + lề 1,5 m');
-  for (const [x, zz] of corners(DINH_NGHI)) assert.ok(inAvoid(z, x, zz), 'đình');
-  for (const k of OUT_ROCKS) assert.ok(z.avoid.some((c) => covers(c, k.x, k.z, k.r)), `đá ${k.x},${k.z}`);
-  for (const [x, zz] of corners(DAI_PHAT.bac)) assert.ok(z.avoid.some((c) => covers(c, x, zz)) || !z.rects.some((r) => x >= r.x0 && x <= r.x1 && zz >= r.z0 && zz <= r.z1), 'bậc đá');
-  for (const d of DAI_PHAT.den) assert.ok(inAvoid(z, d.x, d.z), 'đèn đá');
-  assert.ok(z.avoid.some((c) => covers(c, DAI_PHAT.stand.x, DAI_PHAT.stand.z)), 'chỗ đứng ngắm Đại Phật');
-});
-test('zoneAt nhận Hồ Thác; đường mòn phía tây vẫn là Đường Mòn; giữa hồ vẫn thuộc vùng (quái chỉ không đặt ở đó)', () => {
-  assert.equal(zoneAt(90, 96), 'hoThac'); assert.equal(zoneAt(95, 118), 'hoThac');
-  assert.equal(zoneAt(80, 104), 'duongMon'); assert.equal(zoneAt(82, 104), null);
-});
-test('thả quái nhiều lần: không con nào đứng trong hồ / bậc đá; hai vùng sát nhau cùng hiện không vượt bể vẽ', () => {
-  const z = FARM_ZONES.hoThac;
-  for (const seed of [4, 8, 15, 16, 23, 42]) {
-    const sp = createSpawner('hoThac', rngSeed(seed), { player: { x: 88, z: 100 } });
-    for (const m of sp.mons) { assert.ok(Math.hypot(m.x - THAC.pool.x, m.z - THAC.pool.z) > THAC.pool.r + 1.5, 'trong hồ'); assert.ok(m.x < DAI_PHAT.bac.x0 || m.z < DAI_PHAT.bac.z0 || m.z > DAI_PHAT.bac.z1, 'trên bậc đá'); assert.ok(!inAvoid(z, m.x, m.z)); }
+test('Phiên 118: bãi quái nằm trong khoảng đất trống đi tới được, nối đường mòn bằng lối hẹp; KHÔNG chạm cảnh đẹp (thác, Đại Phật, hồ, Bảo tháp, miếu, cổ thụ, đường mòn)', () => {
+  for (const [zid, glade, lane] of [['duongMon', 'rung-sau-dong', 'loi-rung-dong'], ['hoThac', 'rung-sau-tay', 'loi-rung-tay']]) {
+    const z = FARM_ZONES[zid], g = OUT_WALKS.find((w) => w.id === glade), l = OUT_WALKS.find((w) => w.id === lane);
+    assert.ok(g && l, zid); assert.ok(z.rects.every((r) => r.x0 >= g.x0 && r.x1 <= g.x1 && r.z0 >= g.z0 && r.z1 <= g.z1), 'trọn trong khoảng đất trống');
+    assert.ok(l.x1 - l.x0 >= 6, 'lối rộng ≥ 6 m');
+    const path = OUT_WALKS.find((w) => w.id === (zid === 'duongMon' ? 'duong-thac' : 'duong-rung'));
+    assert.ok(l.z0 <= path.z1 && l.z1 >= path.z0 || l.z0 <= path.z1 + 1 && l.z1 >= path.z0 - 1, 'lối chạm đường mòn');
+    assert.ok(Math.abs(l.z1 - g.z0) <= 1 || l.z0 <= g.z0 && l.z1 >= g.z0, 'lối chạm khoảng đất trống');
+    for (const r of z.rects) for (const w of OUT_WALKS) if (!['rung-sau-dong', 'rung-sau-tay'].includes(w.id)) assert.ok(!(r.x0 < w.x1 && w.x0 < r.x1 && r.z0 < w.z1 && w.z0 < r.z1), `${zid} chồng ${w.id}`);
+    for (const r of z.rects) {
+      for (const [x, zz] of [[THAC.pool.x, THAC.pool.z], [DAI_PHAT.stand.x, DAI_PHAT.stand.z], [LAKE.x, LAKE.z], [THUY_TA.stand.x, THUY_TA.stand.z], [BAO_THAP.cx, BAO_THAP.cz], [CO_THU.x, CO_THU.z], [(MIEU.x0 + MIEU.x1) / 2, (MIEU.z0 + MIEU.z1) / 2], [(DINH_NGHI.x0 + DINH_NGHI.x1) / 2, (DINH_NGHI.z0 + DINH_NGHI.z1) / 2]]) assert.ok(!inR(r, x, zz, 6), `${zid} sát cảnh đẹp ${x},${zz}`);
+      for (const k of OUT_ROCKS) assert.ok(!inR(r, k.x, k.z, 3));
+      for (const [x, zz] of RIVER.pts) assert.ok(!inR(r, x, zz, 3), `${zid} sát sông`);
+    }
   }
-  assert.ok(2 * z.cap <= FARM_CFG.maxVisible, 'hai vùng sát nhau cùng hiện ≤ bể vẽ');
+  assert.ok(!FARM_ZONES.biaRungThong.rects.some((r) => inR(r, THAC.pool.x, THAC.pool.z)));
+});
+test('zoneAt: đường mòn thác, bãi dưới thác và Đại Phật không còn quái; rừng sâu thì có', () => {
+  for (const [x, z] of [[90, 96], [95, 118], [80, 104], [108, 118], [106, 104], [20, 104]]) assert.equal(zoneAt(x, z), null, `${x},${z}`);
+  assert.equal(zoneAt(52, 130), 'duongMon'); assert.equal(zoneAt(-60, 115), 'hoThac');
+});
+test('thả quái nhiều lần: quái chỉ ở trong khoảng đất trống; hai vùng cùng hiện không vượt bể vẽ', () => {
+  for (const id of ['duongMon', 'hoThac']) for (const seed of [4, 8, 15, 16, 23, 42]) {
+    const z = FARM_ZONES[id], sp = createSpawner(id, rngSeed(seed), { player: { x: z.rects[0].x0 + 1, z: z.rects[0].z0 - 3 } });
+    for (const m of sp.mons) assert.ok(z.rects.some((r) => inR(r, m.x, m.z)), `${id} ngoài bãi`);
+  }
+  assert.ok(3 * FARM_ZONES.hoThac.cap <= FARM_CFG.maxVisible + FARM_ZONES.hoThac.cap, 'bể vẽ');
 });

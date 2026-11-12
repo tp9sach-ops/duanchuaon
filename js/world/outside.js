@@ -15,6 +15,11 @@ export const OUT_WALKS = [
   { id: 'bai-rung', x0: -118, x1: -90, z0: 72, z1: 108 },       // bãi trong rừng thông
   { id: 'duong-thap', x0: 59, x1: 65, z0: 92, z1: 100 },        // Phiên 82: lối từ đường mòn thác lên đồi Bảo tháp (rẽ trái ở giữa đường mòn)
   { id: 'san-thap', x0: 50, x1: 74, z0: 68, z1: 93 },           // Phiên 82: sân lát đá quanh Bảo tháp
+  // Phiên 118: hai khoảng đất trống trong rừng, trước chỉ để nhìn nay ĐI TỚI ĐƯỢC (bãi quái ngủ trong bụi rậm). Mỗi khoảng nối với đường mòn bằng một lối hẹp 6 m.
+  { id: 'loi-rung-dong', x0: 50, x1: 56, z0: 108, z1: 121 },      // lối từ đường mòn thác (rẽ phải, nam) vào rừng sâu phía Đông
+  { id: 'rung-sau-dong', x0: 36, x1: 68, z0: 120, z1: 142 },      // khoảng đất trống rừng sâu phía Đông (bãi Kim)
+  { id: 'loi-rung-tay', x0: -64, x1: -58, z0: 93, z1: 105 },      // lối từ đường mòn rừng (rẽ trái, nam) vào rừng sâu phía Tây
+  { id: 'rung-sau-tay', x0: -78, x1: -46, z0: 104, z1: 130 },     // khoảng đất trống rừng sâu phía Tây (bãi Thủy)
   ...LAND_WALKS,                                                 // Phiên 36: đường xuống xóm + khu dân cư (js/world/land.js)
 ];
 

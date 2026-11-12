@@ -86,7 +86,9 @@ export function buildFarm() {
         if (s.type !== m.type) { s.body.clear(); (tpl[m.type] = tpl[m.type] || buildType(m.type)); s.body.add(tpl[m.type].clone()); s.type = m.type; }
         const flash = Math.max(0, m.flash || 0), sc = (m.elite ? 1.15 : 1) * (1 + 0.14 * flash), phase = (m.id || 0) * 1.7;
         s.root.visible = true; s.root.position.set(m.x, 0, m.z);
-        s.body.position.y = Math.abs(Math.sin(t * 2.2 + phase)) * 0.07; s.body.rotation.y = m.ry + Math.sin(t * 0.9 + phase) * 0.3; s.body.scale.setScalar(sc);
+        const sleep = !m.eng;   // Phiên 118: quái chưa bị đánh thì NGỦ trong bụi (nằm thấp, thở chậm); bị đánh mới nổi giận và đứng dậy
+        s.body.position.y = sleep ? 0 : Math.abs(Math.sin(t * 2.2 + phase)) * 0.07; s.body.rotation.y = m.ry + (sleep ? 0 : Math.sin(t * 0.9 + phase) * 0.3); s.body.scale.setScalar(sc);
+        if (sleep) s.body.scale.set(sc * 1.05, sc * (0.72 + 0.03 * Math.sin(t * 0.8 + phase)), sc * 1.05);
         const h = (HEIGHT[m.type] || 1.5) * sc + 0.5, hurt = m.oan < m.max, isT = view.target === m.uid;
         s.bar.visible = hurt || isT; s.bar.position.y = h; if (camera) s.bar.quaternion.copy(camera.quaternion);
         const pct = Math.max(0, Math.min(1, m.oan / Math.max(1, m.max))); s.fill.scale.set(1.16 * pct, 0.1, 1); s.fill.position.x = -0.58 * (1 - pct);

@@ -21,7 +21,8 @@ test('ngoài chùa: mọi vùng đi bộ nối liền với chỗ xuất hiện 
 });
 
 test('ngoài chùa: ngoài vùng đi bộ là chặn (rừng, nhà dân, sườn núi chỉ để nhìn); mặt thác và hồ chân thác cũng chặn', () => {
-  for (const [x, z] of [[-60, 120], [40, 70], [150, 104], [70, 170], [-20, 100], [60, 120]]) assert.equal(blocked(x, z), true, `(${x},${z})`);
+  for (const [x, z] of [[-60, 135], [40, 70], [150, 104], [70, 170], [-20, 100], [60, 150]]) assert.equal(blocked(x, z), true, `(${x},${z})`);
+  for (const [x, z] of [[-60, 115], [-60, 100], [52, 130], [53, 114]]) assert.equal(blocked(x, z), false, `rừng sâu đi tới được (${x},${z})`);
   assert.equal(blocked(THAC.pool.x, THAC.pool.z), false, 'hồ chân thác bơi được (Phiên 87)'); assert.equal(blocked(THAC.pool.x + THAC.pool.r - 0.5, THAC.pool.z), true, 'sát vách thác (ngoài vùng đi bộ) vẫn chặn');
 });
 

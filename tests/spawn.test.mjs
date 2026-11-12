@@ -42,8 +42,8 @@ test('vùng nằm TRỌN trong vùng đi bộ OUT_WALKS; hai vùng không chồn
 test('zoneAt: nhận đúng vùng, ngoài vùng và toạ độ lạ → null', () => {
   assert.equal(zoneAt(-100, 90), 'biaRungThong');
   assert.equal(zoneAt(-80, 89), 'biaRungThong');
-  assert.equal(zoneAt(-40, 89), 'duongMon');
-  assert.equal(zoneAt(50, 104), 'duongMon');
+  assert.equal(zoneAt(-40, 89), null, 'đường mòn thông thoáng, không còn quái');
+  assert.equal(zoneAt(50, 104), null, 'đường mòn thác không còn quái'); assert.equal(zoneAt(52, 130), 'duongMon'); assert.equal(zoneAt(-60, 115), 'hoThac');
   assert.equal(zoneAt(0, 0), null);
   assert.equal(zoneAt(NaN, 5), null);
   assert.equal(zoneAt('x', undefined), null);
@@ -105,10 +105,10 @@ test('tinh anh hồi sinh sau 5 phút', () => {
 });
 
 test('đặt không được (điểm bị chiếm) thì thử lại sau retry giây, không mất lượt', () => {
-  const sp = createSpawner('duongMon', rngSeed(5)), cap = FARM_ZONES.duongMon.cap, rng0 = () => 0;   // rng0: mọi lần chọn đều ra đúng điểm (-66, 85)
+  const sp = createSpawner('duongMon', rngSeed(5)), cap = FARM_ZONES.duongMon.cap, rng0 = () => 0;   // rng0: mọi lần chọn đều ra đúng điểm (37.5, 121.5)
   const normals = sp.mons.filter((m) => !m.elite);
   hitMonster(sp, normals[0].id, 1e6, 'ban', rng0); hitMonster(sp, normals[1].id, 1e6, 'ban', rng0);   // hẹn 30 s
-  const blocker = { id: 999, type: 'daotac', ten: 'x', lv: 15, he: 'kim', elite: false, x: -66, z: 85, ry: 0, oan: 1, max: 1, dmgBy: {} };
+  const blocker = { id: 999, type: 'daotac', ten: 'x', lv: 15, he: 'kim', elite: false, x: 37.5, z: 121.5, ry: 0, oan: 1, max: 1, dmgBy: {} };
   sp.mons.push(blocker);
   assert.equal(sp.mons.length, cap - 1);
   assert.equal(run(sp, 30, rng0).length, 0);                       // tới giờ nhưng chỗ bị chiếm

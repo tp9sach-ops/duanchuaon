@@ -18,7 +18,7 @@ test('monsterattack: walkable — trong vùng, tránh hình tròn; vùng lạ kh
   assert.equal(walkable('biaRungThong', -100, 90), true);
   assert.equal(walkable('biaRungThong', -110, 102), false, 'trong vòng tránh');
   assert.equal(walkable('biaRungThong', 0, 0), false, 'ngoài vùng');
-  assert.equal(walkable('hoThac', 106, 104), false, 'giữa hồ thác');
+  assert.equal(walkable('hoThac', 106, 104), false, 'bãi thác không còn là vùng quái'); assert.equal(walkable('hoThac', -60, 115), true);
   assert.equal(walkable('khong-co', 0, 0), true);
   assert.equal(walkable('biaRungThong', NaN, 3), false);
   for (const z of Object.values(FARM_ZONES)) { const r = z.rects[0]; assert.equal(walkable(z.id, r.x0 - 0.5, r.z0), false); }

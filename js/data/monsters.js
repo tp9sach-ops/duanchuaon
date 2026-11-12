@@ -34,18 +34,18 @@ export const FARM_ZONES = Object.freeze({
     rects: Object.freeze([{ x0: -117, x1: -91, z0: 73, z1: 107 }, { x0: -90, x1: -72, z0: 85, z1: 93 }]),
     avoid: Object.freeze([{ x: -100.5, z: 75.5, r: 3.2 }, { x: -106, z: 90, r: 3.6 }, { x: -110, z: 102, r: 8.5 }]),
   }),
+  // Phiên 118: hai vùng này DỜI khỏi đường mòn và bãi dưới thác (để đường thông thoáng, Đại Phật + thác để chụp hình) vào hai khoảng đất trống rừng sâu mới (OUT_WALKS 'rung-sau-dong' / 'rung-sau-tay'). Id giữ nguyên để lưu/test không đổi.
   duongMon: Object.freeze({
-    id: 'duongMon', nightOnly: true, ten: 'Đường Mòn Đông–Tây', lvMin: 12, lvMax: 25, he: 'kim', cap: 12, eliteMax: 1,
+    id: 'duongMon', nightOnly: true, ten: 'Rừng Sâu Phía Đông', lvMin: 12, lvMax: 25, he: 'kim', cap: 12, eliteMax: 1,
     normal: Object.freeze(['daotac']), elite: Object.freeze(['cuopduong']),
-    rects: Object.freeze([{ x0: -66, x1: -18, z0: 85, z1: 93 }, { x0: 20, x1: 80, z0: 100, z1: 108 }]),
+    rects: Object.freeze([{ x0: 37.5, x1: 66.5, z0: 121.5, z1: 140.5 }]),
     avoid: Object.freeze([]),
   }),
-  // Bãi dưới thác (OUT_WALKS 'bai-thac' x 84–112, z 86–122), chừa lề 1 m. avoid: hồ thác (tâm 106,104 r 7,5, bơi được nên chừa thêm), đình nghỉ chân, bốn đá lớn, bậc đá + đèn trước Đại Phật.
   hoThac: Object.freeze({
-    id: 'hoThac', nightOnly: true, ten: 'Hồ Thác Đại Phật', lvMin: 25, lvMax: 45, he: 'thuy', cap: 12, eliteMax: 1,
+    id: 'hoThac', nightOnly: true, ten: 'Rừng Sâu Phía Tây', lvMin: 25, lvMax: 45, he: 'thuy', cap: 12, eliteMax: 1,
     normal: Object.freeze(['thuyquy']), elite: Object.freeze(['lyngu']),
-    rects: Object.freeze([{ x0: 85, x1: 111, z0: 87, z1: 121 }]),
-    avoid: Object.freeze([{ x: 106, z: 104, r: 10 }, { x: 92, z: 90, r: 4 }, { x: 100, z: 92, r: 2.6 }, { x: 109, z: 90, r: 2.7 }, { x: 101, z: 117, r: 3 }, { x: 111.5, z: 117, r: 6 }]),
+    rects: Object.freeze([{ x0: -76.5, x1: -47.5, z0: 105.5, z1: 128.5 }]),
+    avoid: Object.freeze([]),
   }),
 });
 
