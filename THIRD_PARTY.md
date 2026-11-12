@@ -61,3 +61,8 @@ SOFTWARE.
 ## Mô hình nhân vật chibi (`assets/models/chibi/chibi-low.glb`, `chibi-mid.glb`) — GIẤY PHÉP CHƯA RÕ
 - Do ptg gửi ngày 2026-11-11: `low_poly_chibi_base.glb` (→ `chibi-low.glb`, xuất từ Sketchfab, 700 đỉnh) và `chibi_base.glb` (→ `chibi-mid.glb`, xuất từ Sketchfab, 7.000 đỉnh). Tên tác giả và giấy phép KHÔNG có trong file; ptg cần xác nhận nguồn/giấy phép trước khi công bố rộng và bổ sung ghi công ở đây. Mã đã gắn xương và tô màu theo vùng (không sửa lưới).
 - `chibi_base_body.glb` (20.000 đỉnh) ptg cũng gửi nhưng CHƯA đưa vào repo.
+
+## Tiếng kỹ năng / chiến đấu (`assets/sfx/*.mp3`, 15 file) — GIẤY PHÉP CHƯA XÁC NHẬN
+- Do Gp gửi ngày 2026-11-11 (Phiên 109). Tên file gốc gợi ý nguồn: `dragon-studio-*` (8 file kiếm), `universfield-blade-piercing-body`, `freesound_community-clean-fast-swoosh`, `freesound_gamestudio-hero-skill-attack-reveal-*` (5 file kỹ năng) — dạng tên file tải từ Pixabay. Giấy phép cụ thể từng file KHÔNG có trong file; Gp cần xác nhận (và ghi công nếu giấy phép yêu cầu) trước khi công bố rộng.
+- Mã đã cắt đuôi, chuẩn hóa độ lớn (ffmpeg loudnorm −18 LUFS), đổi sang mono 44,1 kHz 80 kbps; không sửa nội dung âm thanh. Bảng file gốc → file trong repo: `docs/PHIEN109.md`.
+
