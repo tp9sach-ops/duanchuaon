@@ -15,3 +15,6 @@ For the 9 Sạch monthly-archive project (and any long multi-session build): aft
 
 ## Việc tiếp
 - Sửa nút "Tự động" trong dock.js (nối toggleAuto) nếu ptg đồng ý; test DOM cho farmCombat; chụp ảnh điện thoại; G2.5 thanh kỹ năng; `LGT.he` nối vào engine; tutorial "ba vùng"; PROMPT.md mục 7 (Phiên 98, 109–115); thêm quái Đồi Bảo Tháp.
+
+## Phiên 116 (nhỏ)
+- `js/world/tutorial.js`: lời hướng dẫn sửa thành "ba vùng luyện" (thêm Hồ Thác) và bỏ câu "quái không đánh trả", thay bằng lời về gồng/né/Sinh Lực/kiệt sức. `tests/tutorial.test.mjs` 6/6.

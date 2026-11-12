@@ -22,7 +22,7 @@
 5. Màu và hình mô hình chỉ là khối tạm, chờ GLB/hoạ sĩ.
 
 ## Chưa làm / lưu ý
-- `js/world/tutorial.js` dòng ~89 vẫn ghi "hai vùng luyện" (chỉ nhắc Bìa Rừng Thông và Đường Mòn). Phiên sau sửa thành ba vùng, thêm "${FARM_ZONES.hoThac.ten} (bãi dưới thác, quái cấp ${MONSTERS.thuyquy.lv}–${MONSTERS.lyngu.lv})" và chạy `tests/tutorial.test.mjs`. Chưa làm vì file 17 KB, tải lại nguyên file qua công cụ dễ hỏng.
+- (ĐÃ SỬA Phiên 116) `js/world/tutorial.js` từng ghi "hai vùng luyện" (chỉ nhắc Bìa Rừng Thông và Đường Mòn). Phiên sau sửa thành ba vùng, thêm "${FARM_ZONES.hoThac.ten} (bãi dưới thác, quái cấp ${MONSTERS.thuyquy.lv}–${MONSTERS.lyngu.lv})" và chạy `tests/tutorial.test.mjs`. Chưa làm vì file 17 KB, tải lại nguyên file qua công cụ dễ hỏng.
 - `docs/KE_HOACH_GDD_V2.md`: chưa đánh dấu G2.4 "(b) XONG (Phiên 113)" và chưa ghi vùng Hồ Thác XONG (Phiên 114). Phiên sau sửa cả hai.
 - `FARM_CFG` comment ở `js/data/monsters.js` về `maxVisible` vẫn nói "hai vùng sát nhau" (đúng: tối đa hai vùng cùng nằm trong nearMargin 40 m).
 - Chưa chơi thử trên trình duyệt thật (vùng Hồ Thác, mô hình 3D, bảng chọn Hệ Phiên 113).
