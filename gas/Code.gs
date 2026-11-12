@@ -68,6 +68,10 @@ function route_(req) {
     case 'sync':         return json_(roomSync_(req));       // Room.gs (đa người)
     case 'yq':           return json_(yqSync_(req));         // Yq.gs (yêu quái đánh chung)
     case 'thr':          return json_(thrSync_(req));        // Throw.gs (ném người chơi khác)
+    case 'saveScore':    return json_(rankSave_(req));       // Rank.gs (bảng xếp hạng)
+    case 'rankPing':     return json_(rankPing_(req));
+    case 'getRank':      return json_(rankList_(req));
+    case 'getPlayer':    return json_(rankPlayer_(req));
     case 'acctCreate':   return json_(acctCreate_(req));     // Accounts.gs (tài khoản nhân vật)
     case 'acctLogin':    return json_(acctLogin_(req));
     case 'acctLoad':     return json_(acctLoad_(req));
