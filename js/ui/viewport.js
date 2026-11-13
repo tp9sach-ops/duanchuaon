@@ -4,6 +4,7 @@ import { viewportState } from './viewportLogic.js';
 
 export function initViewport(root = document.documentElement) {
   let raf = 0, last = '', frame = null;
+  injectFix();   // Phiên 130: css/mobilefix.css (sửa nút bị che trên điện thoại / trong khung)
   const apply = () => {
     raf = 0;
     const vv = window.visualViewport || null;
@@ -25,8 +26,18 @@ export function initViewport(root = document.documentElement) {
   return { refresh: apply };
 }
 
+/** Chèn css/mobilefix.css một lần (cùng cách compact.js chèn compact.css). */
+function injectFix() {
+  try {
+    if (document.querySelector('link[data-mobilefix]')) return;
+    const l = document.createElement('link'); l.rel = 'stylesheet'; l.dataset.mobilefix = '1';
+    l.href = new URL('../../css/mobilefix.css', import.meta.url).href; document.head.appendChild(l);
+  } catch (_) { /* không để lỗi nạp CSS làm hỏng game */ }
+}
+
 /** Phiên 129: game chạy trong khung (iframe). Đo vùng khung THẬT SỰ nhìn thấy để HUD/nút không bị khuất dưới thanh trình duyệt hoặc phần khung nằm ngoài màn hình.
- *  Cách 1: IntersectionObserver (trang cha khác tên miền vẫn dùng được). Cách 2 (tuỳ chọn): trang cha gửi postMessage {dgt:'frame', top, bottom} (toạ độ trong khung). */
+ *  Cách 1: IntersectionObserver (trang cha khác tên miền vẫn dùng được). Cách 2 (tuỳ chọn): trang cha gửi postMessage {dgt:'frame', top, bottom, left?, right?} (toạ độ trong khung).
+ *  Phiên 130: thêm left/right để cắt cả chiều ngang. */
 function watchFrame(set, on) {
   let inFrame = false;
   try { inFrame = window.self !== window.top; } catch (_) { inFrame = true; }
@@ -42,7 +53,7 @@ function watchFrame(set, on) {
       const io = new IntersectionObserver((es) => {
         const e = es[es.length - 1]; if (!e) return;
         const r = e.intersectionRect;
-        set(e.isIntersecting && r ? { top: r.top, bottom: r.bottom } : null);
+        set(e.isIntersecting && r ? { top: r.top, bottom: r.bottom, left: r.left, right: r.right } : null);
       }, { threshold: th });
       io.observe(s);
     }
@@ -50,7 +61,7 @@ function watchFrame(set, on) {
   try {
     window.addEventListener('message', (ev) => {
       const d = ev && ev.data; if (!d || d.dgt !== 'frame') return;
-      set({ top: Number(d.top), bottom: Number(d.bottom) });
+      set({ top: Number(d.top), bottom: Number(d.bottom), left: Number(d.left), right: Number(d.right) });
     });
   } catch (_) { /* bỏ qua */ }
 }

@@ -27,29 +27,41 @@ export const keyboardOpen = (layoutH, vv) => !!(vv && isFinite(vv.height) && num
 /** Hệ số co giãn HUD 0,78–1,12 theo cạnh nhỏ nhất của khung nhìn nhìn thấy (390×700 = 1). */
 export const hudScale = (w, h) => Math.round(clamp(Math.min(num(w, 390) / 390, num(h, 700) / 700), 0.78, 1.12) * 100) / 100;
 
-/** Khung game nằm trong iframe (Google Sites, trang khung...): khung có thể CAO hơn phần màn hình thật sự nhìn thấy (thanh địa chỉ, thanh dưới, trang cha cuộn).
- *  rect = vùng của khung đang nhìn thấy theo toạ độ trong khung { top, bottom } (lấy từ IntersectionObserver hoặc trang cha gửi qua postMessage).
- *  Trả { top, bottom } đã kẹp trong [0, innerH]; null nếu khung nhìn thấy đủ (lệch ≤ 2px) hoặc số liệu hỏng → giữ cách đo cũ. Vùng < 160px coi là hỏng (khung chưa dựng xong). */
-export function frameClip(innerH, rect) {
+/** Khung game nằm trong iframe (Google Sites, trang khung...): khung có thể CAO hoặc RỘNG hơn phần màn hình thật sự nhìn thấy (thanh địa chỉ, thanh dưới, trang cha cuộn / phóng to).
+ *  rect = vùng của khung đang nhìn thấy theo toạ độ trong khung { top, bottom, left?, right? } (lấy từ IntersectionObserver hoặc trang cha gửi qua postMessage).
+ *  innerW (tuỳ chọn) = chiều rộng khung; có cùng left/right hợp lệ thì cắt thêm theo chiều ngang (Phiên 130: nút bên phải/trái bị khuất khi khung rộng hơn màn hình).
+ *  Trả { top, bottom, left, right, x } đã kẹp trong khung (x = true khi có cắt ngang); null nếu khung nhìn thấy đủ (lệch ≤ 2px) hoặc số liệu hỏng → giữ cách đo cũ.
+ *  Vùng cao < 160px coi là hỏng (khung chưa dựng xong); vùng ngang < 160px thì bỏ qua phần cắt ngang. */
+export function frameClip(innerH, rect, innerW) {
   const H = num(innerH, 0);
   if (!H || !rect || !isFinite(rect.top) || !isFinite(rect.bottom)) return null;
   const top = clamp(rect.top, 0, H), bottom = clamp(rect.bottom, 0, H);
   if (bottom - top < 160) return null;
-  if (top <= 2 && H - bottom <= 2) return null;
-  return { top: Math.round(top), bottom: Math.round(bottom) };
+  const W = num(innerW, 0);
+  let left = 0, right = W, x = false;
+  if (W && isFinite(rect.left) && isFinite(rect.right)) {
+    const l = clamp(rect.left, 0, W), r = clamp(rect.right, 0, W);
+    if (r - l >= 160 && (l > 2 || W - r > 2)) { left = l; right = r; x = true; }
+  }
+  const y = !(top <= 2 && H - bottom <= 2);
+  if (!y && !x) return null;
+  return { top: Math.round(top), bottom: Math.round(bottom), left: Math.round(left), right: Math.round(right), x };
 }
 
-/** Tất cả giá trị cần ghi ra :root (--vvw, --vvh, --vv-top, --vv-bar, --hud-s) và data-* (vp, orient, short, tall, square, kbd, frame). */
+/** Tất cả giá trị cần ghi ra :root (--vvw, --vvh, --vv-top, --vv-left, --vv-bar, --hud-s) và data-* (vp, orient, short, tall, square, kbd, frame, frameX). */
 export function viewportState({ innerW, innerH, vv, frame } = {}) {
   let w = num(vv && vv.width, num(innerW, 390)), h = num(vv && vv.height, num(innerH, 800));
   const c0 = classify(w, h), kbd = keyboardOpen(innerH, vv);
-  const clip = kbd ? null : frameClip(innerH, frame);   // bàn phím ảo mở thì không cắt theo khung
-  let top = 0, bar = bottomBar(innerH, vv);
-  if (clip) { top = clip.top; h = Math.min(h, clip.bottom - clip.top); bar = 0; }
+  const clip = kbd ? null : frameClip(innerH, frame, innerW);   // bàn phím ảo mở thì không cắt theo khung
+  let top = 0, left = 0, bar = bottomBar(innerH, vv);
+  if (clip) {
+    top = clip.top; h = Math.min(h, clip.bottom - clip.top); bar = 0;
+    if (clip.x) { left = clip.left; w = Math.min(w, clip.right - clip.left); }
+  }
   const c = clip ? classify(w, h) : c0;
   return {
-    vars: { '--vvw': w + 'px', '--vvh': h + 'px', '--vv-top': top + 'px', '--vv-bar': bar + 'px', '--hud-s': String(hudScale(w, kbd ? Math.max(h, 520) : h)) },
-    data: { vp: c.size, orient: c.landscape ? 'landscape' : 'portrait', short: String(c.short && !kbd), tall: String(c.tall), square: String(c.square), kbd: String(kbd), frame: String(!!clip) },
+    vars: { '--vvw': w + 'px', '--vvh': h + 'px', '--vv-top': top + 'px', '--vv-left': left + 'px', '--vv-bar': bar + 'px', '--hud-s': String(hudScale(w, kbd ? Math.max(h, 520) : h)) },
+    data: { vp: c.size, orient: c.landscape ? 'landscape' : 'portrait', short: String(c.short && !kbd), tall: String(c.tall), square: String(c.square), kbd: String(kbd), frame: String(!!clip), frameX: String(!!(clip && clip.x)) },
     cls: c,
   };
 }

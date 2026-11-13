@@ -58,3 +58,23 @@ test('viewportState với frame: thu --vvh, đặt --vv-top; bàn phím mở th�
   const n = viewportState({ innerW: 390, innerH: 800, vv: { width: 390, height: 750, offsetTop: 0 } });
   assert.equal(n.data.frame, 'false'); assert.equal(n.vars['--vv-top'], '0px'); assert.equal(n.vars['--vv-bar'], '50px');
 });
+
+// Phiên 130: cắt theo chiều ngang (khung rộng hơn phần màn hình nhìn thấy → nút bên phải/trái bị khuất)
+test('khung iframe: cắt chiều ngang khi left/right hợp lệ; thiếu hoặc đủ thì bỏ qua', () => {
+  assert.equal(frameClip(800, { top: 0, bottom: 800, left: 0, right: 600 }, 800).right, 600);
+  assert.equal(frameClip(800, { top: 0, bottom: 800, left: 0, right: 600 }, 800).x, true);
+  assert.equal(frameClip(800, { top: 0, bottom: 800, left: 120, right: 800 }, 800).left, 120);
+  assert.equal(frameClip(800, { top: 0, bottom: 800, left: 0, right: 800 }, 800), null);        // đủ bề ngang và bề cao
+  assert.equal(frameClip(800, { top: 0, bottom: 800, left: 0, right: 600 }), null);              // không biết bề rộng khung → bỏ phần ngang
+  assert.equal(frameClip(800, { top: 0, bottom: 800, left: NaN, right: 600 }, 800), null);       // số liệu ngang hỏng → bỏ phần ngang
+  assert.equal(frameClip(800, { top: 0, bottom: 800, left: 0, right: 100 }, 800), null);         // vùng ngang < 160px = hỏng
+  const both = frameClip(800, { top: 40, bottom: 760, left: 0, right: 500 }, 800); assert.equal(both.top, 40); assert.equal(both.x, true);
+  assert.equal(frameClip(800, { top: 0, bottom: 700, left: 0, right: 800 }, 800).x, false);      // chỉ cắt dọc
+});
+test('viewportState với frame ngang: thu --vvw, đặt --vv-left, bật data-frame-x', () => {
+  const s = viewportState({ innerW: 800, innerH: 800, vv: { width: 800, height: 800, offsetTop: 0 }, frame: { top: 0, bottom: 800, left: 100, right: 500 } });
+  assert.equal(s.vars['--vvw'], '400px'); assert.equal(s.vars['--vv-left'], '100px'); assert.equal(s.data.frameX, 'true'); assert.equal(s.data.frame, 'true');
+  const n = viewportState({ innerW: 390, innerH: 800, vv: { width: 390, height: 800, offsetTop: 0 }, frame: { top: 0, bottom: 690 } });
+  assert.equal(n.vars['--vv-left'], '0px'); assert.equal(n.data.frameX, 'false'); assert.equal(n.vars['--vvw'], '390px');
+  const d = viewportState(); assert.equal(d.vars['--vv-left'], '0px'); assert.equal(d.data.frameX, 'false');
+});
