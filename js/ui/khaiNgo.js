@@ -1,10 +1,12 @@
 // Lễ Khai Ngộ trong game (G2.4b, GDD v2 mục 5.2): đủ Tu Vi 10 → ngồi vào 1 trong 5 bồ đoàn Ngũ Hành (hàng gần bàn thờ, có màu) → bảng nhỏ
 // hiện Hệ đang ngồi + đếm 60 giây dùng thử Skill 1 → "Chọn Hệ này" (lần đầu miễn phí; đổi sang Hệ khác tốn 20 lá bồ đề, TẠM).
 // Logic thuần: js/world/khaiNgo.js, js/world/heSeats.js (có test). File này chỉ lo giao diện + ghi localStorage['lgt.he'] + trừ lá bồ đề qua LGT.merit.spendLa.
-// Đặt LGT.he (Hệ đã chọn hoặc null) và phát sự kiện window 'lgt:he' { he, reset }. Chưa có thanh skill để bấm đánh quái (G2.5), nên Hệ mới chỉ dùng thử được ở đây.
+// Đặt LGT.he (Hệ đã chọn hoặc null) và phát sự kiện window 'lgt:he' { he, reset }. Chưa có thanh skill để bấm đánh quái (G2.5), nên Hệ mới mới dùng thử được ở đây.
 import { createKhaiNgo, canKhaiNgo, loadHe } from '../world/khaiNgo.js';
 import { KHAI_NGO } from '../data/skillCfg.js';
 import { heAt, heLabel } from '../world/heSeats.js';
+import { effLevel } from '../world/heQuest.js';
+import { levelOf } from '../world/quests.js';
 
 const SIT = ['sit', 'meditate'];
 const WHY = { 'chua-du-tu-vi': 'Chưa đủ Tu Vi.', 'het-gio': 'Đã hết 60 giây dùng thử.', 'hoi-chieu': 'Kỹ năng đang hồi chiêu.', 'chua-ngoi': 'Hãy ngồi vào bồ đoàn trước.' };
@@ -25,6 +27,7 @@ export function initKhaiNgo({ toast = () => {} } = {}) {
   row.append(bTry, bOk, bUp); box.append(title, info, row); document.body.appendChild(box);
 
   let ng = null, seatHe = null, warned = null;
+  const capNow = () => { try { if (LGT.capHieuDung) return LGT.capHieuDung(); } catch (_) { /* dùng cách dự phòng */ } return effLevel(LGT.farm ? LGT.farm.tuvi : 0, levelOf(LGT.quests && LGT.quests.prog ? LGT.quests.prog.xp : 0).lv); };
   const hide = () => { box.hidden = true; };
   const leaves = () => { const l = LGT.merit && LGT.merit.leaf; return l && Number.isFinite(+l.la) ? +l.la : 0; };
 
@@ -53,6 +56,7 @@ export function initKhaiNgo({ toast = () => {} } = {}) {
     try { localStorage.setItem(KHAI_NGO.heKey, r.he); } catch (_) { /* chế độ riêng tư: vẫn đặt trong phiên */ }
     LGT.he = r.he;
     try { window.dispatchEvent(new CustomEvent('lgt:he', { detail: { he: r.he, reset: r.reset } })); } catch (_) { /* bỏ qua */ }
+    try { if (LGT.act) LGT.act('khaingo'); } catch (_) { /* nhiệm vụ gia nhập phái */ }
     toast(`Lễ Khai Ngộ xong: bạn thuộc ${heLabel(r.he)}.${r.reset ? ' Kỹ năng về cấp 1.' : ''}`, 4500);
     hide();
   });
@@ -61,8 +65,8 @@ export function initKhaiNgo({ toast = () => {} } = {}) {
   function tick() {
     const w = LGT.world, h = w && SIT.includes(w.mode) ? heAt(w.pos) : null;
     if (!h) { if (ng) { ng.standUp(); ng = null; } seatHe = null; warned = null; hide(); return; }
-    const tuvi = LGT.farm ? LGT.farm.tuvi : 0;
-    if (!canKhaiNgo(tuvi)) { if (warned !== h) { warned = h; toast(`Cần Tu Vi ${KHAI_NGO.tuViMin} để làm Lễ Khai Ngộ (bạn có ${tuvi}). Đánh quái ở bãi rừng để tăng Tu Vi.`, 5500); } return; }
+    const tuvi = capNow();   // Phiên 143: cấp hiệu dụng = max(Tu Vi, cấp công hạnh) — thấy "Cấp 10" là gia nhập phái được
+    if (!canKhaiNgo(tuvi)) { if (warned !== h) { warned = h; toast(`Cần cấp ${KHAI_NGO.tuViMin} để gia nhập phái (bạn cấp ${tuvi}). Đánh quái ở bãi rừng hoặc làm nhiệm vụ để lên cấp.`, 5500); } return; }
     if (!ng) { ng = createKhaiNgo({ tuvi, he: readHe() }); seatHe = null; }
     if (ng.state === 'done') { hide(); return; }
     if (seatHe !== h) { const r = ng.sit(h, nowSec()); if (r.ok) seatHe = h; }
