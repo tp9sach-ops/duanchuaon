@@ -46,7 +46,7 @@ export function initFarm(hud, { toast = () => {} } = {}) {
   function reward(r) {
     const mon = r.mon, now = Date.now(), s = settleKill(farm, MONSTERS[mon.type], r.drops, now); farm = s.farm; save();
     if (s.senGain > 0 && LGT.addMerit) LGT.addMerit(s.senGain);
-    const xp = s.expGain > 0 ? killXp(mon) : 0;   // Phiên 134: hạ quái cũng cộng kinh nghiệm cấp độ (thanh "Cấp"), trong cùng trần ngày với Tu Vi
+    const xp = killXp(mon);   // Phiên 138: MỖI lần thu phục quái đều cộng kinh nghiệm cấp độ (thanh "Cấp"), kể cả khi đã hết trần Tu Vi trong ngày (trần ngày chỉ áp cho Tu Vi và hạt sen)
     const bits = [`Thu phục ${mon.ten}!`]; if (xp > 0) bits.push(`+${xp} kinh nghiệm`); if (s.senGain > 0) bits.push(`+${s.senGain} hạt sen`); if (s.expGain > 0) bits.push(`+${s.expGain} Tu Vi`);
     if (xp > 0 && LGT.addXp) LGT.addXp(xp);
     toast(bits.join(' '), 2600); if (LGT.sfx) LGT.sfx.play('quai-ha');
