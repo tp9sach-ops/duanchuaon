@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { FARM_CFG, MONSTERS } from '../js/data/monsters.js';
-import { emptyFarm, loadFarm, senLeft, tuViOf, settleKill, settleBoss, expLeft } from '../js/world/farm.js';
+import { emptyFarm, loadFarm, senLeft, tuViOf, settleKill, settleBoss, expLeft, killXp } from '../js/world/farm.js';
 import { createSpawner, tickSpawner, hitMonster } from '../js/world/spawn.js';
 import { rngSeed } from '../js/world/yeuquai.js';
 import { NGUON_CFG } from '../js/data/nguon.js';
@@ -79,4 +79,12 @@ test('Phiên 123: thu phục BOSS vùng tính nguồn boss (15% cấp kế, tr�
   for (let i = 0; i < 6; i++) { const r = settleKill(f, boss, { hatSen: 20 }, T0); f = r.farm; if (r.expGain > 0) { got++; assert.equal(r.expGain, Math.round(expToNext(1) * 0.15)); } else assert.equal(r.expCapped, true); }
   assert.equal(got, NGUON_CFG.tranNgay.boss); assert.equal(expLeft(f, 'boss', T0), 0); assert.equal(expLeft(f, 'hangYeu', T0), NGUON_CFG.tranNgay.hangYeu, 'quái thường không bị ảnh hưởng');
   assert.equal(f.sen.n, FARM_CFG.senCapNgay, 'hạt sen vẫn có trần ngày');
+});
+
+test('killXp: kinh nghiệm cấp độ theo cấp quái, tinh anh ×2, boss ×5, luôn ≥ 1 và hữu hạn', () => {
+  assert.equal(killXp({ lv: 3 }), 2);
+  assert.equal(killXp({ lv: 10, elite: true }), killXp({ lv: 10 }) * 2);
+  assert.equal(killXp({ lv: 20, boss: true }), killXp({ lv: 20 }) * 5);
+  assert.ok(killXp({ lv: 140 }) <= 12);
+  for (const bad of [null, undefined, {}, { lv: NaN }, { lv: -5 }, { lv: 'x' }]) assert.ok(killXp(bad) >= 1);
 });
