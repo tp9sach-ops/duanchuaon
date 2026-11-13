@@ -5,6 +5,7 @@ import { rollSizeCm, loadRec, noteRecord, cardData } from '../world/fishCard.js'
 import { THROW_RELEASE } from '../world/fishPose.js';
 import { icon } from './bagIcons.js';
 import { ORBS, orbById, repairCost, orbCurrency, priceText, loadFish, buyOrb, selectOrb, repairOrb, currentOrb, startCast, tick, tap, isTapKey, stillNearWater, keepFish, releaseCaught, releaseFish, nearWater, waterById, fishLabel, pondSummary, speciesById, phaseText, outcomeText, orbBrief, POND_MAX } from '../world/fishing.js';
+import { releaseXp } from '../world/xpThuong.js';   // Phiên 138: kinh nghiệm cấp độ mỗi lần phóng sinh
 
 const KEY = 'lgt.fish', REC_KEY = 'lgt.fishrec';   // REC_KEY: kỷ lục cỡ cá từng loài (Phiên 120)
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
@@ -76,7 +77,7 @@ export function initFishing(hud, { toast = () => {} } = {}) {
   function begin() {
     if (casting) return;
     const w = here(); if (!w) { toast('Hãy đứng gần mặt nước (hồ cá, ao sen, hồ thác) rồi thả cầu.', 3000); return; }
-    // Phiên 89: luôn ném THẢNG TRƯỚC MẶT. Nếu mặt nước không ở phía trước (lệch > ~50°) thì nhân vật quay mặt về phía nước rồi mới ném.
+    // Phiên 89: luôn ném THẲNG TRƯỚC MẶT. Nếu mặt nước không ở phía trước (lệch > ~50°) thì nhân vật quay mặt về phía nước rồi mới ném.
     let ry = NaN; { const W = LGT.world; if (W && W.pos && Number.isFinite(W.facing)) { ry = W.facing; const want = Math.atan2(w.x - W.pos.x, w.z - W.pos.z); let df = Math.atan2(Math.sin(want - ry), Math.cos(want - ry)); if (Math.abs(df) > 0.9) { ry = want; W.face(ry); } } }
     const r = startCast(st, w.id); if (!r.ok) { toast(r.reason === 'cracked' ? 'Quả cầu đã nứt, hãy sửa hoặc đổi cầu khác.' : r.reason === 'noorb' ? 'Bạn chưa có quả cầu nào. Mở tab “Quả cầu” để mua.' : 'Không thả cầu được ở đây.', 3200); return; }
     st = r.state; save(); caught = null; note = ''; hideCard();
@@ -101,9 +102,15 @@ export function initFishing(hud, { toast = () => {} } = {}) {
   }
   function release() {
     if (!caught) return; const f = caught, r = releaseCaught(st, f); if (!r.ok) return;
-    st = r.state; caught = null; note = `Bạn đã phóng sinh ${fishLabel(f)}. Nam mô A Di Đà Phật.`; hideCard(); rig(); changed(); rewardRelease(r.sen);
+    st = r.state; caught = null; note = `Bạn đã phóng sinh ${fishLabel(f)}. Nam mô A Di Đà Phật.`; hideCard(); rig(); changed(); rewardRelease(r.sen, f);
   }
-  function rewardRelease(sen) { if (LGT.act) LGT.act('phongsinh'); if (LGT.merit && LGT.merit.reward) LGT.merit.reward('phongsinh', sen); }   // trần 10 lần/ngày; hết trần vẫn được thả, chỉ không cộng sen
+  /** Thưởng mỗi lần phóng sinh. Hạt sen: trần 10 lần/ngày (hết trần vẫn được thả, chỉ không cộng sen). Phiên 138: kinh nghiệm cấp độ (releaseXp) cho MỌI lần thả, không có trần ngày. */
+  function rewardRelease(sen, fish) {
+    if (LGT.act) LGT.act('phongsinh'); if (LGT.merit && LGT.merit.reward) LGT.merit.reward('phongsinh', sen);
+    const xp = releaseXp(fish); if (!(xp > 0)) return;
+    if (LGT.addXp) LGT.addXp(xp);
+    setTimeout(() => toast(`Phóng sinh: +${xp} kinh nghiệm.`, 2400), 1300);   // sau thông báo hạt sen (thông báo mới đè thông báo cũ)
+  }
 
   function buy(id) {
     const o = orbById(id); if (!o) return; const r = buyOrb(st, bal(), id); if (!r.ok) { toast(WHY[r.reason] || 'Không mua được.', 2800); return; }
@@ -118,7 +125,7 @@ export function initFishing(hud, { toast = () => {} } = {}) {
   }
   function freeFish(uid) {
     const r = releaseFish(st, uid); if (!r.ok) return;
-    st = r.state; changed(); toast(`Đã phóng sinh ${fishLabel(r.fish)}.`, 2400); rewardRelease(r.sen);
+    st = r.state; changed(); toast(`Đã phóng sinh ${fishLabel(r.fish)}.`, 2400); rewardRelease(r.sen, r.fish);
   }
 
   function paintCast() {   // chỉ cập nhật chữ trạng thái mỗi khung hình (không dựng lại cả bảng)
@@ -136,7 +143,7 @@ export function initFishing(hud, { toast = () => {} } = {}) {
     if (caught) {
       list.appendChild(el('p', 'fs-status ok', note));
       const row = el('div', 'fs-ctl'); row.append(btn('Thu cá', keep, 'fs-b buy'), btn('Phóng sinh', release)); list.appendChild(row);
-      list.appendChild(el('p', 'fs-hint', `Thu cá: nuôi trong ao riêng (tối đa ${POND_MAX} con). Phóng sinh: thả về nước, được hạt sen (hôm nay tối đa 10 lần có thưởng).`)); return;
+      list.appendChild(el('p', 'fs-hint', `Thu cá: nuôi trong ao riêng (tối đa ${POND_MAX} con). Phóng sinh: thả về nước, được kinh nghiệm và hạt sen (hạt sen hôm nay tối đa 10 lần có thưởng).`)); return;
     }
     if (note) list.appendChild(el('p', 'fs-status', note));
     list.appendChild(el('p', 'fs-hint', w ? `Bạn đang đứng gần ${w.ten}. Bấm “Thả cầu” để bắt đầu.` : 'Hãy đi tới hồ cá, ao sen hoặc hồ thác (đứng sát mép nước) rồi mở lại bảng này.'));
