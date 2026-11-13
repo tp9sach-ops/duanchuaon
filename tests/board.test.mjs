@@ -1,7 +1,7 @@
-// Ván trượt (Phiên 92): luật mua, lên/xuống ván, hệ số tốc độ, nút trong cụm thao tác, dòng trong Túi đồ.
+// Ván trượt (Phiên 92): luật mua, lên/xuống ván, hệ số tốc độ, nút trong cụm thao tác, dòng trong Túi đồ. Phiên 130: đổi thành Thương bay (cưỡi thương, vào trận thì thương bay về tay).
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { BOARD, loadBoard, buyBoard, toggleBoard, boardSpeedMul, canRide } from '../js/world/board.js';
+import { BOARD, loadBoard, buyBoard, toggleBoard, boardSpeedMul, canRide, returnPose, RETURN_S, SPIN_S } from '../js/world/board.js';
 import { dockButtons, bagSections } from '../js/world/dock.js';
 
 test('loadBoard: đọc hỏng → chưa có ván; không thể "đang đứng trên ván" khi chưa có', () => {
@@ -38,6 +38,7 @@ test('canRide: chỉ khi đi lại tự do, ngoài nhà, không bơi', () => {
   assert.equal(canRide({ free: true, inHouse: true }), false);
   assert.equal(canRide({ free: true, swim: true }), false);
   assert.equal(canRide({ free: false }), false);
+  assert.equal(canRide({ free: true, fight: true }), false);   // đang đánh nhau: không cưỡi được
   assert.equal(canRide(), false);
 });
 
@@ -47,12 +48,21 @@ test('dockButtons: nút Lên/Xuống ván chỉ hiện khi đã có ván và đa
   assert.ok(!ids({ board: { own: false, on: false } }).includes('vantruot'));
   assert.ok(ids({ board: { own: true, on: false } }).includes('vantruot'));
   assert.ok(!ids({ board: { own: true, on: false }, inHouse: true }).includes('vantruot'));
-  assert.equal(dockButtons({ free: true, board: { own: true, on: false } }).find((b) => b.id === 'vantruot').label, 'Lên ván');
-  assert.equal(dockButtons({ free: true, board: { own: true, on: true } }).find((b) => b.id === 'vantruot').label, 'Xuống ván');
+  assert.equal(dockButtons({ free: true, board: { own: true, on: false } }).find((b) => b.id === 'vantruot').label, 'Cưỡi thương');
+  assert.equal(dockButtons({ free: true, board: { own: true, on: true } }).find((b) => b.id === 'vantruot').label, 'Xuống thương');
   assert.ok(!ids({ board: { own: true }, swim: { mode: 'swim' } }).includes('vantruot'));   // đang bơi: chỉ Lặn + Túi đồ
 });
 
 test('bagSections: Túi đồ có dòng Ván trượt theo trạng thái', () => {
   const row = (b) => bagSections({ board: b })[4].rows.find((r) => r.ten === BOARD.ten);
   assert.match(row(null).mo, /chưa có/); assert.match(row({ own: true, on: false }).mo, /đã có/); assert.match(row({ own: true, on: true }).mo, /gấp đôi/);
+});
+
+test('returnPose: xoay đúng một vòng rồi bay về tay, kết thúc đúng lúc', () => {
+  const a = returnPose(0); assert.equal(a.done, false); assert.equal(a.ang, 0); assert.ok(a.rad > 0); assert.equal(a.blend, 0);
+  const mid = returnPose(SPIN_S / 2); assert.ok(Math.abs(mid.ang - Math.PI) < 1e-9);
+  const end = returnPose(SPIN_S); assert.ok(Math.abs(end.ang - Math.PI * 2) < 1e-9); assert.equal(end.blend, 0);
+  const fly = returnPose((SPIN_S + RETURN_S) / 2); assert.ok(fly.blend > 0 && fly.blend < 1); assert.ok(fly.rad < end.rad);
+  const done = returnPose(RETURN_S); assert.equal(done.done, true); assert.equal(done.blend, 1); assert.equal(done.rad, 0);
+  for (const bad of [NaN, undefined, 'x', -3]) assert.equal(returnPose(bad).ang, 0);
 });
