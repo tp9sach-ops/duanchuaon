@@ -1,12 +1,12 @@
-// Phiên 138 (mục 1): kinh nghiệm cấp độ khi thu phục quái và khi phóng sinh.
+// Phiên 138: kinh nghiệm cấp độ khi thu phục quái và khi phóng sinh; cấp công hạnh và Tu Vi KHÔNG còn trần.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { SPECIES } from '../js/world/fishing.js';
 import { releaseXp, RELEASE_XP } from '../js/world/xpThuong.js';
 import { emptyFarm, settleKill, killXp } from '../js/world/farm.js';
-import { NGUON_CFG } from '../js/data/nguon.js';
-import { levelOf } from '../js/world/quests.js';
+import { levelOf, LEVELS } from '../js/world/quests.js';
+import { xpForLevel, levelAtXp } from '../js/world/levelCurve.js';
 
 const T0 = Date.UTC(2026, 10, 13, 5, 0, 0);   // 12:00 giờ VN, 13/11/2026
 const src = (p) => readFileSync(new URL(p, import.meta.url), 'utf8');
@@ -31,12 +31,28 @@ test('phóng sinh liên tục đủ để lên cấp: 15 lần cá chép nhỏ =
   assert.equal(levelOf(15 * releaseXp({ sp: 'chep', lon: false })).lv, 2);
 });
 
-test('thu phục quái: hết trần Tu Vi trong ngày thì Tu Vi = 0 nhưng kinh nghiệm cấp độ (killXp) vẫn ≥ 1', () => {
-  const CAP = NGUON_CFG.tranNgay.hangYeu; let f = emptyFarm(T0);
-  for (let i = 0; i < CAP + 10; i++) {
+test('thu phục quái: Phiên 138 không còn trần Tu Vi theo ngày — hạ 100 lần trong một ngày vẫn lần nào cũng có Tu Vi và kinh nghiệm cấp độ', () => {
+  let f = emptyFarm(T0);
+  for (let i = 0; i < 100; i++) {
     const r = settleKill(f, { lv: 3 }, { hatSen: 0 }, T0); f = r.farm;
-    if (i >= CAP) { assert.equal(r.expGain, 0, 'hết trần Tu Vi'); assert.ok(killXp({ lv: 3 }) >= 1, 'vẫn có kinh nghiệm cấp độ'); }
+    assert.ok(r.expGain > 0, `lần ${i + 1} phải có Tu Vi`); assert.equal(r.expCapped, false);
+    assert.ok(killXp({ lv: 3 }) >= 1, 'có kinh nghiệm cấp độ');
   }
+});
+
+test('cấp công hạnh KHÔNG giới hạn: cấp 10 ở 1800 điểm, cấp 11 ở 2400, cấp 12 ở 3100; điểm cực lớn vẫn ra cấp hợp lệ', () => {
+  const L = LEVELS.length;
+  assert.deepEqual([levelOf(1799).lv, levelOf(1800).lv, levelOf(2399).lv, levelOf(2400).lv, levelOf(3099).lv, levelOf(3100).lv], [9, 10, 10, 11, 11, 12]);
+  const big = levelOf(1e9);
+  assert.ok(big.lv > L, 'vượt cấp 10'); assert.ok(big.xp1 > big.xp && big.xp >= big.xp0); assert.ok(big.pct >= 0 && big.pct <= 100); assert.equal(big.ten, LEVELS[L - 1].ten);
+  assert.equal(levelOf(1800).xp1, 2400);
+});
+
+test('đường cong cấp: đơn điệu, liên tục, không bỏ cấp; xpForLevel và levelAtXp là hàm ngược của nhau', () => {
+  const table = LEVELS.map((l) => l.xp); let prev = 0;
+  for (let x = 0; x <= 60000; x += 37) { const v = levelOf(x); assert.ok(v.lv >= prev && v.lv - prev <= 1 || prev === 0, `x=${x}`); assert.ok(x >= v.xp0 && x < v.xp1, `x=${x} trong [${v.xp0}, ${v.xp1})`); prev = v.lv; }
+  for (let lv = 1; lv <= 300; lv++) { assert.equal(levelAtXp(table, xpForLevel(table, lv)), lv, `cấp ${lv}`); if (lv > 1) assert.equal(levelAtXp(table, xpForLevel(table, lv) - 1), lv - 1, `ngay dưới cấp ${lv}`); }
+  for (const bad of [-5, NaN, 'x', null, undefined]) assert.equal(levelAtXp(table, bad), 1);
 });
 
 test('nối dây giao diện: thu phục quái không còn phụ thuộc trần Tu Vi; phóng sinh (câu được và ao cá) đều gọi releaseXp', () => {

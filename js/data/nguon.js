@@ -14,7 +14,8 @@ export const NGUON_CFG = Object.freeze({
   // Chống cày quái quá yếu (chỉ hàng yêu, khi biết cấp quái): chênh ≤ mienGiam cấp → đủ EXP;
   // mỗi cấp chênh vượt mức đó giảm giamMoiCap (trừ vào hệ số), thấp nhất `san`.
   chenhLech: Object.freeze({ mienGiam: 5, giamMoiCap: 0.1, san: 0.1 }),
-  // Phiên 122: TRẦN Tu Vi mỗi ngày (giờ VN) cho các nguồn có thể cày lặp: hàng yêu bãi rừng tối đa 30 lần có EXP/ngày (Phiên 129: mức 4%/lần = 120% một cấp/ngày, trước là 2%/lần = 60%), thu phục yêu quái hằng tháng tối đa 3 lần/ngày. Quá trần vẫn đánh được, vẫn nhận hạt sen theo trần riêng, chỉ không thêm Tu Vi. TẠM, chờ ptg duyệt.
-  tranNgay: Object.freeze({ hangYeu: 30, boss: 3 }),
+  // Phiên 122: TRẦN Tu Vi mỗi ngày (giờ VN) cho các nguồn có thể cày lặp (hàng yêu bãi rừng 30 lần/ngày, thu phục yêu quái hằng tháng 3 lần/ngày).
+  // Phiên 138: ptg yêu cầu KHÔNG GIỚI HẠN trần kinh nghiệm → đặt Infinity (mọi lần thu phục đều có Tu Vi). Muốn có lại trần thì đặt số hữu hạn (hạt sen vẫn có trần riêng ở FARM_CFG.senCapNgay).
+  tranNgay: Object.freeze({ hangYeu: Infinity, boss: Infinity }),
   muiGio: 7,   // Việt Nam UTC+7
 });

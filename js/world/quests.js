@@ -2,16 +2,18 @@
 // Mọi giá trị (điểm kinh nghiệm, hạt sen thưởng, ngưỡng cấp) là QUY ƯỚC TẠM của dự án, chờ ptg duyệt.
 // Cách dùng: prog = loadProg(raw); r = record(prog, { type:'nhang', n:3 }, Date.now()); r.prog (lưu lại), r.done (nhiệm vụ vừa xong), r.levelUp.
 // Giao diện: js/ui/quest.js. Các nơi phát sự kiện gọi window.LGT.act(type, arg|n) (xem js/ui/quest.js).
+import { xpForLevel, levelAtXp } from './levelCurve.js';   // Phiên 138: cấp KHÔNG giới hạn
 
 /** Các loại sự kiện hợp lệ. 'npc' và 'visit' có `arg` (id NPC / id điểm đến); 'nhang' có n = số nén; 'doila' (đổi lá), 'muadat', 'nangnha' phát từ js/ui/merit.js và js/ui/land.js (Phiên 39); 'cau' (câu được một con cá) và 'phongsinh' (thả một con về nước) phát từ js/ui/fishing.js (Phiên 47). */
 export const EVENT_TYPES = ['nhang', 'bow', 'thien', 'kinh', 'niem', 'den', 'loc', 'npc', 'visit', 'chat', 'doila', 'muadat', 'nangnha', 'cau', 'phongsinh', 'noithat', 'khinhthan'];
 
-/** Cấp độ: ngưỡng điểm tối thiểu để đạt cấp i+1 và danh hiệu. Cấp tối đa = số phần tử. */
+/** Cấp độ: ngưỡng điểm tối thiểu để đạt cấp i+1 và danh hiệu. Đây là 10 cấp ĐẦU; Phiên 138: từ cấp 11 trở đi KHÔNG giới hạn (js/world/levelCurve.js), danh hiệu giữ như cấp 10. */
 export const LEVELS = [
   { xp: 0, ten: 'Khách vãng lai' }, { xp: 30, ten: 'Người sơ tâm' }, { xp: 80, ten: 'Phật tử' }, { xp: 150, ten: 'Thiện tín' },
   { xp: 250, ten: 'Hộ pháp' }, { xp: 400, ten: 'Cư sĩ' }, { xp: 600, ten: 'Thiện tri thức' }, { xp: 900, ten: 'Đạo hữu' },
   { xp: 1300, ten: 'Tịnh nhân' }, { xp: 1800, ten: 'Trưởng lão cư sĩ' },
 ];
+const XP_TABLE = LEVELS.map((l) => l.xp);
 /** Thưởng hạt sen khi lên tới cấp `lv` (cấp 1 không thưởng). */
 export const levelReward = (lv) => (lv > 1 ? lv * 2 : 0);
 
@@ -89,11 +91,13 @@ export function loadProg(raw) {
   return p;
 }
 
-/** Cấp hiện tại theo điểm: { lv, ten, xp, xp0 (ngưỡng cấp này), xp1 (ngưỡng cấp sau, null nếu tối đa), pct (0..100 tới cấp sau) }. */
+/**
+ * Cấp hiện tại theo điểm: { lv, ten, xp, xp0 (ngưỡng cấp này), xp1 (ngưỡng cấp sau), pct (0..100 tới cấp sau) }.
+ * Phiên 138: KHÔNG có cấp tối đa — xp1 luôn có giá trị; từ cấp 11 trở đi danh hiệu giữ như cấp 10 (xem js/world/levelCurve.js).
+ */
 export function levelOf(xp) {
-  const x = cnt(xp, 1e9); let i = 0; while (i + 1 < LEVELS.length && x >= LEVELS[i + 1].xp) i++;
-  const xp0 = LEVELS[i].xp, nxt = LEVELS[i + 1], xp1 = nxt ? nxt.xp : null;
-  return { lv: i + 1, ten: LEVELS[i].ten, xp: x, xp0, xp1, pct: xp1 == null ? 100 : Math.round(((x - xp0) / (xp1 - xp0)) * 100) };
+  const x = cnt(xp, 1e9), lv = levelAtXp(XP_TABLE, x), xp0 = xpForLevel(XP_TABLE, lv), xp1 = xpForLevel(XP_TABLE, lv + 1);
+  return { lv, ten: LEVELS[Math.min(lv, LEVELS.length) - 1].ten, xp: x, xp0, xp1, pct: Math.round(((x - xp0) / (xp1 - xp0)) * 100) };
 }
 
 /** Sang ngày mới thì làm lại bộ đếm hằng ngày (trả bản sao). */
