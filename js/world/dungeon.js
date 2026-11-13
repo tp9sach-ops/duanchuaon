@@ -108,3 +108,14 @@ export function rewardFor(dungeonId, clears, rng = Math.random) {
   }
   return { hatSen: Math.round(base * (1 + C.reward.senPerClear * k)), manh: d.boss, items };
 }
+
+/**
+ * Thông tin hiển thị một phó bản cho bảng chọn: { id, ten, npc, dia, lvMin, lvMax, bossTen, bossLv, waves, clears, hpMul, atkMul, sizeMul, senBoss }.
+ * `hpMul/atkMul/sizeMul` = độ mạnh hiện tại so với lần đầu (do số lần đã chinh phục); `senBoss` = hạt sen thưởng trung bình khi hạ boss lần tới. Phó bản lạ → null.
+ */
+export function describe(st, id) {
+  const d = DUNGEONS[id]; if (!d) return null;
+  const mobs = d.mobs.map((m) => MONSTERS[m]), boss = MONSTERS[d.boss], k = clearsOf(st, id), f = clearFactor(k), dr = boss.drop;
+  const r2 = (x) => Math.round(x * 100) / 100;
+  return { id, ten: d.ten, npc: d.npc, dia: d.dia, lvMin: Math.min(...mobs.map((m) => m.lv)), lvMax: Math.max(boss.lv, ...mobs.map((m) => m.lv)), bossTen: boss.ten, bossLv: boss.lv, waves: C.waves, clears: k, hpMul: r2(f.hp), atkMul: r2(f.atk), sizeMul: r2(f.size), senBoss: Math.round(((dr.min + dr.max) / 2) * (1 + C.reward.senPerClear * k)) };
+}

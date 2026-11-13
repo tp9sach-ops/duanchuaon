@@ -6,7 +6,7 @@ Quy tắc ptg (chép nguyên văn): For the 9 Sạch monthly-archive project (an
 1. ✅ Kinh nghiệm không giới hạn trần — XONG (Phiên 138 bỏ trần cấp công hạnh + trần Tu Vi/ngày; Phiên 139 bỏ nốt trần Tu Vi 150).
 2. ✅ Map mở rộng, quái càng sâu càng mạnh — đã có từ Phiên 131–132 (`docs/PHIEN132.md`).
 3. ✅ Hạt sen không ảnh hưởng sức mạnh — đã có từ Phiên 133 (`docs/PHIEN133.md`).
-4. 🔶 Phó bản — đang làm theo bước: 4a ✅ lõi logic (Phiên 139); 4b ✅ zone + cảnh 3D riêng (chưa nhìn bằng mắt); 4c ⏳ NPC + bảng chọn phó bản; 4d ⏳ nối `LGT.addXp`/`settleKill`, lưu `lgt.dungeon`, hiển thị lượt/boss.
+4. 🔶 Phó bản — đang làm theo bước: 4a ✅ lõi logic (Phiên 139); 4b ✅ zone + cảnh 3D riêng (chưa nhìn bằng mắt); 4c ✅ NPC + bảng chọn phó bản (chưa nhìn bằng mắt); 4d ⏳ nối `LGT.addXp`/`settleKill`, lưu `lgt.dungeon`, hiển thị lượt/boss.
 5. ⏳ Mảnh ghép boss → linh thú trong hồ lô.
 
 ## Đã làm ở Phiên 139
@@ -23,6 +23,13 @@ Quy tắc ptg (chép nguyên văn): For the 9 Sạch monthly-archive project (an
 - `js/scene/dungeon.js`: cảnh theo chủ đề (rừng: cây nón; hang: đá; hồ: cột xanh; tháp: trụ đất) + cổng rời dùng `buildGate` của `js/scene/voDai.js`. `js/ui/dungeonZones.js` (gắn trong `js/main.js`): đặt `LGT.dungeonZones = { enter(id), leave(), inside }`. `enter` chỉ vào được từ chùa khi đang rảnh; **bước 4c (NPC) chỉ cần gọi `LGT.dungeonZones.enter('rungmoc')`** …
 - CHƯA nhìn bằng mắt (không WebGL). `tests/zonedungeon.test.mjs` (5 test) có trong `npm test`. Thiếu còn lại ở 4d: không có quái trong zone (chưa gọi `dungeon.enter/onKill`), rời bằng cổng chưa gọi `leave()` của logic (xóa lượt đang chạy), chưa lưu `lgt.dungeon`.
 
+## Mục 4c (Phiên 139): người dẫn + bảng chọn phó bản
+- 4 NPC mới `DUNGEON_NPCS` trong `js/world/npc.js` (cũng nằm trong `NPCS`, nên dùng chung cảnh/click/va chạm): `pbmoc` Lão tiều phu (-55,77), `pbkim` Thợ mỏ già (50,120), `pbthuy` Ngư ông (-55,105), `pbtho` Sư thầy giữ tháp (60,56); đứng ở lối vào bốn khu rừng sâu; chỗ đã dò bằng `tests/npc.test.mjs` (va chạm + tới được từ cổng chùa). `DUNGEONS[id].npcId` trỏ về NPC.
+- Bấm NPC → `js/ui/npc.js` gọi `LGT.dungeonPanel.open(dungeonId)` (như Thầy Tri khách/Bác Tư). Mỗi NPC chỉ mở phó bản CỦA MÌNH (ý ptg: "gặp NPC → chọn phó bản" — nếu muốn một NPC liệt kê cả 4 phó bản thì sửa `paint()` trong `js/ui/dungeonPanel.js`).
+- `js/ui/dungeonPanel.js`: bảng hiện cấp quái, số lượt, boss, số lần đã chinh phục, độ mạnh hiện tại (máu/công/kích thước), hạt sen khi hạ boss, mảnh yêu quái; nút "Vào phó bản" → `enter(state,id)` (logic) rồi `LGT.dungeonZones.enter(id)` (zone 4b); nếu zone không vào được thì KHÔNG lưu trạng thái. Trạng thái ở `localStorage` khóa `lgt.dungeon`, đặt `LGT.dungeonState = { get(), set(s) }` cho bước 4d. Tải lại trang giữa phó bản → lượt đang chạy bị xóa (không tính chinh phục) vì zone tạm đưa về chùa.
+- `describe(state, id)` mới trong `js/world/dungeon.js` (cấp quái, hệ số, thưởng) — có test trong `tests/dungeon.test.mjs`.
+- LƯU Ý: vào phó bản hiện đưa tới KHU TRỐNG (quái là việc của 4d) — ra bằng cổng phía nam. Chưa nhìn bằng mắt.
+
 ## Chỉnh nút Nhảy (ptg yêu cầu giữa phiên, 13/11): nhảy tới trước + lướt né chiêu
 - Đang đi mà bấm Nhảy → cú nhảy bật tới trước (`leapPlan`: 2,2 + 0,3 × bậc mét, kéo dài đúng thời gian trên không, đi qua `world.dash` với `tilt:false`, dừng trước vật cản bằng `landing`). Đứng yên bấm Nhảy → nhảy tại chỗ như cũ.
 - Bấm Nhảy tiếp lúc còn trên không hoặc trong 0,6 s sau khi chạm đất → LƯỚT (`glidePlan`: 3 + 0,2 × bậc mét, 0,26 s) và BẤT TỬ 0,45 s (`vitals.guard` trong `js/world/monsterAttack.js`, qua `LGT.farmCombat.vitals`); hồi chiêu lướt 1,2 s. Lướt chờ hết cú bật rồi mới chạy. Không áp dụng trong nhà (nhảy thường vẫn được).
@@ -33,8 +40,8 @@ Quy tắc ptg (chép nguyên văn): For the 9 Sạch monthly-archive project (an
 ## Còn là trần (KHÔNG phải kinh nghiệm — giữ nguyên, hỏi ptg nếu muốn bỏ)
 Trần hạt sen 100/ngày, 10 lần/ngày hạt sen phóng sinh, 5 lần/ngày/loại hoạt động chùa, 60 phút tự động hàng yêu/ngày, kẹp lưu EXP 1e9 (kỹ thuật), kẹp cấp 99 của máu/sát thương yêu quái hằng tháng.
 
-## Việc kế: MỤC 4c — NPC + bảng chọn phó bản (rồi 4d: quái trong zone + lưu + thưởng)
+## Việc kế: MỤC 4d — quái trong zone phó bản + thưởng + lưu (rồi mục 5: mảnh ghép boss → linh thú)
 Ý ban đầu ở `docs/PHIEN138.md` (ý ptg + hướng làm: `js/world/dungeon.js` logic thuần + test → zone/cảnh 3D riêng → NPC + bảng chọn → nối `LGT.addXp`/`settleKill`; dùng cơ chế zone của Võ đài: `zones.js`, `zoneRuntime.js`, `zoneVoDai.js`, `js/scene/voDai.js`, `js/ui/zoneGate.js`).
 
 ## Prompt khởi động cho phiên mới (dán nguyên văn)
-> Đọc `docs/PHIEN139.md`, `docs/PHIEN138.md`, `docs/PHIEN132.md`, `docs/PHIEN133.md`. Chỉ xem các chỗ cần sửa, không đọc hết repo. Mục 1–3 đã xong; kinh nghiệm không còn trần. Làm MỤC 4c (NPC + bảng chọn phó bản, gọi `LGT.dungeonZones.enter(id)`; lõi `js/world/dungeon.js` và zone 4b đã xong), từng bước nhỏ, `npm test` phải xanh, đẩy GitHub rồi báo; cuối phiên viết `docs/PHIEN140.md` kèm prompt bàn giao và chép nguyên văn quy tắc bàn giao ở trên.
+> Đọc `docs/PHIEN139.md`, `docs/PHIEN138.md`, `docs/PHIEN132.md`, `docs/PHIEN133.md`. Chỉ xem các chỗ cần sửa, không đọc hết repo. Mục 1–3 đã xong; kinh nghiệm không còn trần. Làm MỤC 4d (quái trong zone phó bản: dùng `waveMobs`/`onKill`/`mobSpot`, lưu qua `LGT.dungeonState`, gọi `leave` khi rời, thưởng + kinh nghiệm; lõi, zone 4b và NPC 4c đã xong), từng bước nhỏ, `npm test` phải xanh, đẩy GitHub rồi báo; cuối phiên viết `docs/PHIEN140.md` kèm prompt bàn giao và chép nguyên văn quy tắc bàn giao ở trên.

@@ -135,7 +135,18 @@ export const VILLAGERS = [
 ];
 
 /** Mọi nhân vật có thể thưa chuyện: NPC trong chùa + dân làng. */
-export const NPCS = [...TEMPLE_NPCS, ...VILLAGERS];
+/** Người dẫn vào PHÓ BẢN (Phiên 139, mục 4c): đứng ở lối vào bốn khu rừng sâu. Bấm vào → bảng phó bản (js/ui/dungeonPanel.js). `dungeon` = id trong js/data/dungeons.js. Chỗ đứng đã dò bằng tests/npc.test.mjs (va chạm, tới được từ cổng). */
+export const DUNGEON_NPCS = [
+  { id: 'pbmoc', ten: 'Lão tiều phu', color: 'nau', hair: 'trang', beard: 'dai', x: -55, z: 77, ry: Math.PI / 2, stand: { x: -52.5, z: 77 }, dungeon: 'rungmoc',
+    lines: ['Rừng Cổ Mộc phía trong tối lắm, cây già hóa yêu cả rồi.', 'Cháu muốn vào thì nói lão một tiếng, lão chỉ đường.', 'Quái trong đó hồi sinh mỗi lượt một mạnh, một to hơn.', 'Hạ được chín lượt, Lão Mộc Tinh mới chịu lộ mặt.', 'Ai từng thắng rồi quay lại, rừng còn dữ hơn lần trước.'] },
+  { id: 'pbkim', ten: 'Thợ mỏ già', color: 'xam', hair: 'troc', x: 50, z: 120, ry: Math.PI / 2, stand: { x: 52.5, z: 120 }, dungeon: 'hangkim',
+    lines: ['Hang Sơn Cước đào sâu vào núi, giặc cướp chiếm cả rồi.', 'Muốn xuống hang thì cứ bảo ta, ta mở lối cho.', 'Mỗi lượt bọn cướp quay lại, chúng đông và hung hơn.', 'Hết chín lượt thì Sơn Cước Đầu Mục tự ra mặt.', 'Thắng một lần chưa đủ, hang này càng thắng càng khó.'] },
+  { id: 'pbthuy', ten: 'Ngư ông', color: 'lam', hair: 'bui', x: -55, z: 105, ry: Math.PI / 2, stand: { x: -52.5, z: 105 }, dungeon: 'hothuy',
+    lines: ['Động Thủy Mẫu ngầm dưới hồ, nước đen như mực.', 'Bác chài cả đời, chưa dám xuống tận đáy động.', 'Thủy quỷ chết rồi lại trồi lên, lần sau to và dữ hơn.', 'Qua chín lượt sóng, Thủy Mẫu mới nổi lên đón khách.', 'Cháu muốn xuống động thì nói bác, bác đưa tới miệng hang.'] },
+  { id: 'pbtho', ten: 'Sư thầy giữ tháp', color: 'casa', hair: 'troc', x: 60, z: 56, ry: Math.PI / 2, stand: { x: 62.5, z: 56 }, dungeon: 'thaptho',
+    lines: ['Bảo Tháp có mê cung dưới chân, tượng đá canh giữ.', 'Thầy giữ tháp đã lâu, ít ai dám xuống mê cung.', 'Đá hộ tháp vỡ rồi lại ghép, mỗi lượt một vững hơn.', 'Chín lượt qua rồi, Thạch Linh mới thức giấc.', 'Con muốn thử sức thì thưa thầy, thầy mở cửa tháp.'] },
+];
+export const NPCS = [...TEMPLE_NPCS, ...VILLAGERS, ...DUNGEON_NPCS];
 
 /** Hoạt động tại các điểm cảnh (Phiên 17): bấm vào cảnh → đi tới → mô tả việc làm + 1 hạt sen/ngày. Không có nhân vật; pick = khối cầu bấm được. id trùng PLACES nếu có. */
 export const ACTS = [

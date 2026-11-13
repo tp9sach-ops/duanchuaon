@@ -14,9 +14,9 @@ export const DUNGEON_CFG = Object.freeze({
 // Mỗi phó bản: { id, ten, npc (người dẫn), dia (địa điểm gặp NPC, mô tả), mobs [loại thường, loại tinh anh], boss (id trong MONSTERS), vatPham (bảng rơi khi hạ boss) }.
 // Quái lấy từ MONSTERS (js/data/monsters.js) nên cấp/Hệ/Công/Thủ cùng đường cong với bãi rừng.
 export const DUNGEONS = Object.freeze({
-  rungmoc: Object.freeze({ id: 'rungmoc', ten: 'Rừng Cổ Mộc', npc: 'Lão tiều phu', dia: 'Cổng rừng phía sau chùa', mobs: Object.freeze(['dameo', 'reutinh']), boss: 'laomoc', vatPham: Object.freeze([['linhchi', 0.6], ['modeo', 0.3], ['trangcuong', 0.1]]) }),
-  hangkim: Object.freeze({ id: 'hangkim', ten: 'Hang Sơn Cước', npc: 'Thợ mỏ già', dia: 'Chân núi đá', mobs: Object.freeze(['daotac', 'cuopduong']), boss: 'soncuoc', vatPham: Object.freeze([['quangvang', 0.6], ['giapsat', 0.3], ['kiemdoc', 0.1]]) }),
-  hothuy: Object.freeze({ id: 'hothuy', ten: 'Động Thủy Mẫu', npc: 'Ngư ông', dia: 'Bờ hồ thác', mobs: Object.freeze(['thuyquy', 'lyngu']), boss: 'thuymau', vatPham: Object.freeze([['ngocthuy', 0.6], ['voc', 0.3], ['chauthuy', 0.1]]) }),
-  thaptho: Object.freeze({ id: 'thaptho', ten: 'Mê Cung Bảo Tháp', npc: 'Sư thầy giữ tháp', dia: 'Chân Bảo Tháp', mobs: Object.freeze(['thachtinh', 'hothap']), boss: 'thachlinh', vatPham: Object.freeze([['thachanh', 0.6], ['tuongda', 0.3], ['linhthach', 0.1]]) }),
+  rungmoc: Object.freeze({ id: 'rungmoc', ten: 'Rừng Cổ Mộc', npc: 'Lão tiều phu', npcId: 'pbmoc', dia: 'Cửa rừng phía Bắc làng', mobs: Object.freeze(['dameo', 'reutinh']), boss: 'laomoc', vatPham: Object.freeze([['linhchi', 0.6], ['modeo', 0.3], ['trangcuong', 0.1]]) }),
+  hangkim: Object.freeze({ id: 'hangkim', ten: 'Hang Sơn Cước', npc: 'Thợ mỏ già', npcId: 'pbkim', dia: 'Lối vào rừng phía Đông', mobs: Object.freeze(['daotac', 'cuopduong']), boss: 'soncuoc', vatPham: Object.freeze([['quangvang', 0.6], ['giapsat', 0.3], ['kiemdoc', 0.1]]) }),
+  hothuy: Object.freeze({ id: 'hothuy', ten: 'Động Thủy Mẫu', npc: 'Ngư ông', npcId: 'pbthuy', dia: 'Lối vào rừng phía Tây', mobs: Object.freeze(['thuyquy', 'lyngu']), boss: 'thuymau', vatPham: Object.freeze([['ngocthuy', 0.6], ['voc', 0.3], ['chauthuy', 0.1]]) }),
+  thaptho: Object.freeze({ id: 'thaptho', ten: 'Mê Cung Bảo Tháp', npc: 'Sư thầy giữ tháp', npcId: 'pbtho', dia: 'Chân đồi Bảo Tháp', mobs: Object.freeze(['thachtinh', 'hothap']), boss: 'thachlinh', vatPham: Object.freeze([['thachanh', 0.6], ['tuongda', 0.3], ['linhthach', 0.1]]) }),
 });
 export const DUNGEON_IDS = Object.freeze(Object.keys(DUNGEONS));

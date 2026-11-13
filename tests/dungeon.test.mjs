@@ -94,3 +94,32 @@ test('hàm thuần: không sửa trạng thái đầu vào', () => {
   const e = enter(null, 'rungmoc'), snap = JSON.stringify(e.state); onKill(e.state); leave(e.state);
   assert.equal(JSON.stringify(e.state), snap);
 });
+
+// ---- Mục 4c (Phiên 139): người dẫn + bảng chọn
+import { readFileSync } from 'node:fs';
+import { describe as describeDungeon } from '../js/world/dungeon.js';
+import { DUNGEON_NPCS, NPCS, npcById, npcSpot } from '../js/world/npc.js';
+
+test('describe: thông tin bảng chọn; chinh phục rồi thì quái mạnh hơn, quà nhiều hơn; id lạ → null', () => {
+  const a = describeDungeon(null, 'rungmoc'), b = describeDungeon({ clears: { rungmoc: 3 } }, 'rungmoc');
+  assert.equal(a.ten, DUNGEONS.rungmoc.ten); assert.equal(a.waves, 9); assert.equal(a.clears, 0); assert.equal(a.hpMul, 1);
+  assert.equal(a.lvMin, MONSTERS.dameo.lv); assert.equal(a.lvMax, MONSTERS.laomoc.lv); assert.equal(a.bossTen, MONSTERS.laomoc.ten);
+  assert.equal(b.clears, 3); assert.ok(b.hpMul > a.hpMul && b.atkMul > a.atkMul && b.sizeMul > a.sizeMul && b.senBoss > a.senBoss);
+  assert.equal(describeDungeon(null, 'khong'), null);
+  for (const id of DUNGEON_IDS) { const d = describeDungeon(null, id); assert.ok(d.lvMin <= d.lvMax && d.senBoss > 0, id); }
+});
+
+test('người dẫn: mỗi phó bản đúng một NPC, id khớp npcId của số liệu, nằm trong NPCS và bấm được (spot)', () => {
+  assert.equal(DUNGEON_NPCS.length, DUNGEON_IDS.length);
+  for (const id of DUNGEON_IDS) {
+    const n = DUNGEON_NPCS.find((x) => x.dungeon === id); assert.ok(n, id); assert.equal(n.id, DUNGEONS[id].npcId); assert.ok(NPCS.includes(n)); assert.equal(npcById(n.id), n);
+    assert.equal(npcSpot(n).npc, n.id);
+  }
+});
+
+test('nối dây: NPC mở bảng, bảng gọi enter của zone và lưu lgt.dungeon; main.js khởi tạo bảng', () => {
+  const rd = (p) => readFileSync(new URL(p, import.meta.url), 'utf8');
+  assert.match(rd('../js/ui/npc.js'), /dungeonPanel\.open\(r\.npc\.dungeon\)/);
+  const ui = rd('../js/ui/dungeonPanel.js'); assert.match(ui, /dungeonZones\.enter/); assert.match(ui, /lgt\.dungeon/); assert.match(ui, /LGT\.dungeonState/);
+  assert.match(rd('../js/main.js'), /dungeonPanel\.js/);
+});

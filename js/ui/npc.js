@@ -16,6 +16,7 @@ export function initNpc({ toast, addMerit }) {
       const a = LGT.npcs && LGT.npcs[id]; if (a && a.say) a.say(r.line);
       toast(r.npc.act ? `${r.npc.ten}: ${r.line}` : `${r.npc.ten}: “${r.line}”`, 6500);
     }
+    if (r.npc.dungeon && LGT.dungeonPanel && !story) setTimeout(() => LGT.dungeonPanel.open(r.npc.dungeon), 700);   // Phiên 139: người dẫn vào phó bản
     if (id === 'trikhach' && LGT.merit && !story) setTimeout(() => LGT.merit.open(), 700);   // Thầy Tri khách giữ việc đổi lá bồ đề (Phiên 35)
     if (id === 'bacphuong' && LGT.land && !story) setTimeout(() => LGT.land.open(), 700);   // Bác Tư khu phố: đất ở + đổi xóm xem (Phiên 36)
     if (id === 'nvdienmay' && !story) setTimeout(() => { if (LGT.items) LGT.items.openShop('dienmay'); else if (LGT.board) LGT.board.shop(); }, 900);   // Nhân viên Điện Máy Lam Sen: Ván trượt 100 lá + Gậy như ý 400 lá (Mục 1)
