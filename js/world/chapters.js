@@ -9,6 +9,7 @@ export const CHAPTERS = [
   { id: 'c5', ten: 'Gieo duyên', mo: 'Mua quả cầu, câu cá, thả về nước (phóng sinh).', ids: ['m-cau', 'm-phongsinh', 'n-phongsinh'] },
   { id: 'c6', ten: 'An cư', mo: 'Đổi lá bồ đề, mua đất, nâng nhà, bày nội thất.', ids: ['m-doila', 'm-muadat', 'm-nangnha', 'm-noithat'] },
   { id: 'c7', ten: 'Trường kỳ', mo: 'Công phu bền bỉ: nhiều nén hương, nhiều thời kinh, kết thêm bạn đạo.', ids: ['m-nhang', 'm-kinh', 'n-npc'] },
+  { id: 'c8', ten: 'Gia nhập phái', mo: 'Đủ Tu Vi 10: làm Lễ Khai Ngộ để chọn Hệ (phái) rồi học chiêu đầu, đánh quái bằng kỹ năng của phái.', ids: ['m-khaingo', 'm-chieu1'] },
 ];
 /** Thứ tự làm của mọi nhiệm vụ (sau cốt truyện). */
 export const CHAIN = CHAPTERS.flatMap((c) => c.ids);
