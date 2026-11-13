@@ -1,14 +1,29 @@
 // Cảnh 3D câu cá (Phiên 48, mục 1.2): quả cầu bay xuống nước, vòng sóng, bóng cá lượn quanh, phao nhún, hoa sen nở đúng cửa sổ bấm.
-// Chỉ VẼ: mọi mốc thời gian và hình học ở js/world/fishingView.js (có test), phiên câu ở js/world/fishing.js (LGT.fishing.session từ js/ui/fishing.js).
+// Chỉ VẾ: mọi mốc thời gian và hình học ở js/world/fishingView.js (có test), phiên câu ở js/world/fishing.js (LGT.fishing.session từ js/ui/fishing.js).
 import * as THREE from 'three';
 import { fishLook } from '../world/pondFish.js';
 import { makeFish } from './pondFish.js';
+import { handTip } from '../world/fishPose.js';
 import { castTarget, flightPoint, rippleAt, rippleTimes, fishShadow, bobY, lotusBloom, orbColor, sessionKey, waterY, FLIGHT } from '../world/fishingView.js';
 
 function glowTexture() {
   const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'), gr = g.createRadialGradient(32, 32, 2, 32, 32, 32);
   gr.addColorStop(0, 'rgba(255,255,255,.95)'); gr.addColorStop(0.45, 'rgba(255,255,255,.35)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, 64, 64);
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+}
+
+/** Dấu "!" cam viền trắng hiện trên đầu nhân vật lúc cá dính (Phiên 120, theo clip mẫu). */
+function alertTexture() {
+  const c = document.createElement('canvas'); c.width = 96; c.height = 128; const g = c.getContext('2d');
+  g.lineJoin = 'round'; g.lineWidth = 16; g.strokeStyle = '#ffffff'; g.fillStyle = '#ff7a1a';
+  g.beginPath(); g.moveTo(30, 12); g.lineTo(66, 12); g.lineTo(58, 76); g.lineTo(38, 76); g.closePath(); g.stroke(); g.fill();
+  g.beginPath(); g.arc(48, 103, 13, 0, Math.PI * 2); g.stroke(); g.fill();
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+}
+/** Hình bóng một con cá nhìn từ trên (mũi về +x, dài ~1,2 m) cho bóng cá dưới nước. */
+function fishShape() {
+  const f = new THREE.Shape(); f.moveTo(0.6, 0); f.quadraticCurveTo(0.25, 0.2, -0.3, 0.08); f.lineTo(-0.62, 0.22); f.lineTo(-0.52, 0); f.lineTo(-0.62, -0.22); f.lineTo(-0.3, -0.08); f.quadraticCurveTo(0.25, -0.2, 0.6, 0);
+  return new THREE.ShapeGeometry(f, 8);
 }
 
 /** opts: { reduce (giảm chuyển động), perf: () => bậc PERF hiện tại (0..5) }. Trả { group, update(t, dt) }. */
@@ -23,7 +38,9 @@ export function buildFishing(LGT, { reduce = false, perf = () => 0 } = {}) {
   const ripples = []; for (let i = 0; i < 5; i++) { const m = new THREE.Mesh(new THREE.RingGeometry(0.85, 1, 40), ringMat()); m.rotation.x = -Math.PI / 2; m.visible = false; group.add(m); ripples.push(m); }
 
   const shadowMat = new THREE.MeshBasicMaterial({ color: 0x0b1a24, transparent: true, opacity: 0, depthWrite: false });
-  const fishShade = new THREE.Mesh(new THREE.CircleGeometry(0.5, 20), shadowMat); fishShade.rotation.x = -Math.PI / 2; fishShade.scale.set(1, 0.4, 1); fishShade.visible = false; group.add(fishShade);
+  const fishGeo = fishShape(), fishShade = new THREE.Mesh(fishGeo, shadowMat); fishShade.rotation.x = -Math.PI / 2; fishShade.scale.set(1.1, 1.1, 1.1); fishShade.visible = false; group.add(fishShade);
+  const rimMat = new THREE.MeshBasicMaterial({ color: 0xdff4ff, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, fog: false });   // viền sáng quanh bóng cá (clip mẫu)
+  const fishRim = new THREE.Mesh(fishGeo, rimMat); fishRim.scale.set(1.3, 1.45, 1); fishRim.position.z = -0.004; fishShade.add(fishRim);
 
   // hoa sen nở: cùng kiểu hoa sen vàng ở hoasen.js nhưng màu hồng trắng
   const lotus = new THREE.Group(); lotus.visible = false; group.add(lotus);
@@ -38,6 +55,7 @@ export function buildFishing(LGT, { reduce = false, perf = () => 0 } = {}) {
   const hl = lotus.clone(true); hl.visible = true; hl.position.set(0, 0, 0); hl.scale.setScalar(1); headLotus.add(hl);
   const hlGlow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: 0xffd0e4, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false, depthTest: false })); hlGlow.scale.set(1.5, 1.5, 1); hlGlow.position.y = 0.45; hlGlow.renderOrder = 999; headLotus.add(hlGlow);
   hl.traverse((o) => { if (o.material && o.material !== petalMat) { o.material = o.material.clone(); } });
+  const alertTex = alertTexture(), alertSp = new THREE.Sprite(new THREE.SpriteMaterial({ map: alertTex, transparent: true, depthTest: false, depthWrite: false, fog: false })); alertSp.scale.set(0.62, 0.83, 1); alertSp.renderOrder = 1000; alertSp.visible = false; group.add(alertSp);   // Phiên 120: dấu "!" cá dính
   let vibKey = '';
   // Phiên 89: cá vừa câu được VĂNG LÊN TAY nhân vật — thấy ngay đó là cá gì, to hay nhỏ (cỡ lớn dài 1,5 lần; loài hiếm to hơn chút)
   const held = new THREE.Group(); held.visible = false; group.add(held);
@@ -62,18 +80,19 @@ export function buildFishing(LGT, { reduce = false, perf = () => 0 } = {}) {
       }
       const p = W.pos, ry = Number.isFinite(W.facing) ? W.facing : 0, k = reduce ? 1 : Math.min(1, (t - hs.t0) / 0.7);
       const hx = p.x + Math.sin(ry) * 0.5, hz = p.z + Math.cos(ry) * 0.5, hy = (p.y || 0) + 0.95;
-      held.visible = true;
+      held.visible = true; held.scale.setScalar(1.7);   // Phiên 120: cá giơ trước ngực to như clip mẫu
       held.position.set(hs.from.x + (hx - hs.from.x) * k, hs.from.y + (hy - hs.from.y) * k + Math.sin(Math.PI * k) * 1.5, hz + (hs.from.z - hz) * (1 - k));
       held.position.z = hs.from.z + (hz - hs.from.z) * k;
       const flap = reduce || k < 1 ? 0 : Math.sin(t * 14);
       held.rotation.set(0, ry + 1.1 + (k < 1 ? k * 6.3 : 0), flap * 0.15); if (hs.obj.tail) hs.obj.tail.rotation.y = Math.sin(t * 16) * 0.5;
       if (k >= 1 && !reduce) held.position.y += Math.sin(t * 3) * 0.02;
-      for (const r of ripples) r.visible = false; orb.visible = false; lotus.visible = false; headLotus.visible = false; fishShade.visible = false;
+      hideAll(); headLotus.visible = false; alertSp.visible = false;
+      if (st.to && !reduce) { const k0 = (t - hs.t0) / 1.1; ripple(ripples[0], k0, st.to.x, st.to.z, st.y, 1.6); ripple(ripples[1], k0 - 0.18, st.to.x, st.to.z, st.y, 1.2); }   // Phiên 120: nước tung lên nơi cá bị kéo khỏi mặt nước
       return;
     }
     if (hs.fish) { hs.fish = null; held.visible = false; }
     if (!s || !W || !W.pos) {
-      headLotus.visible = false; vibKey = '';   // không có phiên: nếu vừa có thì để lại một vòng sóng cuối ~1 giây (cá lên / cá thoát)
+      headLotus.visible = false; alertSp.visible = false; vibKey = '';   // không có phiên: nếu vừa có thì để lại một vòng sóng cuối ~1 giây (cá lên / cá thoát)
       if (st.key) { st.key = ''; st.ended = 1.0; }
       if (st.ended > 0 && st.to) {
         st.ended -= dt || 0.016; group.visible = true; hideAll();
@@ -84,7 +103,7 @@ export function buildFishing(LGT, { reduce = false, perf = () => 0 } = {}) {
     }
     const key = sessionKey(s);
     if (key !== st.key) {   // phiên mới: nhớ chỗ tay và chỗ rơi
-      st.key = key; st.ended = 0; const p = W.pos; st.from = { x: p.x, y: (p.y || 0) + 1.3, z: p.z }; st.to = castTarget(p, s.water, s.ry); st.y = waterY(s.water);
+      st.key = key; st.ended = 0; const p = W.pos; st.from = handTip(p, Number.isFinite(s.ry) ? s.ry : W.facing); st.to = castTarget(p, s.water, s.ry); st.y = waterY(s.water);   // Phiên 128: cầu rời TAY (không cần câu)
       orbMat.color.setHex(orbColor(s.orb)); orbMat.emissive.setHex(orbColor(s.orb)); orbMat.emissiveIntensity = 0.35; orbGlow.material.color.setHex(orbColor(s.orb));
     }
     group.visible = true; const low = perf() >= 4;
@@ -96,16 +115,24 @@ export function buildFishing(LGT, { reduce = false, perf = () => 0 } = {}) {
     const times = rippleTimes(s);
     for (let i = 0; i < ripples.length; i++) { const k = i < times.length && !(low && i > 1) ? rippleAt(s.t, times[i]) : -1; ripple(ripples[i], k, st.to.x, st.to.z, st.y, i === 0 ? 1.4 : 1); }
     // bóng cá
-    const f = low ? null : fishShadow(s);
-    if (f) { fishShade.visible = true; fishShade.position.set(st.to.x + Math.cos(f.ang) * f.rad, st.y + 0.02, st.to.z + Math.sin(f.ang) * f.rad); fishShade.rotation.z = -f.ang - Math.PI / 2; shadowMat.opacity = f.alpha; } else fishShade.visible = false;
+    const f = low ? null : fishShadow(s), hooked = !low && lotusBloom(s) > 0;
+    if (f) { fishShade.visible = true; fishShade.position.set(st.to.x + Math.cos(f.ang) * f.rad, st.y + 0.02, st.to.z + Math.sin(f.ang) * f.rad); fishShade.rotation.z = Math.atan2(-Math.sin(f.ang) * f.face, Math.cos(f.ang) * f.face) + f.yaw; shadowMat.opacity = f.alpha; rimMat.opacity = Math.min(1, f.alpha * 1.1); }   // Phiên 128: đầu cá theo hướng bơi (vào/ra), không lượn vòng
+    else if (hooked) {   // Phiên 128: cá DÍNH — bóng cá giãy mạnh và bị KÉO dần về phía người (clip mẫu), cầu chìm nhấp nhô, nước bắn tung toé
+      const Pp = W.pos, dx = Pp.x - st.to.x, dz = Pp.z - st.to.z, len = Math.hypot(dx, dz) || 1, ux = dx / len, uz = dz / len, span = Math.max(0.2, s.tEnd - s.tBite), pr = Math.max(0, Math.min(1, (s.t - s.tBite) / span));
+      const off = 0.45 + Math.min(len * 0.5, 2.2) * pr, sw = reduce ? 0 : Math.sin(t * 24) * 0.45, lat = reduce ? 0 : Math.sin(t * 17) * 0.18;
+      const fx = st.to.x + ux * off - uz * lat, fz = st.to.z + uz * off + ux * lat;
+      fishShade.visible = true; fishShade.position.set(fx, st.y + 0.02, fz); fishShade.rotation.z = Math.atan2(-uz, ux) + sw; shadowMat.opacity = 0.8; rimMat.opacity = 0.95;
+      if (!reduce) { orb.position.y -= 0.05 + 0.05 * Math.abs(Math.sin(t * 20)); const ph = (t * 2.4) % 1; ripple(ripples[2], ph, fx, fz, st.y, 1.1); ripple(ripples[3], (ph + 0.5) % 1, st.to.x, st.to.z, st.y, 1.3); }
+    } else fishShade.visible = false;
     // hoa sen nở đúng cửa sổ bấm
     const b = lotusBloom(s);
     if (b > 0) {   // hoa trên đầu: nảy lên rồi rung tới khi hết cửa sổ
       const p = W.pos, k = reduce ? 1 : 0.3 + 0.7 * b, sh = reduce ? 0 : Math.sin(t * 70) * 0.06 * b;
       headLotus.visible = true; headLotus.position.set(p.x + sh, (p.y || 0) + 2.05 + (reduce ? 0 : Math.abs(Math.sin(t * 18)) * 0.08), p.z); headLotus.scale.setScalar(k * 0.9); headLotus.rotation.z = reduce ? 0 : Math.sin(t * 55) * 0.14; hl.rotation.y = reduce ? 0 : t * 3;
       hlGlow.material.opacity = 0.4 + (reduce ? 0 : 0.2 * Math.sin(t * 20));
+      alertSp.visible = true; alertSp.position.set(p.x, (p.y || 0) + 2.75 + (reduce ? 0 : Math.abs(Math.sin(t * 10)) * 0.12), p.z);
       if (vibKey !== key) { vibKey = key; if (!reduce) { try { navigator.vibrate && navigator.vibrate([90, 40, 90, 40, 90, 40, 90, 40, 120]); } catch (_) { /* bỏ qua */ } } }
-    } else headLotus.visible = false;
+    } else { headLotus.visible = false; alertSp.visible = false; }
     if (b > 0) { lotus.visible = true; lotus.position.set(st.to.x + 0.55, st.y, st.to.z); const k = reduce ? 1 : 0.2 + 0.8 * b; lotus.scale.setScalar(k); lotus.rotation.y = reduce ? 0 : t * 0.8; lotusGlow.material.opacity = 0.6 + (reduce ? 0 : 0.3 * Math.sin(t * 8)); } else lotus.visible = false;
   }
   return { group, update };
