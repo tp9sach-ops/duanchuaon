@@ -24,3 +24,10 @@ Chúng chạy game thật trong Chromium, chặn mạng ngoài và thay `script.
     node tools/shot/e2e-account-mobile.cjs   # ~3 phút
 
 Lưu ý: tắt Service Worker (`serviceWorkers:'block'`, đã đặt sẵn) vì Playwright không chặn được yêu cầu từ SW nên sau khi tải lại trang three.js sẽ không bao giờ tải xong.
+
+## Kiểm Võ đài giao lưu bằng trình duyệt thật (Phiên 140)
+
+`e2e-vodai.cjs` giả một lời mời giao lưu (móc hàm xử lý gói tin, không cần hai máy), bấm Chấp nhận, vào Võ đài rồi kiểm 4 nút đánh nằm trong màn hình, bấm trúng được, không chồng nhau; cụm nút chính không có nút đánh yêu quái. Bắt đúng lỗi trùng class `cd` (Phiên 140).
+
+    export THREE_DIR=$PWD/t OUT=/thư/mục/ghi/ảnh   # CHROME=/usr/bin/google-chrome nếu không có Chromium của playwright
+    VW=390 VH=780 node tools/shot/e2e-vodai.cjs      # ~2 phút; xuất vodai-390.png

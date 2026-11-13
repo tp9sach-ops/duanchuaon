@@ -78,7 +78,7 @@ export function initDock(hud, { toast = () => {} } = {}) {
     for (const L of layout) {
       const b = byId.get(L.id), it = items.get(L.id); if (!b || !it) continue;
       it.btn.classList.toggle('hot', !!b.hot); it.btn.classList.toggle('lock', !!b.locked); it.btn.classList.toggle('wait', !!b.wait);
-      const cd = cooldownFrac(L.id, c); it.btn.style.setProperty('--cd', cd.toFixed(3)); it.btn.classList.toggle('cd', cd > 0);
+      const cd = cooldownFrac(L.id, c); it.btn.style.setProperty('--cd', cd.toFixed(3)); it.btn.classList.toggle('on-cd', cd > 0);
       const tx = it.btn.querySelector('.dk-tx'); if (tx.textContent !== b.label) tx.textContent = b.label;
       it.btn.classList.toggle('ping', !!hint && hint.id === b.id);
       it.btn.setAttribute('aria-label', b.label + (cd > 0 ? ' (đang hồi chiêu)' : ''));

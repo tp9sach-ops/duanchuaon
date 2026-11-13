@@ -31,7 +31,7 @@ export function initDuel({ toast = () => {} } = {}) {
     + '.dl-bars{display:flex;gap:8px;align-items:center}.dl-hp{flex:1;height:12px;border-radius:6px;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.4);overflow:hidden}.dl-hp i{display:block;height:100%;width:100%;background:#6ccf7a}.dl-hp.o{transform:scaleX(-1)}.dl-hp.o i{background:#e0605a}'
     + '.dl-mid{min-width:44px;font-size:15px}.dl-msg{margin-top:6px;min-height:18px;font-size:15px;color:#ffe9a8}'
     + '.dl-bar{position:fixed;z-index:62;left:50%;transform:translateX(-50%);bottom:max(14px,calc(env(safe-area-inset-bottom) + 8px));display:flex;gap:10px}'
-    + '.dl-btn{width:62px;height:62px;border-radius:50%;border:1px solid rgba(217,178,95,.8);background:rgba(6,7,13,.6);font-size:11px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:0}.dl-btn.cd{opacity:.45}.dl-btn small{font-size:10px;color:#f1dba0}'
+    + '.dl-btn{width:62px;height:62px;border-radius:50%;border:1px solid rgba(217,178,95,.8);background:rgba(6,7,13,.6);font-size:11px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:0}.dl-btn.dl-cd{opacity:.45}.dl-btn small{font-size:10px;color:#f1dba0}'
     + '#dl-fade{position:fixed;inset:0;z-index:80;background:#06070d;opacity:0;pointer-events:none;transition:opacity .3s}';
   document.head.appendChild(st);
   const chip = el('button', 'dl-chip', 'Giao lưu'); chip.type = 'button'; chip.hidden = true;
@@ -133,7 +133,7 @@ export function initDuel({ toast = () => {} } = {}) {
     if (!eng) return; const m = eng.hpMax || DUEL.hp;
     hpMeI.style.width = Math.max(0, eng.hp / m * 100) + '%'; hpOpI.style.width = Math.max(0, eng.oppHp / m * 100) + '%';
     mid.textContent = eng.phase === 'count' ? String(Math.ceil(eng.countLeft)) : eng.phase === 'fight' ? String(Math.ceil(eng.timeLeft)) : '';
-    for (const k of ['a', 'b', 'c', 'g']) { const cd = eng.cdLeft(k); btns[k].classList.toggle('cd', cd > 0 || eng.phase !== 'fight'); btns[k]._cd.textContent = cd > 0 ? cd.toFixed(1) : MOVES[k].key; }
+    for (const k of ['a', 'b', 'c', 'g']) { const cd = eng.cdLeft(k); btns[k].classList.toggle('dl-cd', cd > 0 || eng.phase !== 'fight'); btns[k]._cd.textContent = cd > 0 ? cd.toFixed(1) : MOVES[k].key; }
   }
   function finish(r) {
     send(pack.bye(oppTag())); mode = 'result'; bar.hidden = true;

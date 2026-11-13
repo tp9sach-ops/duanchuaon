@@ -16,7 +16,7 @@
 .dk-b.ping{animation:dkping 1.2s ease-out infinite}
 /* hồi chiêu: vòng tối quay ngược theo thời gian còn lại (--cd: 1 = vừa bấm, 0 = dùng được) */
 .dk-b::after{content:"";position:absolute;inset:0;border-radius:50%;pointer-events:none;opacity:0;background:conic-gradient(rgba(0,0,0,.62) calc(var(--cd,0) * 360deg),transparent 0)}
-.dk-b.cd::after{opacity:1}
+.dk-b.on-cd::after{opacity:1}
 /* nhãn phím tắt (chỉ máy tính có chuột) */
 .dk-key{position:absolute;left:-4px;top:-4px;min-width:18px;height:18px;padding:0 4px;border-radius:9px;background:#f1dba0;color:#1a1208;font:700 10.5px/18px var(--sans,system-ui,sans-serif);text-align:center;pointer-events:none;display:none}
 .dk.kb .dk-key{display:block}.dk.kb .dk-key[hidden]{display:none}

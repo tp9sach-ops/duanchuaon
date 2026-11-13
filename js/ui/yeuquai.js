@@ -6,6 +6,7 @@ import { canGrab } from '../world/strength.js';
 import { callApi, apiEnabled } from '../api.js';
 import { COOP_POLL_MS, coopKeyOk, buildReq, applyServer, lootFromServer, leavesGranted } from '../world/yqCoop.js';
 import { move } from '../world/layout.js';
+import { mapAvailable } from '../world/minimap.js';
 import { levelOf } from '../world/quests.js';
 
 const KEY = 'lgt.yq';
@@ -31,7 +32,7 @@ export function initYeuQuai(hud, { toast = () => {} } = {}) {
   const level = () => levelOf(LGT.quests && LGT.quests.prog ? LGT.quests.prog.xp : 0).lv;
   const str = () => (LGT.strength ? LGT.strength.value : 6);
   const pos = () => (LGT.world && LGT.world.pos) || null;
-  const here = () => !!LGT.world && !LGT.inHouse;
+  const here = () => !!LGT.world && !LGT.inHouse && mapAvailable(LGT.zones);   // Phiên 140: chỉ ở zone hub (không hiện nút đánh yêu quái khi đang ở Võ đài/phó bản)
   const distBoss = () => { const p = pos(); return boss && p ? Math.hypot(boss.x - p.x, boss.z - p.z) : Infinity; };
 
   function flashNow() { flash.hidden = false; setTimeout(() => { flash.hidden = true; }, 220); }
