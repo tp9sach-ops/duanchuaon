@@ -24,8 +24,16 @@ export function mobSpot(id, i, n) {
   const ang = Math.PI * (0.15 + 0.7 * t), rr = a.r * 0.55;   // cung phía bắc (z nhỏ hơn tâm)
   return { x: Math.round((a.cx + Math.cos(ang) * rr) * 100) / 100, z: Math.round((a.cz - Math.sin(ang) * rr) * 100) / 100 };
 }
-/** Điểm quay về chùa (dùng chung cho mọi phó bản; bước 4c đổi sang chỗ NPC). Cùng ô trống với lối về của Võ đài. */
+/** Điểm quay về chung (dự phòng, cùng ô trống với lối về của Võ đài). */
 export const DUNGEON_RETURN_SPAWN = { x: 18, z: 8, ry: Math.PI };
+/** Phiên 142 (4c): ra khỏi phó bản thì đứng cạnh NPC gác phó bản đó (trùng điểm `stand` của NPC trong js/world/npc.js; test canh). Tên điểm: 'tu-pho-ban-<id>'. */
+export const DUNGEON_RETURNS = Object.freeze({
+  rungmoc: Object.freeze({ x: -40, z: 87.6, ry: Math.PI }),
+  hangkim: Object.freeze({ x: -109, z: 98, ry: -Math.PI / 2 }),
+  hothuy: Object.freeze({ x: 97, z: 113, ry: Math.PI / 2 }),
+  thaptho: Object.freeze({ x: 56.5, z: 90, ry: -Math.PI / 2 }),
+});
+export const returnSpawnName = (id) => 'tu-pho-ban-' + id;
 
 export function dungeonZoneDef(id) {
   const d = DUNGEONS[id], a = arenaOf(id); if (!d || !a) return null;
@@ -34,7 +42,7 @@ export function dungeonZoneDef(id) {
     id: dungeonZoneId(id), ten: d.ten, loai: 'QUAI', temp: true, viaNpc: true,
     bounds: { ...a.bounds }, terrain: (x, z) => !inArena(id, x, z),
     spawns: { default: sp },
-    gates: [{ id: 'roi-pho-ban', x: a.cx, z: a.cz + 14, r: 2, to: 'chua', spawn: 'tu-pho-ban', ten: 'Rời phó bản' }],
+    gates: [{ id: 'roi-pho-ban', x: a.cx, z: a.cz + 14, r: 2, to: 'chua', spawn: DUNGEON_RETURNS[id] ? returnSpawnName(id) : 'tu-pho-ban', ten: 'Rời phó bản' }],
     budget: { meshes: 160, drawCalls: 70, textures: 4, trees: 24, maxPlayers: 1 },
   };
 }
@@ -42,6 +50,7 @@ export function dungeonZoneDef(id) {
 /** Đăng ký mọi zone phó bản vào ZoneManager (thêm điểm quay về ở hub). Gọi lại không làm gì thêm. */
 export function registerDungeonZones(manager) {
   const hub = manager.get('chua'); if (hub && !hub.spawns['tu-pho-ban']) hub.spawns['tu-pho-ban'] = { ...DUNGEON_RETURN_SPAWN };
+  if (hub) for (const id of DUNGEON_IDS) if (DUNGEON_RETURNS[id] && !hub.spawns[returnSpawnName(id)]) hub.spawns[returnSpawnName(id)] = { ...DUNGEON_RETURNS[id] };
   for (const id of DUNGEON_IDS) if (!manager.get(dungeonZoneId(id))) manager.register(dungeonZoneDef(id));
   return DUNGEON_IDS.map((id) => manager.get(dungeonZoneId(id)));
 }

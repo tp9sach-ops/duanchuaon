@@ -1,7 +1,7 @@
 // Nối zone phó bản vào game thật (mục 4b, Phiên 139): gắn hook dựng/dỡ cảnh 3D và đặt LGT.dungeonZones.enter(id) — bước 4c (NPC) sẽ gọi hàm này.
 // CHƯA nhìn bằng mắt. Mỗi lần vào là một chuyến travel riêng; rời bằng cổng ở rìa sàn (hoặc leave()).
 import { DUNGEON_IDS } from '../data/dungeons.js';
-import { dungeonZoneId, dungeonIdOfZone, playerSpawn } from '../world/zoneDungeon.js';
+import { dungeonZoneId, dungeonIdOfZone, playerSpawn, returnSpawnName, DUNGEON_RETURNS } from '../world/zoneDungeon.js';
 
 export async function initDungeonZones({ toast = () => {} } = {}) {
   const LGT = window.LGT || (window.LGT = {}), Z = LGT.zones; if (!Z || !LGT.scene) return null;
@@ -20,8 +20,8 @@ export async function initDungeonZones({ toast = () => {} } = {}) {
   }
   /** Rời phó bản về chùa (từ bất kỳ chỗ nào trong phó bản). */
   async function leave() {
-    if (!dungeonIdOfZone(Z.current)) return { ok: false, reason: 'Không ở trong phó bản' };
-    const r = await Z.travel('chua', { spawn: 'tu-pho-ban' });
+    const cur = dungeonIdOfZone(Z.current); if (!cur) return { ok: false, reason: 'Không ở trong phó bản' };
+    const r = await Z.travel('chua', { spawn: DUNGEON_RETURNS[cur] ? returnSpawnName(cur) : 'tu-pho-ban' });
     if (r && r.ok) { LGT.world.teleport(r.spawn.x, r.spawn.z, r.spawn.ry); return { ok: true }; }
     return { ok: false, reason: (r && r.reason) || 'Chưa rời được' };
   }
