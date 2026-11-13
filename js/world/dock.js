@@ -21,7 +21,7 @@ export const HINTS = {
   nhay: 'Bấm “Nhảy” để bay lên (Khinh thân). Đang đi mà bấm thì bật tới trước; bấm thêm lần nữa khi còn trên không (hoặc vừa chạm đất) để lướt một đoạn và né chiêu quái.',
   kynang: 'Bạn đủ điều kiện luyện bậc kế — bấm vào đây.',
   tui: 'Túi đồ: xem bạn đang có những gì.',
-  vantruot: 'Bấm “Cưỡi thương” để cưỡi cây thương to bay — đi nhanh gấp đôi (vào nhà, xuống nước hoặc đang đánh nhau thì tự xuống, thương bay về tay).',
+  vantruot: 'Bấm “Lướt ván” để đứng lên ván trượt — đi nhanh gấp 1,5 lần (vào nhà, xuống nước hoặc đang đánh nhau thì tự xuống, ván bay về tay).',
   nemnpc: 'Có người dân ở gần — bấm “Ném NPC” để nhấc họ lên ném thẳng trước mặt (họ rơi an toàn rồi tự quay về; không ném trong chùa).',
   khiengnguoi: 'Có người ở gần — bấm “Khiêng người” để nhấc họ lên vai (chỉ khiêng được người cấp và sức mạnh nhỏ hơn bạn; không khiêng trong chùa). Khiêng 2 giây rồi ném đi.',
   nemnguoi: 'Bấm “Ném” để ném người đang trên vai ra phía trước mặt (không bấm thì sau 2 giây tự ném). “Thả xuống” để đặt họ xuống, không mất hạt sen.',
@@ -67,7 +67,7 @@ export function dockButtons(c = {}) {
   if (num(k.khinh) > 0) { out.push({ id: 'nhay', label: 'Nhảy', big: !k.water }); out.push({ id: 'kynang', label: 'Kỹ năng', hot: !!k.canTrain }); }
   else out.push({ id: 'nhay', label: 'Nhảy', locked: true });   // chưa mở Khinh thân: vẫn hiện nút mờ, bấm vào được chỉ cách mở (người mới không phải đoán)
   const bd = isObj(k.board) ? k.board : {};
-  if (bd.own && !k.inHouse) out.push({ id: 'vantruot', label: bd.on ? 'Xuống thương' : 'Cưỡi thương', hot: !!bd.on });   // Phiên 92: có thương bay thì có nút cưỡi/xuống thương
+  if (bd.own && !k.inHouse) out.push({ id: 'vantruot', label: bd.on ? 'Xuống ván' : 'Lướt ván', hot: !!bd.on });   // Mục 1: có ván trượt thì có nút lướt/xuống ván
   out.push({ id: 'tui', label: 'Túi đồ' });
   return out;
 }
@@ -118,7 +118,7 @@ export function bagSections(ctx = {}) {
   const fRows = Object.keys(owned).filter((id) => furnitureById(id) && num(owned[id]) > 0).map((id) => ({ ten: furnitureById(id).ten, mo: `× ${num(owned[id])} (đã đặt ${placed.filter((p) => p && p.id === id).length})`, ic: { k: furnitureById(id).kind, c: hexOf(furnitureById(id).color) }, n: num(owned[id]) }));
   S.push({ title: 'Nội thất', rows: fRows.length ? fRows : [{ ten: 'Chưa có món nào', mo: 'Mua ở “Cửa hàng” khi đang ở trong nhà', trong: true }] });
   const kb = Math.min(MAX_BAC, num(c.khinh)), own = isObj(c.land) && isObj(c.land.own) ? c.land.own : null;
-  S.push({ title: 'Thân pháp & nhà', rows: [{ ten: 'Sức mạnh', mo: c.strength ? `${num(c.strength.value)} · ${String(c.strength.tier || '')} · khiêng tối đa ${num(c.strength.limit)} kg` : 'chưa có', ic: { k: 'power' } }, { ten: 'Khinh thân', mo: kb > 0 ? `bậc ${kb}/${MAX_BAC} · ${KHINH_TEN[kb]}` : 'chưa mở', ic: { k: 'wing' } }, { ten: 'Nhà', mo: own ? houseLevel(own.lv).ten : 'chưa có đất', ic: { k: 'house' } }, { ten: BOARD.ten, mo: isObj(c.board) && c.board.own ? (c.board.on ? 'đang cưỡi · đi nhanh gấp đôi' : 'đã có · bấm “Cưỡi thương” để dùng') : `chưa có — ${BOARD.gia} hạt sen ở Điện Máy Lam Sen`, ic: { k: 'board', c: '#f2a31b' } }] });
+  S.push({ title: 'Thân pháp & nhà', rows: [{ ten: 'Sức mạnh', mo: c.strength ? `${num(c.strength.value)} · ${String(c.strength.tier || '')} · khiêng tối đa ${num(c.strength.limit)} kg` : 'chưa có', ic: { k: 'power' } }, { ten: 'Khinh thân', mo: kb > 0 ? `bậc ${kb}/${MAX_BAC} · ${KHINH_TEN[kb]}` : 'chưa mở', ic: { k: 'wing' } }, { ten: 'Nhà', mo: own ? houseLevel(own.lv).ten : 'chưa có đất', ic: { k: 'house' } }, { ten: BOARD.ten, mo: isObj(c.board) && c.board.own ? (c.board.on ? 'đang lướt · đi nhanh gấp 1,5 lần' : 'đã có · bấm “Lướt ván” để dùng') : `chưa có — ${BOARD.gia} lá bồ đề ở Điện Máy Lam Sen`, ic: { k: 'board', c: '#f2a31b' } }] });
   // Phiên 96: ba mảnh Đại hồng chung (cốt truyện). ctx.bell = { da, nuoc, lua } (true = đã có). Mảnh chưa có hiện mờ (c: màu xám).
   const bl = isObj(c.bell) ? c.bell : {}, shardRow = (id, ten, hint) => ({ ten, mo: bl[id] ? 'đã có · giữ cho lễ đúc chuông' : hint, ic: { k: 'bell', c: bl[id] ? ({ da: '#b9b2a4', nuoc: '#6fb7e8', lua: '#f26a3d' })[id] : '#4b4f57' }, n: bl[id] ? 1 : 0 });
   S.push({ title: 'Mảnh chuông Diệu Giang', rows: [shardRow('da', 'Mảnh Đá', 'chưa có · tìm ở vách Đại Phật (Cốt truyện chương 2)'), shardRow('nuoc', 'Mảnh Nước', 'chưa có · sẽ mở ở chương sau'), shardRow('lua', 'Mảnh Lửa', 'chưa có · sẽ mở ở chương sau')] });
