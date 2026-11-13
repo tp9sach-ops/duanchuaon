@@ -92,7 +92,7 @@ export function initBoard({ toast = () => {} } = {}) {
       if (!(LGT.spendSen && LGT.spendSen(r.cost))) { toast('Chưa đủ hạt sen.', 2500); return; }
       st = r.state; save();
       toast(`Đã mua thương bay (−${r.cost} hạt sen).`, 2600);
-      if (canRide(ctx())) { st = toggleBoard(st, true).state; setTimeout(() => toast(`Bạn cưỡi thương — đi nhanh gấp ${BOARD.mul}! Bấm “Xuống thương” để bước xuống.`, 4200); }
+      if (canRide(ctx())) { st = toggleBoard(st, true).state; setTimeout(() => toast(`Bạn cưỡi thương — đi nhanh gấp ${BOARD.mul}! Bấm “Xuống thương” để bước xuống.`, 4200), 1800); }
     },
     status() { return { own: st.own, on: st.on }; },
   };
