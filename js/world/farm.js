@@ -25,6 +25,16 @@ export function loadFarm(raw, now = 0) {
   return f;
 }
 
+/**
+ * Phiên 134: điểm KINH NGHIỆM CẤP ĐỘ (công hạnh, thanh "Cấp" ở thẻ nhân vật) cho một lần hạ quái `mon` ({ lv, elite, boss }).
+ * Quái thường: 1 + 0,4 × cấp quái (tối đa 12); tinh anh ×2; boss vùng ×5. Chỉ tính khi lần đó còn Tu Vi trong trần ngày (xem ui/farm.js) để không cày vô hạn. TẠM, chờ ptg duyệt.
+ */
+export function killXp(mon) {
+  const lv = Math.max(1, Math.floor(Number(mon && mon.lv) || 1));
+  const base = Math.min(12, Math.round(1 + lv * 0.4));
+  return base * (mon && mon.boss ? 5 : mon && mon.elite ? 2 : 1);
+}
+
 /** Số lần có Tu Vi còn lại hôm nay của nguồn 'hangYeu' | 'boss'. */
 export const expLeft = (farm, nguon, now = 0) => NGUON_CFG.tranNgay[nguon] - normCnt(farm && farm.cnt, now)[nguon];
 
