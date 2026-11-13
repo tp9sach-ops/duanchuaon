@@ -12,8 +12,8 @@ import { blocked } from '../js/world/layout.js';
 import '../js/world/placements.js';
 import '../js/world/landscape.js';
 
-test('chương: 7 chương, mọi nhiệm vụ thuộc đúng MỘT chương, không id lạ, không trùng', () => {
-  assert.equal(CHAPTERS.length, 7); assert.equal(CHAPTERS[0].ids.length, 0, 'chương 1 là cốt truyện');
+test('chương: 8 chương, mọi nhiệm vụ thuộc đúng MỘT chương, không id lạ, không trùng', () => {
+  assert.equal(CHAPTERS.length, 8); assert.equal(CHAPTERS[0].ids.length, 0, 'chương 1 là cốt truyện');
   const ids = QUESTS.map((q) => q.id);
   assert.equal(new Set(CHAIN).size, CHAIN.length, 'không trùng');
   for (const id of CHAIN) assert.ok(ids.includes(id), 'id lạ ' + id);
@@ -39,7 +39,7 @@ test('nhiệm vụ ghé nơi: ghé đúng nơi thì xong, nơi khác thì không
   assert.equal(questStatus(r.prog).filter((x) => x.q.id.startsWith('v-') && x.done).length, 2);
 });
 
-test('thẻ việc kế tiếp: báo chương; đi hết chương này sang chương kế; đủ 7 chương đều có việc để làm', () => {
+test('thẻ việc kế tiếp: báo chương; đi hết chương này sang chương kế; đủ 8 chương đều có việc để làm', () => {
   const NOW = Date.UTC(2026, 10, 8, 5), done = loadStory({ step: 'done' });
   const g0 = nextGoal({ story: emptyStory(), prog: emptyProg(), now: NOW }); assert.match(g0.label, /^Chương 1 · Làm quen · 0\/\d+$/); assert.equal(g0.chapter.n, 1);
   let prog = emptyProg(); const chapters = new Set();
@@ -51,6 +51,6 @@ test('thẻ việc kế tiếp: báo chương; đi hết chương này sang chư
     if (q.loai === 'ngay') { p.day = { k: new Date(NOW).getFullYear() + '-' + String(new Date(NOW).getMonth() + 1).padStart(2, '0') + '-' + String(new Date(NOW).getDate()).padStart(2, '0'), n: {}, seen: {}, done: { ...p.day.done, [q.id]: true } }; } else p.done[q.id] = true;
     prog = p;
   }
-  assert.deepEqual([...chapters].sort(), [2, 3, 4, 5, 6, 7]);
+  assert.deepEqual([...chapters].sort(), [2, 3, 4, 5, 6, 7, 8]);
   const st = questStatus(prog); const c = chapterProgress(CHAPTERS[1], st); assert.equal(c.done, c.of);
 });

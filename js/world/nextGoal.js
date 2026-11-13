@@ -9,6 +9,7 @@ import { advise } from './tutorial.js';
 import { SEN_PER_LA } from './merit.js';
 import { ORBS } from './fishing.js';
 import { FURNITURE } from './furniture.js';
+import { SECT_QUESTS, SECT_LV } from './heQuest.js';
 
 /** Thứ tự làm sau cốt truyện = thứ tự các chương (js/world/chapters.js). Nhiệm vụ nào không có trong đây vẫn được làm cuối cùng. */
 export { CHAIN };
@@ -48,13 +49,17 @@ export function nextGoal(state = {}) {
 
   const status = prog ? questStatus(prog, now) : QUESTS.map((q) => ({ q, cur: 0, need: q.dk.n, done: false }));
   const pending = status.filter((r) => !r.done);
-  const rank = (id) => { const i = CHAIN.indexOf(id); return i < 0 ? CHAIN.length : i; };
+  // Phiên 141: gia nhập phái + học chiêu — chỉ khi biết cấp hiệu dụng `state.cap` (thiếu = giữ hành vi cũ); đủ cấp 10 thì làm NGAY (trước mọi việc khác sau cốt truyện).
+  const capKnown = Number.isFinite(+state.cap), cap = capKnown ? +state.cap : Infinity, sectOn = SECT_QUESTS.filter(() => cap >= SECT_LV);
+  const rank = (id) => { if (capKnown && sectOn.includes(id) && cap >= SECT_LV) return -1; const i = CHAIN.indexOf(id); return i < 0 ? CHAIN.length : i; };
   const queue = pending.slice().sort((a, b) => rank(a.q.id) - rank(b.q.id));
   const dailyLeft = (pending.filter((r) => r.q.loai === 'ngay').length);
   const earnId = EARN.find((id) => pending.some((r) => r.q.id === id)) || null;
 
   for (const r of queue) {
     const q = r.q, kind = q.loai === 'ngay' ? 'daily' : 'journey', left = pending.length - 1;
+    if (capKnown && SECT_QUESTS.includes(q.id) && cap < SECT_LV) continue;   // chưa đủ cấp 10: chưa tới lượt
+    if (q.id === 'm-chieu1' && state.he === null) continue;                 // đã biết là chưa có phái: phải Khai Ngộ trước (m-khaingo luôn đứng trước)
     if (q.id === 'm-nangnha' && !own) continue;     // chưa có nhà thì chưa nâng được; sẽ tới lượt sau khi mua đất
     if (q.id === 'm-noithat' && !own) continue;     // chưa có nhà thì chưa có chỗ đặt đồ
     if (q.id === 'm-muadat' && own) continue;       // đã có đất (nhiệm vụ sẽ được ghi nhận khi mua)
@@ -80,6 +85,9 @@ export function nextGoal(state = {}) {
     return g;
   }
 
+  if (capKnown && cap < SECT_LV && pending.some((r) => SECT_QUESTS.includes(r.q.id))) {   // chỉ còn việc chờ cấp 10: nói rõ việc kế tiếp
+    return { ...base, chapter: null, id: 'sect:len-cap', kind: 'journey', label: 'Chương 8 · Gia nhập phái', title: `Luyện lên cấp ${SECT_LV} để gia nhập phái`, text: `Đánh quái ở bãi rừng để lên cấp (bạn đang cấp ${cap}). Đủ cấp ${SECT_LV} sẽ có nhiệm vụ gia nhập phái và học chiêu mới.`, cur: cap, need: SECT_LV, left: pending.length };
+  }
   const a = advise({ sen, la, own });   // mọi nhiệm vụ đã xong: gợi ý tự do, không bao giờ để người chơi không biết làm gì
   const text = own ? 'Bạn đã làm xong mọi nhiệm vụ. Vào nhà bấm “Chỉnh sửa” để sắp đặt đồ, hoặc ra hồ cá ngắm cá; mai quay lại làm việc hằng ngày.' : a.text;
   return { ...base, id: 'free:' + a.id, kind: 'free', label: LABEL.free, title: 'Tu tập tự do', text, go: a.go || null, left: 0, dailyLeft };
