@@ -4,19 +4,22 @@ import assert from 'node:assert/strict';
 import { STATS_CFG, EXP_CFG } from '../js/data/stats.js';
 import { clampTuVi, congOf, thuOf, sinhLucOf, statsOf, expToNext, expCurve, totalExpFor, levelFromExp, expRemaining, progressOf } from '../js/world/stats.js';
 
-test('stats: cấu hình đánh dấu TẠM, khoảng Tu Vi 1..150 và đóng băng', () => {
+test('stats: cấu hình đánh dấu TẠM, Tu Vi không có trần (Phiên 139) và đóng băng', () => {
   assert.equal(STATS_CFG.tam, true);
   assert.equal(STATS_CFG.tuViMin, 1);
-  assert.equal(STATS_CFG.tuViMax, 150);
+  assert.equal(STATS_CFG.tuViMax, Infinity);
+  assert.equal(STATS_CFG.tuViKyThuat, 5000);
   assert.ok(Object.isFrozen(STATS_CFG) && Object.isFrozen(STATS_CFG.cong) && Object.isFrozen(STATS_CFG.thu) && Object.isFrozen(STATS_CFG.sinhLuc));
 });
 
-test('stats: clampTuVi kẹp 1..150, làm tròn xuống, đầu vào lạ về 1', () => {
+test('stats: clampTuVi chỉ kẹp dưới 1 (không trần chơi), làm tròn xuống, đầu vào lạ về 1', () => {
   assert.equal(clampTuVi(1), 1);
   assert.equal(clampTuVi(150), 150);
   assert.equal(clampTuVi(0), 1);
   assert.equal(clampTuVi(-7), 1);
-  assert.equal(clampTuVi(999), 150);
+  assert.equal(clampTuVi(999), 999);
+  assert.equal(clampTuVi(300), 300);
+  assert.equal(clampTuVi(1e9), 5000);   // chặn kỹ thuật
   assert.equal(clampTuVi(12.9), 12);
   assert.equal(clampTuVi('30'), 30);
   for (const bad of [null, undefined, NaN, 'abc', {}, [], Infinity]) assert.equal(clampTuVi(bad), 1, String(bad));
@@ -41,12 +44,13 @@ test('stats: mọi chỉ số là số nguyên và tăng nghiêm ngặt theo t�
   }
 });
 
-test('stats: hàm lẻ khớp statsOf; ngoài khoảng dùng giá trị biên', () => {
+test('stats: hàm lẻ khớp statsOf; dưới 1 dùng giá trị biên', () => {
   assert.equal(congOf(77), statsOf(77).cong);
   assert.equal(thuOf(77), statsOf(77).thu);
   assert.equal(sinhLucOf(77), statsOf(77).sinhLuc);
   assert.deepEqual(statsOf(0), statsOf(1));
-  assert.deepEqual(statsOf(500), statsOf(150));
+  assert.deepEqual(statsOf(500), { tuvi: 500, cong: 1507, thu: 1003, sinhLuc: 12595 });   // 10+3*499, 5+2*499, 120+25*499
+  assert.ok(statsOf(151).cong > statsOf(150).cong);   // vượt 150 vẫn mạnh thêm
   assert.deepEqual(statsOf(undefined), statsOf(1));
 });
 
@@ -65,19 +69,20 @@ test('exp: mốc GDD v2 mục 4.2 (EXP một cấp = 30 × n^1,6) đúng trong 1
   assert.equal(expCurve(10), 1194); assert.equal(expCurve(30), 6927); assert.equal(expCurve(1), 30);
 });
 
-test('exp: expToNext — cấp 1 = 30, tăng dần, cấp 150 = 0, đầu vào lạ → như cấp 1', () => {
+test('exp: expToNext — cấp 1 = 30, tăng dần, cấp 150 vẫn cần EXP (không trần), đầu vào lạ → như cấp 1', () => {
   assert.equal(expToNext(1), 30);
   assert.equal(expToNext(10), 1194);
-  assert.equal(expToNext(150), 0);
+  assert.equal(expToNext(150), expCurve(150));
+  assert.ok(expToNext(150) > 0 && expToNext(300) > expToNext(150));
   assert.equal(expToNext('abc'), 30);
-  for (let n = 2; n < 150; n++) assert.ok(expToNext(n) > expToNext(n - 1), `tăng @${n}`);
+  for (let n = 2; n < 400; n++) assert.ok(expToNext(n) > expToNext(n - 1), `tăng @${n}`);
 });
 
 test('exp: totalExpFor là tổng cộng dồn, cấp 1 = 0; levelFromExp là hàm ngược', () => {
   assert.equal(totalExpFor(1), 0);
   assert.equal(totalExpFor(2), 30);
-  let sum = 0; for (let t = 1; t < 150; t++) { assert.equal(totalExpFor(t), sum, `cum ${t}`); sum += expToNext(t); assert.equal(totalExpFor(t + 1), sum); }
-  for (let t = 1; t <= 150; t++) {
+  let sum = 0; for (let t = 1; t < 400; t++) { assert.equal(totalExpFor(t), sum, `cum ${t}`); sum += expToNext(t); assert.equal(totalExpFor(t + 1), sum); }
+  for (let t = 1; t <= 400; t++) {
     assert.equal(levelFromExp(totalExpFor(t)), t, `đạt đúng cấp ${t}`);
     if (t > 1) assert.equal(levelFromExp(totalExpFor(t) - 1), t - 1, `thiếu 1 EXP @${t}`);
   }
@@ -86,7 +91,8 @@ test('exp: totalExpFor là tổng cộng dồn, cấp 1 = 0; levelFromExp là h�
 test('exp: levelFromExp kẹp biên và đầu vào lạ', () => {
   for (const v of [0, -5, NaN, null, undefined, 'x', 29, 29.9]) assert.equal(levelFromExp(v), 1, String(v));
   assert.equal(levelFromExp(30), 2);
-  assert.equal(levelFromExp(1e12), 150);
+  assert.ok(levelFromExp(1e9) > 150);   // EXP lưu tối đa 1e9 → vượt xa 150
+  assert.equal(levelFromExp(1e12), 5000);   // chặn kỹ thuật
   assert.equal(levelFromExp(Infinity), 1);
 });
 
@@ -94,10 +100,12 @@ test('exp: expRemaining và progressOf nhất quán', () => {
   assert.equal(expRemaining(0), 30);
   assert.equal(expRemaining(29), 1);
   assert.equal(expRemaining(30), expToNext(2));
+  assert.ok(expRemaining(totalExpFor(150)) > 0);   // cấp 150 vẫn còn lên tiếp
   assert.equal(expRemaining(1e12), 0);
   assert.deepEqual(progressOf(0), { tuvi: 1, into: 0, need: 30, pct: 0 });
   assert.deepEqual(progressOf(15), { tuvi: 1, into: 15, need: 30, pct: 0.5 });
-  assert.deepEqual(progressOf(1e12), { tuvi: 150, into: 0, need: 0, pct: 1 });
+  assert.deepEqual(progressOf(1e12), { tuvi: 5000, into: 0, need: 0, pct: 1 });
+  assert.ok(progressOf(totalExpFor(150)).need > 0);
   for (const e of [0, 7, 30, 500, 12345, 999999]) { const p = progressOf(e); assert.equal(p.into + expRemaining(e), p.need, `into+còn=need @${e}`); assert.ok(p.pct >= 0 && p.pct < 1); }
 });
 

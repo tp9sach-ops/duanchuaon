@@ -21,14 +21,15 @@ test('dayKeyVN: đổi ngày đúng lúc 00:00 giờ VN (17:00 UTC)', () => {
   assert.equal(dayKeyVN('abc'), '1970-01-01');
 });
 
-test('expPerAction: tỉ lệ theo EXP cần của cấp; tối thiểu 1; nguồn lạ và cấp 150 → 0', () => {
+test('expPerAction: tỉ lệ theo EXP cần của cấp; tối thiểu 1; nguồn lạ → 0; cấp 150 vẫn nhận (không trần)', () => {
   assert.equal(expPerAction('hangYeu', 10), Math.round(expToNext(10) * NGUON_CFG.nguon.hangYeu.moiLan));
   assert.equal(NGUON_CFG.nguon.hangYeu.moiLan, 0.04);   // Phiên 129: gấp đôi trước đây (0,02)
   assert.equal(expPerAction('boss', 10), Math.round(expToNext(10) * 0.15));
   assert.equal(expPerAction('nhiemVu', 1), Math.round(expToNext(1) * 0.1));
   assert.equal(expPerAction('hangYeu', 1), 1); // 30×0,04 = 1,2 → làm tròn 1
   assert.equal(expPerAction('xyz', 10), 0);
-  assert.equal(expPerAction('boss', 150), 0);
+  assert.equal(expPerAction('boss', 150), Math.round(expToNext(150) * 0.15));
+  assert.ok(expPerAction('boss', 150) > 0);
 });
 
 test('chenhLechFactor: ≤5 cấp đủ; vượt thì giảm; sàn 0,1; cấp quái lạ → 1', () => {
@@ -91,7 +92,8 @@ test('award: nguồn lạ, loại lạ, cấp tối đa; leveledUp khi vượt m
   assert.equal(award({ exp: 0, nguon: 'abc', now: T0 }).reason, 'nguon-la');
   assert.equal(award({ exp: 0, nguon: 'hoatDong', loai: 'zzz', now: T0 }).reason, 'loai-la');
   assert.equal(award({ exp: 0, nguon: 'hoatDong', now: T0 }).gain, 0);
-  assert.equal(award({ exp: 1e9, nguon: 'boss', now: T0 }).reason, 'cap-toi-da');
+  assert.equal(award({ exp: 1e9, nguon: 'boss', now: T0 }).reason, 'ok');   // Phiên 139: EXP lưu tối đa 1e9 vẫn còn lên tiếp (không trần)
+  assert.equal(award({ exp: 1e12, nguon: 'boss', now: T0 }).reason, 'cap-toi-da');   // chỉ chạm chặn kỹ thuật Tu Vi 5000
   const r = award({ exp: expToNext(1) - 1, nguon: 'boss', now: T0 });
   assert.equal(r.leveledUp, true);
   assert.equal(r.tuvi, 2);
