@@ -1,6 +1,7 @@
 // Quái bãi rừng ĐÁNH TRẢ + Sinh Lực người chơi (Phiên 115, G1.6 phần còn thiếu). LOGIC THUẦN (không DOM, không three.js, không đọc đồng hồ, không Math.random): `dt` là giây do nơi gọi truyền.
 // Quái chỉ nổi giận (eng) khi BỊ ĐÁNH (provoke); lúc đó đuổi theo người chơi trong vùng của nó, gồng chiêu báo trước rồi đánh. Số liệu: js/data/monsterAI.js (TẠM). Test: tests/monsterattack.test.mjs.
 // Các hàm sửa quái / vitals TẠI CHỖ (giống spawn.js). Nối giao diện: js/ui/farmCombat.js.
+import { rectsOf } from './spawn.js';
 import { ATTACK_CFG as A, BOSS_ATTACK_CFG, VITALS_CFG as V } from '../data/monsterAI.js';
 import { FARM_ZONES } from '../data/monsters.js';
 import { monsterStats } from './spawn.js';
@@ -12,10 +13,10 @@ const clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
 const kind = (m) => (m && (m.elite || m.boss) ? 'elite' : 'normal');   // Phiên 123: boss đánh như tinh anh (nhanh, tầm xa, Hệ số cao)
 
 /** Điểm (x, z) có đi được trong vùng farm `zoneId` không: nằm trong một hình chữ nhật của vùng và không nằm trong hình tròn tránh. Vùng lạ → true (không chặn). */
-export function walkable(zoneId, x, z) {
+export function walkable(zoneId, x, z, night = false) {
   const zone = FARM_ZONES[zoneId]; if (!zone) return true;
   const px = num(x, NaN), pz = num(z, NaN);
-  if (!zone.rects.some((r) => px >= r.x0 && px <= r.x1 && pz >= r.z0 && pz <= r.z1)) return false;
+  if (!rectsOf(zone, night).some((r) => px >= r.x0 && px <= r.x1 && pz >= r.z0 && pz <= r.z1)) return false;
   return !zone.avoid.some((c) => Math.hypot(px - c.x, pz - c.z) <= c.r);
 }
 
@@ -60,7 +61,7 @@ export function stepMonster(m, dt, player, ctx = {}) {
   if (dist > reach * A.stopFrac) {                    // đuổi theo, không đi ra ngoài vùng
     const step = Math.min(A.speed[kd] * d0, dist - reach * A.stopFrac), ux = dx / dist, uz = dz / dist;
     const tries = [[m.x + ux * step, m.z + uz * step], [m.x + ux * step, m.z], [m.x, m.z + uz * step]];
-    for (const [nx, nz] of tries) if (walkable(m.zone, nx, nz)) { m.x = nx; m.z = nz; break; }
+    for (const [nx, nz] of tries) if (walkable(m.zone, nx, nz, m.night)) { m.x = nx; m.z = nz; break; }
     dx = px - m.x; dz = pz - m.z; dist = Math.hypot(dx, dz);
   }
   if (dist <= reach && m.atkT <= 0) {

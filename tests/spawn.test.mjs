@@ -19,7 +19,7 @@ test('dữ liệu: tên/cấp/Hệ đúng GDD mục 8; mỗi vùng chỉ dùng q
   assert.deepEqual([MONSTERS.dameo.lv, MONSTERS.reutinh.lv, MONSTERS.daotac.lv, MONSTERS.cuopduong.lv], [3, 10, 15, 22]);
   assert.equal(MONSTERS.dameo.ten, 'Dã Mèo Rừng');
   for (const z of ZS) {
-    assert.ok(z.eliteMax <= z.cap && z.cap <= 12);
+    assert.ok(z.eliteMax <= z.cap && z.cap <= z.capNight && z.capNight <= 30);
     for (const id of [...z.normal, ...z.elite]) { const m = MONSTERS[id]; assert.ok(m, id); assert.ok(m.lv >= z.lvMin && m.lv <= z.lvMax, `${id} cấp ${m.lv}`); assert.equal(m.he, z.he); }
     for (const id of z.normal) assert.equal(MONSTERS[id].elite, false);
     for (const id of z.elite) assert.equal(MONSTERS[id].elite, true);
@@ -189,12 +189,22 @@ test('farm thử: người cấp 1 hạ Dã Mèo Rừng liên tục → có hạ
   assert.ok(exp > expToNext(1), `exp=${exp}`);   // đủ để lên cấp 2 trở lên
 });
 
-test('zoneOpen (Phiên 116): vùng nightOnly chỉ mở khi đêm vượt ngưỡng; vùng lạ đóng', async () => {
-  const { zoneOpen, ZONE_IDS } = await import('../js/world/spawn.js'); const { FARM_CFG } = await import('../js/data/monsters.js');
+test('isNight / rectsOf / setNight (Phiên 130): đêm cap tăng và tràn ra nightRects; sáng rút về; quái đang giận ở lại', async () => {
+  const { isNight, rectsOf, setNight, createSpawner: cs, tickSpawner: ts } = await import('../js/world/spawn.js'); const { FARM_CFG } = await import('../js/data/monsters.js');
+  assert.deepEqual([isNight(0), isNight(FARM_CFG.nightAt), isNight(FARM_CFG.nightAt + 0.01), isNight(true), isNight(undefined), isNight('x'), isNight(NaN)], [false, false, true, true, false, false, false]);
   for (const id of ZONE_IDS) {
-    assert.equal(zoneOpen(id, 0), false, id); assert.equal(zoneOpen(id, FARM_CFG.nightAt), false, 'đúng ngưỡng chưa mở');
-    assert.equal(zoneOpen(id, FARM_CFG.nightAt + 0.01), true); assert.equal(zoneOpen(id, true), true);
-    for (const bad of [undefined, null, NaN, 'x']) assert.equal(zoneOpen(id, bad), false, String(bad));
+    const z = FARM_ZONES[id], rng = rngSeed(11);
+    assert.equal(rectsOf(z, false), z.rects); assert.equal(rectsOf(z, true).length, z.rects.length + z.nightRects.length); assert.ok(z.capNight > z.cap);
+    for (const r of z.nightRects) assert.ok(OUT_WALKS.some((w) => r.x0 >= w.x0 && r.x1 <= w.x1 && r.z0 >= w.z0 && r.z1 <= w.z1), `${id} nightRect nằm trong một đường đi`);
+    const sp = cs(id, rng), reg = () => sp.mons.filter((m) => !m.boss);
+    assert.equal(reg().length, z.cap); assert.ok(reg().every((m) => z.rects.some((r) => m.x >= r.x0 && m.x <= r.x1 && m.z >= r.z0 && m.z <= r.z1)), 'ngày: trong khoảng rừng');
+    assert.equal(setNight(sp, true, rng), 0); assert.equal(setNight(sp, true, rng), 0, 'không đổi → không làm gì');
+    for (let i = 0; i < 40; i++) ts(sp, 1, rng);
+    assert.equal(reg().length, z.capNight); assert.ok(reg().filter((m) => m.elite).length <= z.eliteMax + 1);
+    assert.ok(reg().some((m) => z.nightRects.some((r) => m.x >= r.x0 && m.x <= r.x1 && m.z >= r.z0 && m.z <= r.z1)), `${id}: quái tràn ra ngoài`);
+    const out = reg().find((m) => !z.rects.some((r) => m.x >= r.x0 && m.x <= r.x1 && m.z >= r.z0 && m.z <= r.z1)); if (out) out.eng = true;
+    const gone = setNight(sp, false, rng); assert.ok(gone > 0); assert.ok(reg().length <= z.cap + 1);
+    assert.ok(reg().every((m) => m.eng || z.rects.some((r) => m.x >= r.x0 && m.x <= r.x1 && m.z >= r.z0 && m.z <= r.z1)), 'sáng: chỉ con đang giận ở lại ngoài');
+    if (out) assert.ok(sp.mons.includes(out)); assert.ok(sp.mons.some((m) => m.boss), 'boss không bị bớt');
   }
-  assert.equal(zoneOpen('khongcoo', 1), false);
 });

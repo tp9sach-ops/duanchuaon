@@ -39,27 +39,27 @@ export const SPAWN_CFG = Object.freeze({ minGap: 3, minFromPlayer: 6, tries: 30,
 export const FARM_ZONES = Object.freeze({
   // Phiên 119: vùng Mộc cũng DỜI khỏi bãi rừng thông (miếu, cổ thụ, Hồ Rừng + thủy tạ để chụp hình) vào khoảng đất trống 'rung-sau-bac'. Id giữ nguyên.
   biaRungThong: Object.freeze({
-    id: 'biaRungThong', nightOnly: true, ten: 'Rừng Sâu Phía Bắc', lvMin: 3, lvMax: 20, he: 'moc', cap: 12, eliteMax: 1,
+    id: 'biaRungThong', ten: 'Rừng Sâu Phía Bắc', lvMin: 3, lvMax: 20, he: 'moc', cap: 16, capNight: 28, eliteMax: 2, nightRects: Object.freeze([{ x0: -63.5, x1: -58.5, z0: 77.5, z1: 84 }, { x0: -82, x1: -38, z0: 84.5, z1: 93.5 }]),
     normal: Object.freeze(['dameo']), elite: Object.freeze(['reutinh']), boss: 'laomoc',
     rects: Object.freeze([{ x0: -76.5, x1: -47.5, z0: 51.5, z1: 76.5 }]),
     avoid: Object.freeze([]),
   }),
   // Phiên 118: hai vùng sau DỜI khỏi đường mòn và bãi dưới thác (để đường thông thoáng, Đại Phật + thác để chụp hình) vào hai khoảng đất trống rừng sâu mới (OUT_WALKS 'rung-sau-dong' / 'rung-sau-tay'). Id giữ nguyên để lưu/test không đổi.
   duongMon: Object.freeze({
-    id: 'duongMon', nightOnly: true, ten: 'Rừng Sâu Phía Đông', lvMin: 12, lvMax: 25, he: 'kim', cap: 12, eliteMax: 1,
+    id: 'duongMon', ten: 'Rừng Sâu Phía Đông', lvMin: 12, lvMax: 25, he: 'kim', cap: 16, capNight: 28, eliteMax: 2, nightRects: Object.freeze([{ x0: 50.5, x1: 55.5, z0: 108.5, z1: 120 }, { x0: 30, x1: 76, z0: 99.5, z1: 108.5 }]),
     normal: Object.freeze(['daotac']), elite: Object.freeze(['cuopduong']), boss: 'soncuoc',
     rects: Object.freeze([{ x0: 37.5, x1: 66.5, z0: 121.5, z1: 140.5 }]),
     avoid: Object.freeze([]),
   }),
   hoThac: Object.freeze({
-    id: 'hoThac', nightOnly: true, ten: 'Rừng Sâu Phía Tây', lvMin: 25, lvMax: 45, he: 'thuy', cap: 12, eliteMax: 1,
+    id: 'hoThac', ten: 'Rừng Sâu Phía Tây', lvMin: 25, lvMax: 45, he: 'thuy', cap: 16, capNight: 28, eliteMax: 2, nightRects: Object.freeze([{ x0: -63.5, x1: -58.5, z0: 94, z1: 104 }, { x0: -82, x1: -38, z0: 84.5, z1: 93.5 }]),
     normal: Object.freeze(['thuyquy']), elite: Object.freeze(['lyngu']), boss: 'thuymau',
     rects: Object.freeze([{ x0: -76.5, x1: -47.5, z0: 105.5, z1: 128.5 }]),
     avoid: Object.freeze([]),
   }),
   // Phiên 126: vùng thứ tư, khoảng đất trống phía Bắc Bảo Tháp ('rung-sau-thap'). Quái cấp 45–65 — Tu Vi mục tiêu 40–65 (GDD mục 8).
   doiBaoThap: Object.freeze({
-    id: 'doiBaoThap', nightOnly: true, ten: 'Đồi Bảo Tháp', lvMin: 40, lvMax: 65, he: 'tho', cap: 12, eliteMax: 1,
+    id: 'doiBaoThap', ten: 'Đồi Bảo Tháp', lvMin: 40, lvMax: 65, he: 'tho', cap: 16, capNight: 28, eliteMax: 2, nightRects: Object.freeze([{ x0: 60.5, x1: 65.5, z0: 56, z1: 67.5 }]),
     normal: Object.freeze(['thachtinh']), elite: Object.freeze(['hothap']), boss: 'thachlinh',
     rects: Object.freeze([{ x0: 43.5, x1: 74.5, z0: 40.5, z1: 54.5 }]),
     avoid: Object.freeze([]),
@@ -72,8 +72,8 @@ export const FARM_ZONES = Object.freeze({
 // nearMargin: người chơi cách vùng farm ≤ số mét này thì quái được vẽ và chạy; xa hơn thì quái đứng yên (không vẽ, không tốn máy).
 // maxVisible: số quái tối đa vẽ cùng lúc (bể mô hình của js/scene/farm.js). Hai vùng sát nhau (Bìa Rừng Thông và Đường Mòn) có thể cùng hiện: 2 × 12 = 24 ≤ 26.
 export const FARM_CFG = Object.freeze({ tam: true,
-  // Phiên 116: quái bãi rừng CHỈ hiện khi trời tối trong game (LGT.night > nightAt); ban ngày bãi trống để chụp hình check-in. (Boss to ban ngày: G4.1.)
-  nightAt: 0.55,
-  senCapNgay: 100, nearMargin: 40, maxVisible: 26,
+  // Phiên 130 (thay Phiên 116): BAN NGÀY quái nằm NGỦ trong bụi của khoảng rừng sâu (cap); BAN ĐÊM (LGT.night > nightAt) nhiều quái hơn (capNight) và TRÀN RA lối vào + đường mòn sát khoảng rừng (nightRects). Sáng ra quái ngoài khoảng rừng biến mất (trừ con đang đánh nhau).
+  nightAt: 0.55,   // trời tối khi LGT.night > ngưỡng này: bãi quái NỞ RỘNG (nightRects, capNight)
+  senCapNgay: 100, nearMargin: 40, maxVisible: 56,
   // Tự Động Hàng Yêu (GDD v2 mục 12, câu 7; TẠM): tự đánh quái trong tầm autoRange (m), tối đa autoSecNgay giây mỗi ngày giờ VN (60 phút).
   autoRange: 15, autoSecNgay: 3600 });

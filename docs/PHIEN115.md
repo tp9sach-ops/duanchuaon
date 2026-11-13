@@ -72,3 +72,17 @@ Yêu cầu ptg (12/11): chỗ có cây/đất trống mà không đến được
 - `tests/hothac.test.mjs` TRƯỚC ĐÂY KHÔNG nằm trong `npm test` → đã thêm vào; viết lại cho 4 vùng + test Đồi Bảo Tháp. 1019/1020 (chỉ `combo.test.mjs` lỗi có sẵn).
 - LƯU Ý khi thử trình duyệt: lúc có sự kiện yêu quái hằng tháng (`LGT.yq.active`) bãi rừng TẠM TẮT (bossOn), nên `LGT.farmView.mons` rỗng — không phải lỗi. Muốn thử thì đợi hết sự kiện hoặc `LGT.yq.active=false`.
 - Thạch Tinh "đi cùng 3 quái nhỏ" (GDD) chưa làm.
+
+## Phiên 130 — Quái rừng: ngủ ban ngày, TRÀN RA ĐÊM, nhiều quái hơn (mục 1/3 của yêu cầu 13/11)
+Quy tắc ptg (chép nguyên văn): For the 9 Sạch monthly-archive project (and any long multi-session build): after EVERY reply, attach an updated handoff .md so a fresh session with no memory can continue exactly and in detail; if there isn't room to finish everything, send the handoff first; copy this rule verbatim into every handoff.
+
+Yêu cầu 13/11 gồm 3 mục, làm tuần tự: (1) quái ngủ/đánh mới giận + đêm tràn ra + nhiều quái hơn [XONG phiên này]; (2) mở rộng toàn map sát vách núi/rừng, càng sâu càng nguy hiểm (cấp, máu, sát thương cao hơn) [CHƯA]; (3) hạt sen KHÔNG ảnh hưởng sức mạnh — sức mạnh từ EXP/cấp/kỹ năng/combo/đồ/vật phẩm [CHƯA, cần rà `js/world/stats.js`, `LGT.strength`, công thức sát thương, thêm test độc lập với sen].
+
+Đã làm (mục 1):
+- `js/data/monsters.js`: bỏ `nightOnly`; mỗi vùng `cap 16`, `capNight 28`, `eliteMax 2` (+1 đêm), `nightRects` (lối vào + đường mòn, nằm trong OUT_WALKS); `FARM_CFG.maxVisible 56`.
+- `js/world/spawn.js`: `rectsOf/capOf/isNight/setNight`, `zoneAt/pickPoint` nhận `night`; đêm: quái mới sinh dần vào cả `rects`+`nightRects`; sáng: quái ngoài khoảng rừng (không giận, không boss) biến mất, cắt về cap.
+- `js/world/monsterAttack.js`: `walkable(zone,x,z,night)` cho quái đuổi theo ra đường đêm.
+- `js/ui/farm.js`: tick dùng `setNight`, gắn `m.zone/m.night`, giới hạn 56 con ưu tiên boss rồi gần nhất.
+- Ban ngày quái NGỦ trong bụi (chỉ đánh mới giận, đã có từ trước) — giữ nguyên.
+- Tests: `tests/farmcombat.test.mjs` mới; sửa farmui/spawn/hothac; `npm test` 1041 pass / 0 fail. `sw.js` VERSION = dgt-v132.
+- Chưa kiểm bằng mắt trong game (con số TẠM, cần ptg duyệt).

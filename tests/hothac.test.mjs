@@ -13,7 +13,7 @@ test('vùng Thủy: cấp/Hệ đúng GDD mục 8; Lý Ngư Tinh là tinh anh; b
   const z = FARM_ZONES.hoThac;
   assert.equal(ZONE_IDS.length, 4);
   assert.deepEqual([MONSTERS.thuyquy.ten, MONSTERS.thuyquy.lv, MONSTERS.lyngu.ten, MONSTERS.lyngu.lv], ['Thủy Quỷ Hồ Thác', 28, 'Lý Ngư Tinh', 38]);
-  assert.deepEqual([z.lvMin, z.lvMax, z.he, z.cap, z.eliteMax], [25, 45, 'thuy', 12, 1]);
+  assert.deepEqual([z.lvMin, z.lvMax, z.he, z.cap, z.eliteMax], [25, 45, 'thuy', 16, 2]);
   assert.deepEqual([...z.normal], ['thuyquy']); assert.deepEqual([...z.elite], ['lyngu']);
   assert.equal(monsterStats('lyngu').elite, true); assert.equal(monsterStats('thuyquy').he, 'thuy');
   const base = (lv) => MON_CFG.oanBase + MON_CFG.oanPerLv * lv;   // công thức đọc từ cấu hình (Phiên 127 đổi số)

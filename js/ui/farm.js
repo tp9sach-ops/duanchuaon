@@ -3,7 +3,7 @@
 // Nút Ném đá / Thương dùng lại ACT.da / ACT.thuong của js/ui/dock.js: js/ui/yeuquai.js chuyển sang LGT.farm khi KHÔNG có yêu quái hằng tháng.
 // Quái không đánh trả (bãi rừng an toàn để luyện); đòn dùng stoneDamage/spearDamage theo sức mạnh như khi đánh yêu quái. Chưa có Hệ người chơi nên chưa tính khắc/sinh (G2).
 import { MONSTERS, FARM_ZONES, FARM_CFG } from '../data/monsters.js';
-import { createSpawner, tickSpawner, hitMonster, nearestMonster, zoneOpen, ZONE_IDS } from '../world/spawn.js';
+import { createSpawner, tickSpawner, hitMonster, nearestMonster, setNight, isNight, rectsOf, ZONE_IDS } from '../world/spawn.js';
 import { loadFarm, settleKill, settleBoss, senLeft, tuViOf } from '../world/farm.js';
 import { STONE, SPEAR, stoneDamage, spearDamage, rngSeed } from '../world/yeuquai.js';
 import { mapAvailable } from '../world/minimap.js';
@@ -14,7 +14,7 @@ const KEY = 'lgt.farm', AKEY = 'lgt.farmauto';
 const HE_TEN = { kim: 'Kim', moc: 'Mộc', thuy: 'Thủy', hoa: 'Hỏa', tho: 'Thổ' };
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
 const rectDist = (r, x, z) => Math.hypot(Math.max(r.x0 - x, 0, x - r.x1), Math.max(r.z0 - z, 0, z - r.z1));
-const zoneDist = (id, p) => Math.min(...FARM_ZONES[id].rects.map((r) => rectDist(r, p.x, p.z)));
+const zoneDist = (id, p, night = false) => Math.min(...rectsOf(FARM_ZONES[id], night).map((r) => rectDist(r, p.x, p.z)));
 const SIGHT = 18;   // m: tầm nhìn để chọn mục tiêu + hiện thanh Oán Khí (Phiên 127: đòn đánh thường giờ cận chiến nên không dùng STONE.range nữa)
 const bodyOf = (m) => (m.boss ? 1.8 : m.elite ? 1.1 : 0.55);   // bán kính thân (m) để tính tầm Thương
 
@@ -66,7 +66,7 @@ export function initFarm(hud, { toast = () => {} } = {}) {
   }
   function aim(needNear) {
     const t = target();
-    if (!t) { toast('Chưa có quái nào gần. Quái rừng chỉ hiện khi trời tối: chờ đêm rồi đi vào bãi rừng (phía tây làng) hoặc đường mòn để luyện.', 2600); return null; }
+    if (!t) { toast('Chưa có quái nào gần. Quái nằm ngủ trong bụi cây các khoảng rừng sâu (cạnh đường mòn rừng thông, đường mòn thác, phía bắc Bảo Tháp); ban đêm chúng tràn ra đường. Đi vào bụi rồi đánh một con.', 2600); return null; }
     if (needNear && gap(t, pos()) - bodyOf(t) > SPEAR.range) { toast('Lại gần quái hơn mới đánh được.', 1800); return null; }
     return t;
   }
@@ -110,17 +110,17 @@ export function initFarm(hud, { toast = () => {} } = {}) {
     const p = pos();
     if (!p || !here() || bossOn()) { stopAuto('Tự động hàng yêu đã dừng.'); if (view.mons.length) { view.mons = []; view.stones = []; view.target = ''; } box.hidden = true; return; }
     const mons = [];
-    const night = LGT.night;
+    const night = isNight(LGT.night);   // Phiên 130: ban ngày quái NGỦ trong bụi khoảng rừng; ban đêm nhiều hơn và TRÀN RA đường (spawn.js setNight)
     for (const id of ZONE_IDS) {
-      const open = zoneOpen(id, night);   // ban ngày: quái thường vắng, chỉ BOSS vùng (Phiên 123) vẫn nằm ngủ trong bụi
-      if (!open && !FARM_ZONES[id].boss) continue;
-      if (zoneDist(id, p) > FARM_CFG.nearMargin) { if (spawners[id]) away[id] = (away[id] || 0) + dt; continue; }
-      if (!spawners[id]) spawners[id] = createSpawner(id, rng, { player: p });
+      if (zoneDist(id, p, night) > FARM_CFG.nearMargin) { if (spawners[id]) away[id] = (away[id] || 0) + dt; continue; }
+      if (!spawners[id]) spawners[id] = createSpawner(id, rng, { player: p, night });
       const sp = spawners[id];
+      setNight(sp, night, rng, p);
       if (away[id] > 0) { for (let s = Math.min(away[id], 90); s > 0; s -= 5) tickSpawner(sp, Math.min(5, s), rng, p); away[id] = 0; }   // đi xa rồi quay lại: quái đã hồi sinh bù (tối đa 90 giây)
       tickSpawner(sp, dt, rng, p);
-      for (const m of sp.mons) { m.zone = id; m.uid = `${id}:${m.id}`; m.flash = Math.max(0, (m.flash || 0) - dt); if (open || m.boss) mons.push(m); }
+      for (const m of sp.mons) { m.zone = id; m.night = night; m.uid = `${id}:${m.id}`; m.flash = Math.max(0, (m.flash || 0) - dt); mons.push(m); }
     }
+    if (mons.length > FARM_CFG.maxVisible) { mons.sort((a, b) => (b.boss ? 1e6 : 0) - (a.boss ? 1e6 : 0) || gap(a, p) - gap(b, p)); mons.length = FARM_CFG.maxVisible; }   // quá bể vẽ: giữ boss + quái gần nhất
     view.mons = mons;
     view.stones = view.stones.filter((s) => { s.t += dt; if (s.t < s.dur) return true; hit(s.uid, s.dmg); if (LGT.sfx) LGT.sfx.play('da-trung'); return false; });
     if (running) autoStep(dt);
