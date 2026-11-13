@@ -1,12 +1,13 @@
 // Vật phẩm mua bằng lá bồ đề (mục 1): giao diện. Luật/số: js/world/items.js (có test). Nạp từ js/ui/board.js (initBoard). Đặt LGT.items = { openShop(kind), closeShop(), regenMul(), tryRevive(), dmgMul(), state }.
-// - Cửa hàng 'kimhoan' (NPC Kim Hoàn Ngọc Lan): Ngọc hồi máu 100 lá (hồi Sinh Lực ×5, 10 phút), Ngọc dịch chuyển 200 lá (hết Sinh Lực hồi sinh tại chỗ, 20 phút). Cửa hàng 'dienmay' (NPC Điện Máy Lam Sen): Ván trượt 100 lá (js/ui/board.js), Gậy như ý 400 lá.
-// - Hồi máu ×5 / hồi sinh tại chỗ: js/ui/farmCombat.js gọi LGT.items.regenMul() và LGT.items.tryRevive(). Hạn dùng tính theo giờ thật nên đổi tab vẫn chạy.
-// - Gậy như ý: thay hình cây côn cầm tay (nhân vật chibi GLB) bằng cây gậy đỏ đầu đồng chạm rồng như ảnh mẫu, có ánh sáng nhấp nháy; mỗi đòn đánh lan ra vòng sáng trước mặt; +1% sát thương lên quái bãi rừng (cộng thêm 1% vào phần Oán Khí quái vừa mất, không sửa farm.js).
+// - Cửa hàng 'kimhoan' (NPC Kim Hoàn Ngọc Lan): Ngọc hồi máu 100 lá (×5, 10 phút), Ngọc dịch chuyển 200 lá (hồi sinh tại chỗ, 20 phút). Cửa hàng 'dienmay' (NPC Điện Máy Lam Sen): Ván trượt 100 lá (js/ui/board.js), Gậy như ý 400 lá.
+// - Hồi máu ×5 / hồi sinh tại chỗ: js/ui/farmCombat.js gọi LGT.items.regenMul() và tryRevive(). Hạn dùng tính theo giờ thật nên đổi tab vẫn chạy.
+// - Gậy như ý: MUA là có, nhưng chỉ hiện trên tay / có +1% sát thương / vòng sáng lan khi người chơi ĐANG CẦM Gậy như ý (LGT.loadout.weapon === 'nhuy', chọn ở Túi đồ). Mặc định cầm Thương: trả lại cây côn mặc định. Mua gậy xong tự cầm gậy.
 // Nhân vật dựng bằng khối (không phải chibi) thì không đổi hình gậy nhưng vẫn có +1% và vòng sáng. CHƯA nhìn bằng mắt trên máy thật.
 import * as THREE from 'three';
 import { GEMS, STAFF, loadItems, buyGem, buyStaff, remainSec, regenMul as rMul, canRevive, dmgMul as dMul, fmtTime } from '../world/items.js';
 import { BOARD } from '../world/board.js';
 import { askConfirm } from './dialog.js';
+import { buildStaff, loadStaffGlb, pulseGlows } from './staffMesh.js';
 
 const KEY = 'lgt.items';
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
@@ -18,44 +19,7 @@ const CSS = '.it-box{position:fixed;left:50%;top:50%;transform:translate(-50%,-5
   + '.it-chips{position:fixed;left:8px;top:calc(env(safe-area-inset-top,0px) + 56px);z-index:40;display:flex;flex-direction:column;gap:4px;pointer-events:none}'
   + '.it-chip{background:rgba(26,17,10,.82);color:#ffe08a;border:1px solid #c9a24a;border-radius:999px;padding:3px 10px;font:600 12px "Be Vietnam Pro",system-ui,sans-serif}';
 
-let RING_GEO = null, GLOW_TEX = null;
-function glowTexture() {
-  if (GLOW_TEX) return GLOW_TEX;
-  const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'), gr = g.createRadialGradient(32, 32, 2, 32, 32, 31);
-  gr.addColorStop(0, 'rgba(255,245,200,1)'); gr.addColorStop(0.35, 'rgba(255,205,90,.55)'); gr.addColorStop(1, 'rgba(255,170,40,0)'); g.fillStyle = gr; g.fillRect(0, 0, 64, 64);
-  GLOW_TEX = new THREE.CanvasTexture(c); GLOW_TEX.colorSpace = THREE.SRGBColorSpace; return GLOW_TEX;
-}
-
-/** Cây Gậy như ý (theo ảnh mẫu): cán đỏ sẫm bóng, hai đầu đồng chạm rồng cuốn (hàng cầu xoắn ruột gà + vành + chóp tròn), có 3 điểm sáng. Dài 1,5 m, gốc ở giữa (khớp cây côn chibi: trục y dóng theo cánh tay, nắm chính giữa). */
-function buildStaff() {
-  const g = new THREE.Group(); g.name = 'gaynhuy';
-  const red = new THREE.MeshStandardMaterial({ color: 0xb3202e, roughness: 0.32, metalness: 0.55, emissive: 0x4a0008, emissiveIntensity: 0.6 });
-  const bronze = new THREE.MeshStandardMaterial({ color: 0x8c5a3c, roughness: 0.42, metalness: 0.7, emissive: 0x3a2006, emissiveIntensity: 0.5 });
-  const gold = new THREE.MeshStandardMaterial({ color: 0xf0b73c, roughness: 0.28, metalness: 0.8, emissive: 0x7a5200, emissiveIntensity: 0.9 });
-  const put = (geo, mat, y, flip) => { const m = new THREE.Mesh(geo, mat); m.position.y = y; if (flip) m.rotation.x = Math.PI; g.add(m); return m; };
-  put(new THREE.CylinderGeometry(0.03, 0.03, 0.98, 14), red, 0, false);   // cán đỏ
-  for (const s of [-1, 1]) {
-    const fl = s < 0;
-    const r1 = put(new THREE.TorusGeometry(0.036, 0.012, 8, 18), gold, s * 0.495, false); r1.rotation.x = Math.PI / 2;   // vành vàng nối cán với đầu
-    put(new THREE.CylinderGeometry(0.058, 0.04, 0.07, 14), bronze, s * 0.54, fl);                                    // đế doa rộng
-    const r2 = put(new THREE.TorusGeometry(0.05, 0.01, 8, 18), gold, s * 0.585, false); r2.rotation.x = Math.PI / 2;
-    put(new THREE.CylinderGeometry(0.04, 0.045, 0.16, 14), bronze, s * 0.67, fl);                                    // thân đồng
-    for (let i = 0; i < 18; i++) {                                                                                  // rồng cuốn: các cục nổi xếp xoắn ốc
-      const a = i * 0.95, y = 0.595 + (i / 17) * 0.15, b = put(new THREE.SphereGeometry(0.017, 8, 6), i % 3 === 0 ? gold : bronze, s * y, false);
-      b.position.x = Math.cos(a) * 0.047; b.position.z = Math.sin(a) * 0.047;
-    }
-    const cap = put(new THREE.SphereGeometry(0.052, 14, 10), bronze, s * 0.77, false); cap.scale.set(1, 1.15, 1);     // chóp tròn (không mũi nhọn)
-    const r3 = put(new THREE.TorusGeometry(0.046, 0.009, 8, 18), gold, s * 0.73, false); r3.rotation.x = Math.PI / 2;
-  }
-  const glows = [];
-  for (const y of [-0.77, 0, 0.77]) {
-    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture(), transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }));
-    sp.position.y = y; sp.scale.set(y === 0 ? 0.55 : 0.42, y === 0 ? 0.55 : 0.42, 1); g.add(sp); glows.push(sp);
-  }
-  g.userData.glows = glows;
-  g.traverse((o) => { if (o.isMesh) o.castShadow = false; });
-  return g;
-}
+let RING_GEO = null;
 
 /** hud/opts: { toast(text, ms) }. */
 export function initItems({ toast = () => {} } = {}) {
@@ -66,6 +30,7 @@ export function initItems({ toast = () => {} } = {}) {
   document.head.appendChild(el('style', null, CSS));
   const laNow = () => (LGT.merit && LGT.merit.leaf ? LGT.merit.leaf.la : 0);
   const spend = (n) => !!(LGT.merit && LGT.merit.spendLa && LGT.merit.spendLa(n));
+  const staffOn = () => st.staff && (!LGT.loadout || LGT.loadout.weapon === 'nhuy');   // đang cầm Gậy như ý (chưa có hệ chọn đồ thì coi như cầm nếu đã mua)
 
   // ---------- Cửa hàng ----------
   const box = el('section', 'it-box'); box.hidden = true; box.setAttribute('role', 'dialog');
@@ -85,7 +50,9 @@ export function initItems({ toast = () => {} } = {}) {
     const ok = await confirm(`${STAFF.ten} — ${STAFF.gia} lá bồ đề.\n${STAFF.mo}\nBạn đang có ${laNow()} lá bồ đề. Mua không?`); if (!ok) return;
     const r = buyStaff(st, laNow()); if (!r.ok) { toast(r.reason === 'owned' ? 'Bạn đã có Gậy như ý rồi.' : `Chưa đủ lá bồ đề (cần ${r.cost}, bạn có ${laNow()}).`, 3600); return; }
     if (!spend(r.cost)) { toast('Chưa đủ lá bồ đề.', 2500); return; }
-    st = r.state; save(); draw(); toast(`Đã mua ${STAFF.ten} (−${r.cost} lá bồ đề). Cây gậy sáng lên trên tay bạn!`, 3600);
+    st = r.state; save();
+    if (LGT.loadout) LGT.loadout.choose('nhuy', true);   // mua xong tự cầm gậy (đổi lại Thương ở Túi đồ)
+    draw(); toast(`Đã mua ${STAFF.ten} (−${r.cost} lá bồ đề). Bạn đang cầm gậy — đổi vũ khí ở Túi đồ.`, 4200);
   }
   function row(ten, mo, meta, label, enabled, act) {
     const r = el('div', 'it-row'); r.append(el('b', null, ten), el('p', null, mo), el('p', 'it-meta', meta));
@@ -101,8 +68,8 @@ export function initItems({ toast = () => {} } = {}) {
         list.appendChild(row(g.ten, g.mo, meta, left > 0 ? 'Mua thêm' : 'Mua', la >= g.gia, () => buyGemUi(g)));
       }
     } else {
-      const bd = LGT.board ? LGT.board.status() : { own: false };
-      list.appendChild(row(BOARD.ten, `Ván trượt 3D: đứng lên ván đi nhanh gấp ${String(BOARD.mul).replace('.', ',')} lần bình thường (đánh nhau thì tự xuống).`, `Giá ${BOARD.gia} lá${bd.own ? ' · Bạn đã có' : ''}`, bd.own ? 'Đã có' : 'Mua', !bd.own && la >= BOARD.gia, async () => { if (LGT.board) await LGT.board.buy(); draw(); }));
+      const bd = LGT.board ? LGT.board.status() : { van: false };
+      list.appendChild(row(BOARD.ten, `Ván trượt 3D: lướt đi nhanh gấp ${String(BOARD.mul).replace('.', ',')} lần. Ván KHÔNG phải vũ khí (không đánh được); đánh nhau thì tự xuống.`, `Giá ${BOARD.gia} lá${bd.van ? ' · Bạn đã có' : ''}`, bd.van ? 'Đã có' : 'Mua', !bd.van && la >= BOARD.gia, async () => { if (LGT.board) await LGT.board.buy(); draw(); }));
       list.appendChild(row(STAFF.ten, STAFF.mo, `Giá ${STAFF.gia} lá${st.staff ? ' · Bạn đã có' : ''}`, st.staff ? 'Đã có' : 'Mua', !st.staff && la >= STAFF.gia, buyStaffUi));
     }
   }
@@ -125,7 +92,7 @@ export function initItems({ toast = () => {} } = {}) {
   }
   setInterval(chipsDraw, 500); chipsDraw();
 
-  // ---------- Vòng sáng lan (khi đánh bằng Gậy như ý, khi hồi sinh tại chỗ) ----------
+  // ---------- Vòng sáng lan ----------
   const ripples = []; let clock = 0, skin = null;
   function spawnRipple(color, ahead, n) {
     const av = LGT.world && LGT.world.avatar, scene = av && av.group && av.group.parent; if (!scene) return;
@@ -146,25 +113,29 @@ export function initItems({ toast = () => {} } = {}) {
     }
   }
 
-  // ---------- Gậy như ý trên nhân vật (bọc update + swing của avatar, giống js/ui/board.js) ----------
+  // ---------- Gậy như ý trên tay (bọc update + swing của avatar, giống js/ui/board.js) ----------
   function wrapAvatar() {
     const av = LGT.world && LGT.world.avatar; if (!av || av.__items || !av.group || typeof av.update !== 'function') return;
     av.__items = true;
-    let host = null; av.group.traverse((o) => { if (!host && o.isGroup && o.rotation.order === 'YXZ' && o.children.length >= 4) host = o; });   // nhóm cây côn của nhân vật chibi (js/world/avatarChibi.js)
+    let host = null; av.group.traverse((o) => { if (!host && o.isGroup && o.rotation.order === 'YXZ' && o.children.length >= 4) host = o; });   // nhóm cây côn của nhân vật chibi
     if (host) skin = { host, orig: host.children.slice(), mesh: null };
     const upd = av.update.bind(av);
     av.update = (dt) => {
       upd(dt); clock += dt; stepRipples(dt);
-      if (skin && st.staff && !skin.mesh) { for (const c of skin.orig) c.visible = false; skin.mesh = buildStaff(); skin.host.add(skin.mesh); }
-      if (skin && skin.mesh) { const k = 0.5 + 0.25 * Math.sin(clock * 4) + (av.swinging ? 0.35 : 0); for (const s of skin.mesh.userData.glows) s.material.opacity = Math.min(1, k); }
+      if (skin) {
+        const want = staffOn();
+        if (want && !skin.mesh) { for (const c of skin.orig) c.visible = false; skin.mesh = buildStaff(); skin.host.add(skin.mesh); loadStaffGlb(skin.mesh); }
+        else if (!want && skin.mesh) { skin.host.remove(skin.mesh); skin.mesh = null; for (const c of skin.orig) c.visible = true; }   // đổi về Thương: trả cây côn mặc định
+        if (skin.mesh) pulseGlows(skin.mesh, clock, !!av.swinging);
+      }
     };
     const sw = av.swing;
-    if (typeof sw === 'function') av.swing = (...a) => { const r = sw.apply(av, a); if (st.staff) spawnRipple(0xffd45a, 1.5, 2); return r; };
+    if (typeof sw === 'function') av.swing = (...a) => { const r = sw.apply(av, a); if (staffOn()) spawnRipple(0xffd45a, 1.5, 2); return r; };
   }
 
-  // ---------- +1% sát thương lên quái bãi rừng: quái vừa mất Oán Khí bao nhiêu thì mất thêm 1% phần đó (không bao giờ tự giết quái) ----------
+  // ---------- +1% sát thương khi đang cầm Gậy như ý ----------
   function dmgTick() {
-    const mons = LGT.farmView && LGT.farmView.mons; if (!mons || !mons.length) return; const k = dMul(st) - 1;
+    const mons = LGT.farmView && LGT.farmView.mons; if (!mons || !mons.length) return; const k = staffOn() ? dMul(st) - 1 : 0;
     for (const m of mons) {
       const prev = m.__oi;
       if (k > 0 && prev !== undefined && m.oan < prev) { const extra = (prev - m.oan) * k; if (m.oan - extra > 0.5) m.oan -= extra; }
@@ -173,7 +144,6 @@ export function initItems({ toast = () => {} } = {}) {
   }
   setInterval(() => { try { wrapAvatar(); dmgTick(); } catch (e) { /* không để hỏng game */ } }, 100);
 
-  /** Ngọc dịch chuyển: farmCombat gọi khi hết Sinh Lực. true = hồi sinh tại chỗ (không về cổng chùa). */
   function tryRevive() {
     if (!canRevive(st)) return false;
     spawnRipple(0x7fd0ff, 0, 3);
@@ -181,6 +151,6 @@ export function initItems({ toast = () => {} } = {}) {
     return true;
   }
 
-  LGT.items = { openShop, closeShop, regenMul: () => rMul(st), tryRevive, dmgMul: () => dMul(st), get state() { return st; } };
+  LGT.items = { openShop, closeShop, regenMul: () => rMul(st), tryRevive, dmgMul: () => (staffOn() ? dMul(st) : 1), get state() { return st; }, get staff() { return st.staff; } };
   return LGT.items;
 }
