@@ -10,10 +10,10 @@ test('nhiệm vụ: id không trùng, khoá sự kiện hợp lệ, thưởng d�
   for (const q of QUESTS) { assert.ok(EVENT_TYPES.includes(q.dk.key.split(':')[0]), q.id); assert.ok(q.dk.n >= 1 && q.xp > 0 && q.sen >= 0, q.id); assert.ok(['ngay', 'mot'].includes(q.loai)); assert.ok(q.ten.length && q.mo.length); }
 });
 
-test('cấp độ: tăng dần, danh hiệu, thanh tiến độ', () => {
+test('cấp độ: tăng dần, danh hiệu, thanh tiến độ; Phiên 138: không còn cấp tối đa', () => {
   for (let i = 1; i < LEVELS.length; i++) assert.ok(LEVELS[i].xp > LEVELS[i - 1].xp);
-  assert.deepEqual([levelOf(0).lv, levelOf(29).lv, levelOf(30).lv, levelOf(1e9).lv], [1, 1, 2, LEVELS.length]);
-  assert.equal(levelOf(1e9).xp1, null); assert.equal(levelOf(1e9).pct, 100);
+  assert.deepEqual([levelOf(0).lv, levelOf(29).lv, levelOf(30).lv], [1, 1, 2]);
+  assert.ok(levelOf(1e9).lv > LEVELS.length, 'vượt cấp 10'); assert.ok(levelOf(1e9).xp1 > 1e9); assert.ok(levelOf(1e9).pct <= 100);
   assert.equal(levelOf(55).pct, 50); assert.equal(levelOf(-5).lv, 1); assert.equal(levelOf('x').lv, 1);
   assert.equal(levelReward(1), 0); assert.equal(levelReward(3), 6);
 });

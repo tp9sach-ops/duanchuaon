@@ -27,23 +27,24 @@ test('không sửa trạng thái đầu vào (trả bản mới)', () => {
   const f = emptyFarm(T0), snap = JSON.stringify(f); settleKill(f, { lv: 3 }, { hatSen: 1 }, T0); assert.equal(JSON.stringify(f), snap);
 });
 
-test('trần hạt sen mỗi ngày: vượt trần không thêm hạt sen; trần Tu Vi hàng yêu 30 lần/ngày; sang ngày mới (giờ VN) đếm lại', () => {
-  const CAP = NGUON_CFG.tranNgay.hangYeu; let f = emptyFarm(T0), sen = 0, capped = 0, exps = 0;
-  for (let i = 0; i < 500; i++) { const r = settleKill(f, { lv: 3 }, { hatSen: 1 }, T0); f = r.farm; sen += r.senGain; if (r.senCapped) capped++; if (r.expGain > 0) exps++; if (i >= CAP) { assert.equal(r.expGain, 0, 'hết trần Tu Vi'); assert.equal(r.expCapped, true); } }
-  assert.equal(exps, CAP); assert.equal(expLeft(f, 'hangYeu', T0), 0);
+test('Phiên 138: KHÔNG còn trần Tu Vi theo ngày (hàng yêu) — 500 lần vẫn lần nào cũng có Tu Vi; trần hạt sen mỗi ngày vẫn còn; sang ngày mới đếm hạt sen lại', () => {
+  let f = emptyFarm(T0), sen = 0, capped = 0, exps = 0;
+  for (let i = 0; i < 500; i++) { const r = settleKill(f, { lv: 3 }, { hatSen: 1 }, T0); f = r.farm; sen += r.senGain; if (r.senCapped) capped++; if (r.expGain > 0) exps++; assert.equal(r.expCapped, false, 'không còn trần Tu Vi'); }
+  assert.equal(exps, 500); assert.equal(expLeft(f, 'hangYeu', T0), Infinity);
   assert.equal(sen, FARM_CFG.senCapNgay); assert.equal(capped, 500 - FARM_CFG.senCapNgay); assert.equal(senLeft(f, T0), 0); assert.equal(f.kills, 500);
   const r2 = settleKill(f, { lv: 3 }, { hatSen: 2 }, T0 + DAY); assert.equal(r2.senGain, 2); assert.equal(senLeft(r2.farm, T0 + DAY), FARM_CFG.senCapNgay - 2);
-  assert.equal(r2.farm.exp > f.exp, true, 'sang ngày mới lại có Tu Vi, EXP không bị reset'); assert.equal(expLeft(r2.farm, 'hangYeu', T0 + DAY), CAP - 1);
+  assert.equal(r2.farm.exp > f.exp, true, 'EXP không bị reset');
 });
 
-test('thu phục yêu quái hằng tháng cộng Tu Vi nguồn boss: 15% cấp kế, tối đa 3 lần/ngày, ngày mới đếm lại; không sửa đầu vào', () => {
+test('thu phục yêu quái hằng tháng cộng Tu Vi nguồn boss: 15% cấp kế; Phiên 138: không còn trần 3 lần/ngày; không sửa đầu vào', () => {
   const f0 = emptyFarm(T0), snap = JSON.stringify(f0), need = expToNext(1);
   const r = settleBoss(f0, T0); assert.equal(JSON.stringify(f0), snap); assert.equal(r.expGain, Math.round(need * 0.15)); assert.equal(r.farm.cnt.boss, 1); assert.equal(r.expCapped, false);
-  let f = r.farm; for (let i = 0; i < 5; i++) f = settleBoss(f, T0).farm;
-  const over = settleBoss(f, T0); assert.equal(over.expGain, 0); assert.equal(over.expCapped, true); assert.equal(over.farm.cnt.boss, NGUON_CFG.tranNgay.boss); assert.equal(expLeft(f, 'boss', T0), 0);
-  const next = settleBoss(f, T0 + DAY); assert.ok(next.expGain > 0 && next.farm.cnt.boss === 1, 'ngày mới');
+  let f = r.farm; for (let i = 0; i < 10; i++) { const s = settleBoss(f, T0); assert.ok(s.expGain > 0, `lần ${i + 2} vẫn có Tu Vi`); assert.equal(s.expCapped, false); f = s.farm; }
+  assert.equal(f.cnt.boss, 11); assert.equal(expLeft(f, 'boss', T0), Infinity);
+  const next = settleBoss(f, T0 + DAY); assert.ok(next.expGain > 0 && next.farm.cnt.boss === 1, 'ngày mới đếm lại');
   assert.equal(loadFarm({ exp: 5, cnt: { day: '1999-01-01', hangYeu: 9, boss: 9 } }, T0).cnt.hangYeu, 0, 'đếm cũ sang ngày mới bị bỏ');
-  assert.equal(loadFarm({ exp: 5, cnt: { day: dayKeyVN(T0), hangYeu: 9999, boss: -4 } }, T0).cnt.hangYeu, NGUON_CFG.tranNgay.hangYeu, 'dữ liệu hỏng bị kẹp');
+  assert.equal(loadFarm({ exp: 5, cnt: { day: dayKeyVN(T0), hangYeu: 9999, boss: -4 } }, T0).cnt.hangYeu, 9999, 'không còn kẹp theo trần');
+  assert.equal(loadFarm({ exp: 5, cnt: { day: dayKeyVN(T0), hangYeu: 9999, boss: -4 } }, T0).cnt.boss, 0, 'số âm bị kẹp về 0');
   assert.equal(loadFarm('{hỏng', T0).cnt.boss, 0);
 });
 
@@ -74,10 +75,10 @@ test('farm thử nối spawn: đánh hết Dã Mèo của Bìa Rừng Thông nhi
   assert.ok(kills >= 11 * 5, `chỉ ${kills} lần thu phục`); assert.ok(f.exp > 0); assert.ok(sen > 0 && sen <= FARM_CFG.senCapNgay); assert.equal(f.kills, kills); assert.ok(tuViOf(f).tuvi >= 1);
 });
 
-test('Phiên 123: thu phục BOSS vùng tính nguồn boss (15% cấp kế, trần 3/ngày), không ăn vào trần hàng yêu; hạt sen vẫn theo trần ngày', () => {
-  const boss = { lv: 20, boss: true }; let f = emptyFarm(T0), got = 0;
-  for (let i = 0; i < 6; i++) { const r = settleKill(f, boss, { hatSen: 20 }, T0); f = r.farm; if (r.expGain > 0) { got++; assert.equal(r.expGain, Math.round(expToNext(1) * 0.15)); } else assert.equal(r.expCapped, true); }
-  assert.equal(got, NGUON_CFG.tranNgay.boss); assert.equal(expLeft(f, 'boss', T0), 0); assert.equal(expLeft(f, 'hangYeu', T0), NGUON_CFG.tranNgay.hangYeu, 'quái thường không bị ảnh hưởng');
+test('Phiên 123: thu phục BOSS vùng tính nguồn boss (15% cấp kế); Phiên 138: không còn trần 3/ngày, không ăn vào bộ đếm hàng yêu; hạt sen vẫn theo trần ngày', () => {
+  const boss = { lv: 20, boss: true }; let f = emptyFarm(T0);
+  for (let i = 0; i < 6; i++) { const r = settleKill(f, boss, { hatSen: 20 }, T0); f = r.farm; assert.ok(r.expGain > 0, `lần ${i + 1} có Tu Vi`); assert.equal(r.expCapped, false); }
+  assert.equal(f.cnt.boss, 6); assert.equal(f.cnt.hangYeu, 0, 'quái thường không bị ảnh hưởng'); assert.equal(expLeft(f, 'hangYeu', T0), Infinity);
   assert.equal(f.sen.n, FARM_CFG.senCapNgay, 'hạt sen vẫn có trần ngày');
 });
 
