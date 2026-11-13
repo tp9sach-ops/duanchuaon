@@ -23,6 +23,7 @@ export function initHud() {
       <div class="chip-me"><span class="me-av" id="me-av"></span>
         <span class="me-tx"><b id="me-name"></b><i>Hạt sen · bậc 1</i><span class="me-bar"><u style="width:0%"></u></span></span>
         <span class="me-lv" title="Cấp">1</span></div>
+      <div class="tuvi-chip" id="tuvi-chip" title="Tu Vi: tăng khi thu phục quái ở bãi rừng"><span aria-hidden="true">☯</span><b id="tuvi-tx">Tu Vi 1</b><span class="tv-bar"><u id="tuvi-fill" style="width:0%"></u></span></div>
       <div class="temple-name">Diệu Giang Tự</div>
       <button type="button" class="hud-btn gold" id="btn-hall"><span class="ic" aria-hidden="true">⛩</span><span id="btn-hall-tx">Vào chánh điện</span></button>
       <button type="button" class="hud-btn soon" id="btn-work" disabled aria-disabled="true" title="Sắp có"><span class="ic" aria-hidden="true">✦</span>Công quả <em>sắp có</em></button>
@@ -39,6 +40,13 @@ export function initHud() {
     const av = q('me-av'); av.textContent = initialOf(profile.name); av.style.background = robeCss(profile.color); av.style.color = profile.color === '9sach' ? '#0e6b22' : '';   // chữ xanh đậm trên nền vàng của đồng phục
     q('me-name').textContent = profile.name;
   }
+  // Phiên 143: Tu Vi hiện ngay trên thẻ nhân vật (trước đây chỉ thấy khi nhắm quái). Cấp "công hạnh" (thanh Cấp) khác với Tu Vi (từ thu phục quái).
+  { const st = document.createElement('style');
+    st.textContent = '.tuvi-chip{display:flex;align-items:center;gap:6px;margin-top:6px;padding:4px 10px;border-radius:100px;border:1px solid rgba(241,219,160,.45);background:rgba(8,10,20,.55);color:#f6e7c1;font:600 12px/1.2 system-ui,sans-serif;width:max-content;max-width:100%}.tuvi-chip .tv-bar{display:block;width:46px;height:5px;border-radius:3px;background:rgba(255,255,255,.18);overflow:hidden}.tuvi-chip .tv-bar u{display:block;height:100%;background:#d9b25f;text-decoration:none}';
+    document.head.appendChild(st);
+    const tx = q('tuvi-tx'), fl = q('tuvi-fill'); let last = '';
+    const paintTuVi = () => { const f = LGT.farm; if (!f || !f.tuviInfo) return; const t = f.tuviInfo, s = t.need ? `Tu Vi ${t.tuvi} · ${t.into}/${t.need}` : `Tu Vi ${t.tuvi} · tối đa`; if (s !== last) { last = s; tx.textContent = s; fl.style.width = (t.need ? Math.round(100 * t.into / t.need) : 100) + '%'; } };
+    setInterval(paintTuVi, 500); paintTuVi(); }
   const clockEl = q('clock-tx'), clockIc = q('game-clock').firstChild; let lastClock = '';
   const paintClock = () => { const t = clockLabel(LGT.clock, LGT.phase, LGT.weather && LGT.weather.name); if (t !== lastClock) { lastClock = t; clockEl.textContent = t; clockIc.textContent = LGT.night > 0.5 ? '☾' : '☀'; } };
   paintClock(); setInterval(paintClock, 1000);   // Phiên 30: đồng hồ giờ game (LGT.clock/phase do scene/index.js cập nhật mỗi khung)
@@ -100,7 +108,7 @@ export function initHud() {
   }
   // Tài khoản (Phiên 53): tạo / đăng nhập / đặt mật khẩu cho nhân vật cũ. LGT.account = null khi chưa cấu hình máy chủ → như cũ (không mật khẩu).
   const gate = initAccountGate({ form, nameIn, client: LGT.account || null, hasLegacy: () => profile.has, getDraft: () => draft, onEnter: enterWorld });
-  try { initAccountBanner(LGT.account || null); } catch (e) { console.warn('[Diệu Giang Tự] Băng thông báo tài khoản lỗi:', e && e.message); }
+  try { initAccountBanner(LGT.account || null); } catch (e) { console.warn('[Diệu Giang Tự] BƒÉng thông báo tài khoản lỗi:', e && e.message); }
 
   function open() {
     draft = { ...profile }; nameIn.value = profile.has ? profile.name : ''; paintEnter();
