@@ -139,3 +139,11 @@ test('Phiên 125: boss cứ 3 đòn có 1 đòn Giậm Đất — gồng lâu, v
   assert.equal(slams, 0);
   calm(boss); assert.equal(boss.slam, false);
 });
+
+test('vitals.guard: bất tử thêm giây (lướt né), không rút ngắn, kẹp 0..2, hết giờ lại bị đánh', () => {
+  const v = createVitals({ tuvi: 5 }); const hp0 = v.hp;
+  v.guard(0.5); assert.equal(v.take(10).taken, 0); assert.equal(v.hp, hp0);
+  v.step(0.25); v.step(0.25); assert.equal(v.take(10).taken, 10);
+  const w = createVitals({ tuvi: 5 }); w.guard(99); assert.ok(w.grace <= 2); w.guard(0.1); assert.ok(w.grace > 0.5);
+  w.guard('x'); w.guard(-3); assert.ok(w.grace > 0.5);
+});

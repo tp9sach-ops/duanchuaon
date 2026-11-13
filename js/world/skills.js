@@ -77,3 +77,28 @@ export function trainPlan({ bac = 0, capNguoi = 1, sen = 0 } = {}) {
   if ((+sen || 0) < y.sen) return { ok: false, reason: 'sen', next, cap: y.cap, sen: y.sen };
   return { ok: true, reason: '', next, cap: y.cap, sen: y.sen };
 }
+
+// ---- Phiên 139: NHẢY TỚI TRƯỚC + LƯỚT NÉ CHIÊU. Đang đi mà bấm Nhảy → bật tới trước (cả cú nhảy); bấm Nhảy tiếp lúc còn trên không hoặc vừa chạm đất → lướt thêm một đoạn
+// và được bất tử ngắn để né chiêu quái. Mọi con số là QUY ƯỚC TẠM, chờ ptg duyệt.
+export const LEAP_CFG = Object.freeze({ tam: true, minSpeed: 0.4, base: 2.2, perBac: 0.3 });   // m/s tối thiểu coi là "đang đi"; quãng bật tới = base + perBac × bậc (m)
+export const GLIDE_CFG = Object.freeze({ tam: true, base: 3, perBac: 0.2, dur: 0.26, guard: 0.45, cd: 1.2, windowAfterLand: 0.6, minDist: 0.4 });   // quãng lướt, giây lướt, giây bất tử, hồi chiêu, cửa sổ sau khi chạm đất, quãng tối thiểu để tính là lướt được
+const bacClamp = (lv) => Math.max(0, Math.min(MAX_BAC, Math.floor(+lv) || 0));
+/** Kế hoạch bật tới trước: { dist (m), dur (giây = thời gian trên không) }. Bậc 0 hoặc trong nhà → null. */
+export function leapPlan(lv, indoor = false) {
+  const b = bacClamp(lv); if (b <= 0 || indoor) return null;
+  return { dist: Math.round((LEAP_CFG.base + LEAP_CFG.perBac * b) * 100) / 100, dur: airTime(jumpHeight(b)) };
+}
+/** Kế hoạch lướt né: { dist, dur, guard (giây bất tử) }. Bậc 0 hoặc trong nhà → null. */
+export function glidePlan(lv, indoor = false) {
+  const b = bacClamp(lv); if (b <= 0 || indoor) return null;
+  return { dist: Math.round((GLIDE_CFG.base + GLIDE_CFG.perBac * b) * 100) / 100, dur: GLIDE_CFG.dur, guard: GLIDE_CFG.guard };
+}
+/**
+ * Bấm Nhảy lúc này làm gì? 'jump' (nhảy tại chỗ) | 'leap' (đang đi: bật tới trước) | 'glide' (lướt né) | 'none'.
+ * in: { lv, air, sinceAir (giây từ lần cuối còn trên không), moving, glideCd (giây hồi chiêu lướt còn lại), indoor }
+ */
+export function nextAction({ lv = 0, air = false, sinceAir = Infinity, moving = false, glideCd = 0, indoor = false } = {}) {
+  if (!(lv > 0)) return 'none';
+  if (air || (Number.isFinite(+sinceAir) && +sinceAir <= GLIDE_CFG.windowAfterLand)) return !indoor && !(glideCd > 0) ? 'glide' : 'none';
+  return moving && !indoor ? 'leap' : 'jump';
+}

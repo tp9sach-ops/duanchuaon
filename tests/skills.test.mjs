@@ -71,3 +71,25 @@ test('trong nhà bị chặn độ cao; ngoài trời giữ nguyên', () => {
   assert.equal(jumpHeightAt(8, false), jumpHeight(8)); assert.equal(jumpHeightAt(8, true), INDOOR_MAX);
   assert.equal(jumpHeightAt(1, true), jumpHeight(1)); assert.equal(jumpHeightAt(0, true), 0);
 });
+
+// ---- Phiên 139: nhảy tới trước + lướt né
+import { leapPlan, glidePlan, nextAction, LEAP_CFG, GLIDE_CFG, airTime as airT } from '../js/world/skills.js';
+test('leapPlan/glidePlan: bậc 0 và trong nhà → null; bậc cao bật/lướt xa hơn; bật tới trước kéo dài đúng thời gian trên không', () => {
+  assert.equal(leapPlan(0), null); assert.equal(leapPlan(3, true), null); assert.equal(glidePlan(0), null); assert.equal(glidePlan(2, true), null);
+  assert.ok(leapPlan(5).dist > leapPlan(1).dist && glidePlan(5).dist > glidePlan(1).dist);
+  assert.equal(leapPlan(1).dur, airT(jumpHeight(1)));
+  assert.equal(glidePlan(1).guard, GLIDE_CFG.guard); assert.ok(glidePlan(1).guard > 0);
+});
+test('nextAction: chưa mở → none; đứng nhảy tại chỗ; đang đi → bật tới trước; trên không/vừa chạm đất → lướt; hồi chiêu hoặc trong nhà thì không lướt', () => {
+  const base = { lv: 1, air: false, sinceAir: Infinity, moving: false, glideCd: 0, indoor: false };
+  assert.equal(nextAction({ ...base, lv: 0 }), 'none');
+  assert.equal(nextAction(base), 'jump');
+  assert.equal(nextAction({ ...base, moving: true }), 'leap');
+  assert.equal(nextAction({ ...base, moving: true, indoor: true }), 'jump');
+  assert.equal(nextAction({ ...base, air: true }), 'glide');
+  assert.equal(nextAction({ ...base, sinceAir: GLIDE_CFG.windowAfterLand }), 'glide');
+  assert.equal(nextAction({ ...base, sinceAir: GLIDE_CFG.windowAfterLand + 0.01 }), 'jump');
+  assert.equal(nextAction({ ...base, air: true, glideCd: 0.5 }), 'none');
+  assert.equal(nextAction({ ...base, air: true, indoor: true }), 'none');
+  assert.equal(nextAction(), 'none'); assert.ok(LEAP_CFG.minSpeed > 0);
+});

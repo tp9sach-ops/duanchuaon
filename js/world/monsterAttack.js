@@ -83,6 +83,8 @@ export function createVitals({ tuvi = 1 } = {}) {
     /** Đổi Tu Vi: Sinh Lực tối đa đổi theo, giữ nguyên tỉ lệ hiện có. */
     setTuVi(tv) { const nm = sinhLucOf(tv); if (nm !== max) { const r = max > 0 ? hpf / max : 1; max = nm; hpf = down ? 0 : Math.max(1, Math.min(max, r * max)); } },
     touch() { sinceFight = 0; },
+    /** Bất tử thêm `sec` giây (lướt né, Phiên 139); không rút ngắn thời gian bất tử đang có. */
+    guard(sec) { grace = Math.max(grace, clamp(num(sec), 0, 2)); },
     /** Bị đánh `dmg`: trả { taken, down }. Đang bất tử / đã down / dmg không hợp lệ → taken 0. */
     take(dmg) {
       const n = Math.floor(num(dmg)); if (down || grace > 0 || n <= 0) return { taken: 0, down };

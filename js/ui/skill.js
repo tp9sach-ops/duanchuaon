@@ -1,7 +1,8 @@
 // Kỹ năng Khinh thân (nhảy): phím Space + nút "Nhảy" trên điện thoại, chỉ hiện khi đã mở bậc 1 từ cốt truyện tưới cây.
 // Logic ở js/world/skills.js (có test). File này KHÔNG sửa world.js: nó bọc avatar.update để cộng độ cao nhảy vào vị trí nhân vật sau khi world.js đặt xong mỗi khung hình
 // (world.js đặt lại vị trí từ đầu mỗi khung nên không cộng dồn). Đổi tên/áo/kiểu đầu dựng lại nhân vật → bộ đếm 500 ms tự bọc lại.
-import { khinhBac, loadKhinh, jumpHeightAt, canJump, createJump, trainPlan, KHINH_YEU_CAU, KHINH_TEN, MAX_BAC } from '../world/skills.js';
+import { khinhBac, loadKhinh, jumpHeightAt, canJump, createJump, trainPlan, leapPlan, glidePlan, nextAction, LEAP_CFG, GLIDE_CFG, KHINH_YEU_CAU, KHINH_TEN, MAX_BAC } from '../world/skills.js';
+import { landing } from '../world/strength.js';
 import { levelOf } from '../world/quests.js';
 
 const isEditable = (el) => !!el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName));
@@ -30,13 +31,19 @@ export function initSkill(hud, { toast = () => {}, getSen = () => 0, spendSen = 
   }
 
   let lastAirAt = -1e9;   // Phiên 90: lần cuối còn trên không (cho nút Thiết đầu công)
+  let speed = 0, glideCd = 0, glideQ = false, lastP = null;   // Phiên 139: tốc độ đi (m/s), hồi chiêu lướt, lướt đang chờ, vị trí khung trước
   function doJump() {
     const W = LGT.world; if (!W) return false;
     if (LGT.swim && LGT.swim.active) return false;   // đang bơi/lặn: không nhảy
     if (LGT.heldBy) return false;   // Phiên 91: đang bị người khác khiêng trên vai
     const lv = level();
     if (!canJump({ level: lv, mode: W.mode, panelOpen: !!LGT.panelOpen, dialogOpen: dialogOpen() })) return false;
-    const ok = jump.start(jumpHeightAt(lv, !!LGT.inHouse));
+    const indoor = !!LGT.inHouse, sinceAir = jump.air ? 0 : (performance.now() - lastAirAt) / 1000;
+    const act = nextAction({ lv, air: jump.air, sinceAir, moving: speed > LEAP_CFG.minSpeed, glideCd, indoor });   // Phiên 139: đi + Nhảy = bật tới trước; Nhảy tiếp = lướt né
+    if (act === 'glide') { if (W.dashing && glideQ) return false; glideQ = true; return true; }   // lướt ngay khi hết cú bật (xem wrap)
+    if (act === 'none') return false;
+    const ok = jump.start(jumpHeightAt(lv, indoor));
+    if (ok && act === 'leap') { const p = leapPlan(lv, indoor), pos = W.pos, ry = Number.isFinite(W.facing) ? W.facing : 0; if (p && !W.dashing) { const l = landing(pos.x, pos.z, ry, p.dist); if (l.dist > 0.3) W.dash({ x: l.x, z: l.z }, p.dur, { tilt: false }); } }
     if (ok) { if (LGT.sfx) LGT.sfx.play('nhay'); }
     if (ok && LGT.act) LGT.act('khinhthan');   // Phiên 52: nhiệm vụ “Thử Khinh thân” (3 lần nhảy)
     return ok;
@@ -52,7 +59,16 @@ export function initSkill(hud, { toast = () => {}, getSen = () => 0, spendSen = 
   function wrap() {
     const av = LGT.world && LGT.world.avatar; if (!av || av.__khinh) return;
     const orig = av.update.bind(av); av.__khinh = true;
-    av.update = (dt) => { orig(dt); const y = jump.step(dt); if (y > 0 && av.group) av.group.position.y += y; if (jump.air) lastAirAt = performance.now(); };
+    av.update = (dt) => {
+      orig(dt); const y = jump.step(dt); if (y > 0 && av.group) av.group.position.y += y; if (jump.air) lastAirAt = performance.now();
+      const W = LGT.world, p = W && W.pos; glideCd = Math.max(0, glideCd - Math.max(0, Math.min(0.25, dt)));
+      if (p && lastP && dt > 1e-4 && !W.dashing) speed = Math.hypot(p.x - lastP.x, p.z - lastP.z) / dt; else if (W && W.dashing) speed = 0;   // đang lao/lướt không tính là "đang đi"
+      lastP = p ? { x: p.x, z: p.z } : null;
+      if (glideQ && W && !W.dashing) {   // Phiên 139: lướt né một đoạn + bất tử ngắn (hết cú bật tới trước mới lướt)
+        glideQ = false; const gp = glidePlan(level(), !!LGT.inHouse), pos = W.pos, ry = Number.isFinite(W.facing) ? W.facing : 0;
+        if (gp && glideCd <= 0) { const l = landing(pos.x, pos.z, ry, gp.dist); if (l.dist >= GLIDE_CFG.minDist && W.dash({ x: l.x, z: l.z }, gp.dur, { tilt: false })) { glideCd = GLIDE_CFG.cd; try { const v = LGT.farmCombat && LGT.farmCombat.vitals; if (v && v.guard) v.guard(gp.guard); } catch (_) { /* bỏ qua */ } if (LGT.sfx) LGT.sfx.play('nhay'); } }
+      }
+    };
   }
 
   // ---- theo dõi bậc: hiện/ẩn nút, nhắc người chơi cách dùng đúng một lần khi vừa mở khóa

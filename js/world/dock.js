@@ -18,7 +18,7 @@ export const HINTS = {
   cast: 'Bấm đây để thả cầu câu cá (đang đứng sát mép nước).',
   thu: 'Bấm “Thu cá” để nuôi cá trong ao riêng.',
   thietdau: 'Vừa nhảy xong bấm “Thiết đầu công”: nhân vật lao đầu về phía trước, đâm trúng yêu quái thì gây sát thương (Khinh thân bậc 4 trở lên; bậc càng cao lao càng xa, đâm càng đau).',
-  nhay: 'Bấm “Nhảy” để bay lên (Khinh thân).',
+  nhay: 'Bấm “Nhảy” để bay lên (Khinh thân). Đang đi mà bấm thì bật tới trước; bấm thêm lần nữa khi còn trên không (hoặc vừa chạm đất) để lướt một đoạn và né chiêu quái.',
   kynang: 'Bạn đủ điều kiện luyện bậc kế — bấm vào đây.',
   tui: 'Túi đồ: xem bạn đang có những gì.',
   vantruot: 'Bấm “Cưỡi thương” để cưỡi cây thương to bay — đi nhanh gấp đôi (vào nhà, xuống nước hoặc đang đánh nhau thì tự xuống, thương bay về tay).',

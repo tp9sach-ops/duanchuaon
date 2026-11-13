@@ -18,6 +18,13 @@ Quy tắc ptg (chép nguyên văn): For the 9 Sạch monthly-archive project (an
 - `js/data/dungeons.js` (số liệu TẠM): 9 lượt; 4 phó bản `rungmoc` (Rừng Cổ Mộc, boss Lão Mộc Tinh), `hangkim` (Hang Sơn Cước), `hothuy` (Động Thủy Mẫu), `thaptho` (Mê Cung Bảo Tháp); mỗi cái 2 loại quái (thường + tinh anh) và boss lấy từ `MONSTERS`. Mỗi lượt sau: Oán Khí ×(1+0,35·(lượt−1)), Công ×(1+0,2·…), kích thước ×(1+0,06·…); mỗi lần đã chinh phục: +40% Oán Khí, +25% Công, +5% kích thước cho cả khu; boss chính ×1,5 Oán Khí, ×1,25 Công, ×1,7 kích thước thêm. Tinh anh ở lượt 3/6/9. Quà: hạt sen = drop boss × (1 + 0,5 × số lần đã chinh phục), 1 mảnh yêu quái (`manh` = id boss, dùng cho mục 5), 3 lần tung vật phẩm theo bảng `vatPham` (id vật phẩm là TÊN TẠM, chưa có trong túi đồ — bước 4d phải nối hoặc đổi sang vật phẩm thật).
 - `js/world/dungeon.js`: `loadDungeon`, `enter`, `onKill`, `leave`, `waveMobs`, `mobStats`, `rewardFor`, `clearFactor`, `waveFactor`. Trạng thái `{ v, clears, run }` (chưa lưu vào `LGT`). `tests/dungeon.test.mjs` (11 test) có trong `npm test`.
 
+## Chỉnh nút Nhảy (ptg yêu cầu giữa phiên, 13/11): nhảy tới trước + lướt né chiêu
+- Đang đi mà bấm Nhảy → cú nhảy bật tới trước (`leapPlan`: 2,2 + 0,3 × bậc mét, kéo dài đúng thời gian trên không, đi qua `world.dash` với `tilt:false`, dừng trước vật cản bằng `landing`). Đứng yên bấm Nhảy → nhảy tại chỗ như cũ.
+- Bấm Nhảy tiếp lúc còn trên không hoặc trong 0,6 s sau khi chạm đất → LƯỚT (`glidePlan`: 3 + 0,2 × bậc mét, 0,26 s) và BẤT TỬ 0,45 s (`vitals.guard` trong `js/world/monsterAttack.js`, qua `LGT.farmCombat.vitals`); hồi chiêu lướt 1,2 s. Lướt chờ hết cú bật rồi mới chạy. Không áp dụng trong nhà (nhảy thường vẫn được).
+- Logic thuần `nextAction` ở `js/world/skills.js` (test trong `tests/skills.test.mjs`, `tests/monsterattack.test.mjs`); nối giao diện ở `js/ui/skill.js`. Số liệu TẠM (`LEAP_CFG`, `GLIDE_CFG`).
+- Lưu ý: trong lúc đang bật/lướt, nút Thiết đầu công tạm không dùng được (cùng cơ chế `world.dash`); dùng được lại sau khi hết bật (cửa sổ 1,6 s sau chạm đất vẫn còn). CHƯA thử trên trình duyệt thật (môi trường AI không có): ptg thử cảm giác tay rồi chỉnh số.
+- Bất tử chỉ chặn đòn của quái bãi rừng (`farmCombat`); yêu quái hằng tháng không đánh người chơi nên không cần.
+
 ## Còn là trần (KHÔNG phải kinh nghiệm — giữ nguyên, hỏi ptg nếu muốn bỏ)
 Trần hạt sen 100/ngày, 10 lần/ngày hạt sen phóng sinh, 5 lần/ngày/loại hoạt động chùa, 60 phút tự động hàng yêu/ngày, kẹp lưu EXP 1e9 (kỹ thuật), kẹp cấp 99 của máu/sát thương yêu quái hằng tháng.
 
