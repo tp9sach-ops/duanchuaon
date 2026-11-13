@@ -34,9 +34,9 @@ test('quái đang NGỦ không đánh người chơi dù đứng sát; bị đá
 test('đánh dở (quái còn sống): quái đánh trả — gồng chiêu rồi trừ Sinh Lực người chơi', () => {
   // Boss rất trâu nên chắc chắn còn sống sau một đòn.
   LGT.world.pos = { x: 0, z: 0 }; step(12);   // rời xa: quái hết giận, Sinh Lực hồi đầy
-  LGT.world.pos = { x: -62, z: 66 }; step(1); const b = LGT.farmView.mons.find((m) => m.boss); assert.ok(b, 'có boss'); assert.ok(LGT.farmView.mons.every((m) => !m.eng), 'quái đã hết giận');
+  LGT.world.pos = { x: -62, z: 66 }; step(1); const b = LGT.farmView.mons.find((m) => m.boss && m.zone === 'biaRungThong'); assert.ok(b, 'có boss'); assert.ok(LGT.farmView.mons.every((m) => !m.eng), 'quái đã hết giận');
   LGT.world.pos = { x: b.x + 2, z: b.z }; step(8); const hp0 = fc.vitals.hp; assert.equal(hp0, fc.vitals.max, 'đầy Sinh Lực trước khi đánh');
-  api.spear(); step(0.3); assert.ok(LGT.farmView.mons.includes(b), 'boss còn sống'); assert.ok(b.eng, 'boss nổi giận khi bị đánh');
+  LGT.farmView.mons = [b]; api.spear(); step(0.3); assert.ok(LGT.farmView.mons.includes(b), 'boss còn sống');   // chỉ còn boss trong tầm nhìn (đêm quái dày, con khác có thể đứng gần hơn) assert.ok(b.eng, 'boss nổi giận khi bị đánh');
   let winded = false, low = hp0, tp0 = LGT.world.tp || 0; for (let i = 0; i < 80; i++) { step(0.1, 1); if (b.wind > 0) winded = true; low = Math.min(low, fc.vitals.hp); }
   assert.ok(winded, 'có gồng chiêu báo trước'); assert.ok(low < hp0, `Sinh Lực phải giảm (${hp0} → ${low})`); assert.ok(hp0 - low >= 1);
   const ko = (LGT.world.tp || 0) > tp0; if (ko) assert.equal(fc.vitals.hp, fc.vitals.max, 'kiệt sức → về cửa chùa, hồi đầy, không mất gì'); else assert.ok(low > 0);

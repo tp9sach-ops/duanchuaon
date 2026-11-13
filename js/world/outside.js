@@ -24,6 +24,15 @@ export const OUT_WALKS = [
   { id: 'rung-sau-bac', x0: -78, x1: -46, z0: 50, z1: 78 },       // khoảng đất trống rừng sâu phía Bắc (bãi Mộc)
   { id: 'loi-rung-thap', x0: 60, x1: 66, z0: 55, z1: 69 },        // lối từ sân tháp (rẽ bắc) vào rừng sâu phía Bắc tháp
   { id: 'rung-sau-thap', x0: 42, x1: 76, z0: 39, z1: 56 },        // khoảng đất trống phía Bắc Bảo Tháp (bãi Thổ), ngoài hàng rào chùa (z 32,2)
+  // Phiên 131: BỐN VÙNG SÂU Ở BỐN GÓC bản đồ, sát vách núi. Mỗi khoảng nối với khoảng rừng sâu cũ bằng lối hẹp 6 m: càng xa chùa càng nguy hiểm.
+  { id: 'loi-vach-tbac', x0: -100, x1: -78, z0: 58, z1: 64 },        // lối từ rừng sâu phía Bắc (Mộc) đi tiếp về Tây
+  { id: 'rung-sau-vach-tbac', x0: -136, x1: -100, z0: 36, z1: 70 },  // Vách Núi Tây Bắc (Hỏa)
+  { id: 'loi-vach-dbac', x0: 76, x1: 96, z0: 44, z1: 50 },           // lối từ Đồi Bảo Tháp đi tiếp về Đông
+  { id: 'rung-sau-vach-dbac', x0: 96, x1: 136, z0: 22, z1: 62 },     // Vách Núi Đông Bắc (Mộc)
+  { id: 'loi-vach-tnam', x0: -96, x1: -78, z0: 116, z1: 122 },       // lối từ rừng sâu phía Tây (Thủy) đi tiếp về Tây
+  { id: 'rung-sau-vach-tnam', x0: -136, x1: -96, z0: 112, z1: 143 }, // Vách Núi Tây Nam (Kim)
+  { id: 'loi-vach-dnam', x0: 68, x1: 92, z0: 131, z1: 137 },         // lối từ rừng sâu phía Đông (Kim) đi tiếp về Đông
+  { id: 'rung-sau-vach-dnam', x0: 92, x1: 134, z0: 127, z1: 143 },   // Vách Núi Đông Nam (Thổ)
   ...LAND_WALKS,                                                 // Phiên 36: đường xuống xóm + khu dân cư (js/world/land.js)
 ];
 

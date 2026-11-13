@@ -11,7 +11,7 @@ const inR = (r, x, z, m = 0) => x >= r.x0 - m && x <= r.x1 + m && z >= r.z0 - m 
 
 test('vùng Thủy: cấp/Hệ đúng GDD mục 8; Lý Ngư Tinh là tinh anh; bốn vùng', () => {
   const z = FARM_ZONES.hoThac;
-  assert.equal(ZONE_IDS.length, 4);
+  assert.equal(ZONE_IDS.length, 8);   // Phiên 131: 4 vùng gần + 4 vùng sâu
   assert.deepEqual([MONSTERS.thuyquy.ten, MONSTERS.thuyquy.lv, MONSTERS.lyngu.ten, MONSTERS.lyngu.lv], ['Thủy Quỷ Hồ Thác', 28, 'Lý Ngư Tinh', 38]);
   assert.deepEqual([z.lvMin, z.lvMax, z.he, z.cap, z.eliteMax], [25, 45, 'thuy', 16, 2]);
   assert.deepEqual([...z.normal], ['thuyquy']); assert.deepEqual([...z.elite], ['lyngu']);

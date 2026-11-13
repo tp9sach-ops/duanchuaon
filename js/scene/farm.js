@@ -7,7 +7,7 @@ import { FARM_CFG } from '../data/monsters.js';
 
 export const POOL = FARM_CFG.maxVisible;
 const CULL = 70;
-const HE_COLOR = { moc: 0x6fe08a, kim: 0xf0d060, thuy: 0x6ab8ff };
+const HE_COLOR = { moc: 0x6fe08a, kim: 0xf0d060, thuy: 0x6ab8ff, hoa: 0xff7a5a, tho: 0xc8a06a };
 const mat = (c, e = 0, o = {}) => new THREE.MeshStandardMaterial({ color: c, emissive: e, emissiveIntensity: e ? 0.8 : 0, roughness: 0.85, flatShading: true, ...o });
 const add = (g, geo, m, x, y, z) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); g.add(o); return o; };
 

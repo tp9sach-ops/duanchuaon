@@ -27,20 +27,20 @@ export function zoneAt(x, z, night = false) {
 /** Oán Khí tối đa của một loại quái; loại lạ → 0. */
 export function oanKhiMaxOf(typeId) {
   const t = MONSTERS[typeId]; if (!t) return 0;
-  return Math.round((MON_CFG.oanBase + MON_CFG.oanPerLv * t.lv) * (t.boss ? MON_CFG.bossMul : t.elite ? MON_CFG.eliteMul : 1));
+  return Math.round((MON_CFG.oanBase + MON_CFG.oanPerLv * t.lv) * (t.boss ? MON_CFG.bossMul : t.elite ? MON_CFG.eliteMul : 1) * (t.mul ? t.mul.hp : 1));   // Phiên 131: mul.hp = hệ số "độ sâu" (càng xa chùa càng trâu)
 }
 /** Chỉ số của một loại quái: { lv, he, elite, cong, thu, oanKhiMax } (Công/Thủ lấy theo Tu Vi = cấp quái, cùng đường cong người chơi); loại lạ → null. */
 export function monsterStats(typeId) {
   const t = MONSTERS[typeId]; if (!t) return null;
   const s = statsOf(t.lv);
-  return { lv: t.lv, he: t.he, elite: t.elite, boss: !!t.boss, cong: s.cong, thu: s.thu, oanKhiMax: oanKhiMaxOf(typeId) };
+  return { lv: t.lv, he: t.he, elite: t.elite, boss: !!t.boss, cong: Math.round(s.cong * (t.mul ? t.mul.atk : 1)), thu: s.thu, oanKhiMax: oanKhiMaxOf(typeId) };
 }
 
 const respawnDelay = (elite, rng, boss = false) => { const [lo, hi] = boss ? RESPAWN_CFG.boss : elite ? RESPAWN_CFG.elite : RESPAWN_CFG.normal; return lo + rng() * (hi - lo); };
 
 /** Chọn một điểm đặt quái trong vùng (trọng số theo diện tích), tránh `avoid`, cách quái đang sống ≥ minGap, cách người chơi ≥ minFromPlayer. Không được sau `tries` lần → null. */
 export function pickPoint(zone, rng, occupied = [], player = null, night = false) {
-  const rects = rectsOf(zone, night), areas = rects.map((r) => (r.x1 - r.x0) * (r.z1 - r.z0)), total = areas.reduce((a, b) => a + b, 0);
+  const rects = rectsOf(zone, night), nDay = zone.rects.length, areas = rects.map((r, i) => (r.x1 - r.x0) * (r.z1 - r.z0) * (i >= nDay ? 3 : 1)), total = areas.reduce((a, b) => a + b, 0);
   for (let k = 0; k < SPAWN_CFG.tries; k++) {
     let a = rng() * total, i = 0; while (i < areas.length - 1 && a >= areas[i]) { a -= areas[i]; i++; }
     const r = rects[i], x = r.x0 + rng() * (r.x1 - r.x0), z = r.z0 + rng() * (r.z1 - r.z0);

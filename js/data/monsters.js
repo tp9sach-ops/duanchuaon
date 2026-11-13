@@ -3,6 +3,8 @@
 // Tên quái, cấp và Hệ lấy từ bảng GDD mục 8. GDD ghi chung "Quái thường / tinh anh" mà không chỉ rõ con nào là tinh anh:
 // quy ước TẠM ở đây: con đứng sau trong mỗi vùng (Rêu Tinh, Cướp Đường) là TINH ANH. Hồi sinh: xem RESPAWN_CFG bên dưới (Phiên 129 làm nhanh hơn GDD: thường 10–20 giây, tinh anh 2 phút).
 // Quái thường sinh CỤC BỘ theo từng người (không đồng bộ mạng): GDD mục 8 và câu 10. Boss vùng (Lão Mộc Tinh, Sơn Cước Đầu Mục) là việc của G4.1, KHÔNG nằm ở đây.
+// Hệ số độ sâu (Phiên 131): vùng sâu độ 2 và 3. TẠM, chờ ptg duyệt.
+const DEPTH2 = Object.freeze({ hp: 1.5, atk: 1.25 }), DEPTH3 = Object.freeze({ hp: 2.2, atk: 1.5 });
 export const MON_CFG = Object.freeze({
   tam: true,
   // Oán Khí tối đa = (oanBase + oanPerLv × cấp) × (tinh anh ? eliteMul : 1). Dã Mèo Rừng cấp 3 = 66.
@@ -27,6 +29,19 @@ export const MONSTERS = Object.freeze({
   soncuoc: Object.freeze({ id: 'soncuoc', ten: 'Sơn Cước Đầu Mục', lv: 25, he: 'kim', elite: false, boss: true, drop: Object.freeze({ chance: 1, min: 15, max: 25 }) }),
   thachlinh: Object.freeze({ id: 'thachlinh', ten: 'Thạch Linh Hộ Tháp', lv: 65, he: 'tho', elite: false, boss: true, drop: Object.freeze({ chance: 1, min: 25, max: 35 }) }),
   thuymau: Object.freeze({ id: 'thuymau', ten: 'Thủy Mẫu Hồ Thác', lv: 45, he: 'thuy', elite: false, boss: true, drop: Object.freeze({ chance: 1, min: 20, max: 30 }) }),
+  // Phiên 131: BỐN VÙNG SÂU sát vách núi (độ sâu 2 và 3). `mul` = hệ số độ sâu nhân lên Oán Khí (hp) và Công (atk) NGOÀI cấp: càng xa chùa càng nguy hiểm. Con sau mỗi vùng là TINH ANH, rồi BOSS.
+  hoaly: Object.freeze({ id: 'hoaly', ten: 'Hỏa Ly Quỷ', lv: 72, he: 'hoa', elite: false, mul: DEPTH2, drop: Object.freeze({ chance: 0.5, min: 2, max: 4 }) }),
+  viemma: Object.freeze({ id: 'viemma', ten: 'Viêm Ma Sơn Cước', lv: 85, he: 'hoa', elite: true, mul: DEPTH2, drop: Object.freeze({ chance: 1, min: 7, max: 10 }) }),
+  viemde: Object.freeze({ id: 'viemde', ten: 'Viêm Đế Sơn Quỷ', lv: 95, he: 'hoa', elite: false, boss: true, mul: DEPTH2, drop: Object.freeze({ chance: 1, min: 30, max: 40 }) }),
+  cotmoc: Object.freeze({ id: 'cotmoc', ten: 'Cổ Mộc Yêu', lv: 85, he: 'moc', elite: false, mul: DEPTH2, drop: Object.freeze({ chance: 0.5, min: 2, max: 4 }) }),
+  thuvuong: Object.freeze({ id: 'thuvuong', ten: 'Thụ Vương Vách Núi', lv: 98, he: 'moc', elite: true, mul: DEPTH2, drop: Object.freeze({ chance: 1, min: 8, max: 12 }) }),
+  thumau: Object.freeze({ id: 'thumau', ten: 'Thụ Mẫu Vách Núi', lv: 105, he: 'moc', elite: false, boss: true, mul: DEPTH2, drop: Object.freeze({ chance: 1, min: 35, max: 45 }) }),
+  kimgiap: Object.freeze({ id: 'kimgiap', ten: 'Giáp Kim Sơn Tặc', lv: 100, he: 'kim', elite: false, mul: DEPTH3, drop: Object.freeze({ chance: 0.5, min: 3, max: 5 }) }),
+  kimtuong: Object.freeze({ id: 'kimtuong', ten: 'Kim Giáp Tướng', lv: 112, he: 'kim', elite: true, mul: DEPTH3, drop: Object.freeze({ chance: 1, min: 9, max: 13 }) }),
+  kimvuong: Object.freeze({ id: 'kimvuong', ten: 'Kim Giáp Vương', lv: 120, he: 'kim', elite: false, boss: true, mul: DEPTH3, drop: Object.freeze({ chance: 1, min: 40, max: 55 }) }),
+  nhamcu: Object.freeze({ id: 'nhamcu', ten: 'Nham Thạch Cự Nhân', lv: 115, he: 'tho', elite: false, mul: DEPTH3, drop: Object.freeze({ chance: 0.5, min: 3, max: 6 }) }),
+  nhamvuong: Object.freeze({ id: 'nhamvuong', ten: 'Nham Vương', lv: 128, he: 'tho', elite: true, mul: DEPTH3, drop: Object.freeze({ chance: 1, min: 10, max: 15 }) }),
+  solinh: Object.freeze({ id: 'solinh', ten: 'Sơn Linh Thần', lv: 140, he: 'tho', elite: false, boss: true, mul: DEPTH3, drop: Object.freeze({ chance: 1, min: 45, max: 60 }) }),
 });
 
 // Hồi sinh (giây). Phiên 129: NHANH HƠN theo yêu cầu ptg (trước theo GDD mục 8: thường 30–60, tinh anh 300). Nay: thường 10–20, tinh anh 120. Boss vùng giữ 45 phút. TẠM, chờ ptg duyệt.
@@ -62,6 +77,31 @@ export const FARM_ZONES = Object.freeze({
     id: 'doiBaoThap', ten: 'Đồi Bảo Tháp', lvMin: 40, lvMax: 65, he: 'tho', cap: 16, capNight: 28, eliteMax: 2, nightRects: Object.freeze([{ x0: 60.5, x1: 65.5, z0: 56, z1: 67.5 }]),
     normal: Object.freeze(['thachtinh']), elite: Object.freeze(['hothap']), boss: 'thachlinh',
     rects: Object.freeze([{ x0: 43.5, x1: 74.5, z0: 40.5, z1: 54.5 }]),
+    avoid: Object.freeze([]),
+  }),
+  // Phiên 131: BỐN VÙNG SÂU ở bốn góc bản đồ (OUT_WALKS 'rung-sau-vach-*'), sát vách núi. Ban ngày quái ngủ trong bụi; ban đêm tràn ra lối nối. Càng xa chùa càng nguy hiểm (cấp, độ trâu và sát thương cao hơn).
+  vachTayBac: Object.freeze({
+    id: 'vachTayBac', ten: 'Vách Núi Tây Bắc', lvMin: 72, lvMax: 95, he: 'hoa', cap: 16, capNight: 28, eliteMax: 2, nightRects: Object.freeze([{ x0: -100, x1: -78, z0: 58.5, z1: 63.5 }]),
+    normal: Object.freeze(['hoaly']), elite: Object.freeze(['viemma']), boss: 'viemde',
+    rects: Object.freeze([{ x0: -134.5, x1: -101.5, z0: 37.5, z1: 68.5 }]),
+    avoid: Object.freeze([]),
+  }),
+  vachDongBac: Object.freeze({
+    id: 'vachDongBac', ten: 'Vách Núi Đông Bắc', lvMin: 85, lvMax: 105, he: 'moc', cap: 16, capNight: 28, eliteMax: 2, nightRects: Object.freeze([{ x0: 76, x1: 96, z0: 44.5, z1: 49.5 }]),
+    normal: Object.freeze(['cotmoc']), elite: Object.freeze(['thuvuong']), boss: 'thumau',
+    rects: Object.freeze([{ x0: 97.5, x1: 134.5, z0: 23.5, z1: 60.5 }]),
+    avoid: Object.freeze([]),
+  }),
+  vachTayNam: Object.freeze({
+    id: 'vachTayNam', ten: 'Vách Núi Tây Nam', lvMin: 100, lvMax: 120, he: 'kim', cap: 16, capNight: 28, eliteMax: 2, nightRects: Object.freeze([{ x0: -96, x1: -78, z0: 116.5, z1: 121.5 }]),
+    normal: Object.freeze(['kimgiap']), elite: Object.freeze(['kimtuong']), boss: 'kimvuong',
+    rects: Object.freeze([{ x0: -134.5, x1: -97.5, z0: 113.5, z1: 141.5 }]),
+    avoid: Object.freeze([]),
+  }),
+  vachDongNam: Object.freeze({
+    id: 'vachDongNam', ten: 'Vách Núi Đông Nam', lvMin: 115, lvMax: 140, he: 'tho', cap: 16, capNight: 28, eliteMax: 2, nightRects: Object.freeze([{ x0: 68, x1: 92, z0: 131.5, z1: 136.5 }]),
+    normal: Object.freeze(['nhamcu']), elite: Object.freeze(['nhamvuong']), boss: 'solinh',
+    rects: Object.freeze([{ x0: 93.5, x1: 132.5, z0: 128.5, z1: 141.5 }]),
     avoid: Object.freeze([]),
   }),
 });

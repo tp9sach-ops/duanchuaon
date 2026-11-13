@@ -86,3 +86,17 @@ Yêu cầu 13/11 gồm 3 mục, làm tuần tự: (1) quái ngủ/đánh mới g
 - Ban ngày quái NGỦ trong bụi (chỉ đánh mới giận, đã có từ trước) — giữ nguyên.
 - Tests: `tests/farmcombat.test.mjs` mới; sửa farmui/spawn/hothac; `npm test` 1041 pass / 0 fail. `sw.js` VERSION = dgt-v132.
 - Chưa kiểm bằng mắt trong game (con số TẠM, cần ptg duyệt).
+
+## Phiên 131 — Mở rộng map: 4 VÙNG SÂU sát vách núi, càng xa càng nguy hiểm (mục 2/3 của yêu cầu 13/11)
+Quy tắc ptg (chép nguyên văn): For the 9 Sạch monthly-archive project (and any long multi-session build): after EVERY reply, attach an updated handoff .md so a fresh session with no memory can continue exactly and in detail; if there isn't room to finish everything, send the handoff first; copy this rule verbatim into every handoff.
+
+Trạng thái 3 mục: (1) XONG (Phiên 130); (2) XONG phần dữ liệu/logic/test (phiên này), CHƯA nhìn bằng mắt trong game (trình duyệt headless lần này không nạp được LGT — kiểm tra lại: server http.server cổng 8765 phải chạy từ thư mục repo); (3) hạt sen không ảnh hưởng sức mạnh — CHƯA làm, là việc kế tiếp.
+
+Đã làm (mục 2):
+- `js/world/outside.js` OUT_WALKS: 4 khoảng đất `rung-sau-vach-tbac` (x−136…−100 z36–70), `-dbac` (x96–136 z22–62), `-tnam` (x−136…−96 z112–143), `-dnam` (x92–134 z127–143) + 4 lối 6 m `loi-vach-*` nối vào khoảng rừng sâu cũ (bac→tbac, thap→dbac, tay→tnam, dong→dnam). Phía Bắc (z<32, khu chùa) cố ý KHÔNG đụng.
+- `js/data/monsters.js`: 4 vùng mới `vachTayBac` (Hỏa, cấp 72–95, độ sâu 2), `vachDongBac` (Mộc, 85–105, độ sâu 2), `vachTayNam` (Kim, 100–120, độ sâu 3), `vachDongNam` (Thổ, 115–140, độ sâu 3); mỗi vùng 1 quái thường + 1 tinh anh + 1 boss (12 loại mới). Hệ số độ sâu `mul` trên loại quái: DEPTH2 {hp 1.5, atk 1.25}, DEPTH3 {hp 2.2, atk 1.5}; vùng gần KHÔNG có `mul` (giữ số cũ). Tất cả TẠM chờ ptg duyệt.
+- `js/world/spawn.js`: `oanKhiMaxOf` nhân `mul.hp`; `monsterStats.cong` nhân `mul.atk`; `pickPoint` ban đêm ưu tiên nightRects ×3 để quái thật sự tràn ra lối.
+- `js/scene/outside.js`: bụi/cỏ/cây/sương cho 4 khoảng mới. `js/scene/farm.js`: màu Hỏa/Thổ cho thanh máu.
+- Mô hình 3D: loại quái mới dùng chung mô hình dự phòng (giống Cướp Đường) — CHƯA có mô hình riêng (việc có thể làm sau).
+- Tests: `tests/vungsau.test.mjs` mới (đi tới được từ đường làng, trọn trong khoảng đất, không chồng, càng xa càng mạnh, mul đúng); sửa hothac (8 vùng) và farmcombat (chỉ chọn boss Mộc, cô lập mục tiêu). `npm test` 1044 pass / 0 fail. `sw.js` = dgt-v133.
+- Chưa làm: tutorial.js vẫn nói "bốn vùng luyện"; cần cập nhật câu hướng dẫn nếu ptg muốn.
