@@ -9,8 +9,15 @@ import { PLACES } from '../js/world/outside.js';
 
 const read = (p) => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
 
-test('sức mạnh tăng theo cấp, bậc Khinh thân và công đức; đầu vào lạ không ném lỗi', () => {
-  const a = strengthOf({ level: 1 }), b = strengthOf({ level: 5 }), c = strengthOf({ level: 5, khinh: 4 }), d = strengthOf({ level: 5, khinh: 4, sen: 400 });
+test('Phiên 133: hạt sen KHÔNG ảnh hưởng sức mạnh (luật ptg 13/11) — truyền sen nhỏ/lớn/lạ đều ra cùng một số', () => {
+  for (const base of [{ level: 1 }, { level: 5, khinh: 4 }, { level: 10, khinh: 8, bonus: 100 }]) {
+    const want = strengthOf(base);
+    for (const sen of [0, 1, 400, 1e6, 1e9, -5, NaN, 'abc']) assert.equal(strengthOf({ ...base, sen }), want, `sen=${sen}`);
+  }
+  assert.equal(strengthOf({ level: 5, khinh: 4, sen: 1e9 }), 5 * 6 + 4 * 10);
+});
+test('sức mạnh tăng theo cấp, bậc Khinh thân và phần cộng từ yêu quái; đầu vào lạ không ném lỗi', () => {
+  const a = strengthOf({ level: 1 }), b = strengthOf({ level: 5 }), c = strengthOf({ level: 5, khinh: 4 }), d = strengthOf({ level: 5, khinh: 4, bonus: 30 });
   assert.ok(a < b && b < c && c < d, [a, b, c, d].join());
   for (const bad of [undefined, null, 5, 'x', {}, { level: NaN, khinh: -3, sen: 'a' }]) assert.ok(Number.isInteger(strengthOf(bad)) && strengthOf(bad) >= 6);
   assert.equal(strengthOf({ level: 1 }), 6); assert.equal(strengthOf({ level: 1, khinh: 99 }), strengthOf({ level: 1, khinh: 8 }), 'bậc kẹp ở 8');

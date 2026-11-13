@@ -2,15 +2,13 @@
 // Đặt LGT.carry = { status(), pickup(), throw(), drop(), get strength }; LGT.strength = { value, tier, limit }; LGT.carryNear = vật gần nhất (cảnh 3D vẽ vòng sáng).
 import { createCarry, strengthOf, tierOf, carryLimit, throwRange, strengthNeeded, PICK_RADIUS } from '../world/strength.js';
 import { levelOf } from '../world/quests.js';
-import { lifetimeSen } from '../world/merit.js';
 
 /** opts: { toast(text, ms) }. */
 export function initCarry({ toast = () => {} } = {}) {
   const LGT = window.LGT || (window.LGT = {});
   const world = LGT.carryWorld || (LGT.carryWorld = createCarry());
   const level = () => levelOf(LGT.quests && LGT.quests.prog ? LGT.quests.prog.xp : 0).lv;
-  const total = () => { const sen = LGT.getSen ? LGT.getSen() : 0; return lifetimeSen(sen, LGT.merit && LGT.merit.leaf ? LGT.merit.leaf : null); };
-  const str = () => strengthOf({ level: level(), khinh: LGT.skill ? LGT.skill.level : 0, sen: total(), bonus: LGT.yq ? LGT.yq.bonus : 0 });   // bonus: sức mạnh từ thu phục yêu quái
+  const str = () => strengthOf({ level: level(), khinh: LGT.skill ? LGT.skill.level : 0, bonus: LGT.yq ? LGT.yq.bonus : 0 });   // bonus: sức mạnh từ thu phục yêu quái
   const pos = () => (LGT.world && LGT.world.pos) || null;
   const av = () => (LGT.world && LGT.world.avatar) || null;
   const ry = () => { const a = LGT.world && LGT.world.avatar; return a && a.group ? a.group.rotation.y : 0; };

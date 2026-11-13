@@ -71,7 +71,7 @@ TOPICS.push(
     ] },
   { id: 'sucmanh', ten: 'Sức mạnh, khiêng và ném', moTa: 'Cấp + luyện thân + công đức',
     steps: [
-      { text: 'Sức mạnh tăng theo ba thứ: cấp độ của bạn, bậc luyện thân (Khinh thân) và tổng công đức (hạt sen từng kiếm). Thu phục yêu quái còn được cộng thêm sức mạnh vĩnh viễn. Xem số sức mạnh và danh hiệu trong “Túi đồ”.' },
+      { text: 'Sức mạnh tăng theo cấp độ của bạn và bậc luyện thân (Khinh thân); thu phục yêu quái còn được cộng thêm sức mạnh vĩnh viễn. Hạt sen là công đức, KHÔNG làm bạn mạnh hơn. Xem số sức mạnh và danh hiệu trong “Túi đồ”.' },
       { text: `Sức mạnh càng cao khiêng được vật càng nặng (vật 6 kg ai cũng khiêng được; cần ${strengthNeeded(70)} sức mạnh cho vật 70 kg, ${strengthNeeded(200)} cho 200 kg; ví dụ sức mạnh 50 khiêng tối đa ${carryLimit(50)} kg). Vật trong thế giới: ${KG}.` },
       { text: 'Đứng sát vật rồi bấm “Khiêng”. Bấm “Ném” để ném về hướng nhân vật đang nhìn: vật nhẹ và bạn khỏe thì bay xa, vật rơi xuống đất rồi tự trở về chỗ cũ sau một lúc. Vào nhà hoặc ngồi xuống thì vật tự được đặt xuống.' },
       { text: `Người có cấp VÀ sức mạnh lớn hơn bạn có thể khiêng và ném bạn dù bạn không đồng ý; nhưng không được ném trong khuôn viên chùa hay người đang ngồi thiền, hồi chiêu ${THROW_COOLDOWN_S} giây cho mỗi cặp, người ném bị trừ ${THROW_COST_SEN} hạt sen, người bị ném rơi an toàn không mất gì. Phần ném người chơi với nhau qua mạng: đang làm, sắp có.`, soon: true },

@@ -1,5 +1,5 @@
 // Sức mạnh + khiêng/ném vật nặng (Phiên 63). LOGIC THUẦN (không DOM, không three.js), có test: tests/strength.test.mjs. Giao diện: js/ui/carry.js; cảnh 3D: js/scene/carry.js.
-// Sức mạnh tăng theo CẤP ĐỘ, BẬC LUYỆN THÂN (Khinh thân) và CÔNG ĐỨC (tổng hạt sen từng kiếm). Càng mạnh càng khiêng được vật nặng, ném càng xa.
+// Sức mạnh tăng theo CẤP ĐỘ, BẬC LUYỆN THÂN (Khinh thân) và phần cộng từ thu phục yêu quái — KHÔNG tính hạt sen (Phiên 133). Càng mạnh càng khiêng được vật nặng, ném càng xa.
 // Luật ptg chốt 08/11: nhân vật có cấp VÀ sức mạnh đều lớn hơn thì khiêng/ném được người khác dù họ không đồng ý (phần ném NGƯỜI qua mạng: xem docs/PHIEN63.md).
 // Mọi con số (kg, quãng ném, công thức) là QUY ƯỚC TẠM của dự án, chờ ptg duyệt.
 import { canStep, blocked, BOUNDS, GATE } from './layout.js';
@@ -8,11 +8,12 @@ const num = (x, d = 0) => (Number.isFinite(+x) ? +x : d);
 const clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
 const isObj = (o) => o && typeof o === 'object' && !Array.isArray(o);
 
-/** Sức mạnh từ cấp độ người chơi (1..10), bậc Khinh thân (0..8) và tổng hạt sen từng kiếm. Số nguyên ≥ 0; đầu vào lạ → coi như 0 (cấp tối thiểu 1). */
+/** Sức mạnh từ cấp độ người chơi (1..10), bậc Khinh thân (0..8) và phần cộng vĩnh viễn từ thu phục yêu quái. Số nguyên ≥ 0; đầu vào lạ → coi như 0 (cấp tối thiểu 1).
+ *  Phiên 133 (luật ptg 13/11): HẠT SEN KHÔNG ảnh hưởng sức mạnh — trường `sen` (nếu ai còn truyền) bị BỎ QUA hoàn toàn, nên không nạp/kiếm sen để mạnh lên. */
 export function strengthOf(o) {
-  const { level = 1, khinh = 0, sen = 0, bonus = 0 } = isObj(o) ? o : {};   // bonus = sức mạnh vĩnh viễn từ thu phục yêu quái (js/world/yeuquai.js)
-  const lv = clamp(Math.floor(num(level, 1)), 1, 99), kb = clamp(Math.floor(num(khinh)), 0, 8), s = clamp(num(sen), 0, 1e9);
-  return Math.floor(lv * 6 + kb * 10 + Math.sqrt(s) * 2) + clamp(Math.floor(num(bonus)), 0, 100);
+  const { level = 1, khinh = 0, bonus = 0 } = isObj(o) ? o : {};   // bonus = sức mạnh vĩnh viễn từ thu phục yêu quái (js/world/yeuquai.js)
+  const lv = clamp(Math.floor(num(level, 1)), 1, 99), kb = clamp(Math.floor(num(khinh)), 0, 8);
+  return lv * 6 + kb * 10 + clamp(Math.floor(num(bonus)), 0, 100);
 }
 /** Danh hiệu sức mạnh. */
 export const TIERS = [{ min: 0, ten: 'Tay yếu' }, { min: 20, ten: 'Khỏe khoắn' }, { min: 45, ten: 'Lực sĩ' }, { min: 80, ten: 'Dũng sĩ' }, { min: 120, ten: 'Kim cương lực' }];
