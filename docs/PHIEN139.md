@@ -6,7 +6,7 @@ Quy tắc ptg (chép nguyên văn): For the 9 Sạch monthly-archive project (an
 1. ✅ Kinh nghiệm không giới hạn trần — XONG (Phiên 138 bỏ trần cấp công hạnh + trần Tu Vi/ngày; Phiên 139 bỏ nốt trần Tu Vi 150).
 2. ✅ Map mở rộng, quái càng sâu càng mạnh — đã có từ Phiên 131–132 (`docs/PHIEN132.md`).
 3. ✅ Hạt sen không ảnh hưởng sức mạnh — đã có từ Phiên 133 (`docs/PHIEN133.md`).
-4. 🔶 Phó bản — đang làm theo bước: 4a ✅ lõi logic (Phiên 139); 4b ⏳ zone + cảnh 3D riêng; 4c ⏳ NPC + bảng chọn phó bản; 4d ⏳ nối `LGT.addXp`/`settleKill`, lưu `lgt.dungeon`, hiển thị lượt/boss.
+4. 🔶 Phó bản — đang làm theo bước: 4a ✅ lõi logic (Phiên 139); 4b ✅ zone + cảnh 3D riêng (chưa nhìn bằng mắt); 4c ⏳ NPC + bảng chọn phó bản; 4d ⏳ nối `LGT.addXp`/`settleKill`, lưu `lgt.dungeon`, hiển thị lượt/boss.
 5. ⏳ Mảnh ghép boss → linh thú trong hồ lô.
 
 ## Đã làm ở Phiên 139
@@ -18,6 +18,11 @@ Quy tắc ptg (chép nguyên văn): For the 9 Sạch monthly-archive project (an
 - `js/data/dungeons.js` (số liệu TẠM): 9 lượt; 4 phó bản `rungmoc` (Rừng Cổ Mộc, boss Lão Mộc Tinh), `hangkim` (Hang Sơn Cước), `hothuy` (Động Thủy Mẫu), `thaptho` (Mê Cung Bảo Tháp); mỗi cái 2 loại quái (thường + tinh anh) và boss lấy từ `MONSTERS`. Mỗi lượt sau: Oán Khí ×(1+0,35·(lượt−1)), Công ×(1+0,2·…), kích thước ×(1+0,06·…); mỗi lần đã chinh phục: +40% Oán Khí, +25% Công, +5% kích thước cho cả khu; boss chính ×1,5 Oán Khí, ×1,25 Công, ×1,7 kích thước thêm. Tinh anh ở lượt 3/6/9. Quà: hạt sen = drop boss × (1 + 0,5 × số lần đã chinh phục), 1 mảnh yêu quái (`manh` = id boss, dùng cho mục 5), 3 lần tung vật phẩm theo bảng `vatPham` (id vật phẩm là TÊN TẠM, chưa có trong túi đồ — bước 4d phải nối hoặc đổi sang vật phẩm thật).
 - `js/world/dungeon.js`: `loadDungeon`, `enter`, `onKill`, `leave`, `waveMobs`, `mobStats`, `rewardFor`, `clearFactor`, `waveFactor`. Trạng thái `{ v, clears, run }` (chưa lưu vào `LGT`). `tests/dungeon.test.mjs` (11 test) có trong `npm test`.
 
+## Mục 4b (Phiên 139): zone + cảnh phó bản
+- `js/world/zoneDungeon.js` (logic thuần): mỗi phó bản một zone `pb-<id>` (loại `QUAI`), ô 40×40 m tâm x = 700 + 60 × thứ tự, z = 0 (xa hub/Vườn thử/Võ đài), sàn tròn bán kính 16 m. `playerSpawn(id)` (phía nam), `mobSpot(id, i, n)` (cung phía bắc, dùng để đặt quái bước 4d), cổng `roi-pho-ban` ở rìa nam → về chùa (điểm `tu-pho-ban` ở hub = lối về Võ đài (18,8), bước 4c đổi sang chỗ NPC). Cờ zone: `viaNpc` (hub KHÔNG có cổng vào; `validate()` bỏ qua kiểm tra "tới được từ hub") và `temp` (`restore` luôn đưa về chùa, không lưu làm zone cuối). Sửa nhỏ `js/world/zones.js` cho hai cờ này; đăng ký trong `js/world/zoneRuntime.js` (`registerDungeonZones`).
+- `js/scene/dungeon.js`: cảnh theo chủ đề (rừng: cây nón; hang: đá; hồ: cột xanh; tháp: trụ đất) + cổng rời dùng `buildGate` của `js/scene/voDai.js`. `js/ui/dungeonZones.js` (gắn trong `js/main.js`): đặt `LGT.dungeonZones = { enter(id), leave(), inside }`. `enter` chỉ vào được từ chùa khi đang rảnh; **bước 4c (NPC) chỉ cần gọi `LGT.dungeonZones.enter('rungmoc')`** …
+- CHƯA nhìn bằng mắt (không WebGL). `tests/zonedungeon.test.mjs` (5 test) có trong `npm test`. Thiếu còn lại ở 4d: không có quái trong zone (chưa gọi `dungeon.enter/onKill`), rời bằng cổng chưa gọi `leave()` của logic (xóa lượt đang chạy), chưa lưu `lgt.dungeon`.
+
 ## Chỉnh nút Nhảy (ptg yêu cầu giữa phiên, 13/11): nhảy tới trước + lướt né chiêu
 - Đang đi mà bấm Nhảy → cú nhảy bật tới trước (`leapPlan`: 2,2 + 0,3 × bậc mét, kéo dài đúng thời gian trên không, đi qua `world.dash` với `tilt:false`, dừng trước vật cản bằng `landing`). Đứng yên bấm Nhảy → nhảy tại chỗ như cũ.
 - Bấm Nhảy tiếp lúc còn trên không hoặc trong 0,6 s sau khi chạm đất → LƯỚT (`glidePlan`: 3 + 0,2 × bậc mét, 0,26 s) và BẤT TỬ 0,45 s (`vitals.guard` trong `js/world/monsterAttack.js`, qua `LGT.farmCombat.vitals`); hồi chiêu lướt 1,2 s. Lướt chờ hết cú bật rồi mới chạy. Không áp dụng trong nhà (nhảy thường vẫn được).
@@ -28,8 +33,8 @@ Quy tắc ptg (chép nguyên văn): For the 9 Sạch monthly-archive project (an
 ## Còn là trần (KHÔNG phải kinh nghiệm — giữ nguyên, hỏi ptg nếu muốn bỏ)
 Trần hạt sen 100/ngày, 10 lần/ngày hạt sen phóng sinh, 5 lần/ngày/loại hoạt động chùa, 60 phút tự động hàng yêu/ngày, kẹp lưu EXP 1e9 (kỹ thuật), kẹp cấp 99 của máu/sát thương yêu quái hằng tháng.
 
-## Việc kế: MỤC 4b — zone + cảnh 3D riêng của phó bản
+## Việc kế: MỤC 4c — NPC + bảng chọn phó bản (rồi 4d: quái trong zone + lưu + thưởng)
 Ý ban đầu ở `docs/PHIEN138.md` (ý ptg + hướng làm: `js/world/dungeon.js` logic thuần + test → zone/cảnh 3D riêng → NPC + bảng chọn → nối `LGT.addXp`/`settleKill`; dùng cơ chế zone của Võ đài: `zones.js`, `zoneRuntime.js`, `zoneVoDai.js`, `js/scene/voDai.js`, `js/ui/zoneGate.js`).
 
 ## Prompt khởi động cho phiên mới (dán nguyên văn)
-> Đọc `docs/PHIEN139.md`, `docs/PHIEN138.md`, `docs/PHIEN132.md`, `docs/PHIEN133.md`. Chỉ xem các chỗ cần sửa, không đọc hết repo. Mục 1–3 đã xong; kinh nghiệm không còn trần. Làm MỤC 4b (zone + cảnh 3D phó bản, lõi logic `js/world/dungeon.js` đã xong), từng bước nhỏ, `npm test` phải xanh, đẩy GitHub rồi báo; cuối phiên viết `docs/PHIEN140.md` kèm prompt bàn giao và chép nguyên văn quy tắc bàn giao ở trên.
+> Đọc `docs/PHIEN139.md`, `docs/PHIEN138.md`, `docs/PHIEN132.md`, `docs/PHIEN133.md`. Chỉ xem các chỗ cần sửa, không đọc hết repo. Mục 1–3 đã xong; kinh nghiệm không còn trần. Làm MỤC 4c (NPC + bảng chọn phó bản, gọi `LGT.dungeonZones.enter(id)`; lõi `js/world/dungeon.js` và zone 4b đã xong), từng bước nhỏ, `npm test` phải xanh, đẩy GitHub rồi báo; cuối phiên viết `docs/PHIEN140.md` kèm prompt bàn giao và chép nguyên văn quy tắc bàn giao ở trên.

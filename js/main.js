@@ -90,6 +90,7 @@ async function boot() {
   try { initCompact(); } catch (e) { console.warn('[Diệu Giang Tự] Giao diện gọn lỗi:', e && e.message); }   // ẩn/hiện nút, sửa HUD bị che trong khung/màn thấp, nút camera (chạy SAU initHud)
   try { initZones(localStorage, () => (window.LGT && window.LGT.world ? window.LGT.world.pos : null)); } catch (e) { console.warn('[Diệu Giang Tự] Khu vực lỗi:', e && e.message); }
   try { import('./ui/zoneGate.js').then((m) => m.initZoneGate({ toast: (t, ms) => window.LGT.toast && window.LGT.toast(t, ms) })).catch((e) => console.warn('[Diệu Giang Tự] Cổng zone lỗi:', e && e.message)); } catch (_) { /* bỏ qua */ }
+  try { import('./ui/dungeonZones.js').then((m) => m.initDungeonZones({ toast: (t, ms) => window.LGT.toast && window.LGT.toast(t, ms) })).catch((e) => console.warn('[Diệu Giang Tự] Zone phó bản lỗi:', e && e.message)); } catch (_) { /* bỏ qua */ }   // Phiên 139: zone phó bản (4b)
   try { initRoom(); } catch (e) { console.warn('[Diệu Giang Tự] Đa người lỗi:', e && e.message); }   // thấy người khác trong chùa; lỗi thì vẫn chơi một mình
   // Phòng khi onProgress(1) không tới (tab nền): vẫn mở trang sau 6s
   setTimeout(hidePre, 6000);

@@ -57,7 +57,7 @@ export function createZoneManager({ layout = null, onChange = null } = {}) {
     if (defs.has(HUB_ID)) {
       const seen = new Set([HUB_ID]), q = [HUB_ID];
       while (q.length) for (const g of (defs.get(q.shift()).gates)) if (defs.has(g.to) && !seen.has(g.to)) { seen.add(g.to); q.push(g.to); }
-      for (const id of defs.keys()) if (!seen.has(id)) errs.push(id + ': không có đường đi từ hub tới zone này');
+      for (const [id, dd] of defs) if (!seen.has(id) && !dd.viaNpc) errs.push(id + ': không có đường đi từ hub tới zone này');
     }
     return errs;
   }
@@ -141,7 +141,7 @@ export function createZoneManager({ layout = null, onChange = null } = {}) {
   function restore(saved) {
     const s = saved && typeof saved === 'object' ? saved : {};
     for (const id of Array.isArray(s.opened) ? s.opened : []) if (defs.has(id)) opened.add(id);
-    return { zone: defs.has(s.zone) && opened.has(s.zone) ? s.zone : HUB_ID, x: isNum(s.x) ? s.x : null, z: isNum(s.z) ? s.z : null };
+    return { zone: defs.has(s.zone) && opened.has(s.zone) && !defs.get(s.zone).temp ? s.zone : HUB_ID, x: isNum(s.x) ? s.x : null, z: isNum(s.z) ? s.z : null };
   }
   const listen = (f) => { listeners.push(f); return () => { const i = listeners.indexOf(f); if (i >= 0) listeners.splice(i, 1); }; };
 
