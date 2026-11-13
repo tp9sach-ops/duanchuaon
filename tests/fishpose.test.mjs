@@ -61,3 +61,22 @@ test('cardData: tên, cỡ, kỷ lục, biến thể; loài lạ → null', () =
   assert.equal(cardData({ sp: 'khongco' }, 5), null);
   assert.equal(cardData({ sp: id }, 12, { best: 0, isNew: true }).best, 12);
 });
+
+import { fishShadow } from '../js/world/fishingView.js';
+import { startCast, buyOrb, loadFish, tick } from '../js/world/fishing.js';
+test('Phiên 128: bóng cá bơi vào, lao chạm cầu mỗi lần rỉa rồi lùi ra, liên tục, không lượn vòng', () => {
+  for (const seed of [1, 2, 3, 5, 8, 13]) {
+    let x = seed; const rng = () => { x = (x * 16807) % 2147483647; return x / 2147483647; };
+    let s = startCast(buyOrb(loadFish(null), { la: 999, sen: 999 }, 'go').state, 'hoca', rng).sess, prev = null, minAtNib = [];
+    while (s.t < s.tBite + 0.1) {
+      s = tick(s, 0.02); const f = fishShadow(s);
+      if (s.t < s.tShadow || s.t >= s.tBite) { assert.equal(f, null); continue; }
+      assert.ok(f.rad >= 0.27 && f.rad <= 2.7 && Math.abs(f.face) === 1 && Number.isFinite(f.yaw) && f.alpha >= 0 && f.alpha <= 1);
+      if (prev) assert.ok(Math.abs(f.rad - prev.rad) < 0.2, `nhảy bán kính ${prev.rad}→${f.rad} seed ${seed}`);
+      prev = f;
+    }
+    // đúng lúc rỉa (nibble) bóng cá phải ở rất sát cầu
+    for (const n of s.nibbles) { const probe = { ...s, t: n }; const f = fishShadow(probe); if (n > s.tShadow && n < s.tBite) assert.ok(f.rad < 0.4, `rỉa phải sát cầu: ${f.rad}`); }
+    const early = fishShadow({ ...s, t: s.tShadow + 0.01 }); assert.ok(early.rad > 2 && early.face === -1);   // vừa hiện: còn xa, đầu quay về phía cầu
+  }
+});

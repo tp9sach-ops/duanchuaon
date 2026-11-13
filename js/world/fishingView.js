@@ -12,7 +12,7 @@ export const LAND_INSET = 2.6;
 
 /** Tầm ném về phía trước mặt (m). */
 export const THROW_AHEAD = 4.2;
-/** Điểm cầu rơi. Có `ry` (hướng nhìn của nhân vật, nhìn +z khi ry = 0): ném THẲNG TRƯỚC MẶT — điểm cách người THROW_AHEAD mét theo hướng nhìn,
+/** Điểm cầu rơi. Có `ry` (hướng nhìn của nhân vật, nhìn +z khi ry = 0): ném THẢNG TRƯỚC MẶT — điểm cách người THROW_AHEAD mét theo hướng nhìn,
  *  nếu ra ngoài mặt nước thì kéo vào mép trong của nước (vẫn cùng phía trước mặt). Không có `ry`: kiểu cũ — trên đường từ tâm nước ra phía người chơi. Trả { x, z }. */
 export function castTarget(player, water, ry) {
   const w = typeof water === 'string' ? waterById(water) : water; if (!w || !player) return { x: 0, z: 0 };
@@ -40,15 +40,23 @@ export function rippleAt(t, t0, dur = 1.1) { const k = (t - t0) / dur; return k 
 /** Các mốc sóng của một phiên: nước bắn lúc cầu chạm (FLIGHT), mỗi lần cá rỉa (nibbles). */
 export const rippleTimes = (s) => [FLIGHT, ...(s && Array.isArray(s.nibbles) ? s.nibbles : [])];
 
-/** Bóng cá: hiện từ tShadow tới tBite. Trước lúc rỉa bơi vòng quanh cầu (bán kính 2,2 → 1,2); khi rỉa lao vào sát cầu. Trả null nếu không hiện, hoặc { ang, rad, alpha }. */
+/** Bóng cá: hiện từ tShadow tới tBite. Bơi vào, lao chạm cầu mỗi lần rỉa rồi lùi ra (xem chú thích trong hàm). Trả null nếu không hiện, hoặc { ang, rad, alpha, face, yaw }. */
 export function fishShadow(s) {
+  // Phiên 128 (theo clip mẫu): bóng cá bơi THẲNG tới gần cầu, LAO VÀO chạm cầu (cầu nhún) rồi lùi ra, lặp lại mỗi lần rỉa (s.nibbles), rồi dí sát cầu lúc cắn.
+  // Không còn lượn vòng quanh cầu. ang = hướng từ cầu ra phía cá (trôi chậm); rad = khoảng cách tới cầu (≥ 0,28); face = +1 đầu cá quay RA XA cầu, −1 quay VỀ phía cầu; yaw = rung đầu khi rỉa.
   if (!s || s.t < s.tShadow || s.t >= s.tBite) return null;
-  const span = Math.max(0.01, s.tBite - s.tShadow), k = (s.t - s.tShadow) / span;
-  const nib = s.nibbles && s.nibbles.length ? s.nibbles[0] : s.tBite, rad = s.t < nib ? 2.2 - 1.0 * ((s.t - s.tShadow) / Math.max(0.01, nib - s.tShadow)) : 0.5 + 0.3 * Math.sin(s.t * 11);
-  return { ang: (s.t - s.tShadow) * 1.9, rad, alpha: Math.min(1, k * 4) * 0.55 };
+  const t = s.t, nibs = s.nibbles && s.nibbles.length ? s.nibbles : [s.tBite], OUT = 0.95, NEAR = 0.28, FAR = 2.6;
+  const ease = (k) => k * k * (3 - 2 * k), cl = (k) => Math.max(0, Math.min(1, k));
+  const approach = cl((t - s.tShadow) / Math.max(0.01, nibs[0] - 0.5 - s.tShadow)), base = FAR - (FAR - OUT) * ease(approach);
+  let pull = 0, back = false;
+  for (const n of nibs) {
+    const d = t - n, b = d < 0 ? ease(cl(1 + d / 0.5)) : ease(cl(1 - d / 0.7));
+    if (b > pull) { pull = b; back = d > 0.08; }
+  }
+  const bite = ease(cl((t - (s.tBite - 0.4)) / 0.4)); if (bite > pull) { pull = bite; back = false; }
+  const rad = base - (base - NEAR) * pull, k = (t - s.tShadow) / Math.max(0.01, s.tBite - s.tShadow);
+  return { ang: 0.7 + 0.3 * Math.sin(t * 0.9), rad, alpha: Math.min(1, k * 6) * 0.78, face: back ? 1 : -1, yaw: rad < 0.6 ? 0.28 * Math.sin(t * 9) : 0.08 * Math.sin(t * 2.2) };
 }
-
-/** Phao nhún: độ chìm (mét, âm = chìm) theo thời gian; mỗi lần rỉa (trong 0,35 giây) chìm thêm. */
 export function bobY(s) {
   if (!s) return 0; let y = Math.sin(s.t * 3.2) * 0.015;
   for (const n of s.nibbles || []) { const d = s.t - n; if (d >= 0 && d < 0.35) y -= Math.sin((d / 0.35) * Math.PI) * 0.12; }
