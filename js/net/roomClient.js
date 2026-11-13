@@ -1,6 +1,7 @@
 // Khách đa người: thăm dò máy chủ, giữ các nhân vật của người khác, nội suy chuyển động. KHÔNG import three.js:
 // mọi thứ cần ngoài (gọi mạng, dựng nhân vật, đọc trạng thái của mình) được đưa vào qua `deps` nên kiểm thử được bằng Node.
 import { ROOM_CFG, pollInterval, chatOk, createRemotes } from '../engines/room.js';
+import { isSignal } from '../world/duel.js';   // Phiên 137: gói tin giao lưu võ thuật đi chung kênh chat nhưng KHÔNG hiện thành lời nhắn
 
 /**
  * deps: {
@@ -17,6 +18,7 @@ export function createRoomClient(deps) {
   const { call, getSelf, makeAvatar, scene, onOnline = () => {}, pageId } = deps;
   const schedule = deps.schedule || ((fn, ms) => setTimeout(fn, ms)), cancel = deps.cancel || ((h) => clearTimeout(h));
   const remotes = createRemotes(), views = new Map();       // id → { av, key }
+  const sigQ = [];                                           // Phiên 137: gói tin giao lưu chờ gửi (mỗi lượt đồng bộ gửi một gói, ưu tiên hơn lời nhắn thường)
   let holdId = null; const flies = new Map();               // Phiên 91: người đang được MÌNH khiêng trên vai / đang bị MÌNH ném bay vòng cung (id → { x0,y0,z0,x1,z1,t,dur,peak })
   let lastRoom = null, cursor = 0, first = true, pendingSay = '', timer = null, running = false, active = true, fails = 0, busy = false, lastCount = 1, hiddenMs = 9000;
   const API = { pageId };
@@ -33,7 +35,8 @@ export function createRoomClient(deps) {
     const list = remotes.step(dt), alive = new Set();
     for (const p of list) {
       alive.add(p.id); const { av } = viewFor(p);
-      av.group.position.set(p.x, p.y, p.z); av.setFacing(p.ry);
+      const q = deps.xform ? deps.xform(p) : p;           // Phiên 137: trong võ đài, vị trí đối thủ (mượn khung ±200) được đổi về tọa độ võ đài
+      av.group.position.set(q.x, p.y, q.z); av.setFacing(p.ry);
       av.setState(p.state === 'walk' && p.speed < 0.4 ? 'idle' : p.state, p.speed); av.update(dt);
       const fl = flies.get(p.id), me = p.id === holdId && deps.selfPose ? deps.selfPose() : null, rot = av.group.rotation;   // (nhân vật giả trong test có thể không có rotation)
       if (fl) { fl.t += dt; const u = Math.min(1, fl.t / fl.dur); av.group.position.set(fl.x0 + (fl.x1 - fl.x0) * u, fl.y0 * (1 - u) + 4 * fl.peak * u * (1 - u), fl.z0 + (fl.z1 - fl.z0) * u); if (rot) rot.x = u >= 1 ? 0 : 1.3 * (1 - u); if (u >= 1) flies.delete(p.id); }
@@ -53,14 +56,18 @@ export function createRoomClient(deps) {
       const rn = deps.roomOf ? deps.roomOf(ROOM_CFG.room) : ROOM_CFG.room;     // tên phòng theo zone hiện tại (hub = 'main', như cũ)
       if (lastRoom !== null && rn !== lastRoom) API.reset();                  // sang zone khác: quên người + lời nhắn của zone cũ
       lastRoom = rn;
-      const say = pendingSay; pendingSay = '';
+      let say = '', isSig = false; if (sigQ.length) { say = sigQ.shift(); isSig = true; } else { say = pendingSay; pendingSay = ''; }
       const res = await call({ action: 'sync', room: rn, id: pageId, n: me.n, c: me.c, h: me.h, x: me.x, y: me.y, z: me.z, r: me.r, s: me.s, since: cursor, say });
       if (res && res.ok) {
         fails = 0; remotes.ingest(res.players, pageId);
         lastCount = Math.max(1, Number(res.count) || remotes.size + 1); onOnline(lastCount);
         const seq = Number(res.seq) || 0;
         if (!first) for (const c of Array.isArray(res.chat) ? res.chat : []) {      // lần đầu chỉ lấy mốc, không hiện lại lời nhắn cũ
-          if (c && c.id !== pageId) { const v = views.get(c.id), t = chatOk(c.m); if (v && t) { v.av.say(t); if (deps.onChat) deps.onChat({ name: v.name, text: t }); } }
+          if (c && c.id !== pageId) {
+            const t = chatOk(c.m);
+            if (t && isSignal(t)) { if (deps.onSignal) { try { deps.onSignal(c.id, String(c.n || ''), t); } catch (_) { /* người nghe lỗi không làm hỏng đồng bộ */ } } continue; }   // gói giao lưu: không hiện thành bong bóng chat
+            const v = views.get(c.id); if (v && t) { v.av.say(t); if (deps.onChat) deps.onChat({ name: v.name, text: t }); }
+          }
         }
         first = false; cursor = seq;
         // Đường truyền nhanh (Firebase) tự khai chu kỳ ngắn/hệ số bám/chu kỳ khi tab ẩn; Apps Script không khai thì dùng mặc định cũ
@@ -68,7 +75,7 @@ export function createRoomClient(deps) {
         hiddenMs = Number(res.hiddenMs) > 0 ? Number(res.hiddenMs) : 9000; remotes.follow = Number(res.follow) > 0 ? Number(res.follow) : 1.4;
         wait = Number(res.pollMs) > 0 ? Math.max(lo, Math.min(ROOM_CFG.maxPollMs, Number(res.pollMs))) : pollInterval(lastCount);
       } else {
-        if (say) pendingSay = say;                          // chưa gửi được thì giữ lại gửi lần sau
+        if (say) { if (isSig) sigQ.unshift(say); else pendingSay = say; }   // chưa gửi được thì giữ lại gửi lần sau
         fails++; wait = Math.min(10000, ROOM_CFG.minPollMs * Math.pow(2, Math.min(fails, 3)));   // lỗi liên tiếp: thưa dần, tối đa 10 giây
         if (res && res.error === 'room_full') onOnline(null);
       }
@@ -88,6 +95,8 @@ export function createRoomClient(deps) {
   };
   /** Gửi một lời nhắn (hiện bong bóng trên đầu mình ở lượt đồng bộ kế tiếp của người khác). Trả chuỗi đã làm sạch hoặc ''. */
   API.say = (text) => { const t = chatOk(text); if (t) pendingSay = t; return t; };
+  /** Phiên 137: gửi một gói giao lưu (chuỗi "#dg…"). Tối đa 6 gói chờ; đầy thì bỏ gói cũ nhất. */
+  API.signal = (text) => { const t = chatOk(text); if (!t || !isSignal(t)) return false; sigQ.push(t); while (sigQ.length > 6) sigQ.shift(); return true; };
   API.start = () => { if (running) return; running = true; timer = schedule(API.tick, 0); };
   API.stop = () => { running = false; if (timer != null) cancel(timer); timer = null; for (const v of views.values()) { scene.remove(v.av.group); v.av.dispose(); } views.clear(); };
   /** Tab ẩn thì thưa hẳn đi để đỡ tốn lượt gọi Apps Script. */
