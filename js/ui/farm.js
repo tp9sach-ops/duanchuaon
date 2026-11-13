@@ -9,6 +9,9 @@ import { STONE, SPEAR, stoneDamage, spearDamage, rngSeed } from '../world/yeuqua
 import { mapAvailable } from '../world/minimap.js';
 import { loadAuto, autoLeft, addAutoTime, nextAction, rushTarget } from '../world/autoHunt.js';
 import { blocked } from '../world/layout.js';
+import { bgTick } from '../bgTick.js';
+import { skillDamage } from '../world/heQuest.js';
+import { kHeOf } from '../world/elements.js';
 
 const KEY = 'lgt.farm', AKEY = 'lgt.farmauto';
 const HE_TEN = { kim: 'Kim', moc: 'Mộc', thuy: 'Thủy', hoa: 'Hỏa', tho: 'Thổ' };
@@ -81,16 +84,16 @@ export function initFarm(hud, { toast = () => {} } = {}) {
     cdSpear = SPEAR.cd; if (LGT.sfx) LGT.sfx.play('thuong'); hit(t.uid, spearDamage(str()));
   }
 
-  // Tự Động Hàng Yêu (Phiên 108; Phiên 127: tự LAO tới quái rồi Thương/Đánh thường, trong tầm autoRange). Dừng khi mở bảng, rời tab, vào nhà, có yêu quái hằng tháng, hoặc hết 60 phút hôm nay.
+  // Tự Động Hàng Yêu (Phiên 108; Phiên 127: tự LAO tới quái rồi Thương/Đánh thường, trong tầm autoRange). Dừng khi mở bảng, vào nhà, có yêu quái hằng tháng, hoặc hết 60 phút hôm nay.
   function stopAuto(msg) { if (!running) return; running = false; saveAuto(); if (msg) toast(msg, 3200); }
   function toggleAuto() {
     if (running) { stopAuto('Đã tắt tự động hàng yêu.'); if (LGT.sfx) LGT.sfx.play('tu-dong-tat'); return; }
     if (autoLeft(auto, Date.now()) <= 0) { toast('Hôm nay bạn đã dùng hết thời gian tự động hàng yêu. Mai dùng tiếp, hoặc tự bấm đánh nhé!', 3600); return; }
     if (!here() || bossOn()) return;
-    running = true; if (LGT.sfx) LGT.sfx.play('tu-dong-bat'); toast(`Tự động hàng yêu BẬT: nhân vật tự lao vào quái trong ${FARM_CFG.autoRange} m rồi múa côn đánh. Mở bảng hoặc rời trang sẽ tự dừng.`, 4200);
+    running = true; if (LGT.sfx) LGT.sfx.play('tu-dong-bat'); toast(`Tự động hàng yêu BẬT: nhân vật tự lao vào quái trong ${FARM_CFG.autoRange} m rồi múa côn đánh. Mở bảng sẽ tự dừng; chuyển sang tab khác thì nhân vật vẫn tiếp tục đánh.`, 4200);
   }
   function autoStep(dt) {
-    if ((typeof document !== 'undefined' && document.hidden) || LGT.panelOpen || LGT.heldBy || (LGT.world && LGT.world.mode && LGT.world.mode !== 'free')) return stopAuto('Tự động hàng yêu đã dừng.');
+    if (LGT.panelOpen || LGT.heldBy || (LGT.world && LGT.world.mode && LGT.world.mode !== 'free')) return stopAuto('Tự động hàng yêu đã dừng.');
     const r = addAutoTime(auto, dt, Date.now()); auto = r.state; if (performance.now() - autoSaved > 5000) { autoSaved = performance.now(); saveAuto(); }
     if (r.out) return stopAuto('Hết 60 phút tự động hàng yêu hôm nay. Mai dùng tiếp nhé!');
     const p = pos(); let best = null, bd = Infinity; for (const m of view.mons) { const d = gap(m, p); if (d < bd) { bd = d; best = m; } }
@@ -107,7 +110,7 @@ export function initFarm(hud, { toast = () => {} } = {}) {
   }
 
   function tick() {
-    const now = performance.now(), dt = Math.min(0.25, (now - lastT) / 1000); lastT = now;
+    const now = performance.now(), dt = Math.min(typeof document !== 'undefined' && document.hidden ? 1 : 0.25, (now - lastT) / 1000); lastT = now;   // Phiên 143: tab ẩn → nhịp có thể thưa, cho phép bước dài hơn để game không chậm lại
     cdStone = Math.max(0, cdStone - dt); cdSpear = Math.max(0, cdSpear - dt);
     const p = pos();
     if (!p || !here() || bossOn()) { stopAuto('Tự động hàng yêu đã dừng.'); if (view.mons.length) { view.mons = []; view.stones = []; view.target = ''; } box.hidden = true; return; }
@@ -136,9 +139,18 @@ export function initFarm(hud, { toast = () => {} } = {}) {
       senEl.textContent = `Hạt sen hôm nay còn ${senLeft(farm, Date.now())}`;
     }
   }
-  setInterval(tick, 100);
+  bgTick.on(tick);   // Phiên 143: nhịp từ Worker → chạy tiếp cả khi chuyển tab khác
+
+  // Phiên 143: chiêu của phái (js/ui/heSkill.js) đánh quái gần nhất. skillReady() → { ok } | { ok:false, reason:'khong-quai'|'xa' }; skillHit(heSo) → { ok, dmg, ten }.
+  function skillReady() { const t = target(); if (!t) return { ok: false, reason: 'khong-quai' }; if (gap(t, pos()) - bodyOf(t) > SPEAR.range + 3) return { ok: false, reason: 'xa' }; return { ok: true, ten: t.ten }; }
+  function skillHit(heSo) {
+    const t = target(); if (!t) return { ok: false, reason: 'khong-quai' };
+    const dmg = Math.max(1, Math.round(skillDamage(spearDamage(str()), heSo) * kHeOf(LGT.he, t.he)));
+    hit(t.uid, dmg); return { ok: true, dmg, ten: t.ten };
+  }
 
   LGT.farm = {
+    skillReady, skillHit, get tuviInfo() { return tuViOf(farm); },
     stone, spear, toggleAuto, grantBoss,
     get tuvi() { return tuViOf(farm).tuvi; }, get state() { return farm; },
     status() { const t = target(); return { active: !!t || running, ten: t ? t.ten : '', stoneCd: cdStone, spearCd: cdSpear, canAuto: true, auto: running, autoLeft: Math.floor(autoLeft(auto, Date.now()) / 60) }; },
