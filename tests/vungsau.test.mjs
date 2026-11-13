@@ -6,6 +6,8 @@ import { OUT_WALKS } from '../js/world/outside.js';
 import { ZONE_IDS, oanKhiMaxOf, monsterStats, createSpawner } from '../js/world/spawn.js';
 import { strikeDamage } from '../js/world/monsterAttack.js';
 import { statsOf } from '../js/world/stats.js';
+import { WORLD_BOX } from '../js/world/minimap.js';
+import { topicById } from '../js/world/tutorial.js';
 
 const DEEP = { vachTayBac: ['rung-sau-vach-tbac', 'loi-vach-tbac', 'rung-sau-bac'], vachDongBac: ['rung-sau-vach-dbac', 'loi-vach-dbac', 'rung-sau-thap'], vachTayNam: ['rung-sau-vach-tnam', 'loi-vach-tnam', 'rung-sau-tay'], vachDongNam: ['rung-sau-vach-dnam', 'loi-vach-dnam', 'rung-sau-dong'] };
 const W = (id) => OUT_WALKS.find((w) => w.id === id), touch = (a, b) => a.x0 <= b.x1 + 0.01 && b.x0 <= a.x1 + 0.01 && a.z0 <= b.z1 + 0.01 && b.z0 <= a.z1 + 0.01;
@@ -54,4 +56,18 @@ test('bốn vùng sâu sinh quái đúng loại/cấp; quái ngày nằm trong k
     assert.ok(regs.every((m) => z.rects.some((r) => m.x >= r.x0 && m.x <= r.x1 && m.z >= r.z0 && m.z <= r.z1)));
     assert.ok(regs.every((m) => MONSTERS[m.type].lv >= z.lvMin && MONSTERS[m.type].lv <= z.lvMax));
   }
+});
+
+// Phiên 132: bản đồ nhỏ phải phủ cả bốn vùng sâu (trước đó khung chỉ tới x −125/122 nên người ở góc bị kẹp mép) và hướng dẫn phải nhắc tám vùng.
+test('bản đồ nhỏ phủ trọn mọi vùng luyện (kể cả bốn vùng sâu); hướng dẫn nhắc bốn vùng sâu và dải cấp 72–140', () => {
+  for (const id of ZONE_IDS) for (const r of FARM_ZONES[id].rects) {
+    assert.ok(r.x0 >= WORLD_BOX.x0 && r.x1 <= WORLD_BOX.x1 && r.z0 >= WORLD_BOX.z0 && r.z1 <= WORLD_BOX.z1, `${id} nằm trong khung bản đồ`);
+  }
+  for (const id of ['rung-sau-vach-tbac', 'rung-sau-vach-dbac', 'rung-sau-vach-tnam', 'rung-sau-vach-dnam']) {
+    const w = W(id); assert.ok(w.x0 >= WORLD_BOX.x0 && w.x1 <= WORLD_BOX.x1, `${id} nằm trong khung bản đồ`);
+  }
+  const txt = topicById('hangyeu').steps.map((s) => s.text).join(' ');
+  assert.ok(txt.includes('tám vùng luyện') && !txt.includes('bốn vùng luyện:'));
+  for (const d of Object.keys(DEEP)) assert.ok(txt.includes(FARM_ZONES[d].ten), `hướng dẫn nhắc ${d}`);
+  assert.ok(txt.includes(`${FARM_ZONES.vachTayBac.lvMin}–${FARM_ZONES.vachDongNam.lvMax}`));
 });

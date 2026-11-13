@@ -14,8 +14,9 @@ export function mapAvailable(zones) {
   return typeof cur !== 'string' || cur === HUB_ID;
 }
 
-/** Khung thế giới hiển thị trên bản đồ (m). Phủ cả Quan Âm đài (z≈-63), khu nhà ở (z≈210), rừng thông (x≈-118), thác (x≈114). */
-export const WORLD_BOX = { x0: -125, x1: 122, z0: -70, z1: 216 };
+/** Khung thế giới hiển thị trên bản đồ (m). Phủ cả Quan Âm đài (z≈-63), khu nhà ở (z≈210), rừng thông (x≈-118), thác (x≈114)
+ *  và bốn vùng sâu sát vách núi ở bốn góc (x tới ±136, Phiên 131) — trước đây khung chỉ tới x −125/122 nên người ở góc bị kẹp vào mép. */
+export const WORLD_BOX = { x0: -140, x1: 140, z0: -70, z1: 216 };
 /** Khuôn viên chùa (chỉ để tô nền). */
 export const COMPOUND = { x0: -78, x1: 78, z0: -70, z1: 62 };
 
