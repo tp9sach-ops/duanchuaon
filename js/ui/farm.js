@@ -4,7 +4,7 @@
 // Quái không đánh trả (bãi rừng an toàn để luyện); đòn dùng stoneDamage/spearDamage theo sức mạnh như khi đánh yêu quái. Chưa có Hệ người chơi nên chưa tính khắc/sinh (G2).
 import { MONSTERS, FARM_ZONES, FARM_CFG } from '../data/monsters.js';
 import { createSpawner, tickSpawner, hitMonster, nearestMonster, setNight, isNight, rectsOf, ZONE_IDS } from '../world/spawn.js';
-import { loadFarm, settleKill, settleBoss, senLeft, tuViOf } from '../world/farm.js';
+import { loadFarm, settleKill, settleBoss, senLeft, tuViOf, killXp } from '../world/farm.js';
 import { STONE, SPEAR, stoneDamage, spearDamage, rngSeed } from '../world/yeuquai.js';
 import { mapAvailable } from '../world/minimap.js';
 import { loadAuto, autoLeft, addAutoTime, nextAction, rushTarget } from '../world/autoHunt.js';
@@ -46,7 +46,9 @@ export function initFarm(hud, { toast = () => {} } = {}) {
   function reward(r) {
     const mon = r.mon, now = Date.now(), s = settleKill(farm, MONSTERS[mon.type], r.drops, now); farm = s.farm; save();
     if (s.senGain > 0 && LGT.addMerit) LGT.addMerit(s.senGain);
-    const bits = [`Thu phục ${mon.ten}!`]; if (s.senGain > 0) bits.push(`+${s.senGain} hạt sen`); if (s.expGain > 0) bits.push(`+${s.expGain} Tu Vi`);
+    const xp = s.expGain > 0 ? killXp(mon) : 0;   // Phiên 134: hạ quái cũng cộng kinh nghiệm cấp độ (thanh "Cấp"), trong cùng trần ngày với Tu Vi
+    const bits = [`Thu phục ${mon.ten}!`]; if (xp > 0) bits.push(`+${xp} kinh nghiệm`); if (s.senGain > 0) bits.push(`+${s.senGain} hạt sen`); if (s.expGain > 0) bits.push(`+${s.expGain} Tu Vi`);
+    if (xp > 0 && LGT.addXp) LGT.addXp(xp);
     toast(bits.join(' '), 2600); if (LGT.sfx) LGT.sfx.play('quai-ha');
     if (s.leveledUp) setTimeout(() => toast(`Tu Vi lên cấp ${s.tuvi}! Công và Thủ của bạn tăng.`, 4200), 1200);
     if (s.expCapped && capExp !== farm.cnt.day) { capExp = farm.cnt.day; setTimeout(() => toast('Hôm nay bạn đã nhận đủ Tu Vi từ hàng yêu. Vẫn nhận hạt sen theo trần riêng — mai quay lại nhận tiếp!', 5200), 2200); }
