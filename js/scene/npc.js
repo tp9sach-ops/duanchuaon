@@ -38,14 +38,14 @@ import { startFlight, poseAt } from '../world/npcThrow.js';
 export function buildNpcs(scene, LGT) {
   let ui = 0;
   const list = NPCS.map((n) => {
-    const a = createAvatar({ name: n.ten, color: n.color, hair: n.hair, beard: n.beard || '' });
+    const a = createAvatar({ name: n.ten, color: n.color, hair: n.hair, beard: n.beard || '', gourd: false });
     if (n.scale) a.group.scale.setScalar(n.scale);
     a.group.position.set(n.x, groundY(n.x, n.z), n.z); a.setFacing(n.ry, true); scene.add(a.group);
     const umb = isCovered(n.id) ? null : makeUmbrella(ui++); if (umb) a.group.add(umb);
     return { n, a, umb, open: 0 };
   });
   const walkers = WALKERS.map((w, i) => {
-    const a = createAvatar({ name: '', color: w.color, hair: w.hair });
+    const a = createAvatar({ name: '', color: w.color, hair: w.hair, gourd: false });
     if (w.scale) a.group.scale.setScalar(w.scale);
     a.group.children.forEach((c) => { if (c.isSprite) c.visible = false; });   // không hiện nhãn tên
     const k = newWalker(w); a.group.position.set(k.x, 0, k.z); scene.add(a.group);

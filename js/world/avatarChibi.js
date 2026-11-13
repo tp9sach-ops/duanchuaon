@@ -2,6 +2,7 @@
 // Tư thế lấy từ poseFor (avatarLogic.js) rồi đổi thành góc xương bằng chibiPose (chibiRig.js, có test) → mọi trạng thái cũ (đứng, đi, ngồi, gõ mõ, lần hạt, lạy, vung côn) giữ nguyên nhịp, chỉ đổi hình dáng.
 // Phiên 119 (theo clip mẫu): swing() nhận kiểu đòn — không đối số = tự nối chuỗi múa côn → ngang → ngược → xoay (đánh thường); số (skill Chém khí) = 'khi' (giơ cao bổ xuống); chuỗi tên = đúng kiểu đó; trả về tên kiểu đã chọn. setStance(bool) = thế sẵn sàng chiến đấu (khom, chân trước/sau, chạy nghiêng người). Logic: world/combo.js.
 // Phiên 126: côn BỎ MŨI NHỌN, nắm ở giữa cán, múa/xoay quanh bàn tay (pose.spin); HỒ LÔ đeo eo trái (gourdPos(), pulseGourd() — hồn quái bay vào, xem js/world/soul.js); thanh Sinh Lực + Chân khí trên đầu: setBars(hp 0..1 | null, mp 0..1) (js/ui/combatPose.js).
+// Phiên 131: CHỈ NGƯỜI CHƠI đeo hồ lô — createChibiAvatar({ gourd: false }) (NPC, dân làng) thì không có hồ lô; mặc định gourd = true.
 // Mặt (mắt cười, miệng, má hồng), râu, tóc búi, hào quang gắn vào xương đầu; áo polo 9 Sạch = vùng màu trên thân + cổ áo + logo; cà sa = vỏ chuông gắn vào hông. Lỗi/chưa nạp GLB thì avatar.js dùng bản dựng khối.
 import * as THREE from 'three';
 import { DEFAULT_COLOR, colorById, hairById, beardById, cleanName, cleanSay, bubbleLife, poseFor, turnToward, BELL_PROFILE, POLO_LOGOS } from './avatarLogic.js';
@@ -16,7 +17,7 @@ const SKIN = 0xe8934c, HAIR = 0x1f1511, OUTLINE = 0x3a2314;
 const ACT_S = { throw: 0.55, grab: 0.8, show: SHOW_S };   // giây của từng động tác một lần
 const SMOOTH_ARM = ['armL', 'armR', 'foreL', 'foreR', 'handL', 'handR'];
 
-export function createChibiAvatar({ name = 'Khách', color = DEFAULT_COLOR, hair: hairId = 'troc', beard: beardId = '', mine = false } = {}) {
+export function createChibiAvatar({ name = 'Khách', color = DEFAULT_COLOR, hair: hairId = 'troc', beard: beardId = '', mine = false, gourd: wantGourd = true } = {}) {
   const col = colorById(color), group = new THREE.Group(), rig = new THREE.Group(); group.add(rig);
   const geos = [], mats = [], polo = !!col.polo, casa = !!col.casa;
   const geo = (g) => (geos.push(g), g);
@@ -96,8 +97,10 @@ export function createChibiAvatar({ name = 'Khách', color = DEFAULT_COLOR, hair
   let swingT = -1, swingKind = '', lastKind = '', lastEnd = -9;   // Phiên 119: kiểu đòn đang vung, đòn trước + lúc nó kết thúc (để nối chuỗi)
 
   // Hồ lô (Phiên 126): đeo ở eo bên trái (không có ở NPC mặc cà sa vì bị vỏ chuông che). Quái bị hạ thì hồn bay vào đây: gourdPos() cho đích bay, pulseGourd() nháy to ra khi hồn chui vào.
+  // Phiên 131: chỉ người chơi đeo (gourd: false cho NPC / dân làng).
   const gourd = new THREE.Group(), gourdV = new THREE.Vector3(); let gourdPulse = 0;
-  if (!casa) {
+  const hasGourd = !casa && wantGourd;
+  if (hasGourd) {
     gourd.position.set(0.21, 0.05, midZ - 0.01); B.hips.add(gourd);
     const gM = std(0xc47a22, 0.5), gM2 = std(0x8a4f14, 0.6), cordM = std(0xb3261e, 0.5);
     mesh(new THREE.SphereGeometry(0.075, 14, 10), gM, gourd, 0, -0.05, 0);                  // bầu dưới
@@ -166,10 +169,10 @@ export function createChibiAvatar({ name = 'Khách', color = DEFAULT_COLOR, hair
   function setHold(on) { st.hold = !!on; }
   /** Động tác một lần: 'throw' (ném), 'grab' (cúi nhặt). Tên lạ: bỏ qua. */
   function act(nm) { if (ACT_S[nm]) { st.act = nm; st.actT = 0; } }
-  /** Vị trên thế giới của hồ lô {x,y,z} (đích cho hồn bay vào); NPC cà sa không có hồ lô → null. */
-  function gourdPos() { if (casa) return null; gourd.getWorldPosition(gourdV); return { x: gourdV.x, y: gourdV.y + 0.05, z: gourdV.z }; }
+  /** Vị trên thế giới của hồ lô {x,y,z} (đích cho hồn bay vào); NPC không có hồ lô → null. */
+  function gourdPos() { if (!hasGourd) return null; gourd.getWorldPosition(gourdV); return { x: gourdV.x, y: gourdV.y + 0.05, z: gourdV.z }; }
   /** Hồ lô nháy to ra một nhịp (khi hồn quái chui vào). */
-  function pulseGourd() { if (!casa) gourdPulse = 1; }
+  function pulseGourd() { if (hasGourd) gourdPulse = 1; }
   /** Thanh trên đầu: hp, mp trong 0..1; hp = null/NaN → ẩn. */
   function setBars(hp, mp) {
     if (hp == null || !Number.isFinite(+hp)) { bars.visible = false; return; }
