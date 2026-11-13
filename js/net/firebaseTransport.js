@@ -7,6 +7,7 @@ export const FIREBASE_SDK_VERSION = '11.0.2';
 const STALE_MS = 15000;       // quá hạn này không nhận được tin gì từ một người thì coi như họ đã rời
 const SEND_MIN_MS = 250;      // gửi vị trí tối đa 4 lần/giây
 const KEEPALIVE_MS = 5000;    // đứng yên: cứ 5 giây báo "còn đây" một lần
+const SIG_GAP_MS = 120;         // Phiên 137: gói tin giao lưu võ thuật (bắt đầu bằng "#dg") có nhịp riêng, nhanh hơn lời nhắn thường (ROOM_CFG.chatGapMs)
 const CHAT_KEEP = 20;         // chỉ nghe 20 lời nhắn gần nhất
 const FRESH_MS = 60000;       // khi đếm chỗ trống: bỏ qua bóng ma cũ hơn 1 phút
 
@@ -26,7 +27,7 @@ export async function loadFirebaseSdk(version = FIREBASE_SDK_VERSION, imp = (u) 
 export function createFirebaseTransport({ config, name = 'Firebase', loadSdk, now = () => Date.now(), maxPlayers = ROOM_CFG.maxPlayers, appName }) {
   let sdk = null, app = null, db = null, uid = '', myRef = null, connected = false, closed = false;
   const players = new Map(), chatSeen = new Set(), unsubs = [];
-  let chatLog = [], seq = 0, lastKey = '', lastSend = 0, lastChat = 0;
+  let chatLog = [], seq = 0, lastKey = '', lastSend = 0, lastChat = 0, lastSig = 0;
   const API = { kind: 'firebase', name };
 
   /** Kết nối + đăng nhập ẩn danh + nạp danh sách hiện tại. Ném 'room_full' nếu phòng đã đủ người, 'timeout' nếu quá hạn. */
@@ -78,7 +79,8 @@ export function createFirebaseTransport({ config, name = 'Firebase', loadSdk, no
       const due = key !== lastKey ? t - lastSend >= SEND_MIN_MS : t - lastSend >= KEEPALIVE_MS;
       if (due) { lastKey = key; lastSend = t; Promise.resolve(sdk.set(myRef, { ...rec, t })).catch(() => {}); }
       const say = chatOk(req.say);
-      if (say && t - lastChat >= ROOM_CFG.chatGapMs) { lastChat = t; Promise.resolve(sdk.push(sdk.ref(db, 'chat'), { id: uid, n: me.n, m: say, t })).catch(() => {}); }
+      const sig = say.startsWith('#dg');
+      if (say && t - (sig ? lastSig : lastChat) >= (sig ? SIG_GAP_MS : ROOM_CFG.chatGapMs)) { if (sig) lastSig = t; else lastChat = t; Promise.resolve(sdk.push(sdk.ref(db, 'chat'), { id: uid, n: me.n, m: say, t })).catch(() => {}); }
     }
     const list = [];
     for (const [k, v] of players) { if (t - v.seen > STALE_MS) { players.delete(k); continue; } list.push({ ...v.p }); }

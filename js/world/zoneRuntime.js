@@ -4,6 +4,7 @@
 import * as layoutApi from './layout.js';
 import { createZoneManager, HUB_ID } from './zones.js';
 import { THU_DEF, HUB_GATE, HUB_RETURN_SPAWN } from './zoneThu.js';
+import { registerVoDai } from './zoneVoDai.js';
 
 export const ZONE_STORAGE_KEY = 'lgt.zone';
 /** Zone hub: điểm xuất hiện chỉ để khai báo hợp lệ (người chơi vào hub theo đường cũ, không dùng điểm này). */
@@ -32,6 +33,7 @@ export function initZones(storage, getPos) {
   try {   // Phiên 87: cổng thử ở rìa làng → Vườn thử (đăng ký ở đây, KHÔNG trong createZoneRuntime để test hub-only giữ nguyên)
     const hub = rt.manager.get(HUB_ID); hub.gates.push({ ...HUB_GATE }); hub.spawns['tu-vuon-thu'] = { ...HUB_RETURN_SPAWN };
     rt.manager.register({ ...THU_DEF, spawns: { default: { ...THU_DEF.spawns.default } }, gates: THU_DEF.gates.map((g) => ({ ...g })) });
+    registerVoDai(rt.manager);   // Phiên 137: Võ đài giao lưu võ thuật (cổng ở sân chùa)
     const errs = rt.manager.validate(); if (errs.length) console.warn('[Diệu Giang Tự] Zone cấu hình sai:', errs.join('; '));
   } catch (e) { console.warn('[Diệu Giang Tự] Đăng ký Vườn thử lỗi:', e && e.message); }
   LGT.zones = rt.manager; LGT.zoneStart = rt.start;
