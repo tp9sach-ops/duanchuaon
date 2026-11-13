@@ -1,9 +1,12 @@
 // Câu cá bằng quả cầu gieo duyên (Phiên 45, việc 3b + 3d dạng chữ). Logic ở js/world/fishing.js (có test). Mọi chữ hiển thị đi qua textContent.
 // Bảng có 3 tab: "Thả cầu" (quăng → chờ → bấm đúng lúc hoa sen nở → Thu cá / Phóng sinh), "Quả cầu" (mua / chọn / sửa bằng lá bồ đề), "Ao cá" (cá đã thu, phóng sinh từng con).
 // Nút nổi "Câu cá" hiện khi người chơi đứng gần mặt nước câu được. Lưu localStorage['lgt.fish']. Cảnh 3D câu cá: js/scene/fishing.js (Phiên 48) đọc LGT.fishing.session.
+import { rollSizeCm, loadRec, noteRecord, cardData } from '../world/fishCard.js';   // Phiên 120: thẻ cá + kỷ lục
+import { THROW_RELEASE } from '../world/fishPose.js';
+import { icon } from './bagIcons.js';
 import { ORBS, orbById, repairCost, orbCurrency, priceText, loadFish, buyOrb, selectOrb, repairOrb, currentOrb, startCast, tick, tap, isTapKey, stillNearWater, keepFish, releaseCaught, releaseFish, nearWater, waterById, fishLabel, pondSummary, speciesById, phaseText, outcomeText, orbBrief, POND_MAX } from '../world/fishing.js';
 
-const KEY = 'lgt.fish';
+const KEY = 'lgt.fish', REC_KEY = 'lgt.fishrec';   // REC_KEY: kỷ lục cỡ cá từng loài (Phiên 120)
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
 const WHY = { poor: 'Chưa đủ tiền (hạt sen / lá bồ đề).', owned: 'Bạn đã có quả cầu này.', unknown: 'Quả cầu này không có.', notowned: 'Bạn chưa có quả cầu này.', intact: 'Quả cầu còn nguyên, chưa cần sửa.', full: `Ao cá đã đầy (${POND_MAX} con). Hãy phóng sinh bớt.` };
 
@@ -18,13 +21,18 @@ export function initFishing(hud, { toast = () => {} } = {}) {
   const pay = (o, n) => (orbCurrency(o) === 'sen' ? !!(LGT.spendSen && LGT.spendSen(n)) : !!(LGT.merit && LGT.merit.spendLa(n)));
   const pos = () => (LGT.world && LGT.world.pos) || null;
   const here = () => { const p = pos(); return p && !LGT.inHouse ? nearWater(p.x, p.z) : null; };
+  let rec = loadRec(null); try { rec = loadRec(localStorage.getItem(REC_KEY)); } catch (_) { /* bỏ qua */ }
+  const saveRec = () => { try { localStorage.setItem(REC_KEY, JSON.stringify(rec)); } catch (_) { /* chế độ riêng tư */ } };
+  const reduceMotion = () => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (_) { return false; } };
+  let casting = false, card = null, watch = 0, holdPos = null;   // casting: đang vung cần (chưa thả cầu); card: dữ liệu thẻ cá vừa câu
   let tab = 'cast', sess = null, caught = null, note = '', raf = 0, lastT = 0;   // sess = phiên câu đang chạy; caught = cá vừa câu chờ Thu/Phóng sinh
 
-  const box = el('section', 'fs-box'); box.hidden = true; box.setAttribute('role', 'dialog'); box.setAttribute('aria-label', 'Câu cá');
-  const head = el('header'), h = el('h3', null, 'Câu cá gieo duyên'), x = el('button', 'fs-x', '×'); x.type = 'button'; x.setAttribute('aria-label', 'Đóng'); head.append(h, x);
+  const box = el('section', 'fs-box'); box.hidden = true; box.setAttribute('role', 'dialog'); box.setAttribute('aria-label', 'Thu cá');
+  const head = el('header'), h = el('h3', null, 'Thu cá gieo duyên'), x = el('button', 'fs-x', '×'); x.type = 'button'; x.setAttribute('aria-label', 'Đóng'); head.append(h, x);
   const tabs = el('div', 'fs-tabs'), tabBtns = {};
   for (const [id, label] of [['cast', 'Thả cầu'], ['orbs', 'Quả cầu'], ['pond', 'Ao cá']]) { const b = el('button', 'fs-tab', label); b.type = 'button'; b.addEventListener('click', () => show(id)); tabs.appendChild(b); tabBtns[id] = b; }
   const info = el('p', 'fs-info'), list = el('div', 'fs-list'); box.append(head, tabs, info, list); hud.appendChild(box);
+  const cardEl = el('aside', 'fc-card'); cardEl.hidden = true; cardEl.setAttribute('role', 'dialog'); cardEl.setAttribute('aria-label', 'Cá vừa thu'); hud.appendChild(cardEl);
 
 
   const btn = (label, fn, cls = 'fs-b', aria) => { const b = el('button', cls, label); b.type = 'button'; if (aria) b.setAttribute('aria-label', aria); b.addEventListener('click', fn); return b; };
@@ -39,27 +47,61 @@ export function initFishing(hud, { toast = () => {} } = {}) {
     if (sess.over) { finish(); return; }
     paintCast(); raf = requestAnimationFrame(loop);
   }
+  const FISH_TINT = ['#4aa3df', '#e8743b', '#7bc67e', '#c9a0dc', '#e0b04a'];   // Phiên 128: màu icon thẻ cá (cùng cách chọn với túi đồ)
+  function fishIcon(sp) { let h = 0; for (const ch of String(sp.id)) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return { k: sp.loai === 'rua' || sp.loai === 'baba' ? 'turtle' : sp.loai === 'muc' ? 'squid' : 'fish', c: sp.hiem ? '#f0c23a' : FISH_TINT[h % FISH_TINT.length] }; }
+  function avatar() { const W = LGT.world; return W && W.avatar ? W.avatar : null; }
+  /** Đồng bộ nhân vật + camera + HUD với trạng thái câu (Phiên 120): cầm cần khi đang thả, góc cao chếch lúc chờ cá, cận cảnh khi cầm cá, ẩn bớt HUD. */
+  function rig() {
+    const W = LGT.world, av = avatar(), fishing = casting || !!sess, hold = !!caught;
+    try {
+      document.body.classList.toggle('fishing', fishing || hold);
+      if (W && W.shot) W.shot(hold ? 'show' : fishing ? 'cast' : '');
+      if (hold && av && av.act) av.act('show');
+    } catch (_) { /* hiệu ứng không làm sập game */ }
+    if (hold && !watch) { holdPos = pos(); watch = setInterval(() => { const p = pos(); if (!caught || !p || !holdPos) return; if (Math.hypot(p.x - holdPos.x, p.z - holdPos.z) > 1.2) { try { LGT.world.shot(''); } catch (_) { /* bỏ qua */ } } }, 300); }   // đi xa chỗ cầm cá thì camera tự về lại
+    if (!hold && watch) { clearInterval(watch); watch = 0; holdPos = null; }
+  }
+  function hideCard() { card = null; cardEl.hidden = true; cardEl.textContent = ''; }
+  function showCard() {
+    cardEl.textContent = ''; const c = card, sp = caught && speciesById(caught.sp); if (!c || !sp) { cardEl.hidden = true; return; }
+    cardEl.appendChild(el('h4', 'fc-t', c.title)); if (c.isNew) cardEl.appendChild(el('span', 'fc-new', 'MỚI'));
+    const ic = el('div', 'fc-ic'); ic.appendChild(icon(fishIcon(sp))); cardEl.appendChild(ic);
+    const rows = el('div', 'fc-rows'), row = (k, v, extra) => { const r = el('div', 'fc-r'); r.append(el('span', null, k), el('b', null, v)); if (extra) r.appendChild(extra); rows.appendChild(r); };
+    row('Kích thước', `${c.cm} cm`); row('Kỷ lục cao nhất', `${c.best} cm`, c.recordNew ? el('em', 'fc-rec', 'Kỷ lục mới') : null); row('Thông tin biến thể', c.variant);
+    cardEl.appendChild(rows);
+    cardEl.appendChild(el('p', 'fc-sen', `🪷 ${c.sen} hạt sen khi phóng sinh`));
+    const act = el('div', 'fc-act'); act.append(btn('Thu cá', keep, 'fc-b fc-keep'), btn('Phóng sinh', release, 'fc-b fc-free')); cardEl.appendChild(act);
+    cardEl.hidden = false;
+  }
   function begin() {
+    if (casting) return;
     const w = here(); if (!w) { toast('Hãy đứng gần mặt nước (hồ cá, ao sen, hồ thác) rồi thả cầu.', 3000); return; }
-    // Phiên 89: luôn ném THẲNG TRƯỚC MẶT. Nếu mặt nước không ở phía trước (lệch > ~50°) thì nhân vật quay mặt về phía nước rồi mới ném.
+    // Phiên 89: luôn ném THẢNG TRƯỚC MẶT. Nếu mặt nước không ở phía trước (lệch > ~50°) thì nhân vật quay mặt về phía nước rồi mới ném.
     let ry = NaN; { const W = LGT.world; if (W && W.pos && Number.isFinite(W.facing)) { ry = W.facing; const want = Math.atan2(w.x - W.pos.x, w.z - W.pos.z); let df = Math.atan2(Math.sin(want - ry), Math.cos(want - ry)); if (Math.abs(df) > 0.9) { ry = want; W.face(ry); } } }
     const r = startCast(st, w.id); if (!r.ok) { toast(r.reason === 'cracked' ? 'Quả cầu đã nứt, hãy sửa hoặc đổi cầu khác.' : r.reason === 'noorb' ? 'Bạn chưa có quả cầu nào. Mở tab “Quả cầu” để mua.' : 'Không thả cầu được ở đây.', 3200); return; }
-    st = r.state; save(); sess = r.sess; if (Number.isFinite(ry)) sess.ry = ry; caught = null; note = ''; lastT = 0; draw(); stopLoop(); raf = requestAnimationFrame(loop);
+    st = r.state; save(); caught = null; note = ''; hideCard();
+    const go = () => { casting = false; sess = r.sess; if (Number.isFinite(ry)) sess.ry = ry; lastT = 0; rig(); draw(); stopLoop(); raf = requestAnimationFrame(loop); };
+    const av = avatar();
+    if (reduceMotion() || !av || !av.act) { go(); return; }
+    casting = true; try { av.act('throw'); } catch (_) { /* bỏ qua */ }   // Phiên 128: ném cầu bằng tay trước, quả cầu rời tay đúng lúc tay hất tới trước (THROW_RELEASE)
+    rig(); draw(); setTimeout(go, THROW_RELEASE * 1000);
   }
-  function leave() { stopLoop(); sess = null; note = ''; draw(); toast('Bạn đã rời mặt nước nên cầu được thu về (lượt này coi như đã dùng).', 3000); }
+  function leave() { stopLoop(); sess = null; note = ''; rig(); draw(); toast('Bạn đã rời mặt nước nên cầu được thu về (lượt này coi như đã dùng).', 3000); }
   function pressTap() { if (!sess || sess.over) return; sess = tap(sess); finish(); }
   function finish() {
     stopLoop(); const s = sess; sess = null; note = outcomeText(s.outcome, s.fish);
-    caught = s.outcome === 'got' ? s.fish : null; draw(); if (box.hidden) toast(note, 3200);
+    caught = s.outcome === 'got' ? s.fish : null;
+    if (caught) { const cm = rollSizeCm(caught), rr = noteRecord(rec, caught, cm); rec = rr.rec; saveRec(); card = cardData(caught, cm, rr, !(st.dex && st.dex[caught.sp])); showCard(); } else hideCard();
+    rig(); draw(); if (box.hidden) toast(note, 3200);
     if (caught && LGT.act) LGT.act('cau');   // nhiệm vụ “Câu được con cá đầu tiên”
   }
   function keep() {
     if (!caught) return; const r = keepFish(st, caught); if (!r.ok) { toast(WHY[r.reason] || 'Không thu được.', 3000); return; }
-    toast(`Đã thu ${fishLabel(caught)} vào ao cá.`, 2600); st = r.state; caught = null; note = 'Đã thu cá vào ao riêng.'; changed();
+    toast(`Đã thu ${fishLabel(caught)} vào ao cá.`, 2600); st = r.state; caught = null; note = 'Đã thu cá vào ao riêng.'; hideCard(); rig(); changed();
   }
   function release() {
     if (!caught) return; const f = caught, r = releaseCaught(st, f); if (!r.ok) return;
-    st = r.state; caught = null; note = `Bạn đã phóng sinh ${fishLabel(f)}. Nam mô A Di Đà Phật.`; changed(); rewardRelease(r.sen);
+    st = r.state; caught = null; note = `Bạn đã phóng sinh ${fishLabel(f)}. Nam mô A Di Đà Phật.`; hideCard(); rig(); changed(); rewardRelease(r.sen);
   }
   function rewardRelease(sen) { if (LGT.act) LGT.act('phongsinh'); if (LGT.merit && LGT.merit.reward) LGT.merit.reward('phongsinh', sen); }   // trần 10 lần/ngày; hết trần vẫn được thả, chỉ không cộng sen
 
@@ -117,13 +159,13 @@ export function initFishing(hud, { toast = () => {} } = {}) {
   }
   function drawPond() {
     const s = pondSummary(st);
-    info.textContent = s.total ? `Ao cá riêng: ${s.total}/${POND_MAX} con (cá ${s.ca}, rùa ${s.rua}, ba ba ${s.baba}, mực ${s.muc}; hiếm ${s.hiem}, lớn ${s.lon}).` : 'Ao cá riêng đang trống. Câu được cá rồi bấm “Thu cá” để nuôi ở đây.';
+    info.textContent = s.total ? `Ao cá riêng: ${s.total}/${POND_MAX} con (cá ${s.ca}, rùa ${s.rua}, ba ba ${s.baba}, mực ${s.muc}; hiếm ${s.hiem}, lớn ${s.lon}).` : 'Ao cá riêng đang trống. Thu được cá rồi bấm “Thu cá” để nuôi ở đây.';
     for (const f of st.pond) {
       const sp = speciesById(f.sp); if (!sp) continue;
       const row = el('div', 'fs-row'), t = el('div', 'fs-t'); t.append(el('b', null, fishLabel(f)));
       row.append(t, btn('Phóng sinh', () => freeFish(f.uid), 'fs-b sm', `Phóng sinh ${fishLabel(f)}`)); list.appendChild(row);
     }
-    if (s.total) list.appendChild(el('p', 'fs-hint', `Đã câu ${st.stat.got} con · đã phóng sinh ${st.stat.rel} con.`));
+    if (s.total) list.appendChild(el('p', 'fs-hint', `Đã thu ${st.stat.got} con · đã phóng sinh ${st.stat.rel} con.`));
   }
   function draw() {
     list.textContent = '';
@@ -143,7 +185,7 @@ export function initFishing(hud, { toast = () => {} } = {}) {
 
   // ---- Phiên 62: điều khiển nhanh cho cụm nút góc phải-dưới (js/ui/dock.js), không cần mở bảng
   function castQuick() {
-    if (sess || caught) return;
+    if (sess || caught || casting) return;
     const cur = currentOrb(st);
     if (!cur) { toast('Bạn chưa có quả cầu. Mua Cầu Gỗ Bồ Đề (50 hạt sen) ở bảng này nhé.', 3600); open('orbs'); return; }
     if (cur.cracked) { toast('Quả cầu đã nứt — hãy sửa hoặc đổi cầu khác.', 3200); open('orbs'); return; }
