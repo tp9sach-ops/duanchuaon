@@ -42,6 +42,7 @@ export function createTransportManager({ rooms, makeTransport, onSwitch = () => 
     },
     close() { if (cur && cur.close) { try { cur.close(); } catch (_) { /* bỏ qua */ } } cur = null; idx = -1; },
     get current() { return cur ? { index: idx, name: list[idx].name || cur.name || '', kind: cur.kind } : null; },
+    get transport() { return cur; },   // Phiên 137: lấy uid (Firebase) làm mã người chơi trong giao lưu võ thuật
   };
   return API;
 }
