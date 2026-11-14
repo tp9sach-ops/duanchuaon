@@ -3,6 +3,8 @@
 // Đồ đang dùng có TICK XANH (đồ đang cầm; quả cầu câu cá đang dùng). Bấm Thương / Gậy như ý / Ván để đổi đồ cầm (LGT.loadout, js/ui/board.js) — nhân vật bên cạnh đổi theo ngay.
 // Ảnh Thương / Gậy như ý / Ván trượt là ảnh chụp từ mô hình 3D thật (cùng mô hình ngoài game). Không có WebGL thì dùng hình vẽ SVG như cũ và ẩn khung nhân vật.
 // Trong nhà, nút Túi hồ lô vẫn mở bảng sửa nhà (js/ui/furni.js). Nội dung từ js/world/dock.js (bagSections), hình vẽ SVG từ js/ui/bagIcons.js.
+// Phiên 156 (sửa lỗi hiển thị): khi khung nhân vật bị ẩn (không dựng được WebGL) thì lưới 2 cột cũ nhét cả danh sách vào cột 150px bên trái, cột phải trống đỏ → thêm lớp .solo cho 1 cột đầy đủ;
+//   nhân vật 3D cũng được thử dựng lại ở lần mở sau (tối đa 3 lần lỗi mới bỏ hẳn) thay vì bỏ vĩnh viễn sau 1 lần lỗi.
 import * as THREE from 'three';
 import { bagSections } from '../world/dock.js';
 import { icon } from './bagIcons.js';
@@ -31,10 +33,11 @@ const CSS = '.bg2{display:flex;flex-direction:column;overflow:hidden;width:min(5
   + '.bg-tabs button{flex:none;padding:6px 12px;border-radius:999px;border:0;background:rgba(255,255,255,.16);color:#ffe9c8;font:600 12.5px/1.1 var(--sans,inherit);cursor:pointer;min-height:32px}'
   + '.bg-tabs button.on{background:#fff4de;color:#9a3a22;box-shadow:0 2px 0 rgba(0,0,0,.2)}'
   + '.bg-body{display:grid;grid-template-columns:150px minmax(0,1fr);gap:10px;min-height:0;flex:1}'
+  + '.bg-body.solo{grid-template-columns:minmax(0,1fr)}'
   + '.bg-me{align-self:start;position:sticky;top:0;padding:6px 6px 8px;border-radius:14px;background:radial-gradient(circle at 50% 35%,#ffe9c8,#e9b98a);text-align:center;box-shadow:inset 0 0 0 2px rgba(255,255,255,.45),0 3px 0 rgba(0,0,0,.18)}'
   + '.bg-me[hidden]{display:none!important}.bg-me canvas{display:block;width:100%;aspect-ratio:5/7;border-radius:10px;touch-action:none}'
   + '.bg-me-cap{margin:4px 0 0;color:#6a2c18;font:700 12px/1.3 var(--sans,inherit)}'
-  + '.bg-main{min-height:0;overflow:auto;padding-right:2px}'
+  + '.bg-main{min-height:0;min-width:0;overflow:auto;padding-right:2px}'
   + '.bg2 .bg-sec h4{margin:4px 0 6px;color:#ffe2a8;font:700 12px/1.2 var(--sans,inherit);letter-spacing:.06em;text-transform:uppercase}'
   + '.bg2 .bg-grid{grid-template-columns:repeat(' + COLS + ',minmax(0,1fr));gap:8px}'
   + '.bg2 .bg-cell{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:0;min-height:108px;padding:24px 3px 6px;border-radius:14px;border:2px solid transparent;background:#f3efe8;color:#4a3426;box-shadow:0 3px 0 rgba(0,0,0,.2);transition:transform .08s}'
@@ -50,7 +53,7 @@ const CSS = '.bg2{display:flex;flex-direction:column;overflow:hidden;width:min(5
   + '.bg-tick{position:absolute;right:4px;top:4px;width:20px;height:20px;border-radius:50%;background:#22b24c;border:2px solid #fff;color:#fff;font:800 12px/16px var(--sans,inherit);text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.35)}'
   + '.bg2 .bg-hint{color:#ffe9c8}.bg2 .bg-note{color:#ffd9b0}'
   + '.bg2 .bg-detail{position:sticky;bottom:0;margin:8px 0 0;padding:8px 10px;border-radius:10px;border-top:0;background:rgba(70,26,14,.92);color:#fff4de}.bg2 .bg-detail b{color:#ffe2a8}'
-  + '@media (max-width:480px){.bg-body{grid-template-columns:104px minmax(0,1fr);gap:8px}.bg2 .bg-cell{min-height:100px}.bg-art{width:54px;height:54px}.bg-art .bg-img{width:52px;height:52px}}';
+  + '@media (max-width:480px){.bg-body{grid-template-columns:104px minmax(0,1fr);gap:8px}.bg-body.solo{grid-template-columns:minmax(0,1fr)}.bg2 .bg-cell{min-height:100px}.bg-art{width:54px;height:54px}.bg-art .bg-img{width:52px;height:52px}}';
 let styled = false;
 
 // ---------- Ảnh 3D của Thương / Gậy như ý / Ván trượt ----------
@@ -120,7 +123,7 @@ export function initBag(hud) {
 
   // ---------- Nhân vật 3D bên cạnh ----------
   const look = (() => {
-    let renderer = null, scene = null, cam = null, av = null, raf = 0, last = 0, hold = 'thuong', bad = false;
+    let renderer = null, scene = null, cam = null, av = null, raf = 0, last = 0, hold = 'thuong', bad = false, fails = 0;   // Phiên 156: fails — lỗi dựng liên tiếp; đủ 3 lần mới bỏ hẳn
     const st = { host: null, orig: [], staff: null, board: null };
     function clearGear() {
       if (st.staff) { st.host.remove(st.staff); disposeTree(st.staff); st.staff = null; for (const c of st.orig) c.visible = true; }
@@ -152,8 +155,8 @@ export function initBag(hud) {
           scene.add(av.group); av.setFacing(0.45, true);
           let hand = null; av.group.traverse((o) => { if (o.isBone && o.name === 'handR') hand = o; });   // bàn tay phải của thân chibi (có cây côn)
           st.host = hand ? hand.children.find((c) => c.isGroup && c.rotation.order === 'YXZ') || null : null; st.orig = st.host ? st.host.children.slice() : [];
-          apply(); last = 0; raf = requestAnimationFrame(frame); return true;
-        } catch (err) { console.warn('[Diệu Giang Tự] Không dựng được nhân vật trong Túi hồ lô:', err && err.message); bad = true; this.stop(); return false; }
+          apply(); last = 0; raf = requestAnimationFrame(frame); fails = 0; return true;
+        } catch (err) { console.warn('[Diệu Giang Tự] Không dựng được nhân vật trong Túi hồ lô:', err && err.message); fails++; if (fails >= 3) bad = true; this.stop(); return false; }
       },
       set(id) { hold = id; apply(); },
       stop() {
@@ -227,7 +230,7 @@ export function initBag(hud) {
     if (!list.children.length) list.appendChild(el('p', 'bg-hint', 'Mục này chưa có gì.'));
     updateLook();
   }
-  const open = () => { if (LGT.panelOpen) return; box.hidden = false; me.hidden = !look.start(); draw(); x.focus({ preventScroll: true }); };
+  const open = () => { if (LGT.panelOpen) return; box.hidden = false; me.hidden = !look.start(); body.classList.toggle('solo', me.hidden); draw(); x.focus({ preventScroll: true }); };   // Phiên 156: ẩn khung nhân vật → 1 cột đầy đủ
   const close = () => { box.hidden = true; look.stop(); };
   x.addEventListener('click', close);
   box.addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.stopPropagation(); close(); } });
