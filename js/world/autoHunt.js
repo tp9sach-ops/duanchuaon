@@ -1,25 +1,37 @@
 // Tự Động Hàng Yêu (G4.6, Phiên 108; GDD v2 mục 12). LOGIC THUẦN (không DOM, không đọc đồng hồ): `now` (ms) truyền từ ngoài. Test: tests/autohunt.test.mjs.
 // Luật: tự đánh quái trong tầm 15 m (không tự đi), tối đa 60 phút/ngày (giờ Việt Nam, TẠM). Dừng khi mở bảng, rời tab, vào nhà, có yêu quái hằng tháng: việc của js/ui/farm.js.
+// Phiên 163: Trà sữa xoài hoàng kim (tiệm Tách Hoa, js/world/items.js) cộng thêm thời gian cho HÔM NAY: trạng thái có thêm `bonus` (giây) CHỈ KHI > 0 (bản lưu cũ và test cũ không đổi). Sang ngày mới `bonus` mất cùng `secs`.
 import { FARM_CFG } from '../data/monsters.js';
 import { dayKeyVN } from './nguonTuVi.js';
 
 const isObj = (o) => o && typeof o === 'object' && !Array.isArray(o);
 const num = (x, d = 0) => (Number.isFinite(+x) ? +x : d);
+/** Trần thưởng thêm trong một ngày (giây): 24 giờ — chỉ để chặn số lạ trong bản lưu. */
+export const MAX_BONUS = 86400;
+const bonusOf = (o) => (isObj(o) ? Math.max(0, Math.min(MAX_BONUS, Math.floor(num(o.bonus)))) : 0);
+/** Trần giây của trạng thái s: 60 phút gốc + phần thưởng thêm hôm nay. */
+export const capOf = (s) => FARM_CFG.autoSecNgay + bonusOf(s);
 
-/** Trạng thái dùng trong ngày: { day, secs }. */
+/** Trạng thái dùng trong ngày: { day, secs } (+ bonus nếu đã uống Trà sữa). */
 export const emptyAuto = (now = 0) => ({ day: dayKeyVN(now), secs: 0 });
 /** Đọc trạng thái lưu (chuỗi/đối tượng, có thể hỏng); sang ngày mới thì về 0. */
 export function loadAuto(raw, now = 0) {
   let o = raw; if (typeof raw === 'string') { try { o = JSON.parse(raw); } catch (_) { o = null; } }
   const f = emptyAuto(now); if (!isObj(o) || o.day !== f.day) return f;
-  f.secs = Math.max(0, Math.min(FARM_CFG.autoSecNgay, num(o.secs))); return f;
+  const b = bonusOf(o); if (b > 0) f.bonus = b;
+  f.secs = Math.max(0, Math.min(capOf(f), num(o.secs))); return f;
 }
-/** Số giây còn được dùng hôm nay. */
-export const autoLeft = (a, now = 0) => FARM_CFG.autoSecNgay - loadAuto(a, now).secs;
+/** Số giây còn được dùng hôm nay (đã tính phần thưởng thêm). */
+export const autoLeft = (a, now = 0) => { const s = loadAuto(a, now); return capOf(s) - s.secs; };
 /** Cộng `dt` giây đã chạy (kẹp 0..5 mỗi lần, như một nhịp). Trả trạng thái mới + `out` (hết giờ hôm nay). */
 export function addAutoTime(a, dt, now = 0) {
-  const s = loadAuto(a, now), add = Math.max(0, Math.min(5, num(dt)));
-  s.secs = Math.min(FARM_CFG.autoSecNgay, s.secs + add); return { state: s, out: s.secs >= FARM_CFG.autoSecNgay };
+  const s = loadAuto(a, now), add = Math.max(0, Math.min(5, num(dt))), cap = capOf(s);
+  s.secs = Math.min(cap, s.secs + add); return { state: s, out: s.secs >= cap };
+}
+/** Cộng thêm `sec` giây vào trần HÔM NAY (Trà sữa xoài hoàng kim: 1800 giây = 30 phút). Trả trạng thái mới; số lạ/âm → không đổi. */
+export function addAutoBonus(a, sec, now = 0) {
+  const s = loadAuto(a, now), b = Math.min(MAX_BONUS, bonusOf(s) + Math.max(0, Math.floor(num(sec))));
+  if (b > 0) s.bonus = b; return s;
 }
 /**
  * Chọn việc kế (Phiên 127: Tự động LAO VÀO quái): in { gap (m, từ người chơi tới tâm quái), body (bán kính thân), stoneReady (= Đánh thường sẵn sàng), spearReady, spearRange, range = autoRange }.
