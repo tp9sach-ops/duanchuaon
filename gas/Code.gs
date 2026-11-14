@@ -72,6 +72,9 @@ function route_(req) {
     case 'rankPing':     return json_(rankPing_(req));
     case 'getRank':      return json_(rankList_(req));
     case 'getPlayer':    return json_(rankPlayer_(req));
+    case 'giftSend':     return json_(giftSend_(req));       // Gifts.gs (gửi quà: hạt sen, lá bồ đề)
+    case 'giftInbox':    return json_(giftInbox_(req));
+    case 'giftClaim':    return json_(giftClaim_(req));
     case 'acctCreate':   return json_(acctCreate_(req));     // Accounts.gs (tài khoản nhân vật)
     case 'acctLogin':    return json_(acctLogin_(req));
     case 'acctLoad':     return json_(acctLoad_(req));
