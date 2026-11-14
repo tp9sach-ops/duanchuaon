@@ -66,3 +66,7 @@ SOFTWARE.
 - Do Gp gửi ngày 2026-11-11 (Phiên 109). Tên file gốc gợi ý nguồn: `dragon-studio-*` (8 file kiếm), `universfield-blade-piercing-body`, `freesound_community-clean-fast-swoosh`, `freesound_gamestudio-hero-skill-attack-reveal-*` (5 file kỹ năng) — dạng tên file tải từ Pixabay. Giấy phép cụ thể từng file KHÔNG có trong file; Gp cần xác nhận (và ghi công nếu giấy phép yêu cầu) trước khi công bố rộng.
 - Mã đã cắt đuôi, chuẩn hóa độ lớn (ffmpeg loudnorm −18 LUFS), đổi sang mono 44,1 kHz 80 kbps; không sửa nội dung âm thanh. Bảng file gốc → file trong repo: `docs/PHIEN109.md`.
 
+## Nón Jingasa (`js/data/hatGlb.js`, dựng bằng `tools/optimize-hat.mjs`) — GIẤY PHÉP SKETCHFAB STANDARD, CẦN XEM LẠI TRƯỚC KHI CÔNG BỐ
+- Mô hình "Japanese hat (Jingasa)" của Red Xamuraigame (https://sketchfab.com/redxamurai), https://sketchfab.com/3d-models/japanese-hat-jingasa-4984465d3b0946d3be1ff14fb2bfd556 . Metadata ghi giấy phép **SKETCHFAB Standard** (không phải Creative Commons) nên KHÔNG mặc định được đăng công khai trong kho mã mở. ptg cần tự đọc điều khoản (hoặc thay nón khác: `blockHat()` trong `js/ui/hatMesh.js` là nón khối dự phòng).
+- Đã sửa: bỏ dây cằm, gộp đỉnh, giảm tam giác, bỏ pháp tuyến (tính lại khi nạp), nén toạ độ; từ 13 MB còn khoảng 8 KB.
+
