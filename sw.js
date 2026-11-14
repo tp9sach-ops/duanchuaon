@@ -1,7 +1,7 @@
 // Service worker: mở lại được khi mất mạng. Mạng trước, bộ nhớ đệm sau (để luôn thấy bản mới khi có mạng).
 // Đổi VERSION mỗi khi muốn buộc làm mới toàn bộ.
 // Phiên 160: file cùng trang luôn hỏi lại máy chủ (cache:'no-cache') để không bị kẹt bản JS/CSS cũ trong bộ nhớ đệm của trình duyệt ~10 phút sau khi đẩy code.
-const VERSION = 'dgt-v161';
+const VERSION = 'dgt-v162';
 self.addEventListener('install', (e) => { self.skipWaiting(); e.waitUntil(caches.open(VERSION).then((c) => c.addAll(['./', 'index.html', 'manifest.webmanifest', 'assets/icon.svg', 'assets/icon-192.png']).catch(() => {}))); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== VERSION).map((k) => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', (e) => {
