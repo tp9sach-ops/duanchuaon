@@ -7,6 +7,7 @@ import { initChat } from './chat.js';
 import { initQuest } from './quest.js';
 import { initGuide } from './guide.js';
 import { initStory } from './story.js';
+import { initHudFit } from './hudFit.js';
 import { initMerit } from './merit.js';
 import { initDonate } from './donate.js';
 import { DEN_MERIT } from '../engines/den.js';
@@ -133,6 +134,7 @@ export function initHudMenu(hud) {
   try { initEdit(hud, { toast }); } catch (e) { console.warn('[Diệu Giang Tự] Chỉnh sửa nhà lỗi:', e && e.message); }   // chế độ chỉnh sửa nhà: kéo/xoay đồ bằng chuột (Phiên 43)
   try { initHouse(hud, { toast }); } catch (e) { console.warn('[Diệu Giang Tự] Vào nhà lỗi:', e && e.message); }   // nút Vào nhà / Ra ngoài (Phiên 38, 3d-2c)
   try { initStory(hud, { toast, addMerit }); } catch (e) { console.warn('[Diệu Giang Tự] Cốt truyện lỗi:', e && e.message); }   // hộp thoại + mục tiêu chương 1 (Phiên 32); lỗi thì NPC vẫn nói lời thường
+  try { initHudFit(hud); } catch (e) { console.warn('[Diệu Giang Tự] Chống chồng giao diện lỗi:', e && e.message); }   // Phiên 159f: đẩy thẻ Việc kế tiếp / +− / Giao lưu xuống dưới cột trái, không đè nhau
   try { initTutorial(hud, { toast }); } catch (e) { console.warn('[Diệu Giang Tự] Sổ tay hướng dẫn lỗi:', e && e.message); }   // hướng dẫn chơi + gợi ý việc kế tiếp (Phiên 39)
   try { initCoach(hud); } catch (e) { console.warn('[Diệu Giang Tự] Hướng dẫn lần đầu lỗi:', e && e.message); }   // Phiên 70: màn hướng dẫn lần đầu 3 bước có mũi tên
   try { initSfx(); } catch (e) { console.warn('[Diệu Giang Tự] Tiếng kỹ năng lỗi:', e && e.message); }   // Phiên 109: tiếng kỹ năng/chiến đấu từ assets/sfx; phải khởi tạo TRƯỚC các kỹ năng
