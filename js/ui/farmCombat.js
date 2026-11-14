@@ -70,7 +70,7 @@ export function initFarmCombat(hud, { toast = () => {} } = {}) {
       if (!ev) continue;
       if (ev.k === 'calm') engaged.delete(m.uid);
       else if (ev.k === 'windup' && ev.slam) toast(`${m.ten} gồng Giậm Đất! Chạy ra khỏi vòng đỏ.`, 1500);
-      else if (ev.k === 'strike') { const r = vit.take(ev.dmg); if (r.taken > 0) { hudUntil = now + 3000; box.classList.add('hurt'); setTimeout(() => box.classList.remove('hurt'), 220); } if (r.down) { defeat(); break; } }
+      else if (ev.k === 'strike') { const r = vit.take(LGT.items && LGT.items.afterArmor ? LGT.items.afterArmor(ev.dmg) : ev.dmg); /* Phiên 154: Nón Jingasa +3% giáp */ if (r.taken > 0) { hudUntil = now + 3000; box.classList.add('hurt'); setTimeout(() => box.classList.remove('hurt'), 220); } if (r.down) { defeat(); break; } }
     }
     stepVit(dt);
     // 3) (Phiên 145) Tự Động Hàng Yêu KHÔNG còn tự dừng khi Sinh Lực thấp — hết Sinh Lực thì defeat() đưa về cổng chùa hồi sức rồi tự quay lại đánh tiếp (Phiên 147).

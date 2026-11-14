@@ -4,10 +4,12 @@
 // - Gậy như ý: MUA là có, nhưng chỉ hiện trên tay / có +1% sát thương / vòng sáng lan khi người chơi ĐANG CẦM Gậy như ý (LGT.loadout.weapon === 'nhuy', chọn ở Túi đồ). Mặc định cầm Thương: trả lại cây côn mặc định. Mua gậy xong tự cầm gậy.
 // Nhân vật dựng bằng khối (không phải chibi) thì không đổi hình gậy nhưng vẫn có +1% và vòng sáng. CHƯA nhìn bằng mắt trên máy thật.
 import * as THREE from 'three';
-import { GEMS, STAFF, loadItems, buyGem, buyStaff, remainSec, regenMul as rMul, canRevive, dmgMul as dMul, fmtTime } from '../world/items.js';
+import { GEMS, STAFF, HAT, afterArmor as aAfter, loadItems, buyGem, buyStaff, buyHat, toggleHat, hatWorn, armorMul as aMul, remainSec, regenMul as rMul, canRevive, dmgMul as dMul, fmtTime } from '../world/items.js';
 import { BOARD } from '../world/board.js';
 import { askConfirm } from './dialog.js';
 import { buildStaff, loadStaffGlb, pulseGlows, STAFF_SCALE, STAFF_PINK } from './staffMesh.js';
+import { buildHat, HAT_POS } from './hatMesh.js';
+// Phiên 154: Nón Jingasa (Điện Máy, 400 lá): mua xong tự đội lên đầu nhân vật chibi (js/ui/hatMesh.js), +3% giáp = đòn quái đánh trúng bớt 3% (js/ui/farmCombat.js gọi LGT.items.afterArmor()). Cửa hàng có nút Cất nón / Đội nón. Vị trí nón là số TẠM (HAT_POS).
 // Phiên 149: Ngọc dịch chuyển có thể GHIM một chỗ (nút "Ghim chỗ hồi sinh" dưới chỉ báo hạn dùng, chỉ hiện khi ngọc còn hiệu lực): hết máu thì hồi sinh ở chỗ đã ghim, chưa ghim thì hồi sinh tại chỗ đang đứng (js/ui/farmCombat.js đọc LGT.items.pinned). Gậy như ý to gấp STAFF_SCALE lần cây côn mặc định, ánh sáng hồng.
 
 const KEY = 'lgt.items', PIN_KEY = 'lgt.itempin';
@@ -34,6 +36,7 @@ export function initItems({ toast = () => {} } = {}) {
   document.head.appendChild(el('style', null, CSS));
   const laNow = () => (LGT.merit && LGT.merit.leaf ? LGT.merit.leaf.la : 0);
   const spend = (n) => !!(LGT.merit && LGT.merit.spendLa && LGT.merit.spendLa(n));
+  const hatOn = () => hatWorn(st);
   const staffOn = () => st.staff && (!LGT.loadout || LGT.loadout.weapon === 'nhuy');   // đang cầm Gậy như ý (chưa có hệ chọn đồ thì coi như cầm nếu đã mua)
 
   // ---------- Cửa hàng ----------
@@ -58,6 +61,13 @@ export function initItems({ toast = () => {} } = {}) {
     if (LGT.loadout) LGT.loadout.choose('nhuy', true);   // mua xong tự cầm gậy (đổi lại Thương ở Túi đồ)
     draw(); toast(`Đã mua ${STAFF.ten} (−${r.cost} lá bồ đề). Bạn đang cầm gậy — đổi vũ khí ở Túi đồ.`, 4200);
   }
+  async function buyHatUi() {
+    const ok = await confirm(`${HAT.ten} — ${HAT.gia} lá bồ đề.\n${HAT.mo}\nBạn đang có ${laNow()} lá bồ đề. Mua không?`); if (!ok) return;
+    const r = buyHat(st, laNow()); if (!r.ok) { toast(r.reason === 'owned' ? 'Bạn đã có Nón Jingasa rồi.' : `Chưa đủ lá bồ đề (cần ${r.cost}, bạn có ${laNow()}).`, 3600); return; }
+    if (!spend(r.cost)) { toast('Chưa đủ lá bồ đề.', 2500); return; }
+    st = r.state; save(); draw(); toast(`Đã mua ${HAT.ten} (−${r.cost} lá bồ đề). Bạn đã đội nón: +3% giáp.`, 4200);
+  }
+  function toggleHatUi() { st = toggleHat(st); save(); draw(); toast(hatOn() ? 'Bạn đã đội nón (+3% giáp).' : 'Bạn đã cất nón (hết +3% giáp).', 2600); }
   function row(ten, mo, meta, label, enabled, act) {
     const r = el('div', 'it-row'); r.append(el('b', null, ten), el('p', null, mo), el('p', 'it-meta', meta));
     const b = el('button', 'it-buy', label); b.type = 'button'; b.disabled = !enabled; b.addEventListener('click', act); r.appendChild(b); return r;
@@ -75,6 +85,7 @@ export function initItems({ toast = () => {} } = {}) {
       const bd = LGT.board ? LGT.board.status() : { van: false };
       list.appendChild(row(BOARD.ten, `Ván trượt 3D: lướt đi nhanh gấp ${String(BOARD.mul).replace('.', ',')} lần. Ván KHÔNG phải vũ khí (không đánh được); đánh nhau thì tự xuống.`, `Giá ${BOARD.gia} lá${bd.van ? ' · Bạn đã có' : ''}`, bd.van ? 'Đã có' : 'Mua', !bd.van && la >= BOARD.gia, async () => { if (LGT.board) await LGT.board.buy(); draw(); }));
       list.appendChild(row(STAFF.ten, STAFF.mo, `Giá ${STAFF.gia} lá${st.staff ? ' · Bạn đã có' : ''}`, st.staff ? 'Đã có' : 'Mua', !st.staff && la >= STAFF.gia, buyStaffUi));
+      list.appendChild(row(HAT.ten, HAT.mo, `Giá ${HAT.gia} lá · +3% giáp${st.hat ? (hatOn() ? ' · Bạn đang đội' : ' · Bạn đã có, đang cất') : ''}`, st.hat ? (hatOn() ? 'Cất nón' : 'Đội nón') : 'Mua', st.hat || la >= HAT.gia, st.hat ? toggleHatUi : buyHatUi));
     }
   }
   const closeShop = () => { box.hidden = true; };
@@ -106,7 +117,7 @@ export function initItems({ toast = () => {} } = {}) {
   setInterval(chipsDraw, 500); chipsDraw();
 
   // ---------- Vòng sáng lan ----------
-  const ripples = []; let clock = 0, skin = null, skinB = null;   // skinB: cây gậy thu gọn đeo sau lưng (Phiên 152)
+  const ripples = []; let clock = 0, skin = null, skinB = null, skinH = null;   // skinB: cây gậy thu gọn đeo sau lưng (Phiên 152)
   function spawnRipple(color, ahead, n) {
     const av = LGT.world && LGT.world.avatar, scene = av && av.group && av.group.parent; if (!scene) return;
     if (!RING_GEO) { RING_GEO = new THREE.RingGeometry(0.86, 1, 56); }
@@ -133,6 +144,7 @@ export function initItems({ toast = () => {} } = {}) {
     let host = null; av.group.traverse((o) => { if (!host && o.isGroup && o.rotation.order === 'YXZ' && o.children.length >= 4) host = o; });   // nhóm cây côn của nhân vật chibi
     if (host) skin = { host, orig: host.children.slice(), mesh: null };
     const bh = av.backHost; if (bh) skinB = { host: bh, orig: bh.children.slice(), mesh: null };   // Phiên 152: Gậy như ý cũng thu gọn sau lưng khi không đánh
+    if (av.headHost) skinH = { host: av.headHost, mesh: null, av };   // Phiên 154: nón Jingasa trên đầu (chỉ chibi có headHost)
     const upd = av.update.bind(av);
     av.update = (dt) => {
       upd(dt); clock += dt; stepRipples(dt);
@@ -141,6 +153,11 @@ export function initItems({ toast = () => {} } = {}) {
         if (want && !skin.mesh) { for (const c of skin.orig) c.visible = false; skin.mesh = buildStaff(); skin.mesh.scale.setScalar(STAFF_SCALE); skin.host.add(skin.mesh); loadStaffGlb(skin.mesh); }   // Phiên 149: gậy to hơn cây côn mặc định
         else if (!want && skin.mesh) { skin.host.remove(skin.mesh); skin.mesh = null; for (const c of skin.orig) c.visible = true; }   // đổi về Thương: trả cây côn mặc định
         if (skin.mesh) pulseGlows(skin.mesh, clock, !!av.swinging);
+      }
+      if (skinH) {   // Phiên 154: đội / cất nón theo trạng thái đã mua
+        const wantH = hatOn();
+        if (wantH && !skinH.mesh) { skinH.mesh = buildHat(); skinH.mesh.position.set(HAT_POS.x, HAT_POS.y, HAT_POS.z); skinH.host.add(skinH.mesh); if (skinH.av.setHat) skinH.av.setHat(true); }
+        else if (!wantH && skinH.mesh) { skinH.host.remove(skinH.mesh); skinH.mesh = null; if (skinH.av.setHat) skinH.av.setHat(false); }
       }
       if (skinB) {   // Phiên 152: trên lưng — chỉ thay hình, hiện/ẩn do avatar tự lo (backHost.visible)
         const wantB = staffOn();
@@ -171,6 +188,6 @@ export function initItems({ toast = () => {} } = {}) {
     return true;
   }
 
-  LGT.items = { openShop, closeShop, regenMul: () => rMul(st), tryRevive, get pinned() { return pin; }, dmgMul: () => (staffOn() ? dMul(st) : 1), get state() { return st; }, get staff() { return st.staff; } };
+  LGT.items = { openShop, closeShop, regenMul: () => rMul(st), tryRevive, get pinned() { return pin; }, dmgMul: () => (staffOn() ? dMul(st) : 1), armorMul: () => aMul(st), afterArmor: (d) => aAfter(d, st), get state() { return st; }, get staff() { return st.staff; } };
   return LGT.items;
 }
