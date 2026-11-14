@@ -93,9 +93,9 @@ export function createWorld({ scene, camera, canvas, coarse = false, LGT = windo
   addEventListener('contextmenu', (e) => { if (!isEditable(e.target)) e.preventDefault(); }, true);   // Phiên 159b: chặn cả menu "Lưu hình ảnh" khi chuột phải rơi lên lớp phủ/ảnh/canvas khác (trừ ô nhập chữ); pha capture nên không lớp nào chặn được
   /** Một cú bấm (không kéo). Chuột phải: đi tới đó; bấm đúp trúng quái = khóa mục tiêu. Chuột trái: chỉ chạm chương/bồ đoàn. Cảm ứng/bút: bấm = đi. */
   function onClick(cx, cy, d) {
-    if (d.btn !== 2 && pickMonsterAt(cx, cy, true)) return;            // Phiên 159c: bấm (trái / chạm) vào quái = khóa + tự đánh thường
+    if (d.btn !== 1 && pickMonsterAt(cx, cy, true)) return;            // Phiên 159d: bấm chuột PHẢI (hoặc trái / chạm) vào quái = khóa + tự đánh thường, không cần bấm phím 1
     if (!d.mouse) { pickGround(cx, cy, true); return; }
-    if (d.btn === 2) { pickGround(cx, cy, true); return; }            // chuột phải = đi
+    if (d.btn === 2) { pickGround(cx, cy, true); return; }            // chuột phải vào đất = đi
     if (d.btn === 0) pickGround(cx, cy, false);                        // chuột trái: bấm vào quái đã xử lý ở trên; còn lại chỉ chương/bồ đoàn
   }
   /** Tia từ con trỏ chạm quái nào → khóa làm mục tiêu (js/ui/farm.js). Trả true nếu đã khóa được. */
