@@ -2,6 +2,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import '../js/world/placements.js';
+import '../js/world/npc.js';   // đăng ký vật cản NPC (thầy Trụ trì đứng gần bồ đoàn)
+import { free } from '../js/world/path.js';
 import { HE_LIST } from '../js/data/elements.js';
 import { HE_SEAT_ID, HE_COLOR, seatOfHe, heOfSeat, heAt, heLabel, checkHeSeats } from '../js/world/heSeats.js';
 
@@ -27,3 +29,9 @@ test('heAt: đứng đúng bồ đoàn Hệ → Hệ đó; đứng xa hoặc d�
   assert.equal(heAt(null), null); assert.equal(heAt({ x: NaN, z: 1 }), null);
 });
 test('heLabel', () => { assert.equal(heLabel('kim'), 'Hệ Kim'); assert.equal(heLabel('thuy'), 'Hệ Thủy'); assert.equal(heLabel('x'), ''); });
+test('Phiên 153: mọi bồ đoàn Hệ đều đi tới và ngồi được (không nằm sát NPC/vật cản); Hỏa ở góc phải', () => {
+  for (const h of HE_LIST) { const s = seatOfHe(h); assert.equal(free(s.x, s.z), true, h + ': bồ đoàn bị chặn, nhân vật không ngồi vào được'); }
+  const hoa = seatOfHe('hoa'), maxX = Math.max(...HE_LIST.map((h) => seatOfHe(h).x));
+  assert.equal(hoa.x, maxX, 'Hỏa phải là bồ đoàn phải nhất');
+  assert.ok(hoa.x > 10 && hoa.row === 0);
+});

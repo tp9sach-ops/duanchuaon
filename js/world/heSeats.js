@@ -1,11 +1,12 @@
 // 5 bồ đoàn Ngũ Hành trong chánh điện (G2.4b, GDD v2 mục 5.2). LOGIC THUẦN, có test: tests/hesseats.test.mjs.
 // Dùng LẠI 5 bồ đoàn có sẵn ở hàng gần bàn thờ nhất (hàng 0), không thêm bồ đoàn mới nên không đổi lưới, đường đi, va chạm.
-// Cột 1–3 bên trái lối giữa (Kim, Mộc, Thủy), cột 4–5 bên phải (Hỏa, Thổ). Màu chỉ để nhận biết, TẠM.
+// Cột 1–3 bên trái lối giữa (Kim, Mộc, Thủy), bên phải là Thổ (cột 5) và Hỏa ở GÓC PHẢI (cột 7, x = 12,6).
+// Phiên 153: Hỏa dời từ bd04 (x = 3,6) sang bd07 vì bd04 nằm sát thầy Trụ trì (2,6; −40,6): tìm đường (path.js) coi chỗ đó là bị chặn nên nhân vật không ngồi vào được. Màu chỉ để nhận biết, TẠM.
 import { HE_LIST, HE_NAME } from '../data/elements.js';
 import { normHe } from './elements.js';
 import { SEATS, seatById } from './seats.js';
 
-export const HE_SEAT_ID = Object.freeze({ kim: 'bd01', moc: 'bd02', thuy: 'bd03', hoa: 'bd04', tho: 'bd05' });
+export const HE_SEAT_ID = Object.freeze({ kim: 'bd01', moc: 'bd02', thuy: 'bd03', hoa: 'bd07', tho: 'bd05' });
 export const HE_COLOR = Object.freeze({ kim: 0xdfe3e8, moc: 0x3f9b4a, thuy: 0x2f6fd0, hoa: 0xd9432b, tho: 0xc9a227 });
 /** Đứng cách tâm bồ đoàn không quá khoảng này (mét) thì coi là đang ngồi ở đó. */
 export const HE_SEAT_NEAR = 0.9;
