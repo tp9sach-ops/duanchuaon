@@ -1,6 +1,6 @@
 // Nón Jingasa 3D (Phiên 154): dùng cho nhân vật chibi (js/ui/items.js). Mô hình GLB nhúng sẵn trong js/data/hatGlb.js (không cần tải thêm file).
 // - buildHat(): trả nhóm nón NGAY (nón khối đơn giản), rồi thay bằng GLB khi nạp xong (lỗi thì giữ nón khối, game không hỏng).
-// - Chuẩn hóa: vành rộng HAT_DIAM, gốc ở GIỮA VÀNH DƯỚI (y = 0), đỉnh nón hướng +y. Nơi gắn: HAT_POS trong hệ tọa độ "mặt" của chibi (đầu cầu bán kính ~0,42). Các số vị trí là TẠM, CHƯA nhìn bằng mắt.
+// - Chuẩn hóa: vành rộng HAT_DIAM, gốc ở GIỪA VÀNH DƯỚI (y = 0), đỉnh nón hướng +y. Nơi gắn: HAT_POS trong hệ tọa độ "mặt" của chibi (đầu cầu bán kính ~0,42). Các số vị trí là TẠM, CHƯA nhìn bằng mắt.
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { HAT_GLB_B64 } from '../data/hatGlb.js';
