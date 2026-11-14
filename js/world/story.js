@@ -96,7 +96,7 @@ export function dialogueFor(s, id) {
       'A Di Đà Phật! Chào hành giả mới. Con là tiểu Minh, sáng nào cũng tập võ ở đây cho khỏe người.',
       'Chùa Diệu Giang có tám cảnh giới khinh công, nhưng đã thất truyền từ lâu. Từ ngày đại hồng chung vỡ, cây bồ đề cổ cũng ngừng lớn.',
       'Muốn tu tập thì phải bắt đầu từ việc nhỏ. Hành giả vào chánh điện gặp thầy Trụ trì nhé, thầy sẽ giao việc.',
-      'Đi thẳng qua Tam quan, theo lối giữa tới bậc thềm. Cần di chuyển thì dùng phím W A S D, hoặc bấm vào chỗ muốn tới.',
+      'Đi thẳng qua Tam quan, theo lối giữa tới bậc thềm. Cần di chuyển thì dùng phím mũi tên, hoặc bấm chuột phải (chạm trên điện thoại) vào chỗ muốn tới.',
     ] };
     if (st === 'abbot') return { ev: null, pages: ['Hành giả vào chánh điện gặp thầy Trụ trì nhé. Thầy đang chờ đấy.'] };
     if (st === 'water1' || st === 'water2') return { ev: null, pages: ['Cây bồ đề ở phía Tây chánh điện. Tưới cây nhẹ tay, đừng vội.'] };

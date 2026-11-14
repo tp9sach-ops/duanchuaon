@@ -53,12 +53,10 @@ test('hướng nhìn nhân vật khớp quy ước ry (0 = +z)', () => {
 });
 
 test('phím di chuyển (Phiên 129): W/A/S/D = mũi tên ↑←↓→, ưu tiên code, rơi về key; phím khác = null', () => {
-  const pairs = [['KeyW', 'ArrowUp', 'f'], ['KeyA', 'ArrowLeft', 'l'], ['KeyS', 'ArrowDown', 'b'], ['KeyD', 'ArrowRight', 'r']];
-  for (const [w, a, k] of pairs) { assert.equal(moveKeyOf({ code: w }), k); assert.equal(moveKeyOf({ code: a }), k); }
+  const pairs = [['ArrowUp', 'f'], ['ArrowLeft', 'l'], ['ArrowDown', 'b'], ['ArrowRight', 'r']];
+  for (const [a, k] of pairs) { assert.equal(moveKeyOf({ code: a }), k); assert.equal(moveKeyOf({ key: a }), k); }
+  for (const c of ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyQ', 'KeyE', 'KeyR']) assert.equal(moveKeyOf({ code: c, key: c.slice(3).toLowerCase() }), null, c + ' là phím chiêu/không đi (Phiên 159c)');
   // bàn phím AZERTY / trình gõ: code khác nhưng chữ trên phím là w/a/s/d (kể cả hoa) vẫn đi được
-  assert.equal(moveKeyOf({ code: 'KeyZ', key: 'w' }), 'f'); assert.equal(moveKeyOf({ code: 'KeyQ', key: 'A' }), 'l');
-  assert.equal(moveKeyOf({ key: 'S' }), 'b'); assert.equal(moveKeyOf({ key: 'd' }), 'r'); assert.equal(moveKeyOf({ key: 'ArrowLeft' }), 'l');
-  assert.equal(moveKeyOf({ code: 'KeyW', key: 'Process' }), 'f');   // trình gõ tiếng Việt báo key lạ nhưng code đúng
   for (const x of [null, undefined, {}, { code: 'Space', key: ' ' }, { code: 'KeyE', key: 'e' }, { key: 'toString' }, { code: 'constructor' }]) assert.equal(moveKeyOf(x), null);
 });
 test('joystick chạy (Phiên 129): kéo quá vành mới chạy, trong vành chỉ đi bộ', () => {

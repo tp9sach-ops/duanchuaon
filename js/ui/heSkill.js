@@ -1,6 +1,6 @@
 // Thanh CHIÊU CỦA PHÁI (Phiên 141): sau Lễ Khai Ngộ (js/ui/khaiNgo.js) người chơi có Hệ → hiện 3 nút chiêu (ô 1, 2, 3) phía trên cụm nút góc phải-dưới.
 // Chiêu gây sát thương (heSo > 0) đánh quái gần nhất qua LGT.farm.skillHit; chiêu hỗ trợ (heSo = 0: khiên, hồi máu, ẩn thân…) hiện mờ "sắp có" (hiệu ứng làm ở bước sau).
-// Bộ máy hồi chiêu / cấp chiêu: js/world/skillEngine.js; dữ liệu: js/data/combatSkills.js (TẠM). Phím tắt máy tính: 6, 7, 8. Mọi chữ qua textContent.
+// Bộ máy hồi chiêu / cấp chiêu: js/world/skillEngine.js; dữ liệu: js/data/combatSkills.js (TẠM). Phím tắt máy tính: Q, W, E. Mọi chữ qua textContent.
 import { createSkillRuntime } from '../world/skillEngine.js';
 import { skillFor } from '../world/skillCatalog.js';
 import { SKILL_CAP } from '../data/combatSkills.js';
@@ -9,7 +9,7 @@ import { levelOf } from '../world/quests.js';
 import { loadHe } from '../world/khaiNgo.js';
 import { KHAI_NGO } from '../data/skillCfg.js';
 
-const SLOTS = [1, 2, 3], KEYS = { 1: 'Digit6', 2: 'Digit7', 3: 'Digit8' }, KEYTXT = { 1: '6', 2: '7', 3: '8' };
+const SLOTS = [1, 2, 3], KEYS = { 1: 'KeyQ', 2: 'KeyW', 3: 'KeyE' }, KEYTXT = { 1: 'Q', 2: 'W', 3: 'E' };   // Phiên 159c: chiêu phái = Q, W, E (R = Thương ở farm.js; 1–5 = ô nút trong dock)
 const WHY = { 'khong-quai': 'Chưa có quái nào gần. Ra bãi rừng rồi dùng chiêu.', xa: 'Quái còn xa, lại gần hơn rồi dùng chiêu.' };
 const isEditable = (t) => !!t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName));
 

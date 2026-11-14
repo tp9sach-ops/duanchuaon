@@ -52,13 +52,21 @@ export function initFarm(hud, { toast = () => {} } = {}) {
     let best = null, bd = SIGHT + 1; for (const m of view.mons) { const d = gap(m, p); if (d <= bd) { bd = d; best = m; } } return best;
   };
   /** Chọn (khóa) quái dưới tia chuột {origin, dir}. Trả { ok, ten, uid } | { ok:false, reason }. Mọi đòn (đánh thường, Thương, chiêu) nhắm vào quái đã khóa. */
-  function pickAt(origin, dir) {
+  let attackOn = false;   // Phiên 159c: bấm chuột vào quái → khóa + TỰ ĐÁNH THƯỜNG (lao tới nếu xa) cho tới khi quái chết / Esc / người chơi tự đi
+  function pickAt(origin, dir, attack = false) {
     const p = pos(); if (!p || !here() || bossOn()) return { ok: false, reason: 'khong-quai' };
     const m = pickMonster(origin, dir, view.mons.filter((x) => gap(x, p) <= LOCK_RANGE)); if (!m) return { ok: false, reason: 'khong-trung' };
-    lockUid = m.uid; toast(`Đã chọn mục tiêu: ${m.ten}`, 1400); return { ok: true, ten: m.ten, uid: m.uid };
+    lockUid = m.uid; attackOn = !!attack; toast(attack ? `Đánh ${m.ten}! (Esc hoặc tự đi để dừng)` : `Đã chọn mục tiêu: ${m.ten}`, 1400); return { ok: true, ten: m.ten, uid: m.uid };
   }
-  const unlock = () => { const was = !!lockUid; lockUid = ''; return was; };
-  if (typeof addEventListener === 'function') addEventListener('keydown', (e) => { if (e.code === 'Escape' && lockUid && !LGT.panelOpen) unlock(); });   // Esc bỏ khóa mục tiêu (khi không có bảng nào đang mở)
+  const unlock = () => { const was = !!lockUid; lockUid = ''; attackOn = false; return was; };
+  const stopAttack = () => { const was = attackOn; attackOn = false; return was; };
+  function attackStep() {
+    if (!attackOn) return; const p = pos(), t = lockUid && view.mons.find((m) => m.uid === lockUid);
+    if (!t || !p || !here() || bossOn() || LGT.panelOpen || LGT.heldBy || (LGT.world && LGT.world.mode && LGT.world.mode !== 'free')) { attackOn = false; return; }
+    if (gap(t, p) - bodyOf(t) <= SPEAR.range) stone(); else rush(t);
+  }
+  if (typeof addEventListener === 'function') addEventListener('keydown', (e) => { if (e.code === 'Escape' && lockUid && !LGT.panelOpen) unlock();
+    else if (e.code === 'KeyR' && !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey && !LGT.panelOpen && !document.body.classList.contains('edit-mode') && !/^(INPUT|TEXTAREA|SELECT)$/.test((e.target && e.target.tagName) || '') && !(e.target && e.target.isContentEditable)) { spear(); } });   // R = Thương   // Esc bỏ khóa mục tiêu (khi không có bảng nào đang mở)
 
   function reward(r) {
     const mon = r.mon, now = Date.now(), s = settleKill(farm, MONSTERS[mon.type], r.drops, now); farm = s.farm; save();
@@ -142,7 +150,7 @@ export function initFarm(hud, { toast = () => {} } = {}) {
     if (mons.length > FARM_CFG.maxVisible) { mons.sort((a, b) => (b.boss ? 1e6 : 0) - (a.boss ? 1e6 : 0) || gap(a, p) - gap(b, p)); mons.length = FARM_CFG.maxVisible; }   // quá bể vẽ: giữ boss + quái gần nhất
     view.mons = mons;
     view.stones = view.stones.filter((s) => { s.t += dt; if (s.t < s.dur) return true; hit(s.uid, s.dmg); if (LGT.sfx) LGT.sfx.play('da-trung'); return false; });
-    if (running) autoStep(dt);
+    if (running) autoStep(dt); else attackStep();
     const t = target(); view.target = t ? t.uid : '';
     const show = !!t && !bossOn(); box.hidden = !show && now > hudUntil || bossOn();
     if (!box.hidden && t) {
@@ -164,7 +172,7 @@ export function initFarm(hud, { toast = () => {} } = {}) {
   }
 
   LGT.farm = {
-    skillReady, skillHit, pickAt, unlock, get locked() { return lockUid; }, get tuviInfo() { return tuViOf(farm); },
+    skillReady, skillHit, pickAt, unlock, stopAttack, get attacking() { return attackOn; }, get locked() { return lockUid; }, get tuviInfo() { return tuViOf(farm); },
     stone, spear, toggleAuto, grantBoss,
     get tuvi() { return tuViOf(farm).tuvi; }, get state() { return farm; },
     status() { const t = target(); return { active: !!t || running, ten: t ? t.ten : '', stoneCd: cdStone, spearCd: cdSpear, canAuto: true, auto: running, autoLeft: Math.floor(autoLeft(auto, Date.now()) / 60) }; },

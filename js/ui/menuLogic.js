@@ -52,7 +52,7 @@ export const WALLET_PLACEHOLDER = { sen: 0, ngoc: 0 };
 
 /** Câu báo khi bấm Lạy Phật / Thiền mà chưa ở trong chánh điện. */
 export const OUTSIDE_TEXT = 'Hãy vào chánh điện trước (nút “Vào chánh điện”), rồi bấm lại nhé.';
-export const HELP_TEXT = 'Bấm vào đất để đi · bấm bồ đoàn để ngồi · kéo để xoay · cuộn hoặc chụm hai ngón để phóng to · WASD hoặc mũi tên để đi · Esc đóng bảng';
+export const HELP_TEXT = 'Chuột phải (hoặc chạm) vào đất để đi · chuột trái vào quái để đánh · Q W E R là chiêu · bấm bồ đoàn để ngồi · kéo để xoay · cuộn hoặc chụm hai ngón để phóng to · mũi tên để đi · Esc đóng bảng';
 export const WELCOME_TEXT = 'Chào mừng đến Diệu Giang Tự. Bấm vào sân để đi, bấm vào cổng, ao sen, nhà tổ, gác chuông hoặc lư hương để xem.';
 
 export const isReady = (item) => !!item && item.status === 'ready';

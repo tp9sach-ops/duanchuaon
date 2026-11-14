@@ -113,3 +113,13 @@ test('Phiên 159: chuột phải 2 lần vào quái → khóa mục tiêu; mọi
   }
   LGT.world.pos = keepPos; LGT.night = keepNight; step(0.5);
 });
+
+test('Phiên 159c: bấm vào quái = khóa + TỰ ĐÁNH THƯỜNG (lao tới nếu xa), dừng khi tự đi / Esc / quái chết', () => {
+  const keepPos = LGT.world.pos, keepNight = LGT.night; LGT.night = 1; LGT.world.pos = { x: -62, z: 66 }; step(0.5);
+  const m = LGT.farmView.mons.filter((x) => !x.boss).sort((a, b) => Math.hypot(a.x + 62, a.z - 66) - Math.hypot(b.x + 62, b.z - 66))[0]; assert.ok(m);
+  LGT.world.pos = { x: m.x + 0.5, z: m.z }; step(0.2); const hp0 = m.oan;
+  assert.equal(api.pickAt({ x: m.x, y: 1.2, z: m.z + 12 }, { x: 0, y: 0, z: -1 }, true).ok, true); assert.equal(api.attacking, true);
+  step(3); assert.ok(m.oan < hp0 || !LGT.farmView.mons.includes(m), 'tự đánh mà không bấm nút');
+  api.stopAttack(); assert.equal(api.attacking, false);
+  LGT.world.pos = keepPos; LGT.night = keepNight; step(0.5);
+});

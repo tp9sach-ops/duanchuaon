@@ -30,8 +30,9 @@ export function moveVector(keys = {}, joy = null, yaw = 0) {
  * Ưu tiên `code` (vị trí phím, không phụ thuộc kiểu gõ); nếu không có thì dùng `key` (chữ w/a/s/d, kể cả hoa) để bàn phím AZERTY/Dvorak
  * hay trình gõ tiếng Việt vẫn đi được theo đúng nhãn chữ trên phím. `e` = sự kiện keydown/keyup (hoặc đối tượng giả).
  */
-const MOVE_BY_CODE = { KeyW: 'f', ArrowUp: 'f', KeyS: 'b', ArrowDown: 'b', KeyA: 'l', ArrowLeft: 'l', KeyD: 'r', ArrowRight: 'r' };
-const MOVE_BY_KEY = { w: 'f', s: 'b', a: 'l', d: 'r', arrowup: 'f', arrowdown: 'b', arrowleft: 'l', arrowright: 'r' };
+// Phiên 159c: W/A/S/D KHÔNG còn là phím đi — Q/W/E/R là phím chiêu. Đi = mũi tên, chuột phải, hoặc cần cảm ứng.
+const MOVE_BY_CODE = { ArrowUp: 'f', ArrowDown: 'b', ArrowLeft: 'l', ArrowRight: 'r' };
+const MOVE_BY_KEY = { arrowup: 'f', arrowdown: 'b', arrowleft: 'l', arrowright: 'r' };
 export function moveKeyOf(e) {
   if (!e) return null;
   if (e.code && Object.prototype.hasOwnProperty.call(MOVE_BY_CODE, e.code)) return MOVE_BY_CODE[e.code];

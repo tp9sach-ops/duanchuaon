@@ -519,3 +519,5 @@ Môi trường chặn CDN nên cần: `npm i three@0.160.1 playwright-core @spar
 - **Việc kế tiếp = mục 2:** Q = đánh thường (luôn dùng được), W/E/R rồi 1/2/3/4… = thứ tự các chiêu. Lưu ý xung đột W = đi (Phiên 129) — hỏi ptg trước khi gỡ WASD.
 - CHƯA nhìn bằng mắt (không có WebGL/chuột thật) — ptg cần thử trên máy tính.
 
+
+- **Phiên 159c (14/11 11:26) — ptg đổi yêu cầu:** bấm chuột trái vào quái = khóa + tự đánh thường; Q/W/E = chiêu phái, R = Thương, 1–5 = ô dock; WASD không còn đi (chỉ mũi tên/chuột phải/cần). Chi tiết ở cuối `docs/PHIEN159.md`. `npm test`: chỉ còn 3 lỗi có sẵn của commit NPC nv9sach.
