@@ -1,5 +1,5 @@
-// Cụm nút thao tác góc PHẢI-DƯỚI + lời chỉ chỗ bấm + nội dung Túi đồ (Phiên 62). LOGIC THUẦN (không DOM, có test): tests/dock.test.mjs. Giao diện: js/ui/dock.js, js/ui/bag.js.
-// Mục đích: người chơi điện thoại chỉ cần nhìn một chỗ (ngón cái phải) cho nhảy / kỹ năng / thả cầu / bấm / thu cá / phóng sinh / túi đồ.
+// Cụm nút thao tác góc PHẢI-DƯỚI + lời chỉ chỗ bấm + nội dung Túi hồ lô (trước là Túi đồ; Phiên 62). LOGIC THUẦN (không DOM, có test): tests/dock.test.mjs. Giao diện: js/ui/dock.js, js/ui/bag.js.
+// Mục đích: người chơi điện thoại chỉ cần nhìn một chỗ (ngón cái phải) cho nhảy / kỹ năng / thả cầu / bấm / thu cá / phóng sinh / túi hồ lô.
 import { orbById, speciesById, ORBS } from './fishing.js';
 import { furnitureById } from './furniture.js';
 import { houseLevel } from './land.js';
@@ -20,7 +20,7 @@ export const HINTS = {
   thietdau: 'Vừa nhảy xong bấm “Thiết đầu công”: nhân vật lao đầu về phía trước, đâm trúng yêu quái thì gây sát thương (Khinh thân bậc 4 trở lên; bậc càng cao lao càng xa, đâm càng đau).',
   nhay: 'Bấm “Nhảy” để bay lên (Khinh thân). Đang đi mà bấm thì bật tới trước; bấm thêm lần nữa khi còn trên không (hoặc vừa chạm đất) để lướt một đoạn và né chiêu quái.',
   kynang: 'Bạn đủ điều kiện luyện bậc kế — bấm vào đây.',
-  tui: 'Túi đồ: xem bạn đang có những gì.',
+  tui: 'Túi hồ lô: xem bạn đang có những gì, chọn đồ cầm (Thương, Gậy như ý, Ván) và nhìn nhân vật mang đồ đó.',
   vantruot: 'Bấm “Lướt ván” để đứng lên ván trượt — đi nhanh gấp 1,5 lần (vào nhà, xuống nước hoặc đang đánh nhau thì tự xuống, ván bay về tay).',
   nemnpc: 'Có người dân ở gần — bấm “Ném NPC” để nhấc họ lên ném thẳng trước mặt (họ rơi an toàn rồi tự quay về; không ném trong chùa).',
   khiengnguoi: 'Có người ở gần — bấm “Khiêng người” để nhấc họ lên vai (chỉ khiêng được người cấp và sức mạnh nhỏ hơn bạn; không khiêng trong chùa). Khiêng 2 giây rồi ném đi.',
@@ -46,7 +46,7 @@ export function dockButtons(c = {}) {
   if (f.phase === 'wait' || f.phase === 'lotus') return [{ id: 'tap', label: 'Bấm!', big: true, hot: f.phase === 'lotus', say: String(f.text || '') }];
   if (f.phase === 'caught') return [{ id: 'thu', label: 'Thu cá', big: true, say: String(f.text || '') }, { id: 'phong', label: 'Phóng sinh', say: '' }];
   const sw = isObj(k.swim) ? k.swim : {};
-  if (sw.mode === 'swim' || sw.mode === 'dive') return [{ id: 'lan', label: sw.mode === 'dive' ? 'Nổi lên' : 'Lặn', big: true, say: sw.say ? String(sw.say) : '' }, { id: 'tui', label: 'Túi đồ' }];   // đang bơi/lặn: chỉ Lặn↔Nổi lên + Túi đồ (không câu/khiêng/nhảy dưới nước)
+  if (sw.mode === 'swim' || sw.mode === 'dive') return [{ id: 'lan', label: sw.mode === 'dive' ? 'Nổi lên' : 'Lặn', big: true, say: sw.say ? String(sw.say) : '' }, { id: 'tui', label: 'Túi hồ lô' }];   // đang bơi/lặn: chỉ Lặn↔Nổi lên + Túi hồ lô (không câu/khiêng/nhảy dưới nước)
   const cr = isObj(k.carry) ? k.carry : {};
   if (cr.holding) return [{ id: 'nem', label: 'Ném', big: true, say: cr.heldName ? `Đang khiêng: ${cr.heldName}` : '' }, { id: 'ha', label: 'Đặt xuống' }];   // tay đang khiêng vật: chỉ Ném / Đặt xuống
   const pl = isObj(k.ply) ? k.ply : {};
@@ -57,18 +57,18 @@ export function dockButtons(c = {}) {
   if (np.near && !pl.near && !(isObj(k.yq) && k.yq.active)) out.push({ id: 'nemnpc', label: 'Ném NPC', say: `Gần: ${np.near}` });   // Phiên 89
   const yq = isObj(k.yq) ? k.yq : {};
   if (yq.active) { out.push({ id: 'da', label: 'Đánh thường', big: true, wait: +yq.stoneCd > 0, say: yq.ten ? `${yq.ten} đang ở làng!` : '' }, { id: 'thuong', label: 'Thương', wait: +yq.spearCd > 0 }); if (isObj(k.khi)) out.push({ id: 'chemkhi', label: 'Chém khí', hot: true, wait: +k.khi.cd > 0 }); if (yq.canThrow) out.push({ id: 'nemyq', label: 'Ném yêu quái' }); }
-  const fm = isObj(k.farm) ? k.farm : {};   // Phiên 107: quái cố định ở bãi rừng (khác yêu quái hằng tháng): chỉ thêm Ném đá / Thương, vẫn giữ Nhảy, Kỹ năng, Túi đồ
+  const fm = isObj(k.farm) ? k.farm : {};   // Phiên 107: quái cố định ở bãi rừng (khác yêu quái hằng tháng): chỉ thêm Ném đá / Thương, vẫn giữ Nhảy, Kỹ năng, Túi hồ lô
   if (fm.active && !yq.active) out.push({ id: 'da', label: 'Đánh thường', big: true, wait: +fm.stoneCd > 0, say: fm.ten ? `Gần: ${fm.ten}` : '' }, { id: 'thuong', label: 'Thương', wait: +fm.spearCd > 0 });
   if (fm.active && !yq.active && fm.canAuto) out.push({ id: 'tudong', label: fm.auto ? 'Dừng đánh' : 'Tự động', hot: !!fm.auto, say: fm.auto ? `Đang tự đánh · còn ${num(fm.autoLeft)} phút hôm nay` : `Tự đánh quái · còn ${num(fm.autoLeft)} phút hôm nay` });   // Phiên 108: Tự Động Hàng Yêu
   if (k.water && !yq.active) out.push({ id: 'cast', label: f.cracked ? 'Sửa cầu' : f.hasOrb ? 'Thả cầu' : 'Mua cầu', big: true, say: f.text ? String(f.text) : '' });
   const hd = isObj(k.head) ? k.head : {};
   if (hd.open) out.push({ id: 'thietdau', label: 'Thiết đầu công', big: true, hot: true, wait: !!hd.wait, say: hd.dist ? `Lao ${hd.dist} m · −${hd.dmg} máu` : '' });   // Phiên 90
-  if (yq.active) { if (num(k.khinh) > 0) out.push({ id: 'nhay', label: 'Nhảy' }); return out; }   // đang đánh yêu quái: chỉ giữ Ném đá / Thương / Ném yêu quái / Nhảy — ẩn Kỹ năng, Túi đồ, Nhảy mờ cho đỡ vướng
+  if (yq.active) { if (num(k.khinh) > 0) out.push({ id: 'nhay', label: 'Nhảy' }); return out; }   // đang đánh yêu quái: chỉ giữ Ném đá / Thương / Ném yêu quái / Nhảy — ẩn Kỹ năng, Túi hồ lô, Nhảy mờ cho đỡ vướng
   if (num(k.khinh) > 0) { out.push({ id: 'nhay', label: 'Nhảy', big: !k.water }); out.push({ id: 'kynang', label: 'Kỹ năng', hot: !!k.canTrain }); }
   else out.push({ id: 'nhay', label: 'Nhảy', locked: true });   // chưa mở Khinh thân: vẫn hiện nút mờ, bấm vào được chỉ cách mở (người mới không phải đoán)
   const bd = isObj(k.board) ? k.board : {};
   if (bd.own && !k.inHouse) out.push({ id: 'vantruot', label: bd.on ? 'Xuống ván' : 'Lướt ván', hot: !!bd.on });   // Mục 1: có ván trượt thì có nút lướt/xuống ván
-  out.push({ id: 'tui', label: 'Túi đồ' });
+  out.push({ id: 'tui', label: 'Túi hồ lô' });
   return out;
 }
 
@@ -88,7 +88,7 @@ export function loadSeen(raw) {
   return Array.isArray(o) ? [...new Set(o.filter((s) => typeof s === 'string' && HINTS[s]))] : [];
 }
 
-/** Các loại hình trong ô Túi đồ (Phiên 92). js/ui/bagIcons.js vẽ mỗi loại một hình; loại lạ được vẽ ô dấu hỏi. */
+/** Các loại hình trong ô Túi hồ lô (Phiên 92). js/ui/bagIcons.js vẽ mỗi loại một hình; loại lạ được vẽ ô dấu hỏi. */
 export const BAG_ICON_KINDS = ['sen', 'la', 'orb', 'fish', 'turtle', 'squid', 'power', 'wing', 'house', 'board', 'bell',
   'altar', 'bed', 'bench', 'chair', 'crate', 'floorlamp', 'lamp', 'lantern', 'plant', 'rug', 'shelf', 'sofa', 'statue', 'stool', 'table', 'tank', 'tvunit', 'wardrobe'];
 const ORB_COLOR = { go: '#a8763e', da: '#8d98a3', ngoc: '#3fbf9b', luuly: '#4a6fe0', kim: '#f0c23a' };
@@ -101,7 +101,7 @@ function fishIcon(sp) {
 }
 
 /**
- * Nội dung Túi đồ khi ĐANG Ở NGOÀI NHÀ (chỉ để xem). ctx = { sen, la, fish, furni, khinh, land, board, strength }.
+ * Nội dung Túi hồ lô khi ĐANG Ở NGOÀI NHÀ (chỉ để xem). ctx = { sen, la, fish, furni, khinh, land, board, strength }.
  * Trả [{ title, rows: [{ ten, mo, ic?: { k, c? }, n?, trong? }] }]. Hàng có `ic` là một ô có hình (n = số lượng ở góc ô); hàng `trong: true` là ô trống kèm lời chỉ chỗ lấy đồ.
  */
 export function bagSections(ctx = {}) {
@@ -129,12 +129,12 @@ export function bagSections(ctx = {}) {
 // BỐ CỤC Ô CỐ ĐỊNH (Phiên 109). Trước đây các nút xếp thành MỘT CỘT dài và nút đầu cột đổi theo hoàn cảnh: yêu quái/quái vừa tới là "Ném đá" chen xuống đáy,
 // đẩy "Nhảy" lên cao → ngón cái bấm nhầm. Giờ mỗi nút có MỘT Ô CỐ ĐỊNH trong lưới 3 cột × 3 hàng sát góc phải-dưới; nút nào không có thì để trống ô đó, không bao giờ dời chỗ.
 //
-//   hàng 3 (tiện ích, nhỏ):  [T1 Ván]      [T2 Kỹ năng]   [T3 Túi đồ]
+//   hàng 3 (tiện ích, nhỏ):  [T1 Ván]      [T2 Kỹ năng]   [T3 Túi hồ lô]
 //   hàng 2:                  [F  Tự động]  [D  Thiết đầu] [C  Nhảy]
 //   hàng 1 (sát ngón cái):   [E  Chém khí] [B  Thương]    [A  HÀNH ĐỘNG CHÍNH]
 //
 // A = việc đang làm: Ném đá / Bấm! / Thả cầu / Thu cá / Khiêng / Ném / Lặn. B = việc phụ cùng hoàn cảnh: Thương / Phóng sinh / Đặt xuống / Thả xuống.
-// Phím tắt trên máy tính: 1=A 2=B 3=E 4=D 5=F, Space=Nhảy (C), B=Túi đồ.
+// Phím tắt trên máy tính: 1=A 2=B 3=E 4=D 5=F, Space=Nhảy (C), B=Túi hồ lô.
 export const SLOT_POS = { A: { r: 1, c: 3 }, B: { r: 1, c: 2 }, E: { r: 1, c: 1 }, C: { r: 2, c: 3 }, D: { r: 2, c: 2 }, F: { r: 2, c: 1 }, T3: { r: 3, c: 3 }, T2: { r: 3, c: 2 }, T1: { r: 3, c: 1 } };
 export const SLOT_OF = {
   tap: 'A', cast: 'A', thu: 'A', khieng: 'A', nem: 'A', nemnguoi: 'A', lan: 'A', da: 'A',
