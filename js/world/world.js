@@ -91,6 +91,7 @@ export function createWorld({ scene, camera, canvas, coarse = false, LGT = windo
   canvas.addEventListener('pointerup', end); canvas.addEventListener('pointercancel', end);
   canvas.addEventListener('wheel', (e) => { if (blockedNow()) return; e.preventDefault(); dist = zoomCamera(dist, e.deltaY); }, { passive: false });
   canvas.addEventListener('contextmenu', (e) => e.preventDefault());   // Phiên 159: chuột phải dùng để đi → không hiện menu của trình duyệt
+  addEventListener('contextmenu', (e) => { if (!isEditable(e.target)) e.preventDefault(); }, true);   // Phiên 159b: chặn cả menu "Lưu hình ảnh" khi chuột phải rơi lên lớp phủ/ảnh/canvas khác (trừ ô nhập chữ); pha capture nên không lớp nào chặn được
   const dbl = createDoubleClick();
   /** Một cú bấm (không kéo). Chuột phải: đi tới đó; bấm đúp trúng quái = khóa mục tiêu. Chuột trái: chỉ chạm chương/bồ đoàn. Cảm ứng/bút: bấm = đi. */
   function onClick(cx, cy, d) {
