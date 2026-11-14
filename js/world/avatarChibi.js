@@ -110,6 +110,24 @@ export function createChibiAvatar({ name = 'Khách', color = DEFAULT_COLOR, hair
     const cord = mesh(new THREE.TorusGeometry(0.045, 0.01, 6, 14), cordM, gourd, 0, 0.1, 0); cord.rotation.x = Math.PI / 2;   // dây buộc ở cổ
   }
 
+  // Phiên 152: THU CÔN KHI KHÔNG CHIẾN ĐẤU. Hết thế chiến đấu thì cây côn không biến mất mà thu gọn (ngắn 1,1 m), nằm chéo SAU LƯNG, có DÂY ĐEO chéo qua ngực + lưng, hai đầu vẫn PHÁT SÁNG nhấp nháy.
+  // Chỉ người chơi (cùng điều kiện với hồ lô). backHost (group) để js/ui/items.js thay bằng Gậy như ý thu gọn. CHƯA nhìn bằng mắt (không có WebGL ở môi trường AI): vị trí/góc là số TẠM.
+  const backG = new THREE.Group(), backGlow = [], hasBack = !casa && wantGourd; let backTex = null;
+  if (hasBack) {
+    backG.visible = false; backG.position.set(0, 0.3 * H - spY, zb - 0.075); backG.rotation.set(0.12, 0, 0.8); B.spine.add(backG);
+    const woodM = std(0x7a4a24, 0.55), capM = std(0xe0a93a, 0.35), bandM = std(0xb3261e, 0.5), strapM = std(0x5a2d12, 0.8), buckleM = std(0xe0a93a, 0.35);
+    mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.1, 8), woodM, backG, 0, 0, 0);
+    for (const sg of [-1, 1]) { mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.09, 8), capM, backG, 0, sg * 0.54, 0); mesh(new THREE.CylinderGeometry(0.038, 0.038, 0.1, 8), bandM, backG, 0, sg * 0.36, 0); }
+    const gc = document.createElement('canvas'); gc.width = gc.height = 64; { const g = gc.getContext('2d'), gr = g.createRadialGradient(32, 32, 2, 32, 32, 31); gr.addColorStop(0, 'rgba(255,246,214,1)'); gr.addColorStop(0.4, 'rgba(255,205,110,.6)'); gr.addColorStop(1, 'rgba(255,170,60,0)'); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); }
+    backTex = new THREE.CanvasTexture(gc); backTex.colorSpace = THREE.SRGBColorSpace;
+    for (const y of [-0.56, 0.56, 0]) { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: backTex, transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending, depthWrite: false, fog: false })); sp.position.y = y; sp.scale.set(y === 0 ? 0.4 : 0.34, y === 0 ? 0.4 : 0.34, 1); backG.add(sp); backGlow.push(sp); mats.push(sp.material); }
+    // dây đeo: một dải chéo từ vai phải xuống hông trái, ở mặt ngực và mặt lưng; khoen vàng ở giữa ngực
+    const sy = 0.3 * H - spY;
+    for (const zz of [zf + 0.006, zb - 0.006]) { const st2 = mesh(new THREE.BoxGeometry(0.04, 0.5, 0.012), strapM, B.spine, 0, sy, zz); st2.rotation.z = -0.62; }
+    const ring = mesh(new THREE.TorusGeometry(0.025, 0.008, 6, 12), buckleM, B.spine, 0, sy, zf + 0.014);
+  }
+  const backHostGroup = backG;
+
   // Mũi tên ▼ (nhân vật của mình), tên, bong bóng chat
   let arrow = null; if (mine) { arrow = mesh(new THREE.ConeGeometry(0.11, 0.2, 4), basic(0xf2c14e), group, 0, 1.86, 0); arrow.rotation.x = Math.PI; }
   const nameTex = nameTexture(cleanName(name), mine), label = makeSprite(nameTex, 1.28, 0.2, 2.12); group.add(label);
@@ -144,6 +162,7 @@ export function createChibiAvatar({ name = 'Khách', color = DEFAULT_COLOR, hair
     st.stance += ((st.wantStance && (st.state === 'idle' || st.state === 'walk') ? 1 : 0) - st.stance) * Math.min(1, 7 * dt);
     staff.visible = weaponVisible(st.stance, swing ? swing.vis : 0);   // Phiên 120: cầm sẵn khi vào thế chiến đấu
     staff.rotation.y = swing && swing.spin ? swing.spin : 0;           // Phiên 126: múa côn quanh bàn tay
+    if (hasBack) { backG.visible = !staff.visible; if (backG.visible) { const a = 0.5 + 0.5 * Math.sin(clock * 5), b = 0.5 + 0.5 * Math.sin(clock * 5 + Math.PI); backGlow[0].material.opacity = 0.25 + 0.6 * a; backGlow[1].material.opacity = 0.25 + 0.6 * b; backGlow[2].material.opacity = 0.35; } }   // Phiên 152: côn thu gọn sau lưng, hai đầu chớp lệch pha
     if (gourdPulse > 0) { gourdPulse = Math.max(0, gourdPulse - dt * 3); gourd.scale.setScalar(1 + 0.45 * Math.sin(gourdPulse * Math.PI)); }
     const q = showPose(applyStance(chibiPose(p, st.state, clock - st.t0, st.speed, { hold: st.hold, swing, act, walk: st.walk }), st.stance, { walk: st.walk, sit: p.sit, hold: st.hold, busy: !!(swing || act) }), act), ka = Math.min(1, 24 * dt);
     for (const k of SMOOTH_ARM) { const c = st.arms[k] || (st.arms[k] = { ...q[k] }); for (const ax of ['x', 'y', 'z']) c[ax] += (q[k][ax] - c[ax]) * ka; q[k] = c; }   // vai/khuỷu/cổ tay: làm mượt khi đổi tư thế (đứng ↔ chắp tay) để khuỷu không "bật" cái rụp; vẫn đủ nhanh cho gõ mõ, vung côn, ném
@@ -156,7 +175,7 @@ export function createChibiAvatar({ name = 'Khách', color = DEFAULT_COLOR, hair
     st.ry = turnToward(st.ry, st.targetRy, 9 * dt); group.rotation.y = st.ry;
     if (bubble && clock > bubbleUntil) say('');
   }
-  function dispose() { say(''); label.material.dispose(); nameTex.dispose(); barMat.dispose(); barTex.dispose(); haloMat.dispose(); haloTex.dispose(); ch.dispose(); geos.forEach((g) => g.dispose()); mats.forEach((m) => m.dispose()); }
+  function dispose() { say(''); label.material.dispose(); nameTex.dispose(); barMat.dispose(); barTex.dispose(); haloMat.dispose(); haloTex.dispose(); if (backTex) backTex.dispose(); ch.dispose(); geos.forEach((g) => g.dispose()); mats.forEach((m) => m.dispose()); }
   function setBeadCount(n) { malaTarget = -(Math.max(0, +n || 0) / 108) * Math.PI * 2; }
   /** Vung côn. Không đối số: đánh thường, tự nối chuỗi múa côn → ngang → ngược → xoay. Số (skill Chém khí): kiểu 'khi'. Chuỗi: đúng kiểu đó. Trả về tên kiểu đã chọn. */
   function swing(arg) {
@@ -184,5 +203,5 @@ export function createChibiAvatar({ name = 'Khách', color = DEFAULT_COLOR, hair
     bar(8, h, h < 0.3 ? '#ff6a5a' : '#6fe37a', h < 0.3 ? '#c8261c' : '#2fa84a'); bar(27, m, '#7fc4ff', '#2a6fd6');
     barTex.needsUpdate = true;
   }
-  return { group, setState, setFacing, say, setBeadCount, swing, setStance, setHold, act, gourdPos, pulseGourd, setBars, update, dispose, get state() { return st.state; }, get swinging() { return swingT >= 0; }, get holding() { return st.hold; } };
+  return { group, setState, setFacing, say, setBeadCount, swing, setStance, setHold, act, gourdPos, pulseGourd, setBars, update, dispose, get state() { return st.state; }, get swinging() { return swingT >= 0; }, get holding() { return st.hold; }, get backHost() { return hasBack ? backHostGroup : null; } };
 }
