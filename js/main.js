@@ -107,6 +107,7 @@ async function boot() {
   try { import('./ui/zoneGate.js').then((m) => m.initZoneGate({ toast: (t, ms) => window.LGT.toast && window.LGT.toast(t, ms) })).catch((e) => console.warn('[Diệu Giang Tự] Cổng zone lỗi:', e && e.message)); } catch (_) { /* bỏ qua */ }
   try { import('./ui/dungeonZones.js').then((m) => m.initDungeonZones({ toast: (t, ms) => window.LGT.toast && window.LGT.toast(t, ms) })).catch((e) => console.warn('[Diệu Giang Tự] Zone phó bản lỗi:', e && e.message)); } catch (_) { /* bỏ qua */ }   // Phiên 139: zone phó bản (4b)
   try { import('./ui/dungeonPanel.js').then((m) => m.initDungeonPanel({ toast: (t, ms) => window.LGT.toast && window.LGT.toast(t, ms) })).catch((e) => console.warn('[Diệu Giang Tự] Bảng phó bản lỗi:', e && e.message)); } catch (_) { /* bỏ qua */ }   // Phiên 139: NPC + bảng chọn phó bản (4c)
+  try { import('./ui/luyenChieu.js').then((m) => m.initLuyenChieu({ toast: (t, ms) => window.LGT.toast && window.LGT.toast(t, ms) })).catch((e) => console.warn('[Diệu Giang Tự] Khu luyện chiêu lỗi:', e && e.message)); } catch (_) { /* bỏ qua */ }   // Phiên 150: khu luyện chiêu từ bồ đoàn
   try { initRoom(); } catch (e) { console.warn('[Diệu Giang Tự] Đa người lỗi:', e && e.message); }   // thấy người khác trong chùa; lỗi thì vẫn chơi một mình
   // Phòng khi onProgress(1) không tới (tab nền): vẫn mở trang sau 6s
   setTimeout(hidePre, 6000);
