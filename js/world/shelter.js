@@ -12,7 +12,7 @@ export const SHELTERS = [
   { id: 'dinh', ten: 'Đình nghỉ chân', x: 88.8, z: 90, indoor: false },
   { id: 'mieu', ten: 'Miếu nhỏ', x: -100.5, z: 78.4, indoor: false },
   { id: 'cuahang9sach', ten: 'Cửa hàng 9 Sạch', x: 16.4, z: 81.6, indoor: true },
-  { id: 'tachhoa', ten: 'Tách Hoa', x: 16.5, z: 90, indoor: true },
+  { id: 'tachhoa', ten: 'Tách Hoa', x: 16.5, z: 88.4, indoor: true },   // 14/11: z 88,4 (trước 90) vì NPC Tách Hoa đứng ở z 90,2
   { id: 'didong', ten: 'Di Động Sen Vàng', x: -16.5, z: 112.6, indoor: true },
   { id: 'dienmay', ten: 'Điện Máy Lam Sen', x: -16.5, z: 72.4, indoor: true },
   { id: 'kimhoan', ten: 'Kim Hoàn Ngọc Lan', x: 16.2, z: 132, indoor: true },
