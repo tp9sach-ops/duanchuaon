@@ -1,0 +1,13 @@
+/* Cột trái HUD xếp theo DÒNG CHẢY (Phiên 161) — js/ui/hudFit.js tự chèn file này và gom các khối vào .hud-col khi chơi bằng chuột trên khung đủ cao.
+   Trước đây mỗi khối (.hud-tl, .st-wrap, .hud-zoom, .dl-chip) đặt theo toạ độ riêng rồi JS đo lại 0,4 giây/lần nên chồng nhau và nhảy lên xuống.
+   Nay chúng xếp trong MỘT cột flex: không thể đè nhau; khối cao thay đổi (thẻ Việc kế tiếp) nằm CUỐI cột nên không đẩy các nút phía trên. */
+.hud-col{display:none}
+.hud.col-mode .hud-col{position:absolute;left:max(12px,env(safe-area-inset-left));top:max(12px,env(safe-area-inset-top));z-index:3;display:flex;flex-direction:column;align-items:flex-start;gap:8px;max-height:calc(var(--vvh,100vh) - 24px);overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;pointer-events:none}
+.hud.col-mode .hud-col::-webkit-scrollbar{display:none}
+.hud.col-mode .hud-col>*{position:static!important;left:auto!important;top:auto!important;right:auto!important;bottom:auto!important;transform:none!important;margin:0!important;flex:none}
+.hud.col-mode .hud-col>.hud-zoom{flex-direction:row!important;gap:8px!important;pointer-events:auto}
+.hud.col-mode .hud-col>.hud-zoom button{width:38px;height:38px}
+.hud.col-mode .hud-col>.st-wrap[hidden]{display:none!important}
+/* Nhúng trong khung (nút ngôi nhà của trang cha nằm sát mép trái): lùi cả cột vào để không che đồng hồ / thẻ nhiệm vụ */
+html[data-embedded=true] .hud.col-mode .hud-col{left:max(46px,calc(var(--sai-l,0px) + 44px))}
+html[data-embedded=true] .ui-pop{left:max(46px,calc(var(--sai-l,0px) + 44px))}
