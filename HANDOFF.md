@@ -513,3 +513,9 @@ Môi trường chặn CDN nên cần: `npm i three@0.160.1 playwright-core @spar
 - Chi tiết 130/131 ở cuối `docs/PHIEN115.md`; chi tiết 132 + prompt bàn giao ở `docs/PHIEN132.md`. `sw.js` = `dgt-v134`, `npm test` 1045/1045.
 - **Phiên 132 (mục 1 hoàn thiện):** `js/world/minimap.js` `WORLD_BOX` x −125/122 → **−140/140** (bốn vùng sâu tới x ±136, trước đó người ở góc bị kẹp mép); `js/world/tutorial.js` chủ đề `hangyeu` nói **tám vùng** + nhắc bốn vùng sâu và dải cấp 72–140; `tests/vungsau.test.mjs` +1 test (bản đồ phủ mọi vùng, hướng dẫn nhắc 8 vùng).
 - **Phiên 133: mục 2 XONG** (`strengthOf` bỏ hẳn số hạng √hạt sen, `sen` truyền vào bị bỏ qua; chi tiết + việc còn lại ở `docs/PHIEN133.md`). Dòng dưới là ghi chú cũ trước khi làm: rà `js/world/strength.js` (√hạt sen), `LGT.strength`, mọi chỗ sát thương/chỉ số; sức mạnh chỉ từ EXP/cấp (Tu Vi), kỹ năng, cách cộng chiêu (combo), đồ, vật phẩm; thêm test độc lập với sen.
+
+### Phiên 159 (2026-11-14) — danh sách 2 mục của ptg (chơi trên máy tính): mục 1 XONG, mục 2 CHƯA
+- **Mục 1 (xong, `npm test` 1139/1139, `sw.js` = `dgt-v159`):** chuột PHẢI = đi; bấm chuột phải 2 lần vào quái = khóa mục tiêu (`LGT.farm.pickAt/unlock/locked`, `lockUid` trong `js/ui/farm.js`, logic thuần ở `js/world/mouseTarget.js`, nối chuột ở `js/world/world.js` `onClick`). Chuột trái không còn đi trên đất (chỉ chạm chương/bồ đoàn); cảm ứng/bút vẫn bấm = đi. Esc bỏ khóa. Mọi đòn (Đánh thường, Thương, chiêu phái) nhắm quái đã khóa vì cùng dùng `target()`. Chi tiết + việc còn mở + gợi ý mục 2: `docs/PHIEN159.md`.
+- **Việc kế tiếp = mục 2:** Q = đánh thường (luôn dùng được), W/E/R rồi 1/2/3/4… = thứ tự các chiêu. Lưu ý xung đột W = đi (Phiên 129) — hỏi ptg trước khi gỡ WASD.
+- CHƯA nhìn bằng mắt (không có WebGL/chuột thật) — ptg cần thử trên máy tính.
+

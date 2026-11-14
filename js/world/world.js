@@ -1,4 +1,5 @@
 // Chế độ đi bộ: nhân vật người chơi + camera góc nhìn thứ ba + điều khiển (WASD/mũi tên, bấm-để-đi, kéo xoay, cuộn/chụm để zoom, joystick cảm ứng).
+// Phiên 159 — CHUỘT trên máy tính: CHUỘT PHẢI = đi tới đó; bấm chuột phải 2 lần vào quái = khóa mục tiêu (LGT.farm.pickAt); chuột trái = chỉ chạm chương/bồ đoàn, kéo (trái hoặc phải) = xoay camera. Cảm ứng/bút: bấm = đi (như cũ).
 // Logic tính toán ở worldLogic.js (có test); file này chỉ nối với three.js, DOM và vòng lặp cảnh.
 import * as THREE from 'three';
 import './placements.js';                                  // đăng ký vật cản của hoa viên, nhà... vào layout.js
@@ -12,6 +13,7 @@ import { damp } from '../util.js';
 import {
   WALK_SPEED, RUN_SPEED, CLICK_SPEED, CAM_DIST, CAM_PITCH, moveVector, joyVector, joyRun, moveKeyOf, walkStep, createNavigator, camPose, clipCamDist, dragCamera, zoomCamera, facingOf,
 } from './worldLogic.js';
+import { createDoubleClick } from './mouseTarget.js';
 import { shotPose, blendShot } from './fishShot.js';   // Phiên 120: góc camera câu cá / cầm cá
 
 const isEditable = (el) => !!el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName));
@@ -67,7 +69,7 @@ export function createWorld({ scene, camera, canvas, coarse = false, LGT = windo
   canvas.style.touchAction = 'none';
   canvas.addEventListener('pointerdown', (e) => {
     ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    down = ptrs.size === 1 ? { id: e.pointerId, x: e.clientX, y: e.clientY, t: performance.now(), moved: 0 } : null;
+    down = ptrs.size === 1 ? { id: e.pointerId, x: e.clientX, y: e.clientY, t: performance.now(), moved: 0, btn: e.button, mouse: e.pointerType === 'mouse' } : null;   // Phiên 159: nhớ nút chuột (0 trái, 2 phải) + có phải chuột không
     if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; pinch = Math.hypot(a.x - b.x, a.y - b.y); }
     try { canvas.setPointerCapture(e.pointerId); } catch (_) { /* bỏ qua */ }
   });
@@ -83,11 +85,25 @@ export function createWorld({ scene, camera, canvas, coarse = false, LGT = windo
   });
   const end = (e) => {
     const was = down && down.id === e.pointerId ? down : null; ptrs.delete(e.pointerId); if (ptrs.size < 2) pinch = 0;
-    if (was && was.moved <= 8 && performance.now() - was.t < 500 && e.type === 'pointerup' && !blockedNow()) pickGround(e.clientX, e.clientY);
+    if (was && was.moved <= 8 && performance.now() - was.t < 500 && e.type === 'pointerup' && !blockedNow()) onClick(e.clientX, e.clientY, was);
     if (was) down = null;
   };
   canvas.addEventListener('pointerup', end); canvas.addEventListener('pointercancel', end);
   canvas.addEventListener('wheel', (e) => { if (blockedNow()) return; e.preventDefault(); dist = zoomCamera(dist, e.deltaY); }, { passive: false });
+  canvas.addEventListener('contextmenu', (e) => e.preventDefault());   // Phiên 159: chuột phải dùng để đi → không hiện menu của trình duyệt
+  const dbl = createDoubleClick();
+  /** Một cú bấm (không kéo). Chuột phải: đi tới đó; bấm đúp trúng quái = khóa mục tiêu. Chuột trái: chỉ chạm chương/bồ đoàn. Cảm ứng/bút: bấm = đi. */
+  function onClick(cx, cy, d) {
+    if (!d.mouse) { pickGround(cx, cy, true); return; }
+    if (d.btn === 2) { if (dbl.hit(cx, cy, performance.now()) && pickMonsterAt(cx, cy)) return; pickGround(cx, cy, true); return; }
+    if (d.btn === 0) pickGround(cx, cy, false);
+  }
+  /** Tia từ con trỏ chạm quái nào → khóa làm mục tiêu (js/ui/farm.js). Trả true nếu đã khóa được. */
+  function pickMonsterAt(cx, cy) {
+    const F = LGT.farm; if (!F || typeof F.pickAt !== 'function') return false;
+    ndc.set((cx / innerWidth) * 2 - 1, -(cy / innerHeight) * 2 + 1); ray.setFromCamera(ndc, camera);
+    const r = F.pickAt(ray.ray.origin, ray.ray.direction); return !!(r && r.ok);
+  }
 
   /** Tia từ điểm màn hình (cx, cy) có trúng vật 3D gắn với chương nào không → spot hoặc null. */
   function spotAt(cx, cy) {
@@ -95,10 +111,11 @@ export function createWorld({ scene, camera, canvas, coarse = false, LGT = windo
     const h = pickSpot(ray.ray.origin, ray.ray.direction);
     return h ? h.spot : null;
   }
-  function pickGround(cx, cy) {
+  function pickGround(cx, cy, ground = true) {
     ndc.set((cx / innerWidth) * 2 - 1, -(cy / innerHeight) * 2 + 1); ray.setFromCamera(ndc, camera);
     const hs = pickSeat(ray.ray.origin, ray.ray.direction); if (hs) { sit(hs.seat.id); return; }   // bấm bồ đoàn → đi tới ngồi
     const sp = spotAt(cx, cy); if (sp) { goTo(sp.id); return; }
+    if (!ground) return;                                      // Phiên 159: chuột trái không đi trên đất (chỉ chuột phải / cảm ứng)
     release(); arrival.cancel(); showHint(null);
     ndc.set((cx / innerWidth) * 2 - 1, -(cy / innerHeight) * 2 + 1); ray.setFromCamera(ndc, camera);
     plane.constant = -P.y;                                    // mặt phẳng ngang tại độ cao của người

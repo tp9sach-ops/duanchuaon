@@ -95,3 +95,21 @@ test('Phiên 130: ban ngày quái NGỦ trong bụi khoảng rừng (không đ�
   LGT.night = 0.1; step(1); assert.ok(reg().length <= Z.cap, 'sáng: dư cap bị rút'); assert.ok(reg().every((m) => Z.rects.some((r) => inR(r, m)) || m.eng), 'sáng: quái ngoài khoảng rừng biến mất');
   LGT.night = keep; step(0.5);
 });
+
+test('Phiên 159: chuột phải 2 lần vào quái → khóa mục tiêu; mọi đòn nhắm con đã khóa (dù có con gần hơn); chết/xa/Esc thì bỏ khóa', () => {
+  const keepPos = LGT.world.pos, keepNight = LGT.night; LGT.night = 1; LGT.world.pos = { x: -62, z: 66 }; step(0.5);
+  const mons = LGT.farmView.mons.filter((m) => !m.boss); assert.ok(mons.length >= 2, 'có ít nhất 2 quái');
+  const p = LGT.world.pos, byD = [...mons].sort((a, b) => Math.hypot(a.x - p.x, a.z - p.z) - Math.hypot(b.x - p.x, b.z - p.z));
+  const near = byD[0], far = byD.find((m) => m !== near && Math.hypot(m.x - p.x, m.z - p.z) < 30);
+  assert.ok(far, 'có con thứ hai trong 30 m'); {
+    const aimAt = (m) => { const o = { x: m.x, y: 1.2, z: m.z + 12 }; return api.pickAt(o, { x: 0, y: 0, z: -1 }); };   // tia thẳng vào thân con m
+    const r = aimAt(far); assert.equal(r.ok, true); assert.equal(api.locked, far.uid); step(0.2);
+    assert.equal(LGT.farmView.target, far.uid, 'thanh mục tiêu / vòng sáng chuyển sang con đã khóa');
+    assert.equal(api.status().ten, far.ten);
+    api.unlock(); assert.equal(api.locked, ''); step(0.2);
+    assert.notEqual(api.pickAt({ x: 500, y: 1, z: 500 }, { x: 0, y: 0, z: -1 }).ok, true, 'bắn trượt → không khóa');
+    assert.equal(api.locked, '');
+    aimAt(far); LGT.world.pos = { x: p.x + 200, z: p.z + 200 }; step(0.3); assert.equal(api.locked, '', 'đi quá xa thì tự bỏ khóa');
+  }
+  LGT.world.pos = keepPos; LGT.night = keepNight; step(0.5);
+});

@@ -5,7 +5,7 @@ export const COACH_DELAY_MS = 4000;   // chờ sau khi HUD hiện (sau lời ch�
 
 /** Mỗi bước: chữ + danh sách bộ chọn CSS của nút cần chỉ (lấy cái đầu tiên đang hiện). Bước không có nút thì `fallback` chỉ về giữa-dưới màn hình. */
 export const STEPS = [
-  { id: 'move',  title: 'Đi lại',        text: 'Chạm hoặc bấm vào đất để nhân vật đi tới đó. Trên điện thoại có thể kéo cần tròn bên trái; trên máy tính dùng phím W A S D.', targets: ['#joy'], fallback: 'ground' },
+  { id: 'move',  title: 'Đi lại',        text: 'Trên máy tính: bấm CHUỘT PHẢI vào đất để nhân vật đi tới đó (hoặc dùng phím W A S D); kéo chuột để xoay camera; bấm chuột phải 2 lần vào quái để chọn mục tiêu. Trên điện thoại: chạm vào đất hoặc kéo cần tròn bên trái.', targets: ['#joy'], fallback: 'ground' },
   { id: 'quest', title: 'Làm nhiệm vụ',  text: 'Bấm “Nhiệm vụ”, rồi bấm “Dẫn đường” ở việc muốn làm: nhân vật sẽ tự đi tới chỗ cần làm và chỉ nút cần bấm.', targets: ['.hm-mi[data-id="nhiemvu"]'], fallback: null },
   { id: 'help',  title: 'Quên cách chơi?', text: 'Bấm nút “?” ở góc phải-trên để mở sổ tay: các nút, khiêng đồ, yêu quái, xây nhà… đều có hướng dẫn ngắn.', targets: ['.hm-ic[data-id="trogiup"]'], fallback: null },
 ];

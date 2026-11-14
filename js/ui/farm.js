@@ -4,6 +4,7 @@
 // Quái không đánh trả (bãi rừng an toàn để luyện); đòn dùng stoneDamage/spearDamage theo sức mạnh như khi đánh yêu quái. Chưa có Hệ người chơi nên chưa tính khắc/sinh (G2).
 import { MONSTERS, FARM_ZONES, FARM_CFG } from '../data/monsters.js';
 import { createSpawner, tickSpawner, hitMonster, nearestMonster, setNight, isNight, rectsOf, ZONE_IDS } from '../world/spawn.js';
+import { pickMonster, LOCK_RANGE } from '../world/mouseTarget.js';   // Phiên 159: chuột phải 2 lần vào quái = khóa mục tiêu
 import { loadFarm, settleKill, settleBoss, senLeft, tuViOf, killXp } from '../world/farm.js';
 import { STONE, SPEAR, stoneDamage, spearDamage, rngSeed } from '../world/yeuquai.js';
 import { mapAvailable } from '../world/minimap.js';
@@ -44,7 +45,20 @@ export function initFarm(hud, { toast = () => {} } = {}) {
   const all = () => ZONE_IDS.filter((id) => spawners[id]).flatMap((id) => spawners[id].mons);
   const spOf = (m) => spawners[m.zone];
   const gap = (m, p) => Math.hypot(m.x - p.x, m.z - p.z);
-  const target = () => { const p = pos(); if (!p || !here() || bossOn()) return null; let best = null, bd = SIGHT + 1; for (const m of view.mons) { const d = gap(m, p); if (d <= bd) { bd = d; best = m; } } return best; };
+  let lockUid = '';   // Phiên 159: quái người chơi đã khóa bằng chuột phải 2 lần (rỗng = tự chọn quái gần nhất như cũ)
+  const target = () => {
+    const p = pos(); if (!p || !here() || bossOn()) return null;
+    if (lockUid) { const L = view.mons.find((m) => m.uid === lockUid); if (L && gap(L, p) <= LOCK_RANGE) return L; lockUid = ''; }   // quái đã chết / biến mất / ở quá xa → bỏ khóa
+    let best = null, bd = SIGHT + 1; for (const m of view.mons) { const d = gap(m, p); if (d <= bd) { bd = d; best = m; } } return best;
+  };
+  /** Chọn (khóa) quái dưới tia chuột {origin, dir}. Trả { ok, ten, uid } | { ok:false, reason }. Mọi đòn (đánh thường, Thương, chiêu) nhắm vào quái đã khóa. */
+  function pickAt(origin, dir) {
+    const p = pos(); if (!p || !here() || bossOn()) return { ok: false, reason: 'khong-quai' };
+    const m = pickMonster(origin, dir, view.mons.filter((x) => gap(x, p) <= LOCK_RANGE)); if (!m) return { ok: false, reason: 'khong-trung' };
+    lockUid = m.uid; toast(`Đã chọn mục tiêu: ${m.ten}`, 1400); return { ok: true, ten: m.ten, uid: m.uid };
+  }
+  const unlock = () => { const was = !!lockUid; lockUid = ''; return was; };
+  if (typeof addEventListener === 'function') addEventListener('keydown', (e) => { if (e.code === 'Escape' && lockUid && !LGT.panelOpen) unlock(); });   // Esc bỏ khóa mục tiêu (khi không có bảng nào đang mở)
 
   function reward(r) {
     const mon = r.mon, now = Date.now(), s = settleKill(farm, MONSTERS[mon.type], r.drops, now); farm = s.farm; save();
@@ -150,7 +164,7 @@ export function initFarm(hud, { toast = () => {} } = {}) {
   }
 
   LGT.farm = {
-    skillReady, skillHit, get tuviInfo() { return tuViOf(farm); },
+    skillReady, skillHit, pickAt, unlock, get locked() { return lockUid; }, get tuviInfo() { return tuViOf(farm); },
     stone, spear, toggleAuto, grantBoss,
     get tuvi() { return tuViOf(farm).tuvi; }, get state() { return farm; },
     status() { const t = target(); return { active: !!t || running, ten: t ? t.ten : '', stoneCd: cdStone, spearCd: cdSpear, canAuto: true, auto: running, autoLeft: Math.floor(autoLeft(auto, Date.now()) / 60) }; },
