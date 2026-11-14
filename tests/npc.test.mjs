@@ -51,7 +51,7 @@ test('trạng thái hỏng/độc không làm vỡ: chuỗi sai, id lạ, số �
 });
 
 test('dân làng và hoạt động ngoài chùa: id duy nhất, lời ≤ 80 ký tự, điểm đứng/spot đi tới được và bấm trúng được', () => {
-  assert.equal(VILLAGERS.length, 10); assert.equal(new Set(TALKERS.map((t) => t.id)).size, TALKERS.length);
+  assert.equal(VILLAGERS.length, 12); assert.equal(new Set(TALKERS.map((t) => t.id)).size, TALKERS.length);
   for (const t of TALKERS) {
     assert.ok(t.lines.length >= 3, t.id);
     for (const l of t.lines) { assert.ok(Array.from(l).length <= 80, l); assert.equal(cleanSay(l), l, l); }
