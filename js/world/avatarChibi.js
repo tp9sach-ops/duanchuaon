@@ -89,7 +89,7 @@ export function createChibiAvatar({ name = 'Khách', color = DEFAULT_COLOR, hair
   }
 
   // Côn (cầm tay phải): gắn vào xương BÀN TAY (cổ tay) nên theo cả khuỷu lẫn cổ tay. Thân dọc theo cánh tay (trục −x của tay phải) → xoay −90° quanh z.
-  // Phiên 126: BỎ MŨI NHỌN (trước đây có mũi thương + tua); cán đối xứng dài 1,5 m, NẮM ĐÚNG GIỮA cán (trâu da quấn chỗ nắm, hai đầu có chụp vàng + dải đỏ). MÚA: xoay quanh bàn tay theo pose.spin — đặt thứ tự Euler YXZ để xoay y (sau khi đã dóng cán dọc cánh tay bằng z) = côn quay trong mặt phẳng dọc trước người khi tay đưa ngang trước. Hiện sẵn khi vào thế chiến đấu (Phiên 120).
+  // Phiên 126: BỎ MŨI NHỌN (trước đây có mũi thương + tua); cán đối xứng dài 1,5 m, NẮM ĐÚNG GIỪA cán (trâu da quấn chỗ nắm, hai đầu có chụp vàng + dải đỏ). MÚA: xoay quanh bàn tay theo pose.spin — đặt thứ tự Euler YXZ để xoay y (sau khi đã dóng cán dọc cánh tay bằng z) = côn quay trong mặt phẳng dọc trước người khi tay đưa ngang trước. Hiện sẵn khi vào thế chiến đấu (Phiên 120).
   const staff = new THREE.Group(); staff.visible = false; staff.rotation.order = 'YXZ'; staff.rotation.set(0, 0, -Math.PI / 2); staff.position.set(-0.03, 0, 0); B.handR.add(staff);
   { const woodM = std(0x7a4a24, 0.55), capM = std(0xe0a93a, 0.35), bandM = std(0xb3261e, 0.5), gripM = std(0x2f1d10, 0.8);
     mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.5, 8), woodM, staff, 0, 0, 0);                    // cán: y −0,75 … +0,75, tâm đúng chỗ nắm tay
