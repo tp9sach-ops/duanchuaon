@@ -20,7 +20,7 @@ export function initNpc({ toast, addMerit }) {
     if (id === 'trikhach' && LGT.merit && !story) setTimeout(() => LGT.merit.open(), 700);   // Thầy Tri khách giữ việc đổi lá bồ đề (Phiên 35)
     if (id === 'bacphuong' && LGT.land && !story) setTimeout(() => LGT.land.open(), 700);   // Bác Tư khu phố: đất ở + đổi xóm xem (Phiên 36)
     if (id === 'nvdienmay' && !story) setTimeout(() => { if (LGT.items) LGT.items.openShop('dienmay'); else if (LGT.board) LGT.board.shop(); }, 900);   // Nhân viên Điện Máy Lam Sen: Ván trượt 100 lá + Gậy như ý 400 lá (Mục 1)
-    if (id === 'nvkimhoan' && LGT.items && !story) setTimeout(() => LGT.items.openShop('kimhoan'), 900);   // Nhân viên Kim Hoàn Ngọc Lan: Ngọc hồi máu 100 lá + Ngọc dịch chuyển 200 lá (Mục 1)
+    if (id === 'nv9sach' && LGT.items && !story) setTimeout(() => LGT.items.openShop('banhsr'), 900);   // Mục 3 (14/11): Nhân viên Bánh Sầu Riêng 9 Sạch: Bánh sầu riêng 3 vị 100 lá + Bánh sầu riêng pho mai than tre 200 lá (trước đây Kim Hoàn Ngọc Lan bán Ngọc hồi máu / dịch chuyển; Kim Hoàn nay chỉ trò chuyện)
     if (LGT.act) LGT.act(r.npc.act ? 'visit' : 'npc', id);   // nhiệm vụ: trò chuyện / ghé điểm cảnh
     if (r.reward) { addMerit(r.reward); setTimeout(() => toast(`${r.npc.ten} tặng bạn ${r.reward} hạt sen hôm nay.`, 3500), 2500); }
   };
