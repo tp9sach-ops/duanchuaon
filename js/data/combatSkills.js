@@ -30,7 +30,7 @@ export const COMBAT_SKILLS = deepFreeze([
   S({ id: 'kim_1', he: 'kim', slot: 1, ten: 'Kim Cương Trảm', cap: 10, cd: 6, heSo: 1.5, fx: { choang: { chance: 0.3, dur: 2 } } }),
   S({ id: 'moc_1', he: 'moc', slot: 1, ten: 'U Minh Linh Tiễn', cap: 10, cd: 5, heSo: 1.0, fx: { hits: 3, doc: { pctPerSec: 0.2, dur: 6 } } }),
   S({ id: 'thuy_1', he: 'thuy', slot: 1, ten: 'Huyền Băng Chưởng', cap: 10, cd: 6, heSo: 1.3, fx: { cham: { pct: 0.5, dur: 4 } } }),
-  S({ id: 'hoa_1', he: 'hoa', slot: 1, ten: 'Liệt Hỏa Chưởng', cap: 10, cd: 7, heSo: 1.8, fx: { noLan: { r: 4 } } }),
+  S({ id: 'hoa_1', he: 'hoa', slot: 1, ten: 'Liệt Hỏa Chưởng', cap: 10, cd: 7, heSo: 1.8, moc: ['hoa_3'], fx: { noLan: { r: 4 } } }),
   S({ id: 'tho_1', he: 'tho', slot: 1, ten: 'Địa Sách Chưởng', cap: 10, cd: 6, heSo: 1.4, fx: { choang: { chance: 1, dur: 1.5 } } }),
   // ---- Skill 2 (buff, cấp 14) ----
   S({ id: 'kim_2', he: 'kim', slot: 2, ten: 'Hộ Thân Cương Khí', cap: 14, cd: 20, heSo: 0, fx: { dur: 10, giap: 0.2, phanDon: { pct: 0.1, canChien: true } } }),
@@ -42,7 +42,7 @@ export const COMBAT_SKILLS = deepFreeze([
   S({ id: 'kim_3', he: 'kim', slot: 3, ten: 'Thiết Kỵ Xung Trận', cap: 20, cd: 15, heSo: 3.0, fx: { lao: { khoang: 10 }, dienRong: true, hatVang: true } }),
   S({ id: 'moc_3', he: 'moc', slot: 3, ten: 'Vạn Hương Quy Tâm', cap: 20, cd: 20, heSo: 0, fx: { suongDoc: { r: 8, dur: 6 }, cham: { pct: 0.4, dur: 6 }, mon: { pctPerSec: 0.05 } } }),
   S({ id: 'thuy_3', he: 'thuy', slot: 3, ten: 'Băng Phong Thiên Lý', cap: 20, cd: 22, heSo: 0, fx: { dongBang: { r: 10, dur: 3 }, tatCaQuai: true } }),
-  S({ id: 'hoa_3', he: 'hoa', slot: 3, ten: 'Hỏa Long Xuất Hải', cap: 20, cd: 25, heSo: 4.5, fx: { duongRong: true, thieu: { dur: 3 } } }),
+  S({ id: 'hoa_3', he: 'hoa', slot: 3, ten: 'Hỏa Long Xuất Hải', cap: 20, cd: 25, heSo: 4.5, moc: ['hoa_hoalong_4'], fx: { duongRong: true, thieu: { dur: 3 } } }),
   S({ id: 'tho_3', he: 'tho', slot: 3, ten: 'Hư Không Trận', cap: 20, cd: 24, heSo: 0, tamSo: ['fx.vung.hePerSec'], fx: { vung: { dur: 6, cham: 0.6, hePerSec: 0.5 } } }),
   // ---- Skill 4 (Pháp Môn, cấp 30) ----
   S({ id: 'kim_kimcang_4', he: 'kim', slot: 4, phapMon: 'kimcang', ten: 'Bất Hoại Kim Thân', cap: 30, cd: 30, heSo: 0, fx: { dur: 4, giamSatThuong: 0.3, mienKhongChe: true } }),
