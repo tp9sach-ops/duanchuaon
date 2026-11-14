@@ -106,7 +106,7 @@ export function initItems({ toast = () => {} } = {}) {
   setInterval(chipsDraw, 500); chipsDraw();
 
   // ---------- Vòng sáng lan ----------
-  const ripples = []; let clock = 0, skin = null;
+  const ripples = []; let clock = 0, skin = null, skinB = null;   // skinB: cây gậy thu gọn đeo sau lưng (Phiên 152)
   function spawnRipple(color, ahead, n) {
     const av = LGT.world && LGT.world.avatar, scene = av && av.group && av.group.parent; if (!scene) return;
     if (!RING_GEO) { RING_GEO = new THREE.RingGeometry(0.86, 1, 56); }
@@ -132,6 +132,7 @@ export function initItems({ toast = () => {} } = {}) {
     av.__items = true;
     let host = null; av.group.traverse((o) => { if (!host && o.isGroup && o.rotation.order === 'YXZ' && o.children.length >= 4) host = o; });   // nhóm cây côn của nhân vật chibi
     if (host) skin = { host, orig: host.children.slice(), mesh: null };
+    const bh = av.backHost; if (bh) skinB = { host: bh, orig: bh.children.slice(), mesh: null };   // Phiên 152: Gậy như ý cũng thu gọn sau lưng khi không đánh
     const upd = av.update.bind(av);
     av.update = (dt) => {
       upd(dt); clock += dt; stepRipples(dt);
@@ -140,6 +141,12 @@ export function initItems({ toast = () => {} } = {}) {
         if (want && !skin.mesh) { for (const c of skin.orig) c.visible = false; skin.mesh = buildStaff(); skin.mesh.scale.setScalar(STAFF_SCALE); skin.host.add(skin.mesh); loadStaffGlb(skin.mesh); }   // Phiên 149: gậy to hơn cây côn mặc định
         else if (!want && skin.mesh) { skin.host.remove(skin.mesh); skin.mesh = null; for (const c of skin.orig) c.visible = true; }   // đổi về Thương: trả cây côn mặc định
         if (skin.mesh) pulseGlows(skin.mesh, clock, !!av.swinging);
+      }
+      if (skinB) {   // Phiên 152: trên lưng — chỉ thay hình, hiện/ẩn do avatar tự lo (backHost.visible)
+        const wantB = staffOn();
+        if (wantB && !skinB.mesh) { for (const c of skinB.orig) c.visible = false; skinB.mesh = buildStaff(); skinB.mesh.scale.setScalar(STAFF_SCALE * 0.7); skinB.host.add(skinB.mesh); loadStaffGlb(skinB.mesh); }
+        else if (!wantB && skinB.mesh) { skinB.host.remove(skinB.mesh); skinB.mesh = null; for (const c of skinB.orig) c.visible = true; }
+        if (skinB.mesh) pulseGlows(skinB.mesh, clock, false);
       }
     };
     const sw = av.swing;
