@@ -3,6 +3,7 @@
 // Phiên 126: côn BỎ MŨI NHỌN, nắm ở giữa cán, múa/xoay quanh bàn tay (pose.spin); HỒ LÔ đeo eo trái (gourdPos(), pulseGourd() — hồn quái bay vào, xem js/world/soul.js); thanh Sinh Lực + Chân khí trên đầu khi giao chiến: setBars(hp 0..1 | null, mp 0..1) (js/ui/combatPose.js).
 // Phiên 131: CHỈ NGƯỜI CHƠI đeo hồ lô — createChibiAvatar({ gourd: false }) (NPC, dân làng) thì không có hồ lô; mặc định gourd = true.
 // Phiên 159: cast(skillId) = tư thế 30 chiêu Ngũ Hành (gồng → phát → thu, hai tay + thân + chân; logic world/chieuPose.js), trả về tổng số giây (0 = chiêu lạ).
+// Cập nhật 14/11 (mục 2b): màu NPC 'tachhoa' (avatarLogic.js) = đồng phục Tách Hoa: yếm xanh + nón beret + chun tóc (cờ col.tachhoa).
 // Cập nhật 14/11 (mục 2): setBackHidden(bool) — js/ui/board.js gọi khi đang CƯỠI thương / gậy như ý để cây thương thu gọn đeo sau lưng biến mất (đồ đang nằm dưới chân, không thể vừa cưỡi vừa đeo lưng). Cưỡi ván trượt thì vẫn đeo vũ khí sau lưng.
 // Mặt (mắt cười, miệng, má hồng), râu, tóc búi, hào quang gắn vào xương đầu; áo polo 9 Sạch = vùng màu trên thân + cổ áo + logo; cà sa = vỏ chuông gắn vào hông. Lỗi/chưa nạp GLB thì avatar.js dùng bản dựng khối.
 import * as THREE from 'three';
@@ -72,6 +73,15 @@ export function createChibiAvatar({ name = 'Khách', color = DEFAULT_COLOR, hair
     const ly = 0.36 * H - spY;
     const chest = mesh(new THREE.PlaneGeometry(0.1, 0.1), logoM, B.spine, 0.065, ly + 0.02, zf + 0.006); chest.renderOrder = 2;
     const back = mesh(new THREE.PlaneGeometry(0.2, 0.2), logoM, B.spine, 0, ly, zb - 0.006); back.rotation.y = Math.PI; back.renderOrder = 2;
+  }
+  // Đồng phục Tách Hoa (NPC nhân viên, ảnh ptg gửi 14/11): yếm xanh nhạt ngoài áo trắng (mảnh trước + mảnh sau + hai quai vai), nón beret xanh nhạt nghiêng một bên, chun vải kem quanh búi tóc. Số đo là TẠM, CHƯA nhìn bằng mắt.
+  if (col.tachhoa) {
+    const apronM = std(col.apron, 0.8), ay = 0.3 * H - spY, ah = 0.24 * H, aw = 0.34, topY = ay + ah / 2;
+    mesh(new THREE.BoxGeometry(aw, ah, 0.014), apronM, B.spine, 0, ay, zf + 0.01);
+    mesh(new THREE.BoxGeometry(aw, ah, 0.014), apronM, B.spine, 0, ay, zb - 0.01);
+    for (const sx of [-1, 1]) mesh(new THREE.BoxGeometry(0.05, 0.014, zf - zb + 0.03), apronM, B.spine, sx * 0.1, topY, midZ);
+    const beret = mesh(new THREE.SphereGeometry(0.5, 26, 12, 0, Math.PI * 2, 0, Math.PI * 0.5), std(col.beret, 0.85), face, 0.04, 0.17, -0.02); beret.scale.set(1, 0.6, 1.05); beret.rotation.z = -0.16;
+    if (bun) { const sc = mesh(new THREE.TorusGeometry(0.11, 0.032, 8, 16), std(col.scrunchie, 0.9), face, 0, 0.5, -0.1); sc.rotation.x = Math.PI / 2; }
   }
   { const beadM = std(0xc9792f, 0.4), beads = new THREE.InstancedMesh(geo(new THREE.SphereGeometry(0.03, 8, 6)), beadM, 15), m4 = new THREE.Matrix4();
     for (let i = 0; i < 15; i++) { const a = (i / 15) * Math.PI * 2; m4.makeTranslation(Math.sin(a) * 0.14, neckY - spY - 0.06 - (Math.cos(a) > 0 ? 0.07 * Math.cos(a) : 0), midZ + 0.02 + Math.cos(a) * 0.1); beads.setMatrixAt(i, m4); }
