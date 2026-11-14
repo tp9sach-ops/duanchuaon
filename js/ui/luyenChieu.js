@@ -7,14 +7,16 @@ import { listForHe, describeSkill, createDemoRuntime } from '../world/luyenChieu
 import { castTimeline } from '../world/chieuPose.js';
 import { HE_COLOR, HE_SEAT_ID, heLabel } from '../world/heSeats.js';
 import { normHe } from '../world/elements.js';
+import { tierOf } from '../world/chieuFxPlan.js';
 
 export async function initLuyenChieu({ toast = () => {} } = {}) {
   const LGT = window.LGT || (window.LGT = {}), Z = LGT.zones; if (!Z || !LGT.scene || !Z.get(LUYEN_ID)) return null;
-  let hooks = null, fx = null;
+  let hooks = null, fx = null, cfx = null;   // cfx = hiệu ứng 30 chiêu (Phiên 165, js/scene/chieuFx.js)
   try {
     const sc = await import('../scene/luyen.js'), vd = await import('../scene/voDai.js');
     hooks = sc.luyenHooks(LGT.scene); fx = vd.createFx(LGT.scene);
-    const def = Z.get(LUYEN_ID); def.load = hooks.load; def.dispose = () => { try { fx.clear(); } catch (_) { /* bỏ qua */ } hooks.dispose(); };
+    try { cfx = (await import('../scene/chieuFx.js')).createChieuFx(LGT.scene, { getTier: () => tierOf(LGT.perfLevel) }); } catch (_) { cfx = null; }   // lỗi thì dùng hiệu ứng cũ
+    const def = Z.get(LUYEN_ID); def.load = hooks.load; def.dispose = () => { try { fx.clear(); if (cfx) cfx.clear(); } catch (_) { /* bỏ qua */ } hooks.dispose(); };
   } catch (e) { console.warn('[Diệu Giang Tự] Cảnh luyện chiêu lỗi:', e && e.message); return null; }
 
   const rt = createDemoRuntime(); let he = null, items = [], busy = false;
@@ -54,16 +56,17 @@ export async function initLuyenChieu({ toast = () => {} } = {}) {
     // Phiên 163: tư thế nhân vật. Chiêu đánh quay về mộc nhân gần nhất; chiêu hỗ trợ giữ hướng hiện tại. `lead` = giây từ lúc bấm tới giữa khung "phát" (lúc đòn bay ra / trúng).
     const tg = nearestDummy(p), L = castTimeline(it.skill.id), lead = L ? L.gong + L.phat * 0.5 : 0;
     try { const W = LGT.world, av = W && W.avatar; if (!it.support && W && W.face) W.face(Math.atan2(tg.d.x - p.x, tg.d.z - p.z)); if (av && av.cast) av.cast(it.skill.id); } catch (_) { /* bỏ qua: không có tư thế thì vẫn ra hiệu ứng như cũ */ }
+    const plan = cfx ? cfx.cast(it.skill.id, { x: p.x, z: p.z, ry: Math.atan2(tg.d.x - p.x, tg.d.z - p.z), tx: tg.d.x, tz: tg.d.z }) : null;   // Phiên 165: vùng cảnh báo + hạt + tiếng; có thì bỏ vòng/luồng khí cũ
     if (it.support) {   // chiêu hỗ trợ: vòng sáng quanh người
-      fx.ring(p.x, p.z, f.r || 2.6, 1.0, color);
+      if (!plan) fx.ring(p.x, p.z, f.r || 2.6, 1.0, color);
       toast(`${it.skill.ten}: ${describeSkill(it.skill)}`, 2400);
     } else {
       const n = tg, ry = Math.atan2(n.d.x - p.x, n.d.z - p.z), speed = 18, delay = n.dist / speed;
-      fx.wave(p.x, p.z, ry, n.dist, speed, lead, color);
+      if (!plan) fx.wave(p.x, p.z, ry, n.dist, speed, lead, color);
       setTimeout(() => {
         if (!hooks) return; const area = f.dienRong || f.noLan || f.mua || f.song || f.docLan || f.suongDoc;
-        if (area) { fx.ring(n.d.x, n.d.z, (area && area.r) || 4, 1.0, color); LUYEN_DUMMIES.forEach((_, k) => hooks.hit(k)); } else hooks.hit(n.i);
-        fx.ring(n.d.x, n.d.z, 1.6, 0.6, color);
+        if (area) { if (!plan) fx.ring(n.d.x, n.d.z, (area && area.r) || 4, 1.0, color); LUYEN_DUMMIES.forEach((_, k) => hooks.hit(k)); } else hooks.hit(n.i);
+        if (!plan) fx.ring(n.d.x, n.d.z, 1.6, 0.6, color);
       }, Math.round((lead + delay) * 1000));
       toast(`${it.skill.ten}! −${r.dmg} (số mẫu) · ${describeSkill(it.skill)}`, 2400);
     }
