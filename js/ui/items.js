@@ -1,5 +1,6 @@
 // Vật phẩm mua bằng lá bồ đề (mục 1): giao diện. Luật/số: js/world/items.js (có test). Nạp từ js/ui/board.js (initBoard). Đặt LGT.items = { openShop(kind), closeShop(), regenMul(), tryRevive(), dmgMul(), state }.
-// - Cửa hàng 'kimhoan' (NPC Kim Hoàn Ngọc Lan): Ngọc hồi máu 100 lá (×5, 10 phút), Ngọc dịch chuyển 200 lá (hồi sinh tại chỗ, 20 phút). Cửa hàng 'dienmay' (NPC Điện Máy Lam Sen): Ván trượt 100 lá (js/ui/board.js), Gậy như ý 400 lá.
+// - Mục 3 (14/11): cửa hàng 'banhsr' (NPC "Nhân viên Bánh Sầu Riêng 9 Sạch", nhà phố 9 Sạch bên phải đường làng): Bánh sầu riêng 3 vị 100 lá (×5 hồi máu, 10 phút), Bánh sầu riêng pho mai than tre 200 lá (hồi sinh tại chỗ, 20 phút). Trước đây là "Ngọc hồi máu / Ngọc dịch chuyển" bán ở Kim Hoàn Ngọc Lan.
+//   openShop('kimhoan') (tên cũ) vẫn mở đúng cửa hàng bánh để chỗ nào còn gọi tên cũ không bị hỏng. Cửa hàng 'dienmay' (NPC Điện Máy Lam Sen): Ván trượt 100 lá (js/ui/board.js), Gậy như ý 400 lá, Nón Jingasa 400 lá.
 // - Hồi máu ×5 / hồi sinh tại chỗ: js/ui/farmCombat.js gọi LGT.items.regenMul() và tryRevive(). Hạn dùng tính theo giờ thật nên đổi tab vẫn chạy.
 // - Gậy như ý: MUA là có, nhưng chỉ hiện trên tay / có +1% sát thương / vòng sáng lan khi người chơi ĐANG CẦM Gậy như ý (LGT.loadout.weapon === 'nhuy', chọn ở Túi đồ). Mặc định cầm Thương: trả lại cây côn mặc định. Mua gậy xong tự cầm gậy.
 // Nhân vật dựng bằng khối (không phải chibi) thì không đổi hình gậy nhưng vẫn có +1% và vòng sáng. CHƯA nhìn bằng mắt trên máy thật.
@@ -10,7 +11,7 @@ import { askConfirm } from './dialog.js';
 import { buildStaff, loadStaffGlb, pulseGlows, STAFF_SCALE, STAFF_PINK } from './staffMesh.js';
 import { buildHat, HAT_POS } from './hatMesh.js';
 // Phiên 154: Nón Jingasa (Điện Máy, 400 lá): mua xong tự đội lên đầu nhân vật chibi (js/ui/hatMesh.js), +3% giáp = đòn quái đánh trúng bớt 3% (js/ui/farmCombat.js gọi LGT.items.afterArmor()). Cửa hàng có nút Cất nón / Đội nón. Vị trí nón là số TẠM (HAT_POS).
-// Phiên 149: Ngọc dịch chuyển có thể GHIM một chỗ (nút "Ghim chỗ hồi sinh" dưới chỉ báo hạn dùng, chỉ hiện khi ngọc còn hiệu lực): hết máu thì hồi sinh ở chỗ đã ghim, chưa ghim thì hồi sinh tại chỗ đang đứng (js/ui/farmCombat.js đọc LGT.items.pinned). Gậy như ý to gấp STAFF_SCALE lần cây côn mặc định, ánh sáng hồng.
+// Phiên 149: Bánh sầu riêng pho mai than tre (trước là Ngọc dịch chuyển) có thể GHIM một chỗ (nút "Ghim chỗ hồi sinh" dưới chỉ báo hạn dùng, chỉ hiện khi còn hiệu lực): hết máu thì hồi sinh ở chỗ đã ghim, chưa ghim thì hồi sinh tại chỗ đang đứng (js/ui/farmCombat.js đọc LGT.items.pinned). Gậy như ý to gấp STAFF_SCALE lần cây côn mặc định, ánh sáng hồng.
 
 const KEY = 'lgt.items', PIN_KEY = 'lgt.itempin';
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
@@ -74,11 +75,11 @@ export function initItems({ toast = () => {} } = {}) {
   }
   function draw() {
     const la = laNow(); list.textContent = '';
-    title.textContent = shopKind === 'kimhoan' ? 'Kim Hoàn Ngọc Lan' : 'Điện Máy Lam Sen';
+    title.textContent = shopKind === 'banhsr' ? 'Bánh Sầu Riêng 9 Sạch' : 'Điện Máy Lam Sen';
     laLine.textContent = `Bạn có ${la} lá bồ đề.`;
-    if (shopKind === 'kimhoan') {
+    if (shopKind === 'banhsr') {
       for (const g of GEMS) {
-        const left = remainSec(st, g.id), meta = `Giá ${g.gia} lá · dùng ${g.giay / 60} phút${left > 0 ? ` · đang có hiệu lực, còn ${fmtTime(left)} (mua thêm sẽ cộng dồn)` : ''}`;
+        const left = remainSec(st, g.id), meta = `Giá ${g.gia} lá · tác dụng ${g.giay / 60} phút${left > 0 ? ` · đang có tác dụng, còn ${fmtTime(left)} (mua thêm sẽ cộng dồn)` : ''}`;
         list.appendChild(row(g.ten, g.mo, meta, left > 0 ? 'Mua thêm' : 'Mua', la >= g.gia, () => buyGemUi(g)));
       }
     } else {
@@ -89,7 +90,7 @@ export function initItems({ toast = () => {} } = {}) {
     }
   }
   const closeShop = () => { box.hidden = true; };
-  const openShop = (kind) => { shopKind = kind === 'kimhoan' ? 'kimhoan' : 'dienmay'; draw(); box.hidden = false; x.focus({ preventScroll: true }); };
+  const openShop = (kind) => { shopKind = kind === 'banhsr' || kind === 'kimhoan' ? 'banhsr' : 'dienmay'; draw(); box.hidden = false; x.focus({ preventScroll: true }); };   // 'kimhoan' = tên cũ của cửa hàng này
   x.addEventListener('click', closeShop);
   box.addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.stopPropagation(); closeShop(); } });
 
@@ -102,17 +103,17 @@ export function initItems({ toast = () => {} } = {}) {
     for (const g of GEMS) {
       const left = remainSec(st, g.id), on = left > 0;
       if (on) chipList.appendChild(el('span', 'it-chip', `${g.ten}${g.id === 'hoimau' ? ' ×5' : ''} · ${fmtTime(left)}`));
-      else if (was[g.id]) toast(`${g.ten} đã hết hạn.`, 3200);
+      else if (was[g.id]) toast(`${g.ten} đã hết tác dụng.`, 3200);
       was[g.id] = on;
     }
-    pinBtn.hidden = !canRevive(st);   // nút ghim chỉ hiện khi Ngọc dịch chuyển còn hiệu lực
+    pinBtn.hidden = !canRevive(st);   // nút ghim chỉ hiện khi Bánh sầu riêng pho mai than tre còn tác dụng
     pinBtn.textContent = pin ? '📍 Bỏ ghim chỗ hồi sinh' : '📍 Ghim chỗ hồi sinh'; pinBtn.classList.toggle('on', !!pin);
   }
   pinBtn.addEventListener('click', () => {
     if (pin) { pin = null; savePin(); chipsDraw(); toast('Đã bỏ ghim: hết máu sẽ hồi sinh tại chỗ đang đứng.', 3200); return; }
     const p = LGT.world && LGT.world.pos;
     if (!p || LGT.inHouse) { toast('Không ghim được ở đây. Hãy ra ngoài rồi ghim lại.', 3000); return; }
-    pin = { x: p.x, z: p.z }; savePin(); chipsDraw(); toast('Đã ghim chỗ này: hết máu (còn Ngọc dịch chuyển) bạn sẽ hồi sinh ở đây.', 4200);
+    pin = { x: p.x, z: p.z }; savePin(); chipsDraw(); toast('Đã ghim chỗ này: hết máu (còn tác dụng của bánh pho mai than tre) bạn sẽ hồi sinh ở đây.', 4200);
   });
   setInterval(chipsDraw, 500); chipsDraw();
 
@@ -184,7 +185,7 @@ export function initItems({ toast = () => {} } = {}) {
   function tryRevive() {
     if (!canRevive(st)) return false;
     spawnRipple(0x7fd0ff, 0, 3);
-    toast(`Ngọc dịch chuyển phát sáng — bạn hồi sinh ${pin ? 'ở chỗ đã ghim' : 'ngay tại chỗ'}! (còn ${fmtTime(remainSec(st, 'dichchuyen'))})`, 4200);
+    toast(`Bánh sầu riêng pho mai than tre tiếp sức — bạn hồi sinh ${pin ? 'ở chỗ đã ghim' : 'ngay tại chỗ'}! (còn ${fmtTime(remainSec(st, 'dichchuyen'))})`, 4200);
     return true;
   }
 
