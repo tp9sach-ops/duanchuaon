@@ -1,7 +1,8 @@
 // Vật phẩm mua bằng lá bồ đề (mục 1): giao diện. Luật/số: js/world/items.js (có test). Nạp từ js/ui/board.js (initBoard). Đặt LGT.items = { openShop(kind), closeShop(), regenMul(), tryRevive(), dmgMul(), state }.
-// - Mục 3 (14/11): cửa hàng 'banhsr' (NPC "Nhân viên Bánh Sầu Riêng 9 Sạch", nhà phố 9 Sạch bên phải đường làng): Bánh sầu riêng 3 vị 100 lá (×5 hồi máu, 10 phút), Bánh sầu riêng pho mai than tre 200 lá (hồi sinh tại chỗ, 20 phút). Trước đây là "Ngọc hồi máu / Ngọc dịch chuyển" bán ở Kim Hoàn Ngọc Lan.
+// - Mục 3 (14/11): cửa hàng 'banhsr' (NPC "Nhân viên Bánh Sầu Riêng 9 Sạch", nhà phố 9 Sạch bên phải đường làng): Bánh sầu riêng 3 vị 155 lá (×5 hồi máu, 10 phút), Bánh sầu riêng pho mai than tre 150 lá (hồi sinh tại chỗ, 20 phút). Trước đây là "Ngọc hồi máu / Ngọc dịch chuyển" bán ở Kim Hoàn Ngọc Lan.
 //   openShop('kimhoan') (tên cũ) vẫn mở đúng cửa hàng bánh để chỗ nào còn gọi tên cũ không bị hỏng. Cửa hàng 'dienmay' (NPC Điện Máy Lam Sen): Ván trượt 100 lá (js/ui/board.js), Gậy như ý 400 lá, Nón Jingasa 400 lá.
-// - Phiên 163: cửa hàng 'tachhoa' (NPC "Nhân viên Tách Hoa", nhà phố Tách Hoa cạnh 9 Sạch): Trà sữa xoài hoàng kim 50 lá = +30 phút Tự động hàng yêu hôm nay (gọi LGT.farm.addAutoMinutes, js/ui/farm.js).
+// - Phiên 163: cửa hàng 'tachhoa' (NPC "Nhân viên Tách Hoa", nhà phố Tách Hoa cạnh 9 Sạch): Trà sữa xoài hoàng kim 39 lá = +30 phút Tự động hàng yêu hôm nay (gọi LGT.farm.addAutoMinutes, js/ui/farm.js).
+// - 14/11: ảnh món (js/data/itemImages.js, data URI WebP nhỏ) hiện trong khung cửa hàng: hoimau / dichchuyen ở 'banhsr', trasua ở 'tachhoa'. Món khác chưa có ảnh thì không hiện.
 // - Hồi máu ×5 / hồi sinh tại chỗ: js/ui/farmCombat.js gọi LGT.items.regenMul() và tryRevive(). Hạn dùng tính theo giờ thật nên đổi tab vẫn chạy.
 // - Gậy như ý: MUA là có, nhưng chỉ hiện trên tay / có +1% sát thương / vòng sáng lan khi người chơi ĐANG CẦM Gậy như ý (LGT.loadout.weapon === 'nhuy', chọn ở Túi đồ). Mặc định cầm Thương: trả lại cây côn mặc định. Mua gậy xong tự cầm gậy.
 //   Phiên 163: cầm Gậy như ý đánh thường đủ 3 đòn liên tiếp → RỒNG HỒNG bay quanh người (js/ui/dragonFx.js). Chiêu (Chém khí...) gọi swing(số) nên không tính là đánh thường.
@@ -13,6 +14,7 @@ import { askConfirm } from './dialog.js';
 import { buildStaff, loadStaffGlb, pulseGlows, STAFF_SCALE, STAFF_PINK } from './staffMesh.js';
 import { buildHat, HAT_POS } from './hatMesh.js';
 import { createDragonFx, countHit } from './dragonFx.js';
+import { ITEM_IMG } from '../data/itemImages.js';   // 14/11: ảnh món trong khung cửa hàng
 // Phiên 154: Nón Jingasa (Điện Máy, 400 lá): mua xong tự đội lên đầu nhân vật chibi (js/ui/hatMesh.js), +3% giáp = đòn quái đánh trúng bớt 3% (js/ui/farmCombat.js gọi LGT.items.afterArmor()). Cửa hàng có nút Cất nón / Đội nón. Vị trí nón là số TẠM (HAT_POS).
 // Phiên 149: Bánh sầu riêng pho mai than tre (trước là Ngọc dịch chuyển) có thể GHIM một chỗ (nút "Ghim chỗ hồi sinh" dưới chỉ báo hạn dùng, chỉ hiện khi còn hiệu lực): hết máu thì hồi sinh ở chỗ đã ghim, chưa ghim thì hồi sinh tại chỗ đang đứng (js/ui/farmCombat.js đọc LGT.items.pinned). Gậy như ý to gấp STAFF_SCALE lần cây côn mặc định, ánh sáng hồng.
 
@@ -22,6 +24,7 @@ const CSS = '.it-box{position:fixed;left:50%;top:50%;transform:translate(-50%,-5
   + '.it-box header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}.it-box h3{margin:0;font-size:17px;color:#f2c14e}'
   + '.it-x{background:none;border:0;color:#f4e4c1;font-size:24px;line-height:1;cursor:pointer;padding:2px 8px}.it-la{margin:0 0 10px;color:#cdb98a}'
   + '.it-row{border:1px solid rgba(201,162,74,.35);border-radius:10px;padding:10px;margin-bottom:8px;background:rgba(255,255,255,.03)}.it-row b{color:#ffe08a}.it-row p{margin:4px 0}'
+  + '.it-img{display:block;max-width:100%;max-height:114px;width:auto;height:auto;border-radius:8px;margin:0 0 6px}'
   + '.it-meta{color:#cdb98a;font-size:13px}.it-buy{margin-top:6px;background:#c9a24a;color:#2a1a08;border:0;border-radius:8px;padding:8px 16px;font:600 14px inherit;cursor:pointer;min-height:40px}.it-buy:disabled{opacity:.45;cursor:default}'
   + '.it-chips{position:fixed;left:8px;top:calc(env(safe-area-inset-top,0px) + 56px);z-index:40;display:flex;flex-direction:column;gap:4px;pointer-events:none}'
   + '.it-chiplist{display:flex;flex-direction:column;gap:4px}.it-pin{pointer-events:auto;align-self:flex-start;background:rgba(26,17,10,.82);color:#9fe0ff;border:1px solid #6fb8dd;border-radius:999px;padding:5px 12px;font:600 12px "Be Vietnam Pro",system-ui,sans-serif;cursor:pointer;min-height:32px}.it-pin[hidden]{display:none}.it-pin.on{color:#ffe08a;border-color:#c9a24a}'
@@ -82,8 +85,10 @@ export function initItems({ toast = () => {} } = {}) {
     toast(`Đã uống ${TRASUA.ten} (−${r.cost} lá bồ đề): +${TRASUA.phut} phút Tự động hàng yêu hôm nay — còn ${autoLeftMin()} phút.`, 4200);
   }
   const autoLeftMin = () => { try { return LGT.farm && LGT.farm.status ? LGT.farm.status().autoLeft : 0; } catch (_) { return 0; } };
-  function row(ten, mo, meta, label, enabled, act) {
-    const r = el('div', 'it-row'); r.append(el('b', null, ten), el('p', null, mo), el('p', 'it-meta', meta));
+  function row(ten, mo, meta, label, enabled, act, img) {
+    const r = el('div', 'it-row');
+    if (img) { const im = el('img', 'it-img'); im.src = img; im.alt = ten; r.appendChild(im); }   // 14/11: ảnh món bên trên tên
+    r.append(el('b', null, ten), el('p', null, mo), el('p', 'it-meta', meta));
     const b = el('button', 'it-buy', label); b.type = 'button'; b.disabled = !enabled; b.addEventListener('click', act); r.appendChild(b); return r;
   }
   function draw() {
@@ -93,10 +98,10 @@ export function initItems({ toast = () => {} } = {}) {
     if (shopKind === 'banhsr') {
       for (const g of GEMS) {
         const left = remainSec(st, g.id), meta = `Giá ${g.gia} lá · tác dụng ${g.giay / 60} phút${left > 0 ? ` · đang có tác dụng, còn ${fmtTime(left)} (mua thêm sẽ cộng dồn)` : ''}`;
-        list.appendChild(row(g.ten, g.mo, meta, left > 0 ? 'Mua thêm' : 'Mua', la >= g.gia, () => buyGemUi(g)));
+        list.appendChild(row(g.ten, g.mo, meta, left > 0 ? 'Mua thêm' : 'Mua', la >= g.gia, () => buyGemUi(g), ITEM_IMG[g.id]));
       }
     } else if (shopKind === 'tachhoa') {
-      list.appendChild(row(TRASUA.ten, TRASUA.mo, `Giá ${TRASUA.gia} lá · +${TRASUA.phut} phút tự động hàng yêu hôm nay · hôm nay còn ${autoLeftMin()} phút`, 'Mua', la >= TRASUA.gia, buyTraSuaUi));
+      list.appendChild(row(TRASUA.ten, TRASUA.mo, `Giá ${TRASUA.gia} lá · +${TRASUA.phut} phút tự động hàng yêu hôm nay · hôm nay còn ${autoLeftMin()} phút`, 'Mua', la >= TRASUA.gia, buyTraSuaUi, ITEM_IMG.trasua));
     } else {
       const bd = LGT.board ? LGT.board.status() : { van: false };
       list.appendChild(row(BOARD.ten, `Ván trượt 3D: lướt đi nhanh gấp ${String(BOARD.mul).replace('.', ',')} lần. Ván KHÔNG phải vũ khí (không đánh được); đánh nhau thì tự xuống.`, `Giá ${BOARD.gia} lá${bd.van ? ' · Bạn đã có' : ''}`, bd.van ? 'Đã có' : 'Mua', !bd.van && la >= BOARD.gia, async () => { if (LGT.board) await LGT.board.buy(); draw(); }));
