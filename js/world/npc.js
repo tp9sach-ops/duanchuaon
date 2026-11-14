@@ -116,6 +116,17 @@ export const VILLAGERS = [
       'Tiệm mở cửa suốt ngày; hôm nay trời đẹp, bạn nhớ ghé vườn sen sau chùa nhé.',
       'Chúc bạn bình an, may mắn và nhiều niềm vui.',
     ] },
+  // Mục 3 (14/11): nhân viên tiệm Bánh Sầu Riêng 9 Sạch (nhà phố 9 Sạch, STORE_9SACH ở outside.js) — bán Bánh sầu riêng 3 vị + Bánh sầu riêng pho mai than tre (js/ui/npc.js mở cửa hàng 'banhsr').
+  // Đứng ở sân trước cửa tiệm, quay mặt ra đường (−x) như nhân viên Kim Hoàn; chỗ đứng 12,8 nằm trên vỉa hè (vùng duong-lang). Cách phông / hai giỏ hoa / standee ≥ 2,9 m. Vị trí là số TẠM, chưa nhìn bằng mắt.
+  { id: 'nv9sach', ten: 'Nhân viên Bánh Sầu Riêng 9 Sạch', color: '9sach', hair: 'bui', x: 16.4, z: 81.6, ry: -Math.PI / 2, stand: { x: 12.8, z: 81.6 },
+    lines: [
+      'Chào bạn! Bánh Sầu Riêng 9 Sạch, sạch là chính, ngon là mười.',
+      'Bánh sầu riêng 3 vị ăn vào là khỏe, hồi sức nhanh gấp năm lần.',
+      'Bánh pho mai than tre: lỡ gục xuống vẫn đứng dậy ngay tại chỗ.',
+      'Sầu riêng tươi chọn từng trái, làm bánh trong ngày.',
+      'Mua một được ba, nhớ quay vòng may mắn trước cửa nhé.',
+      'Cảm ơn bạn đã ghé tiệm. Chúc bạn một ngày an lạc!',
+    ] },
   { id: 'bacphuong', ten: 'Bác Tư khu phố', color: 'xam', hair: 'troc', beard: 'bac', x: 3.6, z: 153, ry: Math.PI / 2, stand: { x: 0.8, z: 153 },
     lines: [
       'Chào cháu. Xóm mình mỗi xóm mười nhà, đông quá thì lập xóm mới.',
