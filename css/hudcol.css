@@ -8,6 +8,8 @@
 .hud.col-mode .hud-col>.hud-zoom{flex-direction:row!important;gap:8px!important;pointer-events:auto}
 .hud.col-mode .hud-col>.hud-zoom button{width:38px;height:38px}
 .hud.col-mode .hud-col>.st-wrap[hidden]{display:none!important}
+/* Phiên 163: nút Giao lưu (.dl-chip, js/ui/duel.js) nằm trong cột nhưng cột có pointer-events:none nên nút KHÔNG BẤM ĐƯỢC (chỉ lỗi khi chơi bằng chuột, cột gom khối). Cho riêng nút này nhận chuột lại. */
+.hud.col-mode .hud-col>.dl-chip{pointer-events:auto!important;cursor:pointer}
 /* Nhúng trong khung (nút ngôi nhà của trang cha nằm sát mép trái): lùi cả cột vào để không che đồng hồ / thẻ nhiệm vụ */
 html[data-embedded=true] .hud.col-mode .hud-col{left:max(46px,calc(var(--sai-l,0px) + 44px))}
 html[data-embedded=true] .ui-pop{left:max(46px,calc(var(--sai-l,0px) + 44px))}

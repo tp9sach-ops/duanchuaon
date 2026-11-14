@@ -127,6 +127,17 @@ export const VILLAGERS = [
       'Mua một được ba, nhớ quay vòng may mắn trước cửa nhé.',
       'Cảm ơn bạn đã ghé tiệm. Chúc bạn một ngày an lạc!',
     ] },
+  // Phiên 163: nhân viên tiệm trà Tách Hoa (STORE_TACHHOA ở outside.js, sân x 13–19, z 87–95, ngay cạnh tiệm 9 Sạch) — bán Trà sữa xoài hoàng kim 50 lá (+30 phút tự động hàng yêu hôm nay; js/ui/npc.js mở cửa hàng 'tachhoa').
+  // Đứng sân trước cửa tiệm, quay mặt ra đường (−x) như nhân viên 9 Sạch; chỗ đứng 12,8 nằm trên vỉa hè (vùng duong-lang). Cách chiếc xe tay ga (15,9; 93,7) ≈ 4,3 m. Vị trí là số TẠM, chưa nhìn bằng mắt.
+  { id: 'nvtachhoa', ten: 'Nhân viên Tách Hoa', color: 'do', hair: 'bui', x: 16.4, z: 89.4, ry: -Math.PI / 2, stand: { x: 12.8, z: 89.4 },
+    lines: [
+      'Chào bạn! Tách Hoa mới khai trương, mời bạn thử ly trà sữa nhé.',
+      'Trà sữa xoài hoàng kim: ngọt thanh, uống vào tỉnh táo đánh quái cả buổi.',
+      'Uống một ly là thêm nửa tiếng tự động hàng yêu hôm nay đó nha.',
+      'Xoài chín cây chọn từng trái, làm ly nào tươi ly đó.',
+      'Trà ngon thì cứ thong thả nhấp, đừng vội.',
+      'Cảm ơn bạn đã ghé quán. Chúc bạn một ngày an lạc!',
+    ] },
   { id: 'bacphuong', ten: 'Bác Tư khu phố', color: 'xam', hair: 'troc', beard: 'bac', x: 3.6, z: 153, ry: Math.PI / 2, stand: { x: 0.8, z: 153 },
     lines: [
       'Chào cháu. Xóm mình mỗi xóm mười nhà, đông quá thì lập xóm mới.',
