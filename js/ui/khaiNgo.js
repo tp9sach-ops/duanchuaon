@@ -23,10 +23,10 @@ export function initKhaiNgo({ toast = () => {} } = {}) {
   const box = document.createElement('section'); box.id = 'kn-box'; box.hidden = true; box.setAttribute('role', 'dialog'); box.setAttribute('aria-label', 'Lễ Khai Ngộ');
   const title = document.createElement('b'), info = document.createElement('div'), row = document.createElement('div'); row.className = 'kn-row';
   const mk = (txt, cls) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = txt; if (cls) b.className = cls; return b; };
-  const bTry = mk('Dùng thử'), bOk = mk('Chọn Hệ này', 'kn-ok'), bUp = mk('Đứng dậy');
-  row.append(bTry, bOk, bUp); box.append(title, info, row); document.body.appendChild(box);
+  const bTry = mk('Dùng thử'), bLuyen = mk('Luyện tập chiêu'), bOk = mk('Chọn Hệ này', 'kn-ok'), bUp = mk('Đứng dậy');
+  row.append(bTry, bLuyen, bOk, bUp); box.append(title, info, row); document.body.appendChild(box);
 
-  let ng = null, seatHe = null, warned = null;
+  let ng = null, seatHe = null, prevHe = null;   // prevHe: đang ngồi bồ đoàn nhưng chưa đủ Tu Vi (chỉ được luyện tập, chưa chọn Hệ)
   const capNow = () => { try { if (LGT.capHieuDung) return LGT.capHieuDung(); } catch (_) { /* dùng cách dự phòng */ } return effLevel(LGT.farm ? LGT.farm.tuvi : 0, levelOf(LGT.quests && LGT.quests.prog ? LGT.quests.prog.xp : 0).lv); };
   const hide = () => { box.hidden = true; };
   const leaves = () => { const l = LGT.merit && LGT.merit.leaf; return l && Number.isFinite(+l.la) ? +l.la : 0; };
@@ -34,6 +34,7 @@ export function initKhaiNgo({ toast = () => {} } = {}) {
   function refresh() {
     if (!ng || ng.state !== 'trial') { hide(); return; }
     const left = Math.ceil(ng.trialLeft(nowSec())), sk = ng.trialSkill(), cur = readHe();
+    bTry.hidden = false; bOk.hidden = false;
     title.textContent = `Bồ đoàn ${heLabel(ng.seatHe)}`;
     const cost = cur && cur !== ng.seatHe ? KHAI_NGO.taiKhaiLa : 0;
     info.textContent = (left > 0 ? `Dùng thử còn ${left} giây. ` : 'Hết giờ dùng thử. ') + (cur === ng.seatHe ? 'Bạn đã thuộc Hệ này.' : cost ? `Đổi Hệ tốn ${cost} lá bồ đề (bạn có ${leaves()}).` : 'Chọn Hệ lần đầu: miễn phí.');
@@ -42,6 +43,17 @@ export function initKhaiNgo({ toast = () => {} } = {}) {
     box.hidden = false;
   }
 
+  // Phiên 150: chưa đủ Tu Vi vẫn ngồi được và vào luyện tập thử chiêu; chỉ nút Chọn Hệ bị khóa.
+  function showPreview(h, cap) {
+    title.textContent = `Bồ đoàn ${heLabel(h)}`;
+    info.textContent = `Cần cấp ${KHAI_NGO.tuViMin} để chọn Hệ (bạn cấp ${cap}). Bạn vẫn vào luyện tập thử mọi chiêu được.`;
+    bTry.hidden = true; bOk.hidden = true; box.hidden = false;
+  }
+  bLuyen.addEventListener('click', () => {
+    const h = (ng && ng.seatHe) || prevHe; if (!h) return;
+    if (!LGT.luyenChieu) { toast('Khu luyện tập chưa sẵn sàng, thử lại sau vài giây.', 2600); return; }
+    LGT.luyenChieu.enter(h).then((r) => { if (r && !r.ok) toast(r.reason || 'Chưa vào được khu luyện tập.', 3000); }).catch(() => toast('Chưa vào được khu luyện tập.', 3000));
+  });
   bTry.addEventListener('click', () => {
     if (!ng) return;
     const r = ng.tryTrial(nowSec());
@@ -64,9 +76,10 @@ export function initKhaiNgo({ toast = () => {} } = {}) {
 
   function tick() {
     const w = LGT.world, h = w && SIT.includes(w.mode) ? heAt(w.pos) : null;
-    if (!h) { if (ng) { ng.standUp(); ng = null; } seatHe = null; warned = null; hide(); return; }
+    if (!h) { if (ng) { ng.standUp(); ng = null; } seatHe = null; prevHe = null; hide(); return; }
     const tuvi = capNow();   // Phiên 143: cấp hiệu dụng = max(Tu Vi, cấp công hạnh) — thấy "Cấp 10" là gia nhập phái được
-    if (!canKhaiNgo(tuvi)) { if (warned !== h) { warned = h; toast(`Cần cấp ${KHAI_NGO.tuViMin} để gia nhập phái (bạn cấp ${tuvi}). Đánh quái ở bãi rừng hoặc làm nhiệm vụ để lên cấp.`, 5500); } return; }
+    if (!canKhaiNgo(tuvi)) { prevHe = h; showPreview(h, tuvi); return; }
+    prevHe = null;
     if (!ng) { ng = createKhaiNgo({ tuvi, he: readHe() }); seatHe = null; }
     if (ng.state === 'done') { hide(); return; }
     if (seatHe !== h) { const r = ng.sit(h, nowSec()); if (r.ok) seatHe = h; }

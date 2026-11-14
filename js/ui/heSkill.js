@@ -31,7 +31,7 @@ export function initHeSkill(hud, { toast = () => {} } = {}) {
   const st = document.createElement('style');
   st.textContent = '#hs-bar{position:fixed;z-index:9;display:flex;gap:8px;right:12px;bottom:200px;touch-action:none}#hs-bar[hidden]{display:none}'
     + '.hs-b{position:relative;width:54px;height:54px;border-radius:50%;border:1px solid rgba(241,219,159,.7);background:rgba(40,28,14,.88);color:#f6e7c1;font:600 10px/1.15 system-ui,sans-serif;padding:2px;cursor:pointer;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}'
-    + '.hs-b .hs-k{position:absolute;top:1px;right:6px;font-size:9px;opacity:.7}.hs-b.lock,.hs-b.soon{opacity:.45}.hs-b.cd::after{content:"";position:absolute;left:0;right:0;bottom:0;height:calc(var(--cd,0)*100%);background:rgba(0,0,0,.55)}'
+    + '.hs-b .hs-k{position:absolute;top:1px;right:6px;font-size:9px;opacity:.7}.hs-b.lock,.hs-b.soon{opacity:.45}.hs-b.hs-cd::after{content:"";position:absolute;left:0;right:0;bottom:0;height:calc(var(--cd,0)*100%);background:rgba(0,0,0,.55)}'
     + '.hs-b.he-kim{border-color:#dfe3e8}.hs-b.he-moc{border-color:#3f9b4a}.hs-b.he-thuy{border-color:#2f6fd0}.hs-b.he-hoa{border-color:#d9432b}.hs-b.he-tho{border-color:#c9a227}';
   document.head.appendChild(st);
   const bar = document.createElement('div'); bar.id = 'hs-bar'; bar.hidden = true; bar.setAttribute('role', 'group'); bar.setAttribute('aria-label', 'Chiêu của phái'); hud.appendChild(bar);
@@ -65,7 +65,7 @@ export function initHeSkill(hud, { toast = () => {} } = {}) {
       const sk = skillFor(he, s, null), { b, t } = btns[s]; if (!sk) { b.hidden = true; continue; } b.hidden = false;
       const locked = eff() < SKILL_CAP[s], soon = !locked && !(sk.heSo > 0), left = rt.cooldownLeft(sk.id, nowSec());
       t.textContent = locked ? `Cấp ${SKILL_CAP[s]}` : sk.ten;
-      b.className = `hs-b he-${he}${locked ? ' lock' : ''}${soon ? ' soon' : ''}${left > 0 ? ' cd' : ''}`;
+      b.className = `hs-b he-${he}${locked ? ' lock' : ''}${soon ? ' soon' : ''}${left > 0 ? ' hs-cd' : ''}`;
       b.style.setProperty('--cd', sk.cd > 0 ? Math.min(1, left / sk.cd).toFixed(3) : '0');
       b.setAttribute('aria-label', `${sk.ten}${locked ? ` (mở ở cấp ${SKILL_CAP[s]})` : soon ? ' (sắp có)' : left > 0 ? ' (đang hồi chiêu)' : ''}`);
     }
