@@ -1,8 +1,10 @@
 // Khu LUYỆN CHIÊU (Phiên 150, mục 1 danh sách 14/11): từ bảng bồ đoàn (js/ui/khaiNgo.js) bấm "Luyện tập chiêu" → sang zone riêng "Võ đường luyện chiêu"
 // có 3 mộc nhân; bảng liệt kê TẤT CẢ chiêu của Hệ đó (ô 1, 2, 3, 4 hai Pháp Môn, tuyệt học), bấm là thử: không khóa cấp, hồi chiêu ngắn, không ảnh hưởng chỉ số thật.
 // Logic thuần: js/world/zoneLuyen.js, js/world/luyenChieu.js (có test). Cảnh + hiệu ứng: js/scene/luyen.js, js/scene/voDai.js (createFx). CHƯA nhìn bằng mắt. Mọi chữ qua textContent.
+// Phiên 163 (Bản 2 mục 5, 4/4): bấm chiêu → nhân vật quay về mộc nhân gần nhất và làm tư thế gồng → phát → thu (avatar.cast, js/world/chieuPose.js); luồng khí và nháy mộc nhân chờ đúng lúc khung "phát".
 import { LUYEN_ID, LUYEN_DUMMIES, returnSpawnName } from '../world/zoneLuyen.js';
 import { listForHe, describeSkill, createDemoRuntime } from '../world/luyenChieu.js';
+import { castTimeline } from '../world/chieuPose.js';
 import { HE_COLOR, HE_SEAT_ID, heLabel } from '../world/heSeats.js';
 import { normHe } from '../world/elements.js';
 
@@ -49,17 +51,20 @@ export async function initLuyenChieu({ toast = () => {} } = {}) {
     const r = rt.cast(it, nowSec());
     if (!r.ok) { toast(`${it.skill.ten} đang hồi, còn ${Math.ceil(r.left || 0)} giây.`, 1400); return; }
     const color = HE_COLOR[he] || 0xd9b25f, f = it.skill.fx || {};
+    // Phiên 163: tư thế nhân vật. Chiêu đánh quay về mộc nhân gần nhất; chiêu hỗ trợ giữ hướng hiện tại. `lead` = giây từ lúc bấm tới giữa khung "phát" (lúc đòn bay ra / trúng).
+    const tg = nearestDummy(p), L = castTimeline(it.skill.id), lead = L ? L.gong + L.phat * 0.5 : 0;
+    try { const W = LGT.world, av = W && W.avatar; if (!it.support && W && W.face) W.face(Math.atan2(tg.d.x - p.x, tg.d.z - p.z)); if (av && av.cast) av.cast(it.skill.id); } catch (_) { /* bỏ qua: không có tư thế thì vẫn ra hiệu ứng như cũ */ }
     if (it.support) {   // chiêu hỗ trợ: vòng sáng quanh người
       fx.ring(p.x, p.z, f.r || 2.6, 1.0, color);
       toast(`${it.skill.ten}: ${describeSkill(it.skill)}`, 2400);
     } else {
-      const n = nearestDummy(p), ry = Math.atan2(n.d.x - p.x, n.d.z - p.z), speed = 18, delay = n.dist / speed;
-      fx.wave(p.x, p.z, ry, n.dist, speed, 0, color);
+      const n = tg, ry = Math.atan2(n.d.x - p.x, n.d.z - p.z), speed = 18, delay = n.dist / speed;
+      fx.wave(p.x, p.z, ry, n.dist, speed, lead, color);
       setTimeout(() => {
         if (!hooks) return; const area = f.dienRong || f.noLan || f.mua || f.song || f.docLan || f.suongDoc;
         if (area) { fx.ring(n.d.x, n.d.z, (area && area.r) || 4, 1.0, color); LUYEN_DUMMIES.forEach((_, k) => hooks.hit(k)); } else hooks.hit(n.i);
         fx.ring(n.d.x, n.d.z, 1.6, 0.6, color);
-      }, Math.round(delay * 1000));
+      }, Math.round((lead + delay) * 1000));
       toast(`${it.skill.ten}! −${r.dmg} (số mẫu) · ${describeSkill(it.skill)}`, 2400);
     }
   }
