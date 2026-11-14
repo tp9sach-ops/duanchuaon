@@ -6,18 +6,20 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 export const STAFF_LEN = 1.5;
+export const STAFF_SCALE = 1.4;      // Phiên 149: Gậy như ý to hơn cây côn/thương mặc định (dài 1,5 m) → cầm tay dài 2,1 m, dày gấp 1,4 lần
+export const STAFF_PINK = 0xff7ac8;  // Phiên 149: ánh sáng hồng (quầng, vòng sáng khi đánh)
 const GLB = new URL('../../assets/models/gay-nhu-y.glb', import.meta.url).href;
 let TEX = null;
 export function glowTexture() {
   if (TEX) return TEX;
   const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'), gr = g.createRadialGradient(32, 32, 2, 32, 32, 31);
-  gr.addColorStop(0, 'rgba(255,245,200,1)'); gr.addColorStop(0.35, 'rgba(255,205,90,.55)'); gr.addColorStop(1, 'rgba(255,170,40,0)'); g.fillStyle = gr; g.fillRect(0, 0, 64, 64);
+  gr.addColorStop(0, 'rgba(255,238,250,1)'); gr.addColorStop(0.35, 'rgba(255,122,200,.6)'); gr.addColorStop(1, 'rgba(255,70,160,0)'); g.fillStyle = gr; g.fillRect(0, 0, 64, 64);
   TEX = new THREE.CanvasTexture(c); TEX.colorSpace = THREE.SRGBColorSpace; return TEX;
 }
 
 export function buildStaff() {
   const g = new THREE.Group(); g.name = 'gaynhuy'; const body = new THREE.Group(); body.name = 'than'; g.add(body);
-  const red = new THREE.MeshStandardMaterial({ color: 0xb3202e, roughness: 0.32, metalness: 0.55, emissive: 0x4a0008, emissiveIntensity: 0.6 });
+  const red = new THREE.MeshStandardMaterial({ color: 0xb3202e, roughness: 0.32, metalness: 0.55, emissive: 0x8a1f5c, emissiveIntensity: 0.9 });   // Phiên 149: cán đỏ ánh hồng
   const bronze = new THREE.MeshStandardMaterial({ color: 0x8c5a3c, roughness: 0.42, metalness: 0.7, emissive: 0x3a2006, emissiveIntensity: 0.5 });
   const gold = new THREE.MeshStandardMaterial({ color: 0xf0b73c, roughness: 0.28, metalness: 0.8, emissive: 0x7a5200, emissiveIntensity: 0.9 });
   const put = (geo, mat, y, flip) => { const m = new THREE.Mesh(geo, mat); m.position.y = y; if (flip) m.rotation.x = Math.PI; body.add(m); return m; };
@@ -35,10 +37,11 @@ export function buildStaff() {
     const cap = put(new THREE.SphereGeometry(0.052, 14, 10), bronze, s * 0.77, false); cap.scale.set(1, 1.15, 1);
     const r3 = put(new THREE.TorusGeometry(0.046, 0.009, 8, 18), gold, s * 0.73, false); r3.rotation.x = Math.PI / 2;
   }
-  const glows = [];   // [đầu -y, đầu +y, giữa]
-  for (const y of [-0.77, 0.77, 0]) {
-    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture(), transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }));
-    sp.position.y = y; sp.scale.set(y === 0 ? 0.55 : 0.42, y === 0 ? 0.55 : 0.42, 1); g.add(sp); glows.push(sp);
+  const glows = [];   // [đầu -y, đầu +y, giữa, quầng hồng -y, quầng hồng +y] (Phiên 149: thêm 2 quầng hồng dọc thân → cả cây gậy tỏa ánh hồng)
+  for (const y of [-0.77, 0.77, 0, -0.38, 0.38]) {
+    const aura = Math.abs(y) === 0.38;
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture(), transparent: true, opacity: aura ? 0.4 : 0.6, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }));
+    sp.position.y = y; const sz = aura ? 0.62 : y === 0 ? 0.55 : 0.42; sp.scale.set(sz, sz, 1); g.add(sp); glows.push(sp);
   }
   g.userData.glows = glows; g.userData.body = body;
   return g;
@@ -69,4 +72,5 @@ export function pulseGlows(g, t, hot) {
   gl[0].material.opacity = 0.2 + 0.8 * a; gl[0].scale.set(big * (0.7 + 0.5 * a), big * (0.7 + 0.5 * a), 1);
   gl[1].material.opacity = 0.2 + 0.8 * b; gl[1].scale.set(big * (0.7 + 0.5 * b), big * (0.7 + 0.5 * b), 1);
   gl[2].material.opacity = hot ? 0.75 : 0.5;
+  for (let i = 3; i < gl.length; i++) { const w = 0.5 + 0.5 * Math.sin(t * (hot ? 5 : 2.4) + i), s = 0.62 * (0.9 + 0.2 * w); gl[i].material.opacity = (hot ? 0.55 : 0.4) * (0.75 + 0.25 * w); gl[i].scale.set(s, s, 1); }   // Phiên 149: quầng hồng thở nhẹ
 }

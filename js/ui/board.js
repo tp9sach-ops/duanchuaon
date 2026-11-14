@@ -30,11 +30,11 @@ function buildSpearMount() {
 /** Gậy như ý cưỡi bay: cây gậy 3D nằm ngang (to gấp ~1,7), hai đầu chớp sáng, có vệt sáng phía sau khi bay. */
 function buildStaffMount() {
   const g = new THREE.Group(); g.name = 'cuoi-gay'; g.visible = false;
-  const s = buildStaff(); s.rotation.x = Math.PI / 2; s.scale.setScalar(SLEN / 1.5); s.position.y = -0.07; g.add(s); loadStaffGlb(s);
+  const s = buildStaff(); s.rotation.x = Math.PI / 2; s.scale.setScalar(SLEN * 1.25 / 1.5); s.position.y = -0.07; g.add(s); loadStaffGlb(s);   // Phiên 149: gậy cưỡi dài hơn cây thương cưỡi 25%
   const trail = [];
   for (let i = 0; i < 9; i++) {
     const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture(), transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }));
-    sp.position.set(0, -0.07, -(SLEN / 2 + 0.2 + i * 0.32)); const k = 0.9 - i * 0.07; sp.scale.set(k, k, 1); g.add(sp); trail.push(sp);
+    sp.position.set(0, -0.07, -(SLEN * 1.25 / 2 + 0.2 + i * 0.32)); const k = 0.9 - i * 0.07; sp.scale.set(k, k, 1); g.add(sp); trail.push(sp);
   }
   g.userData.staff = s; g.userData.trail = trail;
   return g;

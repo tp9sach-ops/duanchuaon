@@ -8,7 +8,7 @@ import { bagSections } from '../world/dock.js';
 import { icon } from './bagIcons.js';
 import { createAvatar } from '../world/avatar.js';
 import { DEFAULT_COLOR } from '../world/avatarLogic.js';
-import { buildStaff, loadStaffGlb, pulseGlows } from './staffMesh.js';
+import { buildStaff, loadStaffGlb, pulseGlows, STAFF_SCALE } from './staffMesh.js';
 
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
 const COLS = 3;   // số ô mỗi hàng (lưới tự lấp ô trống cho đủ hàng)
@@ -129,7 +129,7 @@ export function initBag(hud) {
     function apply() {
       if (!av) return; clearGear();
       if (av.setStance) av.setStance(hold !== 'van');   // cầm thương/gậy: vào thế sẵn sàng (côn hiện trên tay); đứng ván: đứng thẳng
-      if (hold === 'nhuy' && st.host) { for (const c of st.orig) c.visible = false; st.staff = buildStaff(); st.host.add(st.staff); loadStaffGlb(st.staff); }
+      if (hold === 'nhuy' && st.host) { for (const c of st.orig) c.visible = false; st.staff = buildStaff(); st.staff.scale.setScalar(STAFF_SCALE); st.host.add(st.staff); loadStaffGlb(st.staff); }   // Phiên 149: gậy to hơn côn
       if (hold === 'van') { st.board = makeBoard(); st.board.position.y = -BOARD_TOP; av.group.add(st.board); av.group.position.y = BOARD_TOP; }
     }
     function frame(t) {

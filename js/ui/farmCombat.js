@@ -3,7 +3,8 @@
 // Hết Sinh Lực → được đưa về cửa chùa (không mất đồ, không mất cấp, GDD mục 8), Tự Động Hàng Yêu dừng. Logic: js/world/monsterAttack.js (có test). Số liệu TẠM: js/data/monsterAI.js.
 // Mục 1 (khôi phục sau khi Phiên 143 ghi đè): Ngọc hồi máu (LGT.items.regenMul() = 5) hồi Sinh Lực nhanh gấp 5; Ngọc dịch chuyển (LGT.items.tryRevive()) hết Sinh Lực thì hồi sinh NGAY TẠI CHỖ, không về cổng chùa. js/ui/items.js đặt LGT.items; chưa có thì mọi thứ chạy như cũ.
 // Phiên 145: khi Tự Động Hàng Yêu đang BẬT, hết Sinh Lực thì hồi sức NGAY TẠI CHỖ và đánh tiếp (không dừng tự động, không về cổng chùa); cũng không còn tự dừng khi Sinh Lực thấp. Tự động chỉ dừng khi người chơi tắt / mở bảng / hết 60 phút. Đánh tay (không bật tự động) giữ nguyên: hết máu về cửa chùa.
-// Phiên 147 (SỬA theo ý ptg): Tự Động Hàng Yêu hết Sinh Lực → VỀ CỔNG CHÙA hồi sức (đầy máu + bất tử vài giây), tự động KHÔNG tắt; sau AUTO_BACK_MS (3 giây) nhân vật tự quay lại đúng chỗ đang đánh (nếu tự động vẫn bật) và đánh tiếp. Ngọc dịch chuyển vẫn hồi sinh tại chỗ. Đánh tay: về cửa chùa như cũ.
+// Phiên 149 (theo ý ptg, THAY Phiên 145/147): hết Sinh Lực → (a) CÓ Ngọc dịch chuyển (LGT.items.tryRevive()): hồi sinh TẠI CHỖ, hoặc tại chỗ đã GHIM (LGT.items.pinned) nếu có ghim; Tự động hàng yêu vẫn chạy. (b) KHÔNG có ngọc: về cổng chùa, hồi đầy máu, TẮT tự động hàng yêu và đứng yên ở cổng chùa (đánh tay cũng vậy).
+// Phiên 149: Ngọc hồi máu (×5) mà Sinh Lực còn DƯỚI 50% thì hồi thêm 10% tốc độ (×5,5).
 import { VITALS_CFG } from '../data/monsterAI.js';
 import { provoke, calm, stepMonster, createVitals } from '../world/monsterAttack.js';
 import { statsOf } from '../world/stats.js';
@@ -11,7 +12,7 @@ import { relation } from '../world/elements.js';
 import { RESPAWN } from '../world/yeuquai.js';
 import { bgTick } from '../bgTick.js';
 
-const AUTO_BACK_MS = 3000;   // Phiên 147: nghỉ ở cổng chùa bao lâu (ms) rồi tự quay lại chỗ đang đánh
+const LOW_HP_FRAC = 0.5, LOW_HP_REGEN_MUL = 1.1;   // Phiên 149: Ngọc hồi máu — Sinh Lực dưới 50% thì tốc độ hồi ×1,1
 
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
 
@@ -20,8 +21,7 @@ export function initFarmCombat(hud, { toast = () => {} } = {}) {
   const LGT = window.LGT || (window.LGT = {});
   const vit = createVitals({ tuvi: LGT.farm ? LGT.farm.tuvi : 1 });
   const engaged = new Map();   // uid → quái đang nổi giận (để hết giận khi quái biến mất / người chơi rời vùng)
-  let lastT = performance.now(), warned = false, hudUntil = 0, autoNote = 0;
-  let back = null;   // Phiên 147: { x, z, at } — chỗ đang đánh trước khi gục + thời điểm (performance.now) được quay lại
+  let lastT = performance.now(), warned = false, hudUntil = 0;
 
   const box = el('div', 'fm-hp'); box.hidden = true;
   const bar = el('i', 'fm-hpbar'), fill = el('i'), txt = el('span', 'fm-hptxt');
@@ -30,36 +30,28 @@ export function initFarmCombat(hud, { toast = () => {} } = {}) {
   /** Tiến Sinh Lực d giây; có Ngọc hồi máu thì tiến thêm (k − 1) lần nữa khi KHÔNG còn bất tử sau đòn (để hồi nhanh gấp k mà không rút ngắn thời gian bất tử). */
   function stepVit(d) {
     vit.step(d);
-    const k = LGT.items && LGT.items.regenMul ? LGT.items.regenMul() : 1;
-    if (k > 1 && !vit.down && vit.grace <= 0) for (let i = 1; i < k; i++) vit.step(d);
+    let k = LGT.items && LGT.items.regenMul ? LGT.items.regenMul() : 1;
+    if (k > 1 && vit.pct < LOW_HP_FRAC) k *= LOW_HP_REGEN_MUL;   // Phiên 149: dưới 50% Sinh Lực → hồi nhanh thêm 10%
+    if (k > 1 && !vit.down && vit.grace <= 0) { const extra = k - 1, whole = Math.floor(extra + 1e-9); for (let i = 0; i < whole; i++) vit.step(d); const frac = extra - whole; if (frac > 1e-6) vit.step(d * frac); }
   }
 
   const autoOn = () => { try { return !!(LGT.farm && LGT.farm.status().auto); } catch (_) { return false; } };
 
   function defeat() {
     for (const m of engaged.values()) calm(m); engaged.clear();
-    if (LGT.items && LGT.items.tryRevive && LGT.items.tryRevive()) { vit.revive(); return; }   // Ngọc dịch chuyển: hồi sinh ngay tại chỗ, không dừng tự động, không về cổng chùa
-    if (autoOn()) {   // Phiên 147: đang Tự Động Hàng Yêu → về cổng chùa hồi sức, KHÔNG tắt tự động; tick() sẽ đưa nhân vật quay lại chỗ đánh sau AUTO_BACK_MS
-      const p = LGT.world && LGT.world.pos, now = performance.now();
-      if (p && !back) back = { x: p.x, z: p.z, at: now + AUTO_BACK_MS };   // đã đang chờ quay lại thì giữ chỗ cũ (không ghi đè bằng vị trí ở cổng chùa)
-      else if (back) back.at = now + AUTO_BACK_MS;
-      if (LGT.world && LGT.world.teleport) LGT.world.teleport(RESPAWN.x, RESPAWN.z);
-      vit.revive();
-      if (now - autoNote > 15000) { autoNote = now; toast('Hết Sinh Lực: bạn về cổng chùa hồi sức, vài giây nữa tự quay lại đánh tiếp (tự động hàng yêu vẫn bật).', 3600); }
-      return;
+    if (LGT.items && LGT.items.tryRevive && LGT.items.tryRevive()) {   // Phiên 149: CÓ Ngọc dịch chuyển → hồi sinh tại chỗ, hoặc tại chỗ đã ghim; tự động hàng yêu vẫn chạy
+      const pin = LGT.items.pinned;
+      if (pin && Number.isFinite(pin.x) && Number.isFinite(pin.z) && LGT.world && LGT.world.teleport && !LGT.inHouse) LGT.world.teleport(pin.x, pin.z);
+      vit.revive(); return;
     }
-    back = null;
+    if (autoOn() && LGT.farm && LGT.farm.toggleAuto) LGT.farm.toggleAuto();   // Phiên 149: KHÔNG có ngọc → tắt tự động hàng yêu, đứng lại ở cổng chùa
     if (LGT.world && LGT.world.teleport) LGT.world.teleport(RESPAWN.x, RESPAWN.z);
     vit.revive();
-    toast('Bạn kiệt sức và được đưa về cửa chùa nghỉ ngơi. Không mất đồ, không mất cấp — nghỉ một chút rồi quay lại luyện tiếp nhé!', 5200);
+    toast('Bạn kiệt sức và được đưa về cổng chùa nghỉ ngơi. Tự động hàng yêu đã dừng. Không mất đồ, không mất cấp — nghỉ một chút rồi quay lại luyện tiếp nhé!', 5200);
   }
 
   function tick() {
     const now = performance.now(), dt = Math.min(typeof document !== 'undefined' && document.hidden ? 0.5 : 0.25, (now - lastT) / 1000); lastT = now;
-    if (back && now >= back.at) {   // Phiên 147: hết thời gian nghỉ ở cổng chùa → quay lại chỗ đánh nếu tự động vẫn bật (người chơi tắt tự động thì ở lại cổng chùa)
-      const b = back; back = null;
-      if (autoOn() && LGT.world && LGT.world.teleport && !LGT.inHouse) LGT.world.teleport(b.x, b.z);
-    }
     const view = LGT.farmView, p = LGT.world && LGT.world.pos, mons = view && view.mons ? view.mons : [];
     const live = new Set(mons.map((m) => m.uid));
     for (const [uid, m] of engaged) if (!live.has(uid)) { calm(m); engaged.delete(uid); }   // quái bị thu phục / người chơi rời xa

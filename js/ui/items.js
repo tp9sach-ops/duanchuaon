@@ -7,9 +7,10 @@ import * as THREE from 'three';
 import { GEMS, STAFF, loadItems, buyGem, buyStaff, remainSec, regenMul as rMul, canRevive, dmgMul as dMul, fmtTime } from '../world/items.js';
 import { BOARD } from '../world/board.js';
 import { askConfirm } from './dialog.js';
-import { buildStaff, loadStaffGlb, pulseGlows } from './staffMesh.js';
+import { buildStaff, loadStaffGlb, pulseGlows, STAFF_SCALE, STAFF_PINK } from './staffMesh.js';
+// Phiên 149: Ngọc dịch chuyển có thể GHIM một chỗ (nút "Ghim chỗ hồi sinh" dưới chỉ báo hạn dùng, chỉ hiện khi ngọc còn hiệu lực): hết máu thì hồi sinh ở chỗ đã ghim, chưa ghim thì hồi sinh tại chỗ đang đứng (js/ui/farmCombat.js đọc LGT.items.pinned). Gậy như ý to gấp STAFF_SCALE lần cây côn mặc định, ánh sáng hồng.
 
-const KEY = 'lgt.items';
+const KEY = 'lgt.items', PIN_KEY = 'lgt.itempin';
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
 const CSS = '.it-box{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:9500;width:min(92vw,430px);max-height:84vh;overflow:auto;background:rgba(26,17,10,.97);color:#f4e4c1;border:1px solid #c9a24a;border-radius:14px;padding:14px;font:14px/1.45 "Be Vietnam Pro","Noto Sans",system-ui,sans-serif;box-shadow:0 12px 40px rgba(0,0,0,.55)}'
   + '.it-box header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}.it-box h3{margin:0;font-size:17px;color:#f2c14e}'
@@ -17,6 +18,7 @@ const CSS = '.it-box{position:fixed;left:50%;top:50%;transform:translate(-50%,-5
   + '.it-row{border:1px solid rgba(201,162,74,.35);border-radius:10px;padding:10px;margin-bottom:8px;background:rgba(255,255,255,.03)}.it-row b{color:#ffe08a}.it-row p{margin:4px 0}'
   + '.it-meta{color:#cdb98a;font-size:13px}.it-buy{margin-top:6px;background:#c9a24a;color:#2a1a08;border:0;border-radius:8px;padding:8px 16px;font:600 14px inherit;cursor:pointer;min-height:40px}.it-buy:disabled{opacity:.45;cursor:default}'
   + '.it-chips{position:fixed;left:8px;top:calc(env(safe-area-inset-top,0px) + 56px);z-index:40;display:flex;flex-direction:column;gap:4px;pointer-events:none}'
+  + '.it-chiplist{display:flex;flex-direction:column;gap:4px}.it-pin{pointer-events:auto;align-self:flex-start;background:rgba(26,17,10,.82);color:#9fe0ff;border:1px solid #6fb8dd;border-radius:999px;padding:5px 12px;font:600 12px "Be Vietnam Pro",system-ui,sans-serif;cursor:pointer;min-height:32px}.it-pin[hidden]{display:none}.it-pin.on{color:#ffe08a;border-color:#c9a24a}'
   + '.it-chip{background:rgba(26,17,10,.82);color:#ffe08a;border:1px solid #c9a24a;border-radius:999px;padding:3px 10px;font:600 12px "Be Vietnam Pro",system-ui,sans-serif}';
 
 let RING_GEO = null;
@@ -27,6 +29,8 @@ export function initItems({ toast = () => {} } = {}) {
   if (LGT.items) return LGT.items;
   let st = loadItems(null); try { st = loadItems(localStorage.getItem(KEY)); } catch (_) { /* riêng tư */ }
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (_) { /* bỏ qua */ } };
+  let pin = null; try { const q = JSON.parse(localStorage.getItem(PIN_KEY) || 'null'); if (q && Number.isFinite(+q.x) && Number.isFinite(+q.z)) pin = { x: +q.x, z: +q.z }; } catch (_) { /* riêng tư / hỏng → chưa ghim */ }
+  const savePin = () => { try { if (pin) localStorage.setItem(PIN_KEY, JSON.stringify(pin)); else localStorage.removeItem(PIN_KEY); } catch (_) { /* bỏ qua */ } };
   document.head.appendChild(el('style', null, CSS));
   const laNow = () => (LGT.merit && LGT.merit.leaf ? LGT.merit.leaf.la : 0);
   const spend = (n) => !!(LGT.merit && LGT.merit.spendLa && LGT.merit.spendLa(n));
@@ -79,17 +83,26 @@ export function initItems({ toast = () => {} } = {}) {
   box.addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.stopPropagation(); closeShop(); } });
 
   // ---------- Chỉ báo hạn dùng (góc trái) ----------
-  const chips = el('div', 'it-chips'); document.body.appendChild(chips);
+  const chips = el('div', 'it-chips'), chipList = el('div', 'it-chiplist'), pinBtn = el('button', 'it-pin'); pinBtn.type = 'button'; pinBtn.hidden = true;
+  chips.append(chipList, pinBtn); document.body.appendChild(chips);
   const was = { hoimau: false, dichchuyen: false };
   function chipsDraw() {
-    chips.textContent = '';
+    chipList.textContent = '';
     for (const g of GEMS) {
       const left = remainSec(st, g.id), on = left > 0;
-      if (on) chips.appendChild(el('span', 'it-chip', `${g.ten}${g.id === 'hoimau' ? ' ×5' : ''} · ${fmtTime(left)}`));
+      if (on) chipList.appendChild(el('span', 'it-chip', `${g.ten}${g.id === 'hoimau' ? ' ×5' : ''} · ${fmtTime(left)}`));
       else if (was[g.id]) toast(`${g.ten} đã hết hạn.`, 3200);
       was[g.id] = on;
     }
+    pinBtn.hidden = !canRevive(st);   // nút ghim chỉ hiện khi Ngọc dịch chuyển còn hiệu lực
+    pinBtn.textContent = pin ? '📍 Bỏ ghim chỗ hồi sinh' : '📍 Ghim chỗ hồi sinh'; pinBtn.classList.toggle('on', !!pin);
   }
+  pinBtn.addEventListener('click', () => {
+    if (pin) { pin = null; savePin(); chipsDraw(); toast('Đã bỏ ghim: hết máu sẽ hồi sinh tại chỗ đang đứng.', 3200); return; }
+    const p = LGT.world && LGT.world.pos;
+    if (!p || LGT.inHouse) { toast('Không ghim được ở đây. Hãy ra ngoài rồi ghim lại.', 3000); return; }
+    pin = { x: p.x, z: p.z }; savePin(); chipsDraw(); toast('Đã ghim chỗ này: hết máu (còn Ngọc dịch chuyển) bạn sẽ hồi sinh ở đây.', 4200);
+  });
   setInterval(chipsDraw, 500); chipsDraw();
 
   // ---------- Vòng sáng lan ----------
@@ -124,13 +137,13 @@ export function initItems({ toast = () => {} } = {}) {
       upd(dt); clock += dt; stepRipples(dt);
       if (skin) {
         const want = staffOn();
-        if (want && !skin.mesh) { for (const c of skin.orig) c.visible = false; skin.mesh = buildStaff(); skin.host.add(skin.mesh); loadStaffGlb(skin.mesh); }
+        if (want && !skin.mesh) { for (const c of skin.orig) c.visible = false; skin.mesh = buildStaff(); skin.mesh.scale.setScalar(STAFF_SCALE); skin.host.add(skin.mesh); loadStaffGlb(skin.mesh); }   // Phiên 149: gậy to hơn cây côn mặc định
         else if (!want && skin.mesh) { skin.host.remove(skin.mesh); skin.mesh = null; for (const c of skin.orig) c.visible = true; }   // đổi về Thương: trả cây côn mặc định
         if (skin.mesh) pulseGlows(skin.mesh, clock, !!av.swinging);
       }
     };
     const sw = av.swing;
-    if (typeof sw === 'function') av.swing = (...a) => { const r = sw.apply(av, a); if (staffOn()) spawnRipple(0xffd45a, 1.5, 2); return r; };
+    if (typeof sw === 'function') av.swing = (...a) => { const r = sw.apply(av, a); if (staffOn()) spawnRipple(STAFF_PINK, 1.5 * STAFF_SCALE, 2); return r; };   // Phiên 149: vòng sáng hồng
   }
 
   // ---------- +1% sát thương khi đang cầm Gậy như ý ----------
@@ -147,10 +160,10 @@ export function initItems({ toast = () => {} } = {}) {
   function tryRevive() {
     if (!canRevive(st)) return false;
     spawnRipple(0x7fd0ff, 0, 3);
-    toast(`Ngọc dịch chuyển phát sáng — bạn hồi sinh ngay tại chỗ! (còn ${fmtTime(remainSec(st, 'dichchuyen'))})`, 4200);
+    toast(`Ngọc dịch chuyển phát sáng — bạn hồi sinh ${pin ? 'ở chỗ đã ghim' : 'ngay tại chỗ'}! (còn ${fmtTime(remainSec(st, 'dichchuyen'))})`, 4200);
     return true;
   }
 
-  LGT.items = { openShop, closeShop, regenMul: () => rMul(st), tryRevive, dmgMul: () => (staffOn() ? dMul(st) : 1), get state() { return st; }, get staff() { return st.staff; } };
+  LGT.items = { openShop, closeShop, regenMul: () => rMul(st), tryRevive, get pinned() { return pin; }, dmgMul: () => (staffOn() ? dMul(st) : 1), get state() { return st; }, get staff() { return st.staff; } };
   return LGT.items;
 }
