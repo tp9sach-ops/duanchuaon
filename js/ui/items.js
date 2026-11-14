@@ -1,15 +1,18 @@
 // Vật phẩm mua bằng lá bồ đề (mục 1): giao diện. Luật/số: js/world/items.js (có test). Nạp từ js/ui/board.js (initBoard). Đặt LGT.items = { openShop(kind), closeShop(), regenMul(), tryRevive(), dmgMul(), state }.
 // - Mục 3 (14/11): cửa hàng 'banhsr' (NPC "Nhân viên Bánh Sầu Riêng 9 Sạch", nhà phố 9 Sạch bên phải đường làng): Bánh sầu riêng 3 vị 100 lá (×5 hồi máu, 10 phút), Bánh sầu riêng pho mai than tre 200 lá (hồi sinh tại chỗ, 20 phút). Trước đây là "Ngọc hồi máu / Ngọc dịch chuyển" bán ở Kim Hoàn Ngọc Lan.
 //   openShop('kimhoan') (tên cũ) vẫn mở đúng cửa hàng bánh để chỗ nào còn gọi tên cũ không bị hỏng. Cửa hàng 'dienmay' (NPC Điện Máy Lam Sen): Ván trượt 100 lá (js/ui/board.js), Gậy như ý 400 lá, Nón Jingasa 400 lá.
+// - Phiên 163: cửa hàng 'tachhoa' (NPC "Nhân viên Tách Hoa", nhà phố Tách Hoa cạnh 9 Sạch): Trà sữa xoài hoàng kim 50 lá = +30 phút Tự động hàng yêu hôm nay (gọi LGT.farm.addAutoMinutes, js/ui/farm.js).
 // - Hồi máu ×5 / hồi sinh tại chỗ: js/ui/farmCombat.js gọi LGT.items.regenMul() và tryRevive(). Hạn dùng tính theo giờ thật nên đổi tab vẫn chạy.
 // - Gậy như ý: MUA là có, nhưng chỉ hiện trên tay / có +1% sát thương / vòng sáng lan khi người chơi ĐANG CẦM Gậy như ý (LGT.loadout.weapon === 'nhuy', chọn ở Túi đồ). Mặc định cầm Thương: trả lại cây côn mặc định. Mua gậy xong tự cầm gậy.
+//   Phiên 163: cầm Gậy như ý đánh thường đủ 3 đòn liên tiếp → RỒNG HỒNG bay quanh người (js/ui/dragonFx.js). Chiêu (Chém khí...) gọi swing(số) nên không tính là đánh thường.
 // Nhân vật dựng bằng khối (không phải chibi) thì không đổi hình gậy nhưng vẫn có +1% và vòng sáng. CHƯA nhìn bằng mắt trên máy thật.
 import * as THREE from 'three';
-import { GEMS, STAFF, HAT, afterArmor as aAfter, loadItems, buyGem, buyStaff, buyHat, toggleHat, hatWorn, armorMul as aMul, remainSec, regenMul as rMul, canRevive, dmgMul as dMul, fmtTime } from '../world/items.js';
+import { GEMS, STAFF, HAT, TRASUA, afterArmor as aAfter, loadItems, buyGem, buyStaff, buyHat, buyTraSua, toggleHat, hatWorn, armorMul as aMul, remainSec, regenMul as rMul, canRevive, dmgMul as dMul, fmtTime } from '../world/items.js';
 import { BOARD } from '../world/board.js';
 import { askConfirm } from './dialog.js';
 import { buildStaff, loadStaffGlb, pulseGlows, STAFF_SCALE, STAFF_PINK } from './staffMesh.js';
 import { buildHat, HAT_POS } from './hatMesh.js';
+import { createDragonFx, countHit } from './dragonFx.js';
 // Phiên 154: Nón Jingasa (Điện Máy, 400 lá): mua xong tự đội lên đầu nhân vật chibi (js/ui/hatMesh.js), +3% giáp = đòn quái đánh trúng bớt 3% (js/ui/farmCombat.js gọi LGT.items.afterArmor()). Cửa hàng có nút Cất nón / Đội nón. Vị trí nón là số TẠM (HAT_POS).
 // Phiên 149: Bánh sầu riêng pho mai than tre (trước là Ngọc dịch chuyển) có thể GHIM một chỗ (nút "Ghim chỗ hồi sinh" dưới chỉ báo hạn dùng, chỉ hiện khi còn hiệu lực): hết máu thì hồi sinh ở chỗ đã ghim, chưa ghim thì hồi sinh tại chỗ đang đứng (js/ui/farmCombat.js đọc LGT.items.pinned). Gậy như ý to gấp STAFF_SCALE lần cây côn mặc định, ánh sáng hồng.
 
@@ -69,19 +72,31 @@ export function initItems({ toast = () => {} } = {}) {
     st = r.state; save(); draw(); toast(`Đã mua ${HAT.ten} (−${r.cost} lá bồ đề). Bạn đã đội nón: +3% giáp.`, 4200);
   }
   function toggleHatUi() { st = toggleHat(st); save(); draw(); toast(hatOn() ? 'Bạn đã đội nón (+3% giáp).' : 'Bạn đã cất nón (hết +3% giáp).', 2600); }
+  // Phiên 163: Trà sữa xoài hoàng kim — trừ lá rồi cộng 30 phút Tự động hàng yêu cho hôm nay (LGT.farm.addAutoMinutes). Không có farm thì không trừ lá.
+  async function buyTraSuaUi() {
+    if (!LGT.farm || !LGT.farm.addAutoMinutes) { toast('Tự động hàng yêu chưa sẵn sàng, thử lại sau nhé.', 2600); return; }
+    const ok = await confirm(`${TRASUA.ten} — ${TRASUA.gia} lá bồ đề.\n${TRASUA.mo}\nBạn đang có ${laNow()} lá bồ đề. Mua không?`); if (!ok) return;
+    const r = buyTraSua(laNow()); if (!r.ok) { toast(`Chưa đủ lá bồ đề (cần ${r.cost}, bạn có ${laNow()}). Đổi thêm lá ở Thầy Tri khách.`, 3600); return; }
+    if (!spend(r.cost)) { toast('Chưa đủ lá bồ đề.', 2500); return; }
+    LGT.farm.addAutoMinutes(r.sec / 60); draw();
+    toast(`Đã uống ${TRASUA.ten} (−${r.cost} lá bồ đề): +${TRASUA.phut} phút Tự động hàng yêu hôm nay — còn ${autoLeftMin()} phút.`, 4200);
+  }
+  const autoLeftMin = () => { try { return LGT.farm && LGT.farm.status ? LGT.farm.status().autoLeft : 0; } catch (_) { return 0; } };
   function row(ten, mo, meta, label, enabled, act) {
     const r = el('div', 'it-row'); r.append(el('b', null, ten), el('p', null, mo), el('p', 'it-meta', meta));
     const b = el('button', 'it-buy', label); b.type = 'button'; b.disabled = !enabled; b.addEventListener('click', act); r.appendChild(b); return r;
   }
   function draw() {
     const la = laNow(); list.textContent = '';
-    title.textContent = shopKind === 'banhsr' ? 'Bánh Sầu Riêng 9 Sạch' : 'Điện Máy Lam Sen';
+    title.textContent = shopKind === 'banhsr' ? 'Bánh Sầu Riêng 9 Sạch' : shopKind === 'tachhoa' ? 'Tách Hoa' : 'Điện Máy Lam Sen';
     laLine.textContent = `Bạn có ${la} lá bồ đề.`;
     if (shopKind === 'banhsr') {
       for (const g of GEMS) {
         const left = remainSec(st, g.id), meta = `Giá ${g.gia} lá · tác dụng ${g.giay / 60} phút${left > 0 ? ` · đang có tác dụng, còn ${fmtTime(left)} (mua thêm sẽ cộng dồn)` : ''}`;
         list.appendChild(row(g.ten, g.mo, meta, left > 0 ? 'Mua thêm' : 'Mua', la >= g.gia, () => buyGemUi(g)));
       }
+    } else if (shopKind === 'tachhoa') {
+      list.appendChild(row(TRASUA.ten, TRASUA.mo, `Giá ${TRASUA.gia} lá · +${TRASUA.phut} phút tự động hàng yêu hôm nay · hôm nay còn ${autoLeftMin()} phút`, 'Mua', la >= TRASUA.gia, buyTraSuaUi));
     } else {
       const bd = LGT.board ? LGT.board.status() : { van: false };
       list.appendChild(row(BOARD.ten, `Ván trượt 3D: lướt đi nhanh gấp ${String(BOARD.mul).replace('.', ',')} lần. Ván KHÔNG phải vũ khí (không đánh được); đánh nhau thì tự xuống.`, `Giá ${BOARD.gia} lá${bd.van ? ' · Bạn đã có' : ''}`, bd.van ? 'Đã có' : 'Mua', !bd.van && la >= BOARD.gia, async () => { if (LGT.board) await LGT.board.buy(); draw(); }));
@@ -90,7 +105,7 @@ export function initItems({ toast = () => {} } = {}) {
     }
   }
   const closeShop = () => { box.hidden = true; };
-  const openShop = (kind) => { shopKind = kind === 'banhsr' || kind === 'kimhoan' ? 'banhsr' : 'dienmay'; draw(); box.hidden = false; x.focus({ preventScroll: true }); };   // 'kimhoan' = tên cũ của cửa hàng này
+  const openShop = (kind) => { shopKind = kind === 'banhsr' || kind === 'kimhoan' ? 'banhsr' : kind === 'tachhoa' ? 'tachhoa' : 'dienmay'; draw(); box.hidden = false; x.focus({ preventScroll: true }); };   // 'kimhoan' = tên cũ của cửa hàng này
   x.addEventListener('click', closeShop);
   box.addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.stopPropagation(); closeShop(); } });
 
@@ -138,6 +153,15 @@ export function initItems({ toast = () => {} } = {}) {
     }
   }
 
+  // ---------- Rồng hồng (Phiên 163): cầm Gậy như ý, đánh thường đủ 3 đòn liên tiếp → rồng bay quanh người ----------
+  let dragon = null, hitSt = null;
+  function onNormalHit(av) {
+    hitSt = countHit(hitSt, performance.now() / 1000); if (!hitSt.fire) return;
+    const scene = av.group && av.group.parent; if (!scene) return;
+    if (!dragon || dragon.scene !== scene) { if (dragon) dragon.clear(); dragon = createDragonFx(scene); }   // đổi cảnh (vào / ra nhà...) thì dựng bộ rồng mới
+    if (dragon.spawn(av.group.position, av.group.rotation.y)) spawnRipple(STAFF_PINK, 0, 3);
+  }
+
   // ---------- Gậy như ý trên tay (bọc update + swing của avatar, giống js/ui/board.js) ----------
   function wrapAvatar() {
     const av = LGT.world && LGT.world.avatar; if (!av || av.__items || !av.group || typeof av.update !== 'function') return;
@@ -149,6 +173,7 @@ export function initItems({ toast = () => {} } = {}) {
     const upd = av.update.bind(av);
     av.update = (dt) => {
       upd(dt); clock += dt; stepRipples(dt);
+      if (dragon) dragon.update(dt, av.group.position);   // Phiên 163: rồng hồng bay theo người chơi
       if (skin) {
         const want = staffOn();
         if (want && !skin.mesh) { for (const c of skin.orig) c.visible = false; skin.mesh = buildStaff(); skin.mesh.scale.setScalar(STAFF_SCALE); skin.host.add(skin.mesh); loadStaffGlb(skin.mesh); }   // Phiên 149: gậy to hơn cây côn mặc định
@@ -168,7 +193,14 @@ export function initItems({ toast = () => {} } = {}) {
       }
     };
     const sw = av.swing;
-    if (typeof sw === 'function') av.swing = (...a) => { const r = sw.apply(av, a); if (staffOn()) spawnRipple(STAFF_PINK, 1.5 * STAFF_SCALE, 2); return r; };   // Phiên 149: vòng sáng hồng
+    if (typeof sw === 'function') av.swing = (...a) => {
+      const r = sw.apply(av, a);
+      if (staffOn()) {
+        spawnRipple(STAFF_PINK, 1.5 * STAFF_SCALE, 2);   // Phiên 149: vòng sáng hồng
+        if (typeof a[0] !== 'number') { try { onNormalHit(av); } catch (e) { /* hiệu ứng rồng lỗi không làm hỏng đòn đánh */ } }   // swing(số) = chiêu Chém khí, không tính là đánh thường
+      }
+      return r;
+    };
   }
 
   // ---------- +1% sát thương khi đang cầm Gậy như ý ----------
