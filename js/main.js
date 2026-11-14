@@ -22,6 +22,7 @@ import { isDonateSpot } from './world/donate.js';
 import { initWind } from './scene/wind.js';
 import { initViewport } from './ui/viewport.js';
 import { initAccount } from './net/account.js';
+import { bgTick } from './bgTick.js';
 
 const pct = document.getElementById('pre-pct'), fill = document.getElementById('pre-fill'), pre = document.getElementById('pre');
 const setProgress = (v) => { const p = Math.round(v * 100); pct.textContent = p; fill.style.right = (100 - p) + '%'; };
@@ -88,6 +89,20 @@ async function boot() {
   try { initWind(created.scene); } catch (e) { console.warn('[Diệu Giang Tự] Gió lỗi:', e && e.message); }   // cây lung lay; lỗi thì cây đứng yên
   try { initHud(); } catch (e) { console.warn('[Diệu Giang Tự] HUD lỗi:', e && e.message); }   // màn vào cửa + HUD; lỗi thì giữ giao diện cũ
   try { initCompact(); } catch (e) { console.warn('[Diệu Giang Tự] Giao diện gọn lỗi:', e && e.message); }   // ẩn/hiện nút, sửa HUD bị che trong khung/màn thấp, nút camera (chạy SAU initHud)
+  // Phiên 147 (khôi phục nối của Phiên 143 bị ghi đè): thanh chiêu của phái + Lễ Khai Ngộ ở bồ đoàn Ngũ Hành (heSkill TRƯỚC khaiNgo vì heSkill đặt LGT.capHieuDung).
+  try {
+    const hudEl = document.getElementById('hud'), toast = (t, ms) => window.LGT.toast && window.LGT.toast(t, ms);
+    Promise.all([import('./ui/heSkill.js'), import('./ui/khaiNgo.js')]).then(([hs, kn]) => { if (hudEl) hs.initHeSkill(hudEl, { toast }); kn.initKhaiNgo({ toast }); }).catch((e) => console.warn('[Diệu Giang Tự] Lễ Khai Ngộ / chiêu phái lỗi:', e && e.message));
+  } catch (_) { /* bỏ qua */ }
+  // Phiên 147: khi chuyển tab, vòng vẽ (requestAnimationFrame) dừng hẳn nên nhân vật đứng yên (không đi, không lao vào quái được). Nhịp nền (Worker) tự cập nhật nhân vật khi tab ẩn, chia nhỏ từng bước 0,05 giây để không xuyên tường.
+  if (created.world && typeof created.world.update === 'function') {
+    let bgLast = performance.now();
+    bgTick.on(() => {
+      const now = performance.now(), el = Math.min(2, (now - bgLast) / 1000); bgLast = now;
+      if (!document.hidden || window.LGT.freeCam || (window.LGT.intro && window.LGT.intro.active)) return;
+      for (let rem = el; rem > 1e-6; rem -= 0.05) created.world.update(Math.min(0.05, rem));
+    });
+  }
   try { initZones(localStorage, () => (window.LGT && window.LGT.world ? window.LGT.world.pos : null)); } catch (e) { console.warn('[Diệu Giang Tự] Khu vực lỗi:', e && e.message); }
   try { import('./ui/zoneGate.js').then((m) => m.initZoneGate({ toast: (t, ms) => window.LGT.toast && window.LGT.toast(t, ms) })).catch((e) => console.warn('[Diệu Giang Tự] Cổng zone lỗi:', e && e.message)); } catch (_) { /* bỏ qua */ }
   try { import('./ui/dungeonZones.js').then((m) => m.initDungeonZones({ toast: (t, ms) => window.LGT.toast && window.LGT.toast(t, ms) })).catch((e) => console.warn('[Diệu Giang Tự] Zone phó bản lỗi:', e && e.message)); } catch (_) { /* bỏ qua */ }   // Phiên 139: zone phó bản (4b)
