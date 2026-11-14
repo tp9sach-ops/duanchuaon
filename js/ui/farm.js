@@ -53,9 +53,13 @@ export function initFarm(hud, { toast = () => {} } = {}) {
   };
   /** Chọn (khóa) quái dưới tia chuột {origin, dir}. Trả { ok, ten, uid } | { ok:false, reason }. Mọi đòn (đánh thường, Thương, chiêu) nhắm vào quái đã khóa. */
   let attackOn = false;   // Phiên 159c: bấm chuột vào quái → khóa + TỰ ĐÁNH THƯỜNG (lao tới nếu xa) cho tới khi quái chết / Esc / người chơi tự đi
-  function pickAt(origin, dir, attack = false) {
+  function pickAt(origin, dir, attack = false, ground = null) {
     const p = pos(); if (!p || !here() || bossOn()) return { ok: false, reason: 'khong-quai' };
-    const m = pickMonster(origin, dir, view.mons.filter((x) => gap(x, p) <= LOCK_RANGE)); if (!m) return { ok: false, reason: 'khong-trung' };
+    const near = view.mons.filter((x) => gap(x, p) <= LOCK_RANGE); let m = pickMonster(origin, dir, near);
+    if (!m && ground && Number.isFinite(+ground.x) && Number.isFinite(+ground.z)) {   // Phiên 159e: tia trượt thân thì lấy điểm bấm trên ĐẤT — con nào nằm sát đó (trong thân + 1,3 m) cũng được
+      let bd = Infinity; for (const x of near) { const d = Math.hypot(x.x - ground.x, x.z - ground.z); if (d <= bodyOf(x) + 1.3 && d < bd) { bd = d; m = x; } }
+    }
+    if (!m) return { ok: false, reason: 'khong-trung' };
     lockUid = m.uid; attackOn = !!attack; toast(attack ? `Đánh ${m.ten}! (Esc hoặc tự đi để dừng)` : `Đã chọn mục tiêu: ${m.ten}`, 1400); return { ok: true, ten: m.ten, uid: m.uid };
   }
   const unlock = () => { const was = !!lockUid; lockUid = ''; attackOn = false; return was; };

@@ -123,3 +123,13 @@ test('Phiên 159c: bấm vào quái = khóa + TỰ ĐÁNH THƯỜNG (lao tới n
   api.stopAttack(); assert.equal(api.attacking, false);
   LGT.world.pos = keepPos; LGT.night = keepNight; step(0.5);
 });
+
+test('Phiên 159e: tia trượt thân nhưng điểm bấm trên đất sát quái → vẫn chọn được; xa quái → không', () => {
+  const keepPos = LGT.world.pos, keepNight = LGT.night; LGT.night = 1; LGT.world.pos = { x: -62, z: 66 }; step(0.5);
+  const m = LGT.farmView.mons.filter((x) => !x.boss).sort((a, b) => Math.hypot(a.x + 62, a.z - 66) - Math.hypot(b.x + 62, b.z - 66))[0]; assert.ok(m);
+  const miss = { x: m.x + 200, y: 1.2, z: m.z + 12 }, d = { x: 0, y: 0, z: -1 };
+  assert.equal(api.pickAt(miss, d, false, null).ok, false, 'không có điểm đất: trượt');
+  assert.equal(api.pickAt(miss, d, false, { x: m.x + 1, z: m.z }).ok, true, 'điểm đất sát quái: trúng');
+  api.unlock(); assert.equal(api.pickAt(miss, d, false, { x: m.x + 30, z: m.z + 30 }).ok, false);
+  LGT.world.pos = keepPos; LGT.night = keepNight; step(0.5);
+});

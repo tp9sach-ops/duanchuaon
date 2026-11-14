@@ -102,7 +102,8 @@ export function createWorld({ scene, camera, canvas, coarse = false, LGT = windo
   function pickMonsterAt(cx, cy, attack = false) {
     const F = LGT.farm; if (!F || typeof F.pickAt !== 'function') return false;
     ndc.set((cx / innerWidth) * 2 - 1, -(cy / innerHeight) * 2 + 1); ray.setFromCamera(ndc, camera);
-    const r = F.pickAt(ray.ray.origin, ray.ray.direction, attack); return !!(r && r.ok);
+    plane.constant = -P.y; const g = ray.ray.intersectPlane(plane, hit) ? { x: hit.x, z: hit.z } : null;   // điểm bấm trên đất: dự phòng khi tia trượt thân quái
+    const r = F.pickAt(ray.ray.origin, ray.ray.direction, attack, g); return !!(r && r.ok);
   }
 
   /** Tia từ điểm màn hình (cx, cy) có trúng vật 3D gắn với chương nào không → spot hoặc null. */

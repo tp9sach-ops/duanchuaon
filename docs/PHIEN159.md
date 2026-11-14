@@ -44,3 +44,5 @@ Bạn tiếp tục dự án Diệu Giang Tự (https://github.com/tp9sach-ops/du
 - Chưa làm / hỏi ptg: ô chiêu 4+ (CHIEU_4HE 30 chiêu chưa nối chiến đấu) sẽ gán `1,2,3,4…` thế nào; ptg có muốn giữ A/S/D để đi không (hiện bỏ cả bốn chữ). 3 test lỗi sẵn trên main (dân làng, cửa hàng 9 Sạch, chỗ trú — do commit NPC nv9sach, ngoài phạm vi).
 
 ## CẬP NHẬT 11:36 (159d): chuột PHẢI vào quái = khóa + tự đánh thường luôn (không cần bấm phím 1); chuột phải vào đất vẫn là đi. (Chuột trái/chạm vào quái cũng đánh.) `world.js` `onClick`.
+
+## 11:50 (159e) — sửa "chuột phải vào quái không đánh": vùng chạm quái quá nhỏ (r 0,85 m) nên hay trượt → rộng hơn (thường r1,2/h2,3; tinh anh 1,6/2,9; boss 2,3/3,6) + dự phòng: tia trượt thì lấy điểm bấm trên ĐẤT, quái nào trong (thân + 1,3 m) cũng được chọn (`pickAt(origin,dir,attack,ground)`). Nếu ptg báo vẫn không đánh: cần xem Console trình duyệt (F12) xem có lỗi đỏ khi bấm; nghi ngờ tiếp theo: tia bị chặn/`LGT.farm.pickAt` không được gọi.

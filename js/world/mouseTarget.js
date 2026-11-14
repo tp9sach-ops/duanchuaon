@@ -45,9 +45,9 @@ export function rayToSegment(o, u, a, v) {
 
 /** Kích thước vùng chạm của quái (rộng rãi hơn thân thật cho dễ bấm): { h: chiều cao, r: bán kính } theo loại quái. */
 export function monsterVolume(m) {
-  if (m && m.boss) return { h: 3.4, r: 1.7 };
-  if (m && m.elite) return { h: 2.7, r: 1.2 };
-  return { h: 1.9, r: 0.85 };
+  if (m && m.boss) return { h: 3.6, r: 2.3 };
+  if (m && m.elite) return { h: 2.9, r: 1.6 };
+  return { h: 2.3, r: 1.2 };   // Phiên 159e: rộng hơn (quái ngủ nằm thấp trong bụi, bấm trượt một chút vẫn trúng)
 }
 
 /**
