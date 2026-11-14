@@ -10,16 +10,20 @@ export const GEMS = [
 ];
 export const STAFF = { id: 'nhuy', ten: 'Gậy như ý', gia: 400, dmg: 1.01, mo: 'Gậy đỏ đầu đồng chạm rồng, có ánh sáng; mỗi đòn đánh lan ra một vòng sáng và tăng 1% sát thương. Mua một lần dùng mãi.' };
 
+// Phiên 154: Nón Jingasa (Điện Máy, 400 lá bồ đề): mua một lần, tự đội lên đầu, +3% giáp (đòn quái đánh trúng bớt 3%). Có thể cất / đội lại.
+export const HAT = { id: 'non', ten: 'Nón Jingasa', gia: 400, giap: 0.03, mo: 'Nón lá sơn đen kiểu Jingasa: mua xong tự đội lên đầu nhân vật, tăng 3% giáp (quái đánh bớt đau 3%). Mua một lần dùng mãi.' };
+
 const isObj = (o) => !!o && typeof o === 'object' && !Array.isArray(o);
 const int = (x, lo, hi) => (Number.isFinite(+x) ? Math.max(lo, Math.min(hi, Math.floor(+x))) : lo);
 export const gemById = (id) => GEMS.find((g) => g.id === id) || null;
-export const emptyItems = () => ({ v: 1, exp: { hoimau: 0, dichchuyen: 0 }, staff: false });
+export const emptyItems = () => ({ v: 1, exp: { hoimau: 0, dichchuyen: 0 }, staff: false, hat: false, hatOn: false });
 
 /** Đọc trạng thái đã lưu (chuỗi JSON hoặc đối tượng); hỏng → trống. Mốc hết hạn vô lý (quá xa) bị kéo về trần. */
 export function loadItems(raw, now = Date.now()) {
   let o = raw; if (typeof raw === 'string') { try { o = JSON.parse(raw); } catch (_) { o = null; } }
   const s = emptyItems(); if (!isObj(o)) return s;
   s.staff = o.staff === true;
+  s.hat = o.hat === true; s.hatOn = s.hat && o.hatOn !== false;   // bản lưu cũ không có hat → chưa mua; đã mua mà không ghi hatOn → đang đội
   const e = isObj(o.exp) ? o.exp : {};
   for (const g of GEMS) s.exp[g.id] = int(e[g.id], 0, now + g.giay * MAX_STACK * 1000);
   return s;
@@ -54,3 +58,24 @@ export const canRevive = (st, now = Date.now()) => isActive(st, 'dichchuyen', no
 export const dmgMul = (st) => (isObj(st) && st.staff === true ? STAFF.dmg : 1);
 /** 605 giây → "10:05". */
 export const fmtTime = (s) => { const n = Math.max(0, Math.floor(+s || 0)); return `${Math.floor(n / 60)}:${String(n % 60).padStart(2, '0')}`; };
+
+/** Mua Nón Jingasa (tự đội). Trả { ok, reason: ''|'owned'|'poor', cost, state }. */
+export function buyHat(state, la, now = Date.now()) {
+  const st = loadItems(state, now);
+  if (st.hat) return { ok: false, reason: 'owned', cost: HAT.gia, state: st };
+  if (!(Number(la) >= HAT.gia)) return { ok: false, reason: 'poor', cost: HAT.gia, state: st };
+  return { ok: true, reason: '', cost: HAT.gia, state: { ...st, hat: true, hatOn: true } };
+}
+/** Đội / cất nón (chưa mua thì không đổi gì). */
+export function toggleHat(state, now = Date.now()) {
+  const st = loadItems(state, now); if (!st.hat) return st;
+  return { ...st, hatOn: !st.hatOn };
+}
+export const hatWorn = (st) => isObj(st) && st.hat === true && st.hatOn !== false;
+/** Hệ số giáp: đang đội nón → ×0,97 lượng sát thương nhận, không thì ×1. */
+export const armorMul = (st) => (hatWorn(st) ? 1 - HAT.giap : 1);
+/** Sát thương sau giáp (làm tròn, tối thiểu 1; giá trị lạ → 0). */
+export function afterArmor(dmg, st) {
+  const d = Number(dmg); if (!Number.isFinite(d) || d <= 0) return 0;
+  return Math.max(1, Math.round(d * armorMul(st)));
+}

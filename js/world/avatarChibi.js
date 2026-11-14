@@ -51,9 +51,10 @@ export function createChibiAvatar({ name = 'Khách', color = DEFAULT_COLOR, hair
     const chin = mesh(new THREE.SphereGeometry(0.2, 16, 12), bm, face, 0, -0.27, 0.27); chin.scale.set(1.05, 1.15, 0.55);
     const tail = mesh(new THREE.ConeGeometry(0.17, 0.5, 14), bm, face, 0, -0.55, 0.3); tail.rotation.x = Math.PI + 0.12; tail.scale.set(1, 1, 0.55);
   }
+  let bun = null;   // búi tóc: ẩn khi đội nón (Phiên 154)
   if (hairById(hairId).id === 'bui') {
     const hairM = std(HAIR, 0.8), cap = mesh(new THREE.SphereGeometry(0.435, 24, 14, 0, Math.PI * 2, 0, Math.PI * 0.43), hairM, face, 0, 0.01, -0.025); cap.scale.set(1, 0.97, 1); cap.rotation.x = -0.32;
-    mesh(new THREE.SphereGeometry(0.125, 14, 10), hairM, face, 0, 0.5, -0.1);
+    bun = mesh(new THREE.SphereGeometry(0.125, 14, 10), hairM, face, 0, 0.5, -0.1);
   }
   // Hào quang (khi ngồi thiền/tụng)
   const haloC = document.createElement('canvas'); haloC.width = haloC.height = 128; { const g = haloC.getContext('2d'), gr = g.createRadialGradient(64, 64, 18, 64, 64, 62); gr.addColorStop(0, 'rgba(255,248,214,.0)'); gr.addColorStop(0.55, 'rgba(255,240,190,.95)'); gr.addColorStop(0.7, 'rgba(255,224,150,.45)'); gr.addColorStop(1, 'rgba(255,224,150,0)'); g.fillStyle = gr; g.fillRect(0, 0, 128, 128); }
@@ -203,5 +204,5 @@ export function createChibiAvatar({ name = 'Khách', color = DEFAULT_COLOR, hair
     bar(8, h, h < 0.3 ? '#ff6a5a' : '#6fe37a', h < 0.3 ? '#c8261c' : '#2fa84a'); bar(27, m, '#7fc4ff', '#2a6fd6');
     barTex.needsUpdate = true;
   }
-  return { group, setState, setFacing, say, setBeadCount, swing, setStance, setHold, act, gourdPos, pulseGourd, setBars, update, dispose, get state() { return st.state; }, get swinging() { return swingT >= 0; }, get holding() { return st.hold; }, get backHost() { return hasBack ? backHostGroup : null; } };
+  return { group, setState, setFacing, say, setBeadCount, swing, setStance, setHold, act, gourdPos, pulseGourd, setBars, update, dispose, get state() { return st.state; }, get swinging() { return swingT >= 0; }, get holding() { return st.hold; }, get backHost() { return hasBack ? backHostGroup : null; }, get headHost() { return face; }, setHat(on) { if (bun) bun.visible = !on; } };
 }
