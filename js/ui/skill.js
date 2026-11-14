@@ -43,7 +43,7 @@ export function initSkill(hud, { toast = () => {}, getSen = () => 0, spendSen = 
     if (act === 'glide') { if (W.dashing && glideQ) return false; glideQ = true; return true; }   // lướt ngay khi hết cú bật (xem wrap)
     if (act === 'none') return false;
     const ok = jump.start(jumpHeightAt(lv, indoor));
-    if (ok && act === 'leap') { const p = leapPlan(lv, indoor), pos = W.pos, ry = Number.isFinite(W.facing) ? W.facing : 0; if (p && !W.dashing) { const l = landing(pos.x, pos.z, ry, p.dist); if (l.dist > 0.3) W.dash({ x: l.x, z: l.z }, p.dur, { tilt: false }); } }
+    if (ok && act === 'leap') { const p = leapPlan(lv, indoor), pos = W.pos, ry = Number.isFinite(W.facing) ? W.facing : 0; if (p && !W.dashing) { const l = landing(pos.x, pos.z, ry, p.dist); if (l.dist > 0.3 && W.dash({ x: l.x, z: l.z }, p.dur, { tilt: false }) && glideCd <= 0) glideQ = true; } }   // Phiên 151: bật tới trước xong thì TỰ lướt thêm một đoạn theo hướng đi (không cần bấm Nhảy lần nữa)
     if (ok) { if (LGT.sfx) LGT.sfx.play('nhay'); }
     if (ok && LGT.act) LGT.act('khinhthan');   // Phiên 52: nhiệm vụ “Thử Khinh thân” (3 lần nhảy)
     return ok;
