@@ -2,6 +2,7 @@
 // đọc LGT.farmView.mons (chính các đối tượng quái của spawn.js), thấy Oán Khí của quái giảm (bị đánh) thì quái nổi giận: đuổi theo, gồng chiêu báo trước (phồng lên) rồi đánh.
 // Hết Sinh Lực → được đưa về cửa chùa (không mất đồ, không mất cấp, GDD mục 8), Tự Động Hàng Yêu dừng. Logic: js/world/monsterAttack.js (có test). Số liệu TẠM: js/data/monsterAI.js.
 // Mục 1 (khôi phục sau khi Phiên 143 ghi đè): Ngọc hồi máu (LGT.items.regenMul() = 5) hồi Sinh Lực nhanh gấp 5; Ngọc dịch chuyển (LGT.items.tryRevive()) hết Sinh Lực thì hồi sinh NGAY TẠI CHỖ, không về cổng chùa. js/ui/items.js đặt LGT.items; chưa có thì mọi thứ chạy như cũ.
+// Phiên 145: khi Tự Động Hàng Yêu đang BẬT, hết Sinh Lực thì hồi sức NGAY TẠI CHỖ và đánh tiếp (không dừng tự động, không về cổng chùa); cũng không còn tự dừng khi Sinh Lực thấp. Tự động chỉ dừng khi người chơi tắt / mở bảng / hết 60 phút. Đánh tay (không bật tự động) giữ nguyên: hết máu về cửa chùa.
 import { VITALS_CFG } from '../data/monsterAI.js';
 import { provoke, calm, stepMonster, createVitals } from '../world/monsterAttack.js';
 import { statsOf } from '../world/stats.js';
@@ -16,7 +17,7 @@ export function initFarmCombat(hud, { toast = () => {} } = {}) {
   const LGT = window.LGT || (window.LGT = {});
   const vit = createVitals({ tuvi: LGT.farm ? LGT.farm.tuvi : 1 });
   const engaged = new Map();   // uid → quái đang nổi giận (để hết giận khi quái biến mất / người chơi rời vùng)
-  let lastT = performance.now(), warned = false, hudUntil = 0;
+  let lastT = performance.now(), warned = false, hudUntil = 0, autoNote = 0;
 
   const box = el('div', 'fm-hp'); box.hidden = true;
   const bar = el('i', 'fm-hpbar'), fill = el('i'), txt = el('span', 'fm-hptxt');
@@ -29,10 +30,16 @@ export function initFarmCombat(hud, { toast = () => {} } = {}) {
     if (k > 1 && !vit.down && vit.grace <= 0) for (let i = 1; i < k; i++) vit.step(d);
   }
 
+  const autoOn = () => { try { return !!(LGT.farm && LGT.farm.status().auto); } catch (_) { return false; } };
+
   function defeat() {
     for (const m of engaged.values()) calm(m); engaged.clear();
     if (LGT.items && LGT.items.tryRevive && LGT.items.tryRevive()) { vit.revive(); return; }   // Ngọc dịch chuyển: hồi sinh ngay tại chỗ, không dừng tự động, không về cổng chùa
-    try { if (LGT.farm && LGT.farm.status().auto) LGT.farm.toggleAuto(); } catch (_) { /* bỏ qua */ }
+    if (autoOn()) {   // Phiên 145: đang Tự Động Hàng Yêu → hồi sức tại chỗ (đầy Sinh Lực + vài giây bất tử), nhân vật đánh tiếp, không dừng
+      vit.revive();
+      const now = performance.now(); if (now - autoNote > 15000) { autoNote = now; toast('Hết Sinh Lực nhưng Tự động hàng yêu vẫn tiếp tục: bạn được hồi sức ngay tại chỗ.', 3000); }
+      return;
+    }
     if (LGT.world && LGT.world.teleport) LGT.world.teleport(RESPAWN.x, RESPAWN.z);
     vit.revive();
     toast('Bạn kiệt sức và được đưa về cửa chùa nghỉ ngơi. Không mất đồ, không mất cấp — nghỉ một chút rồi quay lại luyện tiếp nhé!', 5200);
@@ -61,8 +68,7 @@ export function initFarmCombat(hud, { toast = () => {} } = {}) {
       else if (ev.k === 'strike') { const r = vit.take(ev.dmg); if (r.taken > 0) { hudUntil = now + 3000; box.classList.add('hurt'); setTimeout(() => box.classList.remove('hurt'), 220); } if (r.down) { defeat(); break; } }
     }
     stepVit(dt);
-    // 3) Tự Động Hàng Yêu tự dừng khi Sinh Lực thấp
-    if (LGT.farm && vit.pct < VITALS_CFG.autoStopFrac) { try { if (LGT.farm.status().auto) { LGT.farm.toggleAuto(); toast('Tự động hàng yêu dừng vì Sinh Lực thấp. Lùi ra nghỉ một lát nhé!', 4200); } } catch (_) { /* bỏ qua */ } }
+    // 3) (Phiên 145) Tự Động Hàng Yêu KHÔNG còn tự dừng khi Sinh Lực thấp — hết Sinh Lực thì defeat() hồi sức tại chỗ và đánh tiếp.
     show(now);
   }
   function show(now = performance.now()) {
