@@ -18,14 +18,24 @@ export const toNet = (x, z) => ({ x: x - ARENA.cx + NET.x, z: z - ARENA.cz + NET
 export const fromNet = (nx, nz) => ({ x: nx - NET.x + ARENA.cx, z: nz - NET.z + ARENA.cz });
 export const inNetBox = (nx, nz) => Math.abs(nx - NET.x) <= 20 && Math.abs(nz - NET.z) <= 20;
 
-/** Chiêu: a đánh thường · b chém khí (bay thẳng, né ngang được) · c thiết đầu công (lao, né sang bên) · g hộ thân (đỡ; canh đúng lúc đòn tới thì đỡ hoàn hảo, phản lại). */
+/**
+ * CHIÊU — dùng CHUNG một bộ phím với đánh quái ngoài rừng (Phiên 164, mục 1 lộ trình mới): 1 = Đánh thường, 2 (hoặc R) = Thương, 3 = Chém khí, 4 = Thiết đầu công,
+ * Q / W / E = chiêu 1 / 2 / 3 của phái, 6 = Hộ thân (chỉ ở Võ đài). Mỗi chiêu có `shape`: 'melee' (cận chiến hình quạt) · 'wave' (khí bay thẳng, né ngang được) · 'dash' (lao, né sang bên).
+ * Con số là QUY ƯỚC TẠM; ở Võ đài ai cũng có đủ Q/W/E (không gắn cấp/hệ để công bằng) — hệ chỉ đổi TÊN hiển thị ở máy mình.
+ */
 export const MOVES = {
-  a: { id: 'danh', key: 'J', ten: 'Đánh thường', cd: 0.7, wind: 0.3, range: 2.6, dmg: 40 },
-  b: { id: 'khi', key: 'K', ten: 'Chém khí', cd: 3, wind: 0.35, range: 16, speed: 18, halfW: 1.0, dmg: 70 },
-  c: { id: 'lao', key: 'L', ten: 'Thiết đầu công', cd: 6, wind: 0.45, dash: 7, dashS: 0.3, halfW: 1.1, dmg: 95 },
-  g: { id: 'giap', key: 'U', ten: 'Hộ thân', cd: 5.5, dur: 1.2, perfect: 0.45, block: 0.7, counter: 30 },
+  a: { id: 'danh', key: '1', ten: 'Đánh thường', shape: 'melee', cd: 0.7, wind: 0.3, range: 2.6, dmg: 40 },
+  t: { id: 'thuong', key: '2', alt: 'R', ten: 'Thương', shape: 'melee', cd: 1.8, wind: 0.4, range: 3.6, dmg: 60 },
+  b: { id: 'khi', key: '3', ten: 'Chém khí', shape: 'wave', cd: 3, wind: 0.35, range: 16, speed: 18, halfW: 1.0, dmg: 70 },
+  c: { id: 'lao', key: '4', ten: 'Thiết đầu công', shape: 'dash', cd: 6, wind: 0.45, dash: 7, dashS: 0.3, halfW: 1.1, dmg: 95 },
+  q: { id: 'chieu1', key: 'Q', ten: 'Chiêu 1', shape: 'wave', cd: 5, wind: 0.4, range: 14, speed: 20, halfW: 1.2, dmg: 80 },
+  w: { id: 'chieu2', key: 'W', ten: 'Chiêu 2', shape: 'melee', cd: 7, wind: 0.5, range: 4.4, dmg: 100 },
+  e: { id: 'chieu3', key: 'E', ten: 'Chiêu 3', shape: 'dash', cd: 11, wind: 0.5, dash: 9, dashS: 0.35, halfW: 1.3, dmg: 130 },
+  g: { id: 'giap', key: '6', ten: 'Hộ thân', cd: 5.5, dur: 1.2, perfect: 0.45, block: 0.7, counter: 30 },
 };
-export const ATTACKS = ['a', 'b', 'c'];
+export const ATTACKS = ['a', 't', 'b', 'c', 'q', 'w', 'e'];
+/** Mã phím (KeyboardEvent.code) → chiêu. Cùng phím với js/ui/dock.js (1–4, R) và js/ui/heSkill.js (Q, W, E). */
+export const KEY_CODES = { Digit1: 'a', Numpad1: 'a', Digit2: 't', Numpad2: 't', KeyR: 't', Digit3: 'b', Numpad3: 'b', Digit4: 'c', Numpad4: 'c', KeyQ: 'q', KeyW: 'w', KeyE: 'e', Digit6: 'g', Numpad6: 'g' };
 
 const num = (x, d = 0) => (Number.isFinite(+x) ? +x : d);
 const clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
@@ -114,11 +124,11 @@ export function createDuel({ send = () => {}, hpMax = DUEL.hp } = {}) {
     for (const inc of incoming) {
       if (inc.done) continue;
       const m = MOVES[inc.kind], age = t - inc.t0, dx = Math.sin(inc.ry), dz = Math.cos(inc.ry), rx = me.x - inc.ox, rz = me.z - inc.oz;
-      if (inc.kind === 'a') {
+      if (m.shape === 'melee') {
         if (age < m.wind) continue;
         const d = Math.hypot(rx, rz), ang = d < 1e-6 ? 0 : Math.abs(angDiff(Math.atan2(rx, rz), inc.ry));
         settle(inc, d <= m.range + 0.4 && ang <= 1.15);
-      } else if (inc.kind === 'b') {
+      } else if (m.shape === 'wave') {
         if (age < m.wind) continue;
         const along = m.speed * (age - m.wind), p = rx * dx + rz * dz, lat = rx * dz - rz * dx;
         if (p >= inc.prev - 0.4 && p <= Math.min(along, m.range) + 0.4 && p >= 0 && Math.abs(lat) <= m.halfW + 0.3) settle(inc, true);
@@ -170,7 +180,7 @@ export function createDuel({ send = () => {}, hpMax = DUEL.hp } = {}) {
         else { st.whiffs++; events.push({ type: 'ack-miss' }); }
       }
     },
-    /** Dùng chiêu `kind` ('a'|'b'|'c'|'g'). me = {x,z,ry}. Trả { ok, reason?, move, fat? }. */
+    /** Dùng chiêu `kind` ('a'|'t'|'b'|'c'|'q'|'w'|'e'|'g'). me = {x,z,ry}. Trả { ok, reason?, move, fat? }. */
     cast(kind, me) {
       const m = MOVES[kind];
       if (!m) return { ok: false, reason: 'khong-co' };
