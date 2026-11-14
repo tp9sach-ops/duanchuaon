@@ -118,7 +118,8 @@ export const VILLAGERS = [
     ] },
   // Mục 3 (14/11): nhân viên tiệm Bánh Sầu Riêng 9 Sạch (nhà phố 9 Sạch, STORE_9SACH ở outside.js) — bán Bánh sầu riêng 3 vị + Bánh sầu riêng pho mai than tre (js/ui/npc.js mở cửa hàng 'banhsr').
   // Đứng ở sân trước cửa tiệm, quay mặt ra đường (−x) như nhân viên Kim Hoàn; chỗ đứng 12,8 nằm trên vỉa hè (vùng duong-lang). Cách phông / hai giỏ hoa / standee ≥ 2,9 m. Vị trí là số TẠM, chưa nhìn bằng mắt.
-  { id: 'nv9sach', ten: 'Nhân viên Bánh Sầu Riêng 9 Sạch', color: '9sach', hair: 'bui', x: 16.4, z: 81.6, ry: -Math.PI / 2, stand: { x: 12.8, z: 81.6 },
+  // 14/11: z 82,2 (trước 81,6) để điểm thử lối đi (16,5; 81,5) của tests/outside.test.mjs không bị NPC chặn.
+  { id: 'nv9sach', ten: 'Nhân viên Bánh Sầu Riêng 9 Sạch', color: '9sach', hair: 'bui', x: 16.4, z: 82.2, ry: -Math.PI / 2, stand: { x: 12.8, z: 82.2 },
     lines: [
       'Chào bạn! Bánh Sầu Riêng 9 Sạch, sạch là chính, ngon là mười.',
       'Bánh sầu riêng 3 vị ăn vào là khỏe, hồi sức nhanh gấp năm lần.',
@@ -127,9 +128,10 @@ export const VILLAGERS = [
       'Mua một được ba, nhớ quay vòng may mắn trước cửa nhé.',
       'Cảm ơn bạn đã ghé tiệm. Chúc bạn một ngày an lạc!',
     ] },
-  // Phiên 163: nhân viên tiệm trà Tách Hoa (STORE_TACHHOA ở outside.js, sân x 13–19, z 87–95, ngay cạnh tiệm 9 Sạch) — bán Trà sữa xoài hoàng kim 50 lá (+30 phút tự động hàng yêu hôm nay; js/ui/npc.js mở cửa hàng 'tachhoa').
-  // Đứng sân trước cửa tiệm, quay mặt ra đường (−x) như nhân viên 9 Sạch; chỗ đứng 12,8 nằm trên vỉa hè (vùng duong-lang). Cách chiếc xe tay ga (15,9; 93,7) ≈ 4,3 m. Vị trí là số TẠM, chưa nhìn bằng mắt.
-  { id: 'nvtachhoa', ten: 'Nhân viên Tách Hoa', color: 'do', hair: 'bui', x: 16.4, z: 89.4, ry: -Math.PI / 2, stand: { x: 12.8, z: 89.4 },
+  // Phiên 163: nhân viên tiệm trà Tách Hoa (STORE_TACHHOA ở outside.js, sân x 13–19, z 87–95, ngay cạnh tiệm 9 Sạch) — bán Trà sữa xoài hoàng kim 39 lá (+30 phút tự động hàng yêu hôm nay; js/ui/npc.js mở cửa hàng 'tachhoa').
+  // Đứng sân trước cửa tiệm, quay mặt ra đường (−x) như nhân viên 9 Sạch; chỗ đứng 12,8 nằm trên vỉa hè (vùng duong-lang). Cách chiếc xe tay ga (15,9; 93,7) ≈ 3,6 m; để trống điểm giữa sân (16,5; 89) cho test lối đi. Vị trí là số TẠM, chưa nhìn bằng mắt.
+  // 14/11: mặc đồng phục Tách Hoa (color 'tachhoa': áo trắng, yếm + nón beret xanh nhạt) theo ảnh nhân viên ptg gửi.
+  { id: 'nvtachhoa', ten: 'Nhân viên Tách Hoa', color: 'tachhoa', hair: 'bui', x: 16.4, z: 90.2, ry: -Math.PI / 2, stand: { x: 12.8, z: 90.2 },
     lines: [
       'Chào bạn! Tách Hoa mới khai trương, mời bạn thử ly trà sữa nhé.',
       'Trà sữa xoài hoàng kim: ngọt thanh, uống vào tỉnh táo đánh quái cả buổi.',
