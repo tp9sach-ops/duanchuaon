@@ -2,13 +2,14 @@
 // Logic: js/world/spawn.js, js/world/farm.js (có test). Hình 3D: js/scene/farm.js đọc LGT.farmView. Đặt LGT.farm = { status(), stone(), spear(), get tuvi, get state }.
 // Nút Ném đá / Thương dùng lại ACT.da / ACT.thuong của js/ui/dock.js: js/ui/yeuquai.js chuyển sang LGT.farm khi KHÔNG có yêu quái hằng tháng.
 // Quái không đánh trả (bãi rừng an toàn để luyện); đòn dùng stoneDamage/spearDamage theo sức mạnh như khi đánh yêu quái. Chưa có Hệ người chơi nên chưa tính khắc/sinh (G2).
+// Phiên 163: Tu Vi quyết định CẤP CHIÊU (js/ui/heSkill.js: cấp chiêu = Tu Vi ÷ 10, tối đa 10) nên thông báo lên cấp nhắc điều đó. Trà sữa xoài hoàng kim (Tách Hoa, js/ui/items.js) gọi LGT.farm.addAutoMinutes(30) để cộng thêm thời gian Tự động hàng yêu hôm nay.
 import { MONSTERS, FARM_ZONES, FARM_CFG } from '../data/monsters.js';
 import { createSpawner, tickSpawner, hitMonster, nearestMonster, setNight, isNight, rectsOf, ZONE_IDS } from '../world/spawn.js';
 import { pickMonster, LOCK_RANGE } from '../world/mouseTarget.js';   // Phiên 159: chuột phải 2 lần vào quái = khóa mục tiêu
 import { loadFarm, settleKill, settleBoss, senLeft, tuViOf, killXp } from '../world/farm.js';
 import { STONE, SPEAR, stoneDamage, spearDamage, rngSeed } from '../world/yeuquai.js';
 import { mapAvailable } from '../world/minimap.js';
-import { loadAuto, autoLeft, addAutoTime, nextAction, rushTarget } from '../world/autoHunt.js';
+import { loadAuto, autoLeft, addAutoTime, addAutoBonus, nextAction, rushTarget } from '../world/autoHunt.js';
 import { blocked } from '../world/layout.js';
 import { bgTick } from '../bgTick.js';
 import { skillDamage } from '../world/heQuest.js';
@@ -79,14 +80,14 @@ export function initFarm(hud, { toast = () => {} } = {}) {
     const bits = [`Thu phục ${mon.ten}!`]; if (xp > 0) bits.push(`+${xp} kinh nghiệm`); if (s.senGain > 0) bits.push(`+${s.senGain} hạt sen`); if (s.expGain > 0) bits.push(`+${s.expGain} Tu Vi`);
     if (xp > 0 && LGT.addXp) LGT.addXp(xp);
     toast(bits.join(' '), 2600); if (LGT.sfx) LGT.sfx.play('quai-ha');
-    if (s.leveledUp) setTimeout(() => toast(`Tu Vi lên cấp ${s.tuvi}! Công và Thủ của bạn tăng.`, 4200), 1200);
+    if (s.leveledUp) setTimeout(() => toast(`Tu Vi lên cấp ${s.tuvi}! Công, Thủ và cấp chiêu thức của bạn tăng.`, 4200), 1200);   // Phiên 163: Tu Vi → cấp chiêu (heSkill.js)
     if (s.expCapped && capExp !== farm.cnt.day) { capExp = farm.cnt.day; setTimeout(() => toast('Hôm nay bạn đã nhận đủ Tu Vi từ hàng yêu. Vẫn nhận hạt sen theo trần riêng — mai quay lại nhận tiếp!', 5200), 2200); }
     if (s.senCapped && capToast !== farm.sen.day) { capToast = farm.sen.day; setTimeout(() => toast('Hôm nay bạn đã nhận đủ hạt sen từ hàng yêu. Vẫn được Tu Vi — mai quay lại nhận tiếp!', 5200), 2800); }
   }
   // Thu phục yêu quái hằng tháng (js/ui/yeuquai.js gọi khi đóng góp đủ): cộng Tu Vi nguồn 'boss', trần theo ngày.
   function grantBoss() {
     const s = settleBoss(farm, Date.now()); farm = s.farm; save();
-    if (s.expGain > 0) { toast(`+${s.expGain} Tu Vi từ thu phục yêu quái.`, 3000); if (s.leveledUp) setTimeout(() => toast(`Tu Vi lên cấp ${s.tuvi}! Công và Thủ của bạn tăng.`, 4200), 1200); }
+    if (s.expGain > 0) { toast(`+${s.expGain} Tu Vi từ thu phục yêu quái.`, 3000); if (s.leveledUp) setTimeout(() => toast(`Tu Vi lên cấp ${s.tuvi}! Công, Thủ và cấp chiêu thức của bạn tăng.`, 4200), 1200); }
     else if (s.expCapped) toast('Hôm nay bạn đã nhận đủ Tu Vi từ thu phục yêu quái. Mai quay lại nhận tiếp!', 3600);
     return s;
   }
@@ -110,18 +111,24 @@ export function initFarm(hud, { toast = () => {} } = {}) {
     cdSpear = SPEAR.cd; if (LGT.sfx) LGT.sfx.play('thuong'); hit(t.uid, spearDamage(str()));
   }
 
-  // Tự Động Hàng Yêu (Phiên 108; Phiên 127: tự LAO tới quái rồi Thương/Đánh thường, trong tầm autoRange). Dừng khi mở bảng, vào nhà, có yêu quái hằng tháng, hoặc hết 60 phút hôm nay.
+  // Tự Động Hàng Yêu (Phiên 108; Phiên 127: tự LAO tới quái rồi Thương/Đánh thường, trong tầm autoRange). Dừng khi mở bảng, vào nhà, có yêu quái hằng tháng, hoặc hết thời gian hôm nay (60 phút + phần Trà sữa xoài hoàng kim đã uống).
   function stopAuto(msg) { if (!running) return; running = false; saveAuto(); if (msg) toast(msg, 3200); }
   function toggleAuto() {
     if (running) { stopAuto('Đã tắt tự động hàng yêu.'); if (LGT.sfx) LGT.sfx.play('tu-dong-tat'); return; }
-    if (autoLeft(auto, Date.now()) <= 0) { toast('Hôm nay bạn đã dùng hết thời gian tự động hàng yêu. Mai dùng tiếp, hoặc tự bấm đánh nhé!', 3600); return; }
+    if (autoLeft(auto, Date.now()) <= 0) { toast('Hôm nay bạn đã dùng hết thời gian tự động hàng yêu. Mai dùng tiếp, hoặc uống Trà sữa xoài hoàng kim ở Tách Hoa để có thêm 30 phút!', 4200); return; }
     if (!here() || bossOn()) return;
     running = true; if (LGT.sfx) LGT.sfx.play('tu-dong-bat'); toast(`Tự động hàng yêu BẬT: nhân vật tự lao vào quái trong ${FARM_CFG.autoRange} m rồi múa côn đánh. Mở bảng sẽ tự dừng; chuyển sang tab khác thì nhân vật vẫn tiếp tục đánh.`, 4200);
+  }
+  /** Phiên 163: cộng `min` phút vào trần Tự động hàng yêu HÔM NAY (Trà sữa xoài hoàng kim). Trả số phút còn lại hôm nay. Nếu đang hết giờ thì bấm nút Tự động lại là chạy tiếp. */
+  function addAutoMinutes(min) {
+    const sec = Math.max(0, Math.floor((+min || 0) * 60)), now = Date.now();
+    if (sec > 0) { auto = addAutoBonus(auto, sec, now); saveAuto(); }
+    return Math.floor(autoLeft(auto, now) / 60);
   }
   function autoStep(dt) {
     if (LGT.panelOpen || LGT.heldBy || (LGT.world && LGT.world.mode && LGT.world.mode !== 'free')) return stopAuto('Tự động hàng yêu đã dừng.');
     const r = addAutoTime(auto, dt, Date.now()); auto = r.state; if (performance.now() - autoSaved > 5000) { autoSaved = performance.now(); saveAuto(); }
-    if (r.out) return stopAuto('Hết 60 phút tự động hàng yêu hôm nay. Mai dùng tiếp nhé!');
+    if (r.out) return stopAuto('Hết thời gian tự động hàng yêu hôm nay. Mai dùng tiếp, hoặc uống Trà sữa xoài hoàng kim ở Tách Hoa nhé!');
     const p = pos(); let best = null, bd = Infinity; for (const m of view.mons) { const d = gap(m, p); if (d < bd) { bd = d; best = m; } }
     if (!best) return;
     const act = nextAction({ gap: bd, body: bodyOf(best), stoneReady: cdStone <= 0, spearReady: cdSpear <= 0, spearRange: SPEAR.range });
@@ -177,7 +184,7 @@ export function initFarm(hud, { toast = () => {} } = {}) {
 
   LGT.farm = {
     skillReady, skillHit, pickAt, unlock, stopAttack, get attacking() { return attackOn; }, get locked() { return lockUid; }, get tuviInfo() { return tuViOf(farm); },
-    stone, spear, toggleAuto, grantBoss,
+    stone, spear, toggleAuto, grantBoss, addAutoMinutes,
     get tuvi() { return tuViOf(farm).tuvi; }, get state() { return farm; },
     status() { const t = target(); return { active: !!t || running, ten: t ? t.ten : '', stoneCd: cdStone, spearCd: cdSpear, canAuto: true, auto: running, autoLeft: Math.floor(autoLeft(auto, Date.now()) / 60) }; },
   };
