@@ -2,6 +2,7 @@
 // - Mặc định ai cũng cầm và CƯỠI THƯƠNG. Mua Gậy như ý (Điện Máy, 400 lá) thì đánh và cưỡi bằng gậy (hai đầu chớp sáng, vệt sáng khi bay). Mua Ván trượt (100 lá) thì cưỡi/lướt ván; ván KHÔNG phải vũ khí. Người chơi chọn đồ cầm ở Túi đồ (js/ui/bag.js); nút cưỡi ở dock cưỡi đúng đồ đang cầm (nhãn rideLabel).
 // - Tốc độ theo MOUNT_MUL trong js/world/loadout.js (thương/gậy ×1,25 là số TẠM chờ ptg chốt; ván ×1,5). world.js nhân LGT.board.speedMul.
 // - Vào trận (LGT.combatPose.stance) thì KHÔNG cưỡi được: đang cưỡi → đồ rời chân, xoay một vòng quanh người rồi bay về tay (returnPose) và biến mất. Ván trượt 3D nạp từ assets/models/skateboard.glb (thiếu file thì dùng ván khối).
+// - Cập nhật 14/11 (mục 2): đang cưỡi THƯƠNG / GẬY NHƯ Ý (đồ hiện dưới chân, kể cả lúc đang bay về tay) thì cây thương thu gọn đeo SAU LƯNG biến mất (avatar.setBackHidden); cưỡi ván trượt thì vũ khí vẫn đeo lưng vì ván không phải vũ khí.
 // Dữ liệu: 'lgt.van' (đã mua ván chưa; khóa mới, KHÔNG dùng 'lgt.board' cũ vì đó là thương bay mua bằng hạt sen, nay ai cũng có thương) + 'lgt.loadout'. CHƯA nhìn bằng mắt trên máy thật.
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
@@ -126,6 +127,7 @@ export function initBoard({ toast = () => {} } = {}) {
           m.userData.trail.forEach((sp, i) => { sp.material.opacity = on ? Math.max(0, 0.55 - i * 0.055) * (0.7 + 0.3 * Math.sin(clock * 10 + i)) : 0; });
         }
       }
+      if (av.setBackHidden) av.setBackHidden(!!(m && m.visible && id !== 'van'));   // 14/11 (mục 2): thương/gậy đang hiện dưới chân (cưỡi, đang xuống hoặc bay về tay) → ẩn cây đeo sau lưng; ván trượt thì giữ nguyên
       if (av.group) av.group.position.y += lift;
     };
   }

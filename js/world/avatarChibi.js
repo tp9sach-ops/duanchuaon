@@ -1,9 +1,9 @@
 // Nhân vật chibi dùng thân GLB có xương (Phiên 99; bản khớp: khuỷu tay, cổ tay, gối, cổ chân). Cùng giao diện với createAvatar cũ: { group, setState, setFacing, say, setBeadCount, swing, update, dispose, state, swinging } + MỚI: setHold(bool) (giơ tay khiêng vật), act('throw'|'grab').
-// Tư thế lấy từ poseFor (avatarLogic.js) rồi đổi thành góc xương bằng chibiPose (chibiRig.js, có test) → mọi trạng thái cũ (đứng, đi, ngồi, gõ mõ, lần hạt, lạy, vung côn) giữ nguyên nhịp, chỉ đổi hình dáng.
 // Phiên 119 (theo clip mẫu): swing() nhận kiểu đòn — không đối số = tự nối chuỗi múa côn → ngang → ngược → xoay (đánh thường); số (skill Chém khí) = 'khi' (giơ cao bổ xuống); chuỗi tên = đúng kiểu đó; trả về tên kiểu đã chọn. setStance(bool) = thế sẵn sàng chiến đấu (khom, chân trước/sau, chạy nghiêng người). Logic: world/combo.js.
 // Phiên 126: côn BỎ MŨI NHỌN, nắm ở giữa cán, múa/xoay quanh bàn tay (pose.spin); HỒ LÔ đeo eo trái (gourdPos(), pulseGourd() — hồn quái bay vào, xem js/world/soul.js); thanh Sinh Lực + Chân khí trên đầu khi giao chiến: setBars(hp 0..1 | null, mp 0..1) (js/ui/combatPose.js).
 // Phiên 131: CHỈ NGƯỜI CHƠI đeo hồ lô — createChibiAvatar({ gourd: false }) (NPC, dân làng) thì không có hồ lô; mặc định gourd = true.
 // Phiên 159: cast(skillId) = tư thế 30 chiêu Ngũ Hành (gồng → phát → thu, hai tay + thân + chân; logic world/chieuPose.js), trả về tổng số giây (0 = chiêu lạ).
+// Cập nhật 14/11 (mục 2): setBackHidden(bool) — js/ui/board.js gọi khi đang CƯỠI thương / gậy như ý để cây thương thu gọn đeo sau lưng biến mất (đồ đang nằm dưới chân, không thể vừa cưỡi vừa đeo lưng). Cưỡi ván trượt thì vẫn đeo vũ khí sau lưng.
 // Mặt (mắt cười, miệng, má hồng), râu, tóc búi, hào quang gắn vào xương đầu; áo polo 9 Sạch = vùng màu trên thân + cổ áo + logo; cà sa = vỏ chuông gắn vào hông. Lỗi/chưa nạp GLB thì avatar.js dùng bản dựng khối.
 import * as THREE from 'three';
 import { DEFAULT_COLOR, colorById, hairById, beardById, cleanName, cleanSay, bubbleLife, poseFor, turnToward, BELL_PROFILE, POLO_LOGOS } from './avatarLogic.js';
@@ -116,7 +116,8 @@ export function createChibiAvatar({ name = 'Khách', color = DEFAULT_COLOR, hair
 
   // Phiên 152: THU CÔN KHI KHÔNG CHIẾN ĐẤU. Hết thế chiến đấu thì cây côn không biến mất mà thu gọn (ngắn 1,1 m), nằm chéo SAU LƯNG, có DÂY ĐEO chéo qua ngực + lưng, hai đầu vẫn PHÁT SÁNG nhấp nháy.
   // Chỉ người chơi (cùng điều kiện với hồ lô). backHost (group) để js/ui/items.js thay bằng Gậy như ý thu gọn. CHƯA nhìn bằng mắt (không có WebGL ở môi trường AI): vị trí/góc là số TẠM.
-  const backG = new THREE.Group(), backGlow = [], hasBack = !casa && wantGourd; let backTex = null;
+  // Cập nhật 14/11: backHide (setBackHidden) — đang cưỡi thương/gậy thì ẩn cả cây đeo lưng lẫn dây đeo vẫn giữ nguyên (dây là phần thân, chỉ ẩn cây thương + hai đầu sáng).
+  const backG = new THREE.Group(), backGlow = [], hasBack = !casa && wantGourd; let backTex = null, backHide = false;
   if (hasBack) {
     backG.visible = false; backG.position.set(0, 0.3 * H - spY, zb - 0.075); backG.rotation.set(0.12, 0, 0.8); B.spine.add(backG);
     const woodM = std(0x7a4a24, 0.55), capM = std(0xe0a93a, 0.35), bandM = std(0xb3261e, 0.5), strapM = std(0x5a2d12, 0.8), buckleM = std(0xe0a93a, 0.35);
@@ -168,7 +169,7 @@ export function createChibiAvatar({ name = 'Khách', color = DEFAULT_COLOR, hair
     st.stance += ((st.wantStance && (st.state === 'idle' || st.state === 'walk') ? 1 : 0) - st.stance) * Math.min(1, 7 * dt);
     staff.visible = weaponVisible(st.stance, swing ? swing.vis : 0);   // Phiên 120: cầm sẵn khi vào thế chiến đấu
     staff.rotation.y = swing && swing.spin ? swing.spin : 0;           // Phiên 126: múa côn quanh bàn tay
-    if (hasBack) { backG.visible = !staff.visible; if (backG.visible) { const a = 0.5 + 0.5 * Math.sin(clock * 5), b = 0.5 + 0.5 * Math.sin(clock * 5 + Math.PI); backGlow[0].material.opacity = 0.25 + 0.6 * a; backGlow[1].material.opacity = 0.25 + 0.6 * b; backGlow[2].material.opacity = 0.35; } }   // Phiên 152: côn thu gọn sau lưng, hai đầu chớp lệch pha
+    if (hasBack) { backG.visible = !staff.visible && !backHide; if (backG.visible) { const a = 0.5 + 0.5 * Math.sin(clock * 5), b = 0.5 + 0.5 * Math.sin(clock * 5 + Math.PI); backGlow[0].material.opacity = 0.25 + 0.6 * a; backGlow[1].material.opacity = 0.25 + 0.6 * b; backGlow[2].material.opacity = 0.35; } }   // Phiên 152: côn thu gọn sau lưng, hai đầu chớp lệch pha; 14/11: ẩn khi đang cưỡi thương/gậy
     if (gourdPulse > 0) { gourdPulse = Math.max(0, gourdPulse - dt * 3); gourd.scale.setScalar(1 + 0.45 * Math.sin(gourdPulse * Math.PI)); }
     const q = showPose(applyCast(applyStance(chibiPose(p, st.state, clock - st.t0, st.speed, { hold: st.hold, swing, act, walk: st.walk }), castF ? 0 : st.stance, { walk: st.walk, sit: p.sit, hold: st.hold, busy: !!(swing || act || castF) }), castF), act), ka = Math.min(1, 24 * dt);
     for (const k of SMOOTH_ARM) { const c = st.arms[k] || (st.arms[k] = { ...q[k] }); for (const ax of ['x', 'y', 'z']) c[ax] += (q[k][ax] - c[ax]) * ka; q[k] = c; }   // vai/khuỷu/cổ tay: làm mượt khi đổi tư thế (đứng ↔ chắp tay) để khuỷu không "bật" cái rụp; vẫn đủ nhanh cho gõ mõ, vung côn, ném
@@ -204,6 +205,8 @@ export function createChibiAvatar({ name = 'Khách', color = DEFAULT_COLOR, hair
   function gourdPos() { if (!hasGourd) return null; gourd.getWorldPosition(gourdV); return { x: gourdV.x, y: gourdV.y + 0.05, z: gourdV.z }; }
   /** Hồ lô nháy to ra một nhịp (khi hồn quái chui vào). */
   function pulseGourd() { if (hasGourd) gourdPulse = 1; }
+  /** Ẩn / hiện cây thương (hoặc gậy) thu gọn đeo sau lưng. js/ui/board.js bật khi đang CƯỠI thương / gậy như ý (đồ nằm dưới chân nên không thể còn đeo lưng). Mặc định hiện. */
+  function setBackHidden(on) { backHide = !!on; }
   /** Thanh trên đầu: hp, mp trong 0..1; hp = null/NaN → ẩn. */
   function setBars(hp, mp) {
     if (hp == null || !Number.isFinite(+hp)) { bars.visible = false; return; }
@@ -215,5 +218,5 @@ export function createChibiAvatar({ name = 'Khách', color = DEFAULT_COLOR, hair
     bar(8, h, h < 0.3 ? '#ff6a5a' : '#6fe37a', h < 0.3 ? '#c8261c' : '#2fa84a'); bar(27, m, '#7fc4ff', '#2a6fd6');
     barTex.needsUpdate = true;
   }
-  return { group, setState, setFacing, say, setBeadCount, swing, cast, setStance, setHold, act, gourdPos, pulseGourd, setBars, update, dispose, get state() { return st.state; }, get swinging() { return swingT >= 0; }, get casting() { return castT >= 0; }, get holding() { return st.hold; }, get backHost() { return hasBack ? backHostGroup : null; }, get headHost() { return face; }, setHat(on) { if (bun) bun.visible = !on; } };
+  return { group, setState, setFacing, say, setBeadCount, swing, cast, setStance, setHold, act, gourdPos, pulseGourd, setBars, setBackHidden, update, dispose, get state() { return st.state; }, get swinging() { return swingT >= 0; }, get casting() { return castT >= 0; }, get holding() { return st.hold; }, get backHost() { return hasBack ? backHostGroup : null; }, get headHost() { return face; }, setHat(on) { if (bun) bun.visible = !on; } };
 }
