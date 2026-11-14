@@ -16,6 +16,8 @@ export const AVATAR_COLORS = [
 /** Trang phục chỉ NPC dùng (không có trong bảng chọn của người chơi). Cà sa Trụ trì: áo trong màu kem, cà sa vàng nghệ đắp lệch vai, viền ô ruộng nâu đỏ. */
 export const NPC_COLORS = [
   { id: 'casa', ten: 'Cà sa Trụ trì', ao: 0xe9dcb5, dai: 0x7a2c12, casa: 0xc98a1c, vien: 0x7a2c12 },
+  // Đồng phục nhân viên Tách Hoa (theo ảnh ptg gửi 14/11): áo thun trắng, quần trắng, yếm xanh nhạt, nón beret xanh nhạt, chun vải kem buộc búi tóc. Vẽ ở avatarChibi.js (cờ tachhoa).
+  { id: 'tachhoa', ten: 'Đồng phục Tách Hoa', ao: 0xf4f3ee, dai: 0xe9e8e3, apron: 0x9cc7ee, beret: 0x9cc7ee, scrunchie: 0xe8dcc0, tachhoa: true },
 ];
 export const DEFAULT_COLOR = '9sach';   // mặc định: đồng phục áo polo 9 Sạch
 
