@@ -5,6 +5,7 @@
 // Phiên 126: (1) thanh Sinh Lực + Chân khí trên đầu khi giao chiến; (2) quái vừa bị hạ → hồn bay vào hồ lô ở eo (js/world/soul.js, js/scene/soulFx.js).
 // Chân khí (mana) hiện CHỈ HIỂN THỊ (TẠM): Chém khí tốn 30, tự hồi 5/giây, chưa chặn skill khi hết. Sinh Lực lấy từ LGT.farmCombat (js/ui/farmCombat.js).
 // Skill Chém khí (js/ui/conKhi.js) tự gọi avatar.swing(SWING_S) → avatarChibi đổi thành kiểu 'khi' (giơ cao bổ xuống), không cần nối thêm ở đây.
+// Phiên 164: Võ đài (giao lưu võ thuật, js/ui/duel.js) dùng CHUNG đòn đánh thường — LGT.combatPose.strike(ry); đang ở Võ đài thì cũng đứng thế chiến đấu.
 import { createSlashFx } from '../scene/slashFx.js';
 import { createSoulFx } from '../scene/soulFx.js';
 import { diffMons, killed, soulColor } from '../world/soul.js';
@@ -52,15 +53,22 @@ export function initCombatPose() {
       const dead = killed(d.gone, { now, lastAttack, player: w.pos });
       if (dead.length) { ensureFx(); if (soul) for (const e of dead) soul.launch({ x: e.x, y: 0.9, z: e.z }, soulColor(e.he), now, () => { if (av.pulseGourd) av.pulseGourd(); }); }
     }
-    const fc = LGT.farmCombat, fighting = now < fightUntil || !!(ys && ys.active) || !!(fs && fs.active) || !!(fc && fc.engaged > 0), hurt = !!(fc && fc.max && fc.hp < fc.max);
+    const fc = LGT.farmCombat, inDuel = !!(LGT.duel && LGT.duel.mode === 'arena'), fighting = now < fightUntil || inDuel || !!(ys && ys.active) || !!(fs && fs.active) || !!(fc && fc.engaged > 0), hurt = !!(fc && fc.max && fc.hp < fc.max);
     if (fighting !== wantStance) { wantStance = fighting; if (av.setStance) av.setStance(fighting); }
     if (av.setBars) av.setBars(fc && fc.max && (fighting || hurt || now < lastAttack + BARS_HOLD_MS) ? fc.hp / fc.max : null, mana / MANA_MAX);
     if (fx && w.pos) fx.update(w.pos, now);
     if (soul) soul.update(gourd(av), now);
   }
+  /** Phiên 164: Võ đài dùng CHUNG đòn đánh thường với đánh quái — gọi khi ra Đánh thường/Thương trong giao lưu: quay mặt, nối chuỗi múa côn (múa → ngang → ngược → xoay) + vệt chém + vào thế chiến đấu. */
+  function strike(ry) {
+    const w = LGT.world, av = w && w.avatar; if (!av || !av.swing) return null;
+    const now = performance.now(); fightUntil = now + STANCE_HOLD_MS; lastAttack = now; ensureFx();
+    if (Number.isFinite(+ry) && w.face) w.face(+ry);
+    const kind = av.swing(); if (kind && fx) fx.slash(kind, Number.isFinite(+ry) ? +ry : (w.facing || 0), now); return kind || null;
+  }
   setInterval(tick, POLL_MS);
   // Vệt chém và hồn bay cần cập nhật theo từng khung hình (mượt hơn 40 ms).
   (function loop() { const w = LGT.world, now = performance.now(); if (fx && w && w.pos) fx.update(w.pos, now); if (soul && w && w.avatar) soul.update(gourd(w.avatar), now); requestAnimationFrame(loop); })();
-  LGT.combatPose = { get stance() { return wantStance; }, get mana() { return mana; } };
+  LGT.combatPose = { get stance() { return wantStance; }, get mana() { return mana; }, strike };
   return LGT.combatPose;
 }
