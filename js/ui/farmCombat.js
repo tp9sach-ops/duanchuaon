@@ -78,7 +78,7 @@ export function initFarmCombat(hud, { toast = () => {} } = {}) {
   }
   function show(now = performance.now()) {
     const fighting = engaged.size > 0, hurt = vit.hp < vit.max;
-    box.hidden = !(fighting || hurt || now < hudUntil);
+    box.hidden = !(fighting || hurt || now < hudUntil) || !!(LGT.bag && LGT.bag.isOpen);   // Phiên 155: mở Túi hồ lô thì ẩn thanh Sinh Lực nổi (khỏi đè lên các tab)
     if (box.hidden) return;
     txt.textContent = `Sinh Lực ${vit.hp}/${vit.max}`; fill.style.width = `${Math.round(vit.pct * 100)}%`; box.classList.toggle('low', vit.pct < VITALS_CFG.autoStopFrac);
   }
