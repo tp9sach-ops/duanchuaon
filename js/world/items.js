@@ -1,20 +1,21 @@
 // Vật phẩm mua bằng LÁ BỒ ĐỀ (mục 1): Bánh sầu riêng 3 vị + Bánh sầu riêng pho mai than tre (tiệm Bánh Sầu Riêng 9 Sạch), Gậy như ý + Nón Jingasa (Điện Máy Lam Sen). Ván trượt: js/world/board.js.
-// Phiên 163: Trà sữa xoài hoàng kim (tiệm trà Tách Hoa, 50 lá bồ đề): mỗi ly cộng thêm 30 phút Tự động hàng yêu cho HÔM NAY (không có hạn dùng riêng: cộng thẳng vào trần ngày, xem addAutoBonus ở js/world/autoHunt.js).
+// Phiên 163: Trà sữa xoài hoàng kim (tiệm trà Tách Hoa): mỗi ly cộng thêm 30 phút Tự động hàng yêu cho HÔM NAY (không có hạn dùng riêng: cộng thẳng vào trần ngày, xem addAutoBonus ở js/world/autoHunt.js).
+// 14/11 (ptg đổi giá theo menu thật): Bánh sầu riêng 3 vị 155 lá, Bánh sầu riêng pho mai than tre 150 lá, Trà sữa xoài hoàng kim 39 lá. Ảnh vật phẩm: js/data/itemImages.js.
 // Mục 3 (14/11): ĐỔI TÊN "Ngọc hồi máu" → "Bánh sầu riêng 3 vị", "Ngọc dịch chuyển" → "Bánh sầu riêng pho mai than tre"; nơi bán chuyển từ Kim Hoàn Ngọc Lan sang tiệm Bánh Sầu Riêng 9 Sạch.
-//   GIỮ NGUYÊN id ('hoimau', 'dichchuyen'), giá, thời lượng và hiệu lực để bản lưu cũ (localStorage 'lgt.items') vẫn đọc được và các chỗ gọi (regenMul / canRevive) không đổi.
+//   GIỮ NGUYÊN id ('hoimau', 'dichchuyen'), thời lượng và hiệu lực để bản lưu cũ (localStorage 'lgt.items') vẫn đọc được và các chỗ gọi (regenMul / canRevive) không đổi.
 // LOGIC THUẦN (không DOM/three.js), có test: tests/items.test.mjs. Hạn dùng lưu bằng MỐC GIỜ THẬT (Date.now) nên đổi tab / treo web vẫn đếm đúng.
-// Số liệu theo yêu cầu ptg: Bánh sầu riêng 3 vị 100 lá, hồi Sinh Lực nhanh gấp 5, 10 phút. Bánh sầu riêng pho mai than tre 200 lá, hết Sinh Lực thì hồi sinh NGAY TẠI CHỖ (không về cổng chùa), 20 phút. Gậy như ý 400 lá, +1% sát thương, có ánh sáng + hiệu ứng lan khi đánh.
+// Số liệu theo yêu cầu ptg: Bánh sầu riêng 3 vị 155 lá, hồi Sinh Lực nhanh gấp 5, 10 phút. Bánh sầu riêng pho mai than tre 150 lá, hết Sinh Lực thì hồi sinh NGAY TẠI CHỖ (không về cổng chùa), 20 phút. Gậy như ý 400 lá, +1% sát thương, có ánh sáng + hiệu ứng lan khi đánh.
 
 export const REGEN_MUL = 5;
 export const MAX_STACK = 3;   // mua thêm khi còn hạn thì cộng dồn thời gian, tối đa 3 lần thời lượng gốc
 export const GEMS = [
-  { id: 'hoimau', ten: 'Bánh sầu riêng 3 vị', gia: 100, giay: 600, mo: 'Ăn vào hồi Sinh Lực nhanh gấp 5 lần bình thường trong 10 phút.' },
-  { id: 'dichchuyen', ten: 'Bánh sầu riêng pho mai than tre', gia: 200, giay: 1200, mo: 'Trong 20 phút, hết Sinh Lực thì hồi sinh NGAY TẠI CHỖ (đầy Sinh Lực), không bị đưa về cổng chùa.' },
+  { id: 'hoimau', ten: 'Bánh sầu riêng 3 vị', gia: 155, giay: 600, mo: 'Ăn vào hồi Sinh Lực nhanh gấp 5 lần bình thường trong 10 phút.' },
+  { id: 'dichchuyen', ten: 'Bánh sầu riêng pho mai than tre', gia: 150, giay: 1200, mo: 'Trong 20 phút, hết Sinh Lực thì hồi sinh NGAY TẠI CHỖ (đầy Sinh Lực), không bị đưa về cổng chùa.' },
 ];
 export const STAFF = { id: 'nhuy', ten: 'Gậy như ý', gia: 400, dmg: 1.01, mo: 'Gậy đỏ đầu đồng chạm rồng, có ánh sáng; mỗi đòn đánh lan ra một vòng sáng và tăng 1% sát thương. Đánh thường đủ 3 đòn liên tiếp sẽ có rồng hồng bay quanh người. Mua một lần dùng mãi.' };
 
-// Phiên 163: Trà sữa xoài hoàng kim (Tách Hoa, 50 lá bồ đề): +30 phút Tự động hàng yêu hôm nay mỗi ly (uống nhiều ly thì cộng dồn).
-export const TRASUA = { id: 'trasua', ten: 'Trà sữa xoài hoàng kim', gia: 50, phut: 30, mo: 'Ly trà sữa xoài hoàng kim của tiệm Tách Hoa: uống vào được cộng thêm 30 phút Tự động hàng yêu cho hôm nay (cộng dồn với 60 phút gốc). Sang ngày mới trở về 60 phút.' };
+// Phiên 163: Trà sữa xoài hoàng kim (Tách Hoa, 39 lá bồ đề): +30 phút Tự động hàng yêu hôm nay mỗi ly (uống nhiều ly thì cộng dồn).
+export const TRASUA = { id: 'trasua', ten: 'Trà sữa xoài hoàng kim', gia: 39, phut: 30, mo: 'Ly trà sữa xoài hoàng kim của tiệm Tách Hoa: uống vào được cộng thêm 30 phút Tự động hàng yêu cho hôm nay (cộng dồn với 60 phút gốc). Sang ngày mới trở về 60 phút.' };
 
 // Phiên 154: Nón Jingasa (Điện Máy, 400 lá bồ đề): mua một lần, tự đội lên đầu, +3% giáp (đòn quái đánh trúng bớt 3%). Có thể cất / đội lại.
 export const HAT = { id: 'non', ten: 'Nón Jingasa', gia: 400, giap: 0.03, mo: 'Nón lá sơn đen kiểu Jingasa: mua xong tự đội lên đầu nhân vật, tăng 3% giáp (quái đánh bớt đau 3%). Mua một lần dùng mãi.' };
