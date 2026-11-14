@@ -12,10 +12,11 @@ import { askConfirm } from './dialog.js';
 import { buildStaff, loadStaffGlb, pulseGlows, glowTexture } from './staffMesh.js';
 
 const VKEY = 'lgt.van', LKEY = 'lgt.loadout', GLB = new URL('../../assets/models/skateboard.glb', import.meta.url).href;
-const FLY_LIFT = 0.45, FLY_BOB = 0.035, K = 3, SLEN = 2.6, VLEN = 1.1, VBOB = 0.006;   // K: cán thương dày gấp 3 (chỉ bề ngang); SLEN: dài cây thương/gậy khi cưỡi; VLEN: dài ván
+export const FLY_LIFT = 0.45, FLY_BOB = 0.035, VBOB = 0.006, VBASE = 0.14;   // Phiên 166: xuất ra để js/ui/remoteGear.js vẽ người khác cưỡi giống hệt mình
+const K = 3, SLEN = 2.6, VLEN = 1.1;   // K: cán thương dày gấp 3 (chỉ bề ngang); SLEN: dài cây thương/gậy khi cưỡi; VLEN: dài ván
 
 /** Cây thương cưỡi (như Phiên 130–131): nằm ngang, hướng +z, cán gỗ đỏ sẫm dày, hai đầu bọ tròn chụp vàng. Gốc = chỗ nhân vật đứng. */
-function buildSpearMount() {
+export function buildSpearMount() {
   const g = new THREE.Group(); g.name = 'cuoi-thuong'; g.visible = false;
   const wood = new THREE.MeshStandardMaterial({ color: 0x7a2a1c, roughness: 0.5 }), gold = new THREE.MeshStandardMaterial({ color: 0xe0a93a, roughness: 0.3, metalness: 0.4 }), red = new THREE.MeshStandardMaterial({ color: 0xc8261c, roughness: 0.55 });
   const R = 0.055 * K, Y = -R;
@@ -29,7 +30,7 @@ function buildSpearMount() {
 }
 
 /** Gậy như ý cưỡi bay: cây gậy 3D nằm ngang (to gấp ~1,7), hai đầu chớp sáng, có vệt sáng phía sau khi bay. */
-function buildStaffMount() {
+export function buildStaffMount() {
   const g = new THREE.Group(); g.name = 'cuoi-gay'; g.visible = false;
   const s = buildStaff(); s.rotation.x = Math.PI / 2; s.scale.setScalar(SLEN * 1.25 / 1.5); s.position.y = -0.07; g.add(s); loadStaffGlb(s);   // Phiên 149: gậy cưỡi dài hơn cây thương cưỡi 25%
   const trail = [];
@@ -42,7 +43,7 @@ function buildStaffMount() {
 }
 
 /** Ván trượt dựng bằng khối (dùng khi chưa có GLB). Gốc = chỗ người đứng, mặt ván ở y = 0, đáy bánh xe ở y = -0,14. */
-function buildProcBoard() {
+export function buildProcBoard() {
   const g = new THREE.Group(); g.name = 'vantruot-khoi';
   const deck = new THREE.MeshStandardMaterial({ color: 0xf2a31b, roughness: 0.5 }), dark = new THREE.MeshStandardMaterial({ color: 0x2a2a30, roughness: 0.7 }), wheel = new THREE.MeshStandardMaterial({ color: 0xf4f1e6, roughness: 0.4 }), metal = new THREE.MeshStandardMaterial({ color: 0xaab2bd, roughness: 0.35, metalness: 0.7 });
   const add = (geo, mat, x, y, z) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); g.add(m); return m; };
