@@ -16,6 +16,7 @@
         "r": { ".validate": "newData.isNumber() && newData.val() >= -7 && newData.val() <= 7" },
         "s": { ".validate": "newData.isString() && (newData.val() == 'idle' || newData.val() == 'walk' || newData.val() == 'sit' || newData.val() == 'mo' || newData.val() == 'beads' || newData.val() == 'bow')" },
         "t": { ".validate": "newData.isNumber()" },
+        "i": { ".validate": "newData.isString() && newData.val().matches(/^[a-z]{1,8}$/)" },
         "$other": { ".validate": false }
       }
     },

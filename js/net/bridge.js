@@ -17,7 +17,7 @@ export function withGasBridge(t, { gasCall, now = () => Date.now(), everyMs = 40
     if (!busy && tm - last >= everyMs) {
       busy = true; last = tm;
       Promise.resolve()
-        .then(() => gasCall({ action: 'sync', room: ROOM_CFG.room, id: t.uid, n: req.n, c: req.c, h: req.h, x: req.x, y: req.y, z: req.z, r: req.r, s: req.s, since: 0, say: '' }))
+        .then(() => gasCall({ action: 'sync', room: ROOM_CFG.room, id: t.uid, n: req.n, c: req.c, h: req.h, x: req.x, y: req.y, z: req.z, r: req.r, s: req.s, i: req.i || '', since: 0, say: '' }))
         .then((g) => { if (g && g.ok && Array.isArray(g.players)) { gas = g.players; gasAt = now(); } })
         .catch(() => { /* Apps Script lỗi: bỏ qua, Firebase vẫn chạy */ })
         .finally(() => { busy = false; });

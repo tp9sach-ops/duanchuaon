@@ -1,6 +1,7 @@
 // Đa người (Phiên 15a): logic thuần, KHÔNG phụ thuộc three.js/DOM nên kiểm thử được bằng Node.
 // Máy chủ (gas/Room.gs) kiểm lại mọi thứ bằng quy tắc GIỐNG file này; client chỉ lọc trước cho tiện.
 import { cleanName, STATES } from '../world/avatarLogic.js';
+import { cleanGear } from '../world/gearSync.js';   // Phiên 166: vật phẩm đang dùng (gậy, nón, cưỡi, bánh) để người khác thấy
 
 export const ROOM_CFG = {
   room: 'main',
@@ -33,7 +34,7 @@ export const validId = (s) => /^[A-Za-z0-9._-]{8,64}$/.test(String(s == null ? '
 /** Làm sạch trạng thái một người chơi (nhận từ mạng): trả null nếu id không hợp lệ. */
 export function cleanPlayer(p) {
   if (!p || typeof p !== 'object' || !validId(p.id)) return null;
-  return {
+  const out = {
     id: String(p.id),
     n: cleanName(p.n),
     c: tok(p.c, 'nau'), h: tok(p.h, 'troc'),
@@ -41,6 +42,8 @@ export function cleanPlayer(p) {
     r: r2(clamp(p.r, -7, 7)),
     s: STATES.includes(p.s) ? p.s : 'idle',
   };
+  const g = cleanGear(p.i); if (g) out.i = g;       // Phiên 166: chỉ có trường `i` khi thật sự có đồ (gói tin cũ không đổi)
+  return out;
 }
 
 /** Góc quay ngắn nhất từ a tới b (rad). */
@@ -49,7 +52,7 @@ export function angleDiff(a, b) { let d = (b - a) % (Math.PI * 2); if (d > Math.
 /**
  * Giữ danh sách người khác và làm mượt chuyển động giữa hai lần nhận tin (mỗi 1,5–8 giây).
  * ingest(list, now): nhận danh sách từ máy chủ (bỏ người lạ id, bỏ người đã rời).
- * step(dt): trả mảng { id, x, y, z, ry, speed, state, n, c, h } đã nội suy.
+ * step(dt): trả mảng { id, x, y, z, ry, speed, state, n, c, h, i } đã nội suy (i = chuỗi vật phẩm, '' nếu không có).
  */
 export function createRemotes() {
   const m = new Map();
@@ -64,7 +67,7 @@ export function createRemotes() {
       for (const p of fresh) {
         const cur = m.get(p.id);
         if (!cur) { if (m.size < ROOM_CFG.maxPlayers) m.set(p.id, { ...p, tx: p.x, tz: p.z, ty: p.y, tr: p.r, speed: 0 }); }
-        else { cur.tx = p.x; cur.tz = p.z; cur.ty = p.y; cur.tr = p.r; cur.s = p.s; cur.n = p.n; cur.c = p.c; cur.h = p.h; }
+        else { cur.tx = p.x; cur.tz = p.z; cur.ty = p.y; cur.tr = p.r; cur.s = p.s; cur.n = p.n; cur.c = p.c; cur.h = p.h; cur.i = p.i || ''; }
       }
     },
     step(dt) {
@@ -76,7 +79,7 @@ export function createRemotes() {
         p.y += (p.ty - p.y) * (1 - Math.exp(-Math.max(0, dt) * 8));
         p.r += angleDiff(p.r, p.tr) * (1 - Math.exp(-Math.max(0, dt) * 8));
         p.speed = dt > 0 ? Math.hypot(p.x - ox, p.z - oz) / dt : 0;
-        out.push({ id: p.id, x: p.x, y: p.y, z: p.z, ry: p.r, speed: p.speed, state: p.s, n: p.n, c: p.c, h: p.h });
+        out.push({ id: p.id, x: p.x, y: p.y, z: p.z, ry: p.r, speed: p.speed, state: p.s, n: p.n, c: p.c, h: p.h, i: p.i || '' });
       }
       return out;
     },
