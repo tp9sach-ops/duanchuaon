@@ -2,10 +2,10 @@
  * Đa người (Phiên 15a): một phòng chung "Diệu Giang Tự". Apps Script KHÔNG realtime nên client thăm dò (1,5–8 giây
  * tùy số người) và tự nội suy chuyển động. Trạng thái giữ trong CacheService (không ghi Sheet, tự hết hạn).
  *
- * Yêu cầu: client gửi { action:'sync', room, id, n, c, h, x, y, z, r, s, since, say }.
+ * Yêu cầu: client gửi { action:'sync', room, id, n, c, h, x, y, z, r, s, i, since, say }  (i = chuỗi vật phẩm, Phiên 166, tùy chọn).
  *   id    = mã ngẫu nhiên của MỖI lần mở trang (client KHÔNG gửi userKey, để người khác không biết được).
  *   since = số thứ tự lời nhắn đã nhận; say = lời nhắn mới (tùy chọn).
- * Trả { ok, players:[{id,n,c,h,x,y,z,r,s}] (không gồm chính người gọi), chat:[{i,id,n,m}], seq, count, pollMs }.
+ * Trả { ok, players:[{id,n,c,h,x,y,z,r,s,i}] (không gồm chính người gọi), chat:[{i,id,n,m}], seq, count, pollMs }.
  *
  * Quy tắc phải GIỐNG js/engines/room.js: tên ≤ 20, lời nhắn ≤ 80 và không link/email/số điện thoại,
  * tối đa 30 người, quá 12 giây không gửi thì bị coi là đã rời, mỗi người 1 lời nhắn / 2 giây.
@@ -18,6 +18,7 @@ var ROOM_STATES_ = ['idle', 'walk', 'sit', 'mo', 'beads', 'bow'];
 function roomNum_(v, lo, hi, dflt) { v = Number(v); if (!isFinite(v)) return dflt; return Math.max(lo, Math.min(hi, v)); }
 function roomR2_(v) { return Math.round(v * 100) / 100; }
 function roomId_(s) { s = String(s == null ? '' : s); return /^[A-Za-z0-9._-]{8,64}$/.test(s) ? s : ''; }
+function roomGear_(s) { s = String(s == null ? '' : s); return /^[a-z]{1,8}$/.test(s) ? s : ''; }   // Phiên 166: vật phẩm đang dùng (n k p q v h d), giống cleanGear trong js/world/gearSync.js
 function roomTok_(s, dflt) { s = String(s == null ? '' : s); return /^[a-z0-9]{1,12}$/.test(s) ? s : dflt; }
 
 function roomName_(s) {
@@ -62,6 +63,7 @@ function roomSync_(req) {
     me.x = roomR2_(roomNum_(req.x, -ROOM.LIMIT, ROOM.LIMIT, 0)); me.z = roomR2_(roomNum_(req.z, -ROOM.LIMIT, ROOM.LIMIT, 0));
     me.y = roomR2_(roomNum_(req.y, -5, 20, 0)); me.r = roomR2_(roomNum_(req.r, -7, 7, 0));
     me.s = ROOM_STATES_.indexOf(req.s) >= 0 ? req.s : 'idle';
+    me.i = roomGear_(req.i);
     me.t = now;
     st.players[id] = me;
 
@@ -76,7 +78,7 @@ function roomSync_(req) {
     for (i = 0; i < pid.length; i++) {
       if (pid[i] === id) continue;
       var p = st.players[pid[i]];
-      players.push({ id: pid[i], n: p.n, c: p.c, h: p.h, x: p.x, y: p.y, z: p.z, r: p.r, s: p.s });
+      players.push({ id: pid[i], n: p.n, c: p.c, h: p.h, x: p.x, y: p.y, z: p.z, r: p.r, s: p.s, i: p.i || '' });
     }
     for (i = 0; i < st.chat.length; i++) if (st.chat[i].i > since) chat.push(st.chat[i]);
     return { ok: true, players: players, chat: chat, seq: st.seq, count: pid.length, pollMs: roomPoll_(pid.length) };

@@ -22,12 +22,12 @@ export async function loadFirebaseSdk(version = FIREBASE_SDK_VERSION, imp = (u) 
 
 /**
  * opts: { config, name, loadSdk() → Promise<sdk>, now, maxPlayers }
- * Dữ liệu: /players/{uid} = {n,c,h,x,y,z,r,s,t} · /chat/{pushId} = {id,n,m,t}. Mỗi lần mở trang là một uid mới (đăng nhập ẩn danh, không lưu).
+ * Dữ liệu: /players/{uid} = {n,c,h,x,y,z,r,s,t} + `i` (vật phẩm đang dùng, Phiên 166; chỉ có khi có đồ) · /chat/{pushId} = {id,n,m,t}. Mỗi lần mở trang là một uid mới (đăng nhập ẩn danh, không lưu).
  */
 export function createFirebaseTransport({ config, name = 'Firebase', loadSdk, now = () => Date.now(), maxPlayers = ROOM_CFG.maxPlayers, appName }) {
   let sdk = null, app = null, db = null, uid = '', myRef = null, connected = false, closed = false;
   const players = new Map(), chatSeen = new Set(), unsubs = [];
-  let chatLog = [], seq = 0, lastKey = '', lastSend = 0, lastChat = 0, lastSig = 0;
+  let chatLog = [], seq = 0, lastKey = '', lastSend = 0, lastChat = 0, lastSig = 0, gearBlocked = false;   // gearBlocked (Phiên 166): luật Firebase cũ từ chối trường `i` → thôi gửi `i`, người chơi vẫn hiện bình thường
   const API = { kind: 'firebase', name };
 
   /** Kết nối + đăng nhập ẩn danh + nạp danh sách hiện tại. Ném 'room_full' nếu phòng đã đủ người, 'timeout' nếu quá hạn. */
@@ -75,9 +75,17 @@ export function createFirebaseTransport({ config, name = 'Firebase', loadSdk, no
     req = req || {}; const t = now();
     const me = cleanPlayer({ ...req, r: wrap(req.r), id: uid });
     if (me) {
-      const rec = { n: me.n, c: me.c, h: me.h, x: me.x, y: me.y, z: me.z, r: me.r, s: me.s }, key = JSON.stringify(rec);
+      const rec = { n: me.n, c: me.c, h: me.h, x: me.x, y: me.y, z: me.z, r: me.r, s: me.s }; if (me.i && !gearBlocked) rec.i = me.i;   // Phiên 166: chỉ gửi `i` khi có đồ
+      const key = JSON.stringify(rec), hadGear = !!rec.i;
       const due = key !== lastKey ? t - lastSend >= SEND_MIN_MS : t - lastSend >= KEEPALIVE_MS;
-      if (due) { lastKey = key; lastSend = t; Promise.resolve(sdk.set(myRef, { ...rec, t })).catch(() => {}); }
+      if (due) {
+        lastKey = key; lastSend = t;
+        Promise.resolve(sdk.set(myRef, { ...rec, t })).catch(() => {
+          if (!hadGear || gearBlocked) return;     // lỗi thường: bỏ qua như cũ
+          gearBlocked = true; lastKey = ''; lastSend = 0;     // có đồ mà bị từ chối → nhiều khả năng luật Firebase chưa có trường `i`: gửi lại KHÔNG kèm `i` để mình không biến mất
+          try { console.warn('[Diệu Giang Tự] Firebase từ chối trường vật phẩm `i`: cần dán lại firebase/database.rules.json vào Rules rồi Publish. Tạm thời người khác chưa thấy đồ của bạn.'); } catch (_) { /* bỏ qua */ }
+        });
+      }
       const say = chatOk(req.say);
       const sig = say.startsWith('#dg');
       if (say && t - (sig ? lastSig : lastChat) >= (sig ? SIG_GAP_MS : ROOM_CFG.chatGapMs)) { if (sig) lastSig = t; else lastChat = t; Promise.resolve(sdk.push(sdk.ref(db, 'chat'), { id: uid, n: me.n, m: say, t })).catch(() => {}); }

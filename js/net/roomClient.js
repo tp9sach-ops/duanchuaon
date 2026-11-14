@@ -6,9 +6,10 @@ import { isSignal } from '../world/duel.js';   // Phiên 137: gói tin giao lưu
 /**
  * deps: {
  *   call(req) → Promise<res>     gọi máy chủ (Apps Script) hoặc kênh cục bộ
- *   getSelf() → {n,c,h,x,y,z,r,s} | null   trạng thái của mình; null = chưa vào chùa
+ *   getSelf() → {n,c,h,x,y,z,r,s,i?} | null   trạng thái của mình (i = chuỗi vật phẩm, Phiên 166); null = chưa vào chùa
  *   makeAvatar(p) → avatar        dựng nhân vật người khác (avatar.group, setFacing, setState, say, update, dispose)
  *   scene                         nơi thêm/bỏ avatar.group
+ *   applyGear(av, tok, dt)        (tùy chọn, Phiên 166) vẽ vật phẩm của người khác (gậy, nón, ván, bánh) lên avatar mỗi khung hình; dropGear(av) dọn khi người đó rời / dựng lại
  *   onOnline(n)                   số người đang online (kể cả mình)
  *   pageId                        mã ngẫu nhiên của lần mở trang này (KHÔNG dùng userKey để người khác không biết)
  *   schedule(fn, ms) → handle, cancel(handle)   mặc định setTimeout/clearTimeout
@@ -23,9 +24,10 @@ export function createRoomClient(deps) {
   let lastRoom = null, cursor = 0, first = true, pendingSay = '', timer = null, running = false, active = true, fails = 0, busy = false, lastCount = 1, hiddenMs = 9000;
   const API = { pageId };
 
+  const killView = (v) => { try { if (deps.dropGear) deps.dropGear(v.av); } catch (_) { /* dọn đồ lỗi không làm hỏng đồng bộ */ } scene.remove(v.av.group); v.av.dispose(); };
   function viewFor(p) {
     const key = p.n + '|' + p.c + '|' + p.h; let v = views.get(p.id);
-    if (v && v.key !== key) { scene.remove(v.av.group); v.av.dispose(); views.delete(p.id); v = null; }   // đổi tên/áo: dựng lại
+    if (v && v.key !== key) { killView(v); views.delete(p.id); v = null; }   // đổi tên/áo: dựng lại
     if (!v) { const av = makeAvatar({ name: p.n, color: p.c, hair: p.h }); scene.add(av.group); av.group.position.set(p.x, p.y, p.z); av.setFacing(p.ry, true); v = { av, key, name: p.n }; views.set(p.id, v); }
     return v;
   }
@@ -38,12 +40,13 @@ export function createRoomClient(deps) {
       const q = deps.xform ? deps.xform(p) : p;           // Phiên 137: trong võ đài, vị trí đối thủ (mượn khung ±200) được đổi về tọa độ võ đài
       av.group.position.set(q.x, p.y, q.z); av.setFacing(p.ry);
       av.setState(p.state === 'walk' && p.speed < 0.4 ? 'idle' : p.state, p.speed); av.update(dt);
+      if (deps.applyGear) { try { deps.applyGear(av, p.i || '', dt); } catch (e) { /* vẽ đồ lỗi thì bỏ qua, người vẫn hiện */ } }   // Phiên 166: gậy / nón / ván / bánh của người khác (sau update, cộng độ cao khi cưỡi)
       const fl = flies.get(p.id), me = p.id === holdId && deps.selfPose ? deps.selfPose() : null, rot = av.group.rotation;   // (nhân vật giả trong test có thể không có rotation)
       if (fl) { fl.t += dt; const u = Math.min(1, fl.t / fl.dur); av.group.position.set(fl.x0 + (fl.x1 - fl.x0) * u, fl.y0 * (1 - u) + 4 * fl.peak * u * (1 - u), fl.z0 + (fl.z1 - fl.z0) * u); if (rot) rot.x = u >= 1 ? 0 : 1.3 * (1 - u); if (u >= 1) flies.delete(p.id); }
       else if (me) { av.group.position.set(me.x, (me.y || 0) + 2.05, me.z); av.setFacing(me.r, true); if (rot) rot.x = 1.3; }   // nằm vắt trên vai mình
       else if (rot && rot.x) rot.x = 0;
     }
-    for (const [id, v] of views) if (!alive.has(id)) { scene.remove(v.av.group); v.av.dispose(); views.delete(id); flies.delete(id); if (holdId === id) holdId = null; }
+    for (const [id, v] of views) if (!alive.has(id)) { killView(v); views.delete(id); flies.delete(id); if (holdId === id) holdId = null; }
   };
 
   /** Một lượt đồng bộ: gửi trạng thái của mình, nhận người khác + lời nhắn mới. */
@@ -57,7 +60,7 @@ export function createRoomClient(deps) {
       if (lastRoom !== null && rn !== lastRoom) API.reset();                  // sang zone khác: quên người + lời nhắn của zone cũ
       lastRoom = rn;
       let say = '', isSig = false; if (sigQ.length) { say = sigQ.shift(); isSig = true; } else { say = pendingSay; pendingSay = ''; }
-      const res = await call({ action: 'sync', room: rn, id: pageId, n: me.n, c: me.c, h: me.h, x: me.x, y: me.y, z: me.z, r: me.r, s: me.s, since: cursor, say });
+      const res = await call({ action: 'sync', room: rn, id: pageId, n: me.n, c: me.c, h: me.h, x: me.x, y: me.y, z: me.z, r: me.r, s: me.s, i: me.i || '', since: cursor, say });
       if (res && res.ok) {
         fails = 0; remotes.ingest(res.players, pageId);
         lastCount = Math.max(1, Number(res.count) || remotes.size + 1); onOnline(lastCount);
@@ -98,7 +101,7 @@ export function createRoomClient(deps) {
   /** Phiên 137: gửi một gói giao lưu (chuỗi "#dg…"). Tối đa 6 gói chờ; đầy thì bỏ gói cũ nhất. */
   API.signal = (text) => { const t = chatOk(text); if (!t || !isSignal(t)) return false; sigQ.push(t); while (sigQ.length > 6) sigQ.shift(); return true; };
   API.start = () => { if (running) return; running = true; timer = schedule(API.tick, 0); };
-  API.stop = () => { running = false; if (timer != null) cancel(timer); timer = null; for (const v of views.values()) { scene.remove(v.av.group); v.av.dispose(); } views.clear(); };
+  API.stop = () => { running = false; if (timer != null) cancel(timer); timer = null; for (const v of views.values()) killView(v); views.clear(); };
   /** Tab ẩn thì thưa hẳn đi để đỡ tốn lượt gọi Apps Script. */
   API.setActive = (a) => { active = !!a; };
   /** Danh sách người khác đang thấy trong cảnh: [{id,n,x,z}] (vị trí đã nội suy). */
@@ -118,8 +121,8 @@ export function createLocalTransport({ BC = globalThis.BroadcastChannel, now = (
   if (typeof ch.unref === 'function') ch.unref();           // Node: không giữ tiến trình sống (kiểm thử)
   ch.onmessage = (e) => { const d = e && e.data; if (d && typeof d.id === 'string') seen.set(d.id, { p: d, t: now() }); };
   const call = async (req) => {
-    const { id, n, c, h, x, y, z, r, s } = req;
-    ch.postMessage({ id, n, c, h, x, y, z, r, s });
+    const { id, n, c, h, x, y, z, r, s, i } = req;
+    ch.postMessage({ id, n, c, h, x, y, z, r, s, i });
     const t = now(), players = [];
     for (const [k, v] of [...seen]) { if (t - v.t > ttlMs) seen.delete(k); else players.push(v.p); }
     return { ok: true, players, chat: [], seq: 0, count: players.length + 1, pollMs: ROOM_CFG.minPollMs };
