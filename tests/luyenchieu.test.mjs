@@ -79,7 +79,8 @@ test('đi sang khu luyện chiêu và về: ZoneManager chuyển đúng, tải l
   const go = await m.travel(LUYEN_ID, { spawn: 'default' }); assert.ok(go.ok); assert.equal(m.current, LUYEN_ID); assert.equal(loaded, 1);
   assert.equal(m.restore(m.serialize({ x: 0, z: 0 })).zone, 'chua', 'zone tạm không được lưu làm zone cuối');
   const back = await m.travel('chua', { spawn: returnSpawnName('hoa') }); assert.ok(back.ok); assert.equal(m.current, 'chua'); assert.equal(disposed, 1);
-  assert.equal(back.spawn.x, 3.6);
+  assert.equal(back.spawn.x, 12.6);   // Phiên 153: bồ đoàn Hỏa dời ra góc phải (bd07) nên chỗ đứng khi về cũng ở đó
+  assert.equal(back.spawn.x, returnSpawnOf('hoa').x);
 });
 
 test('nối giao diện: main.js nạp khu luyện chiêu; bảng bồ đoàn có nút Luyện tập chiêu và cho ngồi dưới cấp 10', () => {
