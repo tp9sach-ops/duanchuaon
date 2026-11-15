@@ -21,3 +21,8 @@ html[data-embedded=true]:not([data-short=true]) .st-wrap{left:max(40px,calc(var(
 html[data-frame-x=true] .hud,html[data-frame-x=true] .enter{left:var(--vv-left,0px);right:auto;width:var(--vvw)}
 html[data-frame-x=true] #house-btn{left:calc(var(--vv-left,0px) + var(--vvw)/2)}
 html[data-frame-x=true] .sound{left:calc(var(--vv-left,0px) + 14px)}
+
+/* 6) Phiên 179: khung (iframe) CAO hơn phần màn hình nhìn thấy (Chrome máy tính bảng, thanh địa chỉ) → cần đi #joy (gắn vào body, bottom theo khung) bị tụt xuống dưới mép nhìn thấy.
+   --vv-gap (viewport.js) = phần khung nằm dưới vùng nhìn thấy; nâng cần đi lên đúng bấy nhiêu. */
+html[data-frame=true] #joy{margin-bottom:var(--vv-gap,0px)}
+html[data-frame-x=true] #joy{margin-left:var(--vv-left,0px)}

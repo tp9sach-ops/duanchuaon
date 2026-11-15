@@ -48,7 +48,8 @@ export function frameClip(innerH, rect, innerW) {
   return { top: Math.round(top), bottom: Math.round(bottom), left: Math.round(left), right: Math.round(right), x };
 }
 
-/** Tất cả giá trị cần ghi ra :root (--vvw, --vvh, --vv-top, --vv-left, --vv-bar, --hud-s) và data-* (vp, orient, short, tall, square, kbd, frame, frameX). */
+/** Tất cả giá trị cần ghi ra :root (--vvw, --vvh, --vv-top, --vv-left, --vv-bar, --vv-gap, --hud-s) và data-* (vp, orient, short, tall, square, kbd, frame, frameX).
+ *  --vv-gap (Phiên 179) = phần khung nằm DƯỚI vùng nhìn thấy (px), để nâng các nút gắn thẳng vào body như cần đi #joy lên khỏi mép bị cắt. */
 export function viewportState({ innerW, innerH, vv, frame } = {}) {
   let w = num(vv && vv.width, num(innerW, 390)), h = num(vv && vv.height, num(innerH, 800));
   const c0 = classify(w, h), kbd = keyboardOpen(innerH, vv);
@@ -60,7 +61,7 @@ export function viewportState({ innerW, innerH, vv, frame } = {}) {
   }
   const c = clip ? classify(w, h) : c0;
   return {
-    vars: { '--vvw': w + 'px', '--vvh': h + 'px', '--vv-top': top + 'px', '--vv-left': left + 'px', '--vv-bar': bar + 'px', '--hud-s': String(hudScale(w, kbd ? Math.max(h, 520) : h)) },
+    vars: { '--vvw': w + 'px', '--vvh': h + 'px', '--vv-top': top + 'px', '--vv-left': left + 'px', '--vv-bar': bar + 'px', '--vv-gap': (clip ? Math.max(0, Math.round(num(innerH, 0) - clip.bottom)) : 0) + 'px', '--hud-s': String(hudScale(w, kbd ? Math.max(h, 520) : h)) },
     data: { vp: c.size, orient: c.landscape ? 'landscape' : 'portrait', short: String(c.short && !kbd), tall: String(c.tall), square: String(c.square), kbd: String(kbd), frame: String(!!clip), frameX: String(!!(clip && clip.x)) },
     cls: c,
   };
