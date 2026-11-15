@@ -14,6 +14,7 @@ import {
   WALK_SPEED, RUN_SPEED, CLICK_SPEED, CAM_DIST, CAM_PITCH, moveVector, joyVector, joyRun, moveKeyOf, walkStep, createNavigator, camPose, clipCamDist, dragCamera, zoomCamera, facingOf,
 } from './worldLogic.js';
 import { shotPose, blendShot } from './fishShot.js';   // Phiên 120: góc camera câu cá / cầm cá
+import { createCamFeel, fovNhay, kBamDoc } from './camFeel.js';   // Phiên 175: rung màn, khựng hình, đẩy gần, bám nhảy mượt (mục 11)
 
 const isEditable = (el) => !!el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName));
 
@@ -301,10 +302,15 @@ export function createWorld({ scene, camera, canvas, coarse = false, LGT = windo
       else if (!nav.active && !v) act.cancelWalk();
     }
     avatar.setState(speedNow > 0.4 && !(LGT.board && LGT.board.on) ? 'walk' : 'idle', speedNow);   // trên ván trượt: đứng yên, không bước chân
-    avatar.group.position.set(P.x, P.y, P.z); avatar.update(dt);
+    avatar.group.position.set(P.x, P.y, P.z); avatar.update(dt * camTocDo);   // Phiên 175: khựng hình chỉ làm chậm nhân vật
     if (mark.visible) { const s = 1 + 0.12 * Math.sin(performance.now() / 160); mark.scale.set(s, s, s); mark.position.y = P.y + 0.06; }
     camStep(dt);
   }
+
+  let camPrevY = 0;
+  const camFeel = createCamFeel({ tuyChon: (() => { try { return localStorage.getItem('lgt.camfeel'); } catch (_) { return null; } })(), giamHeThong: (() => { try { return !!(matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches); } catch (_) { return false; } })() });
+  LGT.camFeel = { rung: (c) => camFeel.rung(c), khung: (g) => camFeel.khung(g), chieu: (l) => camFeel.chieu(l), set: (o) => { camFeel.set(o); try { localStorage.setItem('lgt.camfeel', JSON.stringify(camFeel.tuyChon)); } catch (_) {} }, get tuyChon() { return camFeel.tuyChon; }, get tocDo() { return camTocDo; } };
+  let camTocDo = 1;   // < 1 trong lúc khựng/chậm: chỉ nhân vật dùng, không đóng băng thế giới (PvP)
 
   /** Camera: bám theo, làm mượt (giật cục khi va tường thì mượt hơn). */
   function camStep(dt) {
@@ -315,9 +321,13 @@ export function createWorld({ scene, camera, canvas, coarse = false, LGT = windo
     camD = camD == null ? want : damp(camD, want, want < camD ? 16 : 3, dt);   // bị chắn thì lùi vào nhanh, thoáng thì ra từ từ
     const c = camPose(P, e.yaw, e.pitch, camD);
     if (!cam.init) { cam.x = c.pos.x; cam.y = c.pos.y; cam.z = c.pos.z; cam.lx = c.look.x; cam.ly = c.look.y; cam.lz = c.look.z; cam.init = true; }
-    const k = 9; cam.x = damp(cam.x, c.pos.x, k, dt); cam.y = damp(cam.y, c.pos.y, k, dt); cam.z = damp(cam.z, c.pos.z, k, dt);
+    const tren = P.y > 0.05, vy = dt > 0 ? (P.y - camPrevY) / dt : 0; camPrevY = P.y;   // Phiên 175: trên không bám dọc trễ ~0,2 s, FOV mở khi lên
+    const k = 9; cam.x = damp(cam.x, c.pos.x, k, dt); cam.y = damp(cam.y, c.pos.y, kBamDoc(tren, k), dt); cam.z = damp(cam.z, c.pos.z, k, dt);
     cam.lx = damp(cam.lx, c.look.x, 12, dt); cam.ly = damp(cam.ly, c.look.y, 12, dt); cam.lz = damp(cam.lz, c.look.z, 12, dt);
-    camera.position.set(cam.x, Math.max(0.5, cam.y), cam.z); camera.lookAt(cam.lx, cam.ly, cam.lz);
+    const cf = camFeel.step(dt); camTocDo = cf.tocDo;
+    camera.position.set(cam.x + cf.dx, Math.max(0.5, cam.y + cf.dy), cam.z); camera.lookAt(cam.lx, cam.ly, cam.lz);
+    const zm = 1 / (1 + cf.fov + (camFeel.giam ? 0 : fovNhay(vy, 9)));   // zoom thay vì sửa fov để không đụng chỉnh FOV màn dọc ở scene/index.js
+    if (Math.abs(camera.zoom - zm) > 1e-4) { camera.zoom = zm; camera.updateProjectionMatrix(); }
   }
 
   LGT.world = { setProfile, zoom, walkTo, sit, bow, meditate, chant, beads, rest, stand, get mode() { return act.mode; }, seats: SEATS, get pos() { return { x: P.x, z: P.z, y: P.y }; }, get facing() { return avatar.group.rotation.y; }, get dashing() { return !!dashS; }, get held() { return !!heldS; }, hold, dash, face(ry) { if (Number.isFinite(ry)) avatar.setFacing(ry, true); }, teleport, goTo, get avatar() { return avatar; }, get camera() { return { yaw, pitch, dist }; }, shot(name) { shot = name === 'cast' || name === 'show' ? name : ''; }, get shotName() { return shot; }, nav };
