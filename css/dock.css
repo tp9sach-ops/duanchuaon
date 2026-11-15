@@ -1,4 +1,4 @@
-/* Cụm nút thao tác góc phải-dưới (Phiên 62; bố cục ô cố định Phiên 109): lưới 3 cột × 3 hàng, nằm TRÊN lưới nút Lạy/Thiền/Tụng kinh.
+/* Cụm nút thao tác góc PHẢI-DƯỚI (Phiên 62; bố cục ô cố định Phiên 109): lưới 3 cột × 3 hàng, nằm TRÊN lưới nút Lạy/Thiền/Tụng kinh.
    Mỗi nút có MỘT ô cố định (js/world/dock.js SLOT_OF) nên không bao giờ dời chỗ khi hoàn cảnh đổi; ô không dùng thì để trống. Hàng 1 (dưới cùng, sát ngón cái) = hành động chính. */
 .dk{--dk-a:76px;--dk-m:58px;--dk-s:46px;--dk-gap:8px;position:absolute;right:max(12px,env(safe-area-inset-right));bottom:max(214px,calc(env(safe-area-inset-bottom) + 200px));z-index:3;pointer-events:none}
 .dk[hidden]{display:none!important}
@@ -66,3 +66,11 @@ body.has-dock .fs-fab{display:none!important}
 .bg-nm{max-width:100%;padding:0 2px;font:500 10.5px/1.15 var(--sans,inherit);color:#d6d9e4;text-align:center;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;word-break:break-word}
 .bg-hint{margin:6px 0 0;font:400 12px/1.4 var(--sans,inherit);color:#aeb3c2}
 .bg-detail{position:sticky;bottom:-12px;margin:10px -14px -12px;padding:8px 14px;background:rgba(14,10,7,.97);border-top:1px solid rgba(217,178,95,.35);font:400 13px/1.35 var(--sans,inherit);color:#e8eaf2}.bg-detail b{color:#fff}
+
+/* Phiên 197: GỒNG LỰC NHẢY — ấn giữ nút Nhảy, vòng tròn nhỏ ở giữa nở dần (--jump-ring 0..1 do js/ui/skill.js đặt), chạm khung nút = hết tầm (bay cao tối đa). */
+.dk-b[data-id="nhay"]{isolation:isolate;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+.dk-b[data-id="nhay"]::before{content:"";position:absolute;left:50%;top:50%;width:calc(var(--jump-ring,0) * 100%);height:calc(var(--jump-ring,0) * 100%);transform:translate(-50%,-50%);border-radius:50%;z-index:-1;pointer-events:none;opacity:0;background:radial-gradient(circle,rgba(255,244,200,.98) 0,rgba(241,219,160,.78) 58%,rgba(217,178,95,.45) 100%);box-shadow:0 0 10px rgba(255,236,170,.85)}
+body.jump-charging .dk-b[data-id="nhay"]::before{opacity:1}
+body.jump-charging .dk-b[data-id="nhay"]{border-color:#fff3c4;color:#2a1c05}
+body.jump-full .dk-b[data-id="nhay"]{animation:dkpulse .22s ease-in-out infinite alternate;box-shadow:0 0 18px rgba(255,236,170,.95)}
+@media (prefers-reduced-motion:reduce){body.jump-full .dk-b[data-id="nhay"]{animation:none}}
