@@ -3,7 +3,7 @@
 // Bộ máy hồi chiêu / cấp chiêu: js/world/skillEngine.js; dữ liệu: js/data/combatSkills.js (TẠM). Phím tắt máy tính: Q, W, E. Mọi chữ qua textContent.
 // Phiên 163: TU VI LÀ ĐỂ TĂNG CẤP CHIÊU — cấp mỗi chiêu tự theo Tu Vi (js/ui/farm.js): cấp = Tu Vi ÷ 10 (tối thiểu 1, tối đa 10, skillLevelCap ở skillEngine.js); mỗi cấp +6% hệ số sát thương. Trước đây không chỗ nào nâng cấp nên chiêu luôn ở cấp 1. Nút chiêu hiện "Lv N"; giữ nhấn xem bảng thông tin cũng theo cấp này.
 import { createSkillRuntime, skillLevelCap } from '../world/skillEngine.js';
-import { skillFor } from '../world/skillCatalog.js';
+import { skillFor, phapMonOfHe } from '../world/skillCatalog.js';
 import { SKILL_CAP } from '../data/combatSkills.js';
 import { effLevel } from '../world/heQuest.js';
 import { levelOf } from '../world/quests.js';
@@ -11,7 +11,8 @@ import { loadHe } from '../world/khaiNgo.js';
 import { KHAI_NGO } from '../data/skillCfg.js';
 import { infoOf, infoRows, iconSpec } from '../world/chieuInfo.js';   // Phiên 162: biểu tượng + bảng giữ-để-xem
 
-const SLOTS = [1, 2, 3], KEYS = { 1: 'KeyQ', 2: 'KeyW', 3: 'KeyE' }, KEYTXT = { 1: 'Q', 2: 'W', 3: 'E' };   // Phiên 159c: chiêu phái = Q, W, E (R = Thương ở farm.js; 1–5 = ô nút trong dock)
+// Phiên 180: đủ 5 ô — 1, 2, 3 (Q, W, E) + ô 4 = Pháp Môn (T, mở cấp 30, chọn 1 trong 2 Pháp Môn của Hệ) + Tuyệt Học (Y, mở cấp 60, tiêu 5 Tâm Ấn).
+const SLOTS = [1, 2, 3, 4, 'tuyet'], KEYS = { 1: 'KeyQ', 2: 'KeyW', 3: 'KeyE', 4: 'KeyT', tuyet: 'KeyY' }, KEYTXT = { 1: 'Q', 2: 'W', 3: 'E', 4: 'T', tuyet: 'Y' }, PM_KEY = 'lgt.phapmon';   // lgt.* tự đồng bộ theo tài khoản   // Phiên 159c: chiêu phái = Q, W, E (R = Thương ở farm.js; 1–5 = ô nút trong dock)
 const WHY = { 'khong-quai': 'Chưa có quái nào gần. Ra bãi rừng rồi dùng chiêu.', xa: 'Quái còn xa, lại gần hơn rồi dùng chiêu.' };
 const HOLD_MS = 380, SVGNS = 'http://www.w3.org/2000/svg';   // giữ ≥ 380 ms = xem thông tin (không tung chiêu); chạm nhanh = tung chiêu
 const isEditable = (t) => !!t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName));
@@ -24,20 +25,23 @@ export function initHeSkill(hud, { toast = () => {} } = {}) {
   LGT.capHieuDung = eff;   // cấp hiệu dụng = max(Tu Vi, Cấp công hạnh) — dùng cho Lễ Khai Ngộ, nhiệm vụ gia nhập phái, ô chiêu
   const tuViNow = () => (LGT.farm ? LGT.farm.tuvi : 0);   // Phiên 163: cấp chiêu chỉ theo Tu Vi (không tính cấp công hạnh)
 
-  let rt = null, he = null;
+  let rt = null, he = null, pm = null;
+  const currentPm = (h) => { try { const id = localStorage.getItem(PM_KEY); return phapMonOfHe(h).some((p) => p.id === id) ? id : null; } catch (_) { return null; } };
   const currentHe = () => { try { return loadHe(localStorage.getItem(KHAI_NGO.heKey)); } catch (_) { return LGT.he || null; } };
   function sync() {
     const h = LGT.he || currentHe();
-    if (h !== he || !rt) { he = h; rt = he ? createSkillRuntime({ he, tuvi: eff() }) : null; }
+    const npm = h ? currentPm(h) : null;
+    if (h !== he || !rt) { he = h; pm = npm; rt = he ? createSkillRuntime({ he, phapMon: pm, tuvi: eff() }) : null; }
+    else if (npm !== pm) { pm = npm; rt.setHe(he, pm); }   // cùng Hệ: chỉ đổi Pháp Môn, giữ cấp chiêu
     if (rt) {
       rt.setTuVi(eff());
       const lv = Math.max(1, skillLevelCap(tuViNow()));   // Phiên 163: Tu Vi tăng → cấp chiêu tăng (setLevel không bao giờ hạ cấp)
-      for (const s of SLOTS) { const sk = skillFor(he, s, null); if (sk) rt.setLevel(sk.id, lv); }
+      for (const s of SLOTS) { const sk = skillFor(he, s, pm); if (sk) rt.setLevel(sk.id, lv); }
     }
   }
 
   const st = document.createElement('style');
-  st.textContent = '#hs-bar{position:fixed;z-index:9;display:flex;gap:8px;right:12px;bottom:200px;touch-action:none}#hs-bar[hidden]{display:none}'
+  st.textContent = '#hs-bar{position:fixed;z-index:9;display:flex;flex-wrap:wrap-reverse;justify-content:flex-end;gap:8px;max-width:182px;right:12px;bottom:200px;touch-action:none}#hs-pm{position:fixed;z-index:13;left:50%;top:50%;transform:translate(-50%,-50%);width:min(340px,90vw);padding:14px;border-radius:14px;border:1px solid rgba(241,219,159,.8);background:rgba(28,19,9,.97);color:#f6e7c1;font:13px/1.4 system-ui,sans-serif;box-shadow:0 10px 40px rgba(0,0,0,.6)}#hs-pm[hidden]{display:none}#hs-pm h4{margin:0 0 8px;font-size:15px}#hs-pm button{display:block;width:100%;margin:6px 0 0;padding:10px;border-radius:10px;border:1px solid rgba(241,219,159,.6);background:rgba(60,42,20,.9);color:#fff;text-align:left;font:inherit;cursor:pointer}#hs-pm button small{display:block;opacity:.75}#hs-pm .x{text-align:center;background:transparent}#hs-bar[hidden]{display:none}'
     + '.hs-b{position:relative;width:54px;height:54px;border-radius:50%;border:1px solid rgba(241,219,159,.7);background:rgba(40,28,14,.88);color:#f6e7c1;font:600 10px/1.15 system-ui,sans-serif;padding:2px;cursor:pointer;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}'
     + '.hs-b .hs-k{position:absolute;top:1px;right:6px;font-size:9px;opacity:.7}.hs-b.lock,.hs-b.soon{opacity:.45}.hs-b.hs-cd::after{content:"";position:absolute;left:0;right:0;bottom:0;height:calc(var(--cd,0)*100%);background:rgba(0,0,0,.55)}'
     + '.hs-b svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}.hs-b .hs-n{position:relative;z-index:1;font-size:8.5px;margin-top:26px;text-shadow:0 1px 2px #000}'
@@ -62,8 +66,22 @@ export function initHeSkill(hud, { toast = () => {} } = {}) {
     return svg;
   }
   const tip = document.createElement('div'); tip.id = 'hs-tip'; tip.hidden = true; tip.setAttribute('role', 'tooltip'); hud.appendChild(tip);
+  // Chọn Pháp Môn (ô 4): hiện khi chạm ô 4 đã mở mà chưa chọn. Lưu ở localStorage (lgt.phapmon).
+  const pmBox = document.createElement('div'); pmBox.id = 'hs-pm'; pmBox.hidden = true; pmBox.setAttribute('role', 'dialog'); hud.appendChild(pmBox);
+  function openPm() {
+    sync(); if (!he) return; pmBox.textContent = '';
+    const h = document.createElement('h4'); h.textContent = 'Chọn Pháp Môn (chiêu 4)'; pmBox.appendChild(h);
+    for (const p of phapMonOfHe(he)) {
+      const sk = skillFor(he, 4, p.id), b = document.createElement('button'), s = document.createElement('small'); b.type = 'button';
+      b.textContent = p.ten; s.textContent = `${p.vaiTro}${sk ? ' · chiêu: ' + sk.ten : ''}`; b.appendChild(s);
+      b.addEventListener('click', () => { try { localStorage.setItem(PM_KEY, p.id); } catch (_) { /* bỏ qua */ } pmBox.hidden = true; sync(); paint(); toast(`Đã chọn ${p.ten}.`, 2200); });
+      pmBox.appendChild(b);
+    }
+    const x = document.createElement('button'); x.type = 'button'; x.className = 'x'; x.textContent = 'Để sau'; x.addEventListener('click', () => { pmBox.hidden = true; }); pmBox.appendChild(x);
+    pmBox.hidden = false;
+  }
   function showTip(slot) {
-    sync(); const sk = rt && skillFor(he, slot, null); if (!sk) return false;
+    sync(); const sk = rt && skillFor(he, slot, pm); if (!sk) return false;
     const info = infoOf(sk.id, { tuvi: eff(), level: rt.effectiveLevel(sk.id) }); if (!info) return false;
     tip.textContent = ''; const h = document.createElement('h4'); h.textContent = info.ten; tip.appendChild(h);
     for (const [k, v] of infoRows(info)) { const r = document.createElement('div'), b = document.createElement('b'); r.className = 'r'; b.textContent = k + ': '; r.append(b, document.createTextNode(v)); tip.appendChild(r); }
@@ -86,15 +104,17 @@ export function initHeSkill(hud, { toast = () => {} } = {}) {
 
   function cast(slot) {
     sync(); if (!rt || !LGT.farm) return false;
-    const sk = skillFor(he, slot, null); if (!sk) return false;
+    const sk = skillFor(he, slot, pm);
+    if (!sk && slot === 4) { if (eff() < SKILL_CAP[4]) toast(`Chiêu này mở ở cấp ${SKILL_CAP[4]} (bạn cấp ${eff()}).`, 2400); else openPm(); return false; }
+    if (!sk) return false;
     if (eff() < SKILL_CAP[slot]) { toast(`Chiêu này mở ở cấp ${SKILL_CAP[slot]} (bạn cấp ${eff()}).`, 2400); return false; }
     if (!(sk.heSo > 0)) { toast(`${sk.ten}: chiêu hỗ trợ, hiệu ứng sẽ mở ở bước sau.`, 2600); return false; }
     const pre = LGT.farm.skillReady(); if (!pre.ok) { toast(WHY[pre.reason] || 'Chưa dùng được.', 2200); return false; }
     const r = rt.tryCast(slot, nowSec());
-    if (!r.ok) { toast(r.reason === 'hoi-chieu' ? `${sk.ten} đang hồi chiêu, còn ${Math.ceil(r.left || 0)} giây.` : 'Chưa dùng được chiêu này.', 2000); return false; }
+    if (!r.ok) { toast(r.reason === 'hoi-chieu' ? `${sk.ten} đang hồi chiêu, còn ${Math.ceil(r.left || 0)} giây.` : r.reason === 'tam-an' ? `${sk.ten} cần ${r.need} Tâm Ấn (bạn có ${r.have}). Ra đòn trúng quái để tích Tâm Ấn.` : 'Chưa dùng được chiêu này.', 2200); return false; }
     const h = LGT.farm.skillHit(r.heSo);
     try { const av = LGT.world && LGT.world.avatar; if (av && typeof av.cast === 'function') av.cast(sk.id); } catch (_) {}   // Phiên 162: tư thế gồng → phát → thu
-    if (h.ok) { toast(`${sk.ten} Lv${r.level}! −${h.dmg} Oán Khí ${h.ten}`, 1800); if (LGT.sfx) LGT.sfx.play('thuong'); if (LGT.act) LGT.act('dungchieu'); }
+    if (h.ok) { try { rt.onHit(1); } catch (_) { /* bỏ qua */ } toast(`${sk.ten} Lv${r.level}! −${h.dmg} Oán Khí ${h.ten}`, 1800); if (LGT.sfx) LGT.sfx.play('thuong'); if (LGT.act) LGT.act('dungchieu'); }
     return h.ok;
   }
 
@@ -104,10 +124,17 @@ export function initHeSkill(hud, { toast = () => {} } = {}) {
     const dock = document.getElementById('dock');
     if (dock && !dock.hidden) { const r = dock.getBoundingClientRect(); if (r.width) { bar.style.right = Math.max(8, Math.round(innerWidth - r.right)) + 'px'; bar.style.bottom = Math.round(innerHeight - r.top + 8) + 'px'; } }
     for (const s of SLOTS) {
-      const sk = skillFor(he, s, null), bs = btns[s], { b, t, lv } = bs; if (!sk) { b.hidden = true; continue; } b.hidden = false;
+      const sk = skillFor(he, s, pm), bs = btns[s], { b, t, lv } = bs;
+      if (!sk) {   // ô 4 chưa chọn Pháp Môn: vẫn hiện nút (khóa tới cấp 30, rồi bấm để chọn)
+        if (s !== 4) { b.hidden = true; continue; }
+        b.hidden = false; const old = b.querySelector('svg'); if (old) old.remove(); bs.ico = '';
+        const lk = eff() < SKILL_CAP[4]; t.textContent = lk ? `Cấp ${SKILL_CAP[4]}` : 'Chọn Pháp Môn'; lv.textContent = '';
+        b.className = `hs-b he-${he}${lk ? ' lock' : ''}`; b.style.setProperty('--cd', '0'); b.setAttribute('aria-label', lk ? `Pháp Môn (mở ở cấp ${SKILL_CAP[4]})` : 'Chọn Pháp Môn'); continue;
+      }
+      b.hidden = false;
       if (bs.ico !== sk.id) { const old = b.querySelector('svg'); if (old) old.remove(); b.insertBefore(drawIcon(sk.id), b.firstChild); bs.ico = sk.id; }
       const locked = eff() < SKILL_CAP[s], soon = !locked && !(sk.heSo > 0), left = rt.cooldownLeft(sk.id, nowSec()), lvNow = rt.effectiveLevel(sk.id);
-      t.textContent = locked ? `Cấp ${SKILL_CAP[s]}` : sk.ten; lv.textContent = locked ? '' : `Lv${lvNow}`;
+      t.textContent = locked ? `Cấp ${SKILL_CAP[s]}` : sk.ten; lv.textContent = locked ? '' : (s === 'tuyet' ? `${rt.tamAn}/5` : `Lv${lvNow}`);
       b.className = `hs-b he-${he}${locked ? ' lock' : ''}${soon ? ' soon' : ''}${left > 0 ? ' hs-cd' : ''}`;
       b.style.setProperty('--cd', sk.cd > 0 ? Math.min(1, left / sk.cd).toFixed(3) : '0');
       b.setAttribute('aria-label', `${sk.ten}${locked ? '' : ` cấp ${lvNow}`}${locked ? ` (mở ở cấp ${SKILL_CAP[s]})` : soon ? ' (sắp có)' : left > 0 ? ' (đang hồi chiêu)' : ''}`);

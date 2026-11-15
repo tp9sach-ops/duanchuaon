@@ -9,8 +9,13 @@
 
 Lưu ý: phiên khác cùng ngày cũng ghi `docs/PHIEN178.md` (vừa đi vừa bấm chiêu) — file đó đã được khôi phục nguyên văn; đừng ghi đè.
 
+## Mục 2 — chiêu thức của phái (Giang chọn làm CẢ BA, lần lượt từng bước)
+Hiện trạng tìm thấy: thanh chiêu (`js/ui/heSkill.js`) chỉ có 3 ô Q/W/E; ô 4 (Pháp Môn, cấp 30) và Tuyệt Học (cấp 60) chưa có nút; Pháp Môn chưa chọn ở đâu; Tâm Ấn không được cộng ở giao diện; chiêu hỗ trợ (`heSo = 0`: khiên, buff, hồi máu, ẩn thân…) chỉ báo "sắp có", chưa có tác dụng; hiệu ứng chiêu của mình người khác chưa chắc thấy.
+- **Bước A — XONG (sw dgt-v171):** `heSkill.js` hiện đủ 5 ô: Q W E + T (Pháp Môn) + Y (Tuyệt Học), xếp 2 hàng (3 + 2). Ô 4: khóa tới cấp 30; đủ cấp mà chưa chọn thì chạm để mở bảng chọn 1 trong 2 Pháp Môn của Hệ, lưu `localStorage lgt.phapmon` (khóa lgt.* tự đồng bộ theo tài khoản). Tuyệt Học hiện Tâm Ấn `x/5`; mỗi chiêu trúng quái +1 Tâm Ấn (`rt.onHit(1)` trong `cast`). Chưa làm: chọn lại Pháp Môn sau khi đã chọn (chưa có cách đổi); đòn đánh thường chưa cộng Tâm Ấn.
+- **Bước B — CHƯA:** cho chiêu hỗ trợ (heSo = 0) có tác dụng thật (khiên, hồi máu, buff công/tốc đánh, ẩn thân…) theo `fx` trong `js/data/combatSkills.js`.
+- **Bước C — CHƯA:** đồng bộ — người chơi khác thấy hiệu ứng chiêu của mình (qua `js/net/*`, xem cách `avatarChibi`/`gearSync` đồng bộ hiện nay).
+
 ## VIỆC KẾ
-- Chờ Giang xác nhận mục 1 (đủ nút + cần đi hiện đúng chỗ trên Chrome).
-- Mục 2: nút kỹ năng theo hệ phái khi đánh quái (đọc `js/ui/dock.js`, `js/ui/heSkill.js`, `js/ui/skill.js`, `js/world/chieu*.js`) + đồng bộ chiêu cho mọi người chơi.
+- Chờ Giang thử bước A (5 nút chiêu hiện đúng, không đè nút khác) rồi nói "tiếp tục" → Bước B.
 - Mục 3: cỡ nút trong bảng ⇄ (`js/ui/compact.js`, `--dk-s` trong `css/dock.css`).
 - Mục 4: điều khiển dễ hơn.
