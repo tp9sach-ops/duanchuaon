@@ -45,7 +45,21 @@ export function initDock(hud, { toast = () => {} } = {}) {
   function make(b) {
     const btn = el('button', 'dk-b'); btn.type = 'button'; btn.dataset.id = b.id;
     btn.append(el('span', 'dk-ic', ICON[b.id] || '•'), el('span', 'dk-tx', b.label), el('span', 'dk-key'));
-    let downAt = 0;   // Phiên 178: mốc bấm xuống của RIÊNG nút này (trước đây một cờ chung → nút khác bị nuốt mất một lần bấm khi click không bao giờ tới)
+    let downAt = 0, sawPtr = false;   // Phiên 178: mốc bấm xuống của RIÊNG nút này (trước đây một cờ chung → nút khác bị nuốt mất một lần bấm khi click không bao giờ tới)
+    if (b.id === 'nhay') {   // Phiên 197: ấn GIỮ để gồng lực (vòng tròn nhỏ trong nút nở dần), THẢ để bay; đang bay / trên không thì bấm là chạy ngay (xem LGT.skill.press)
+      btn.addEventListener('pointerdown', (e) => {
+        if (e.pointerType === 'mouse' && e.button !== 0) return; e.preventDefault(); sawPtr = true;
+        if (!(LGT.skill && LGT.skill.level > 0)) { press('nhay'); return; }   // chưa mở Khinh thân: nhắc cách mở như cũ
+        if (!seen.includes('nhay')) { seen.push('nhay'); saveSeen(); }
+        try { btn.setPointerCapture(e.pointerId); } catch (_) { /* bỏ qua */ }
+        try { LGT.skill.press(); } catch (_) { /* nút không làm sập game */ }
+        refresh();
+      });
+      ['pointerup', 'pointercancel', 'lostpointercapture'].forEach((ev) => btn.addEventListener(ev, () => { try { if (LGT.skill && LGT.skill.release) LGT.skill.release(); } catch (_) { /* bỏ qua */ } }));
+      btn.addEventListener('click', () => { if (sawPtr) { sawPtr = false; return; } press('nhay'); });   // click sau khi đã xử lý pointer thì bỏ; Enter/Space (bàn phím) vẫn nhảy vừa (ACT.nhay)
+      btn.addEventListener('contextmenu', (e) => e.preventDefault());   // giữ lâu trên điện thoại không bật menu
+      return { btn };
+    }
     if (FAST.has(b.id)) btn.addEventListener('pointerdown', (e) => { if (e.pointerType === 'mouse' && e.button !== 0) return; e.preventDefault(); downAt = performance.now(); press(b.id); });
     btn.addEventListener('click', () => { if (downAt && performance.now() - downAt < 700) { downAt = 0; return; } press(b.id); });   // click đến ngay sau pointerdown = cùng một lần bấm → bỏ; Enter/Space (bàn phím) vẫn chạy
     return { btn };
@@ -120,3 +134,4 @@ export function initDock(hud, { toast = () => {} } = {}) {
   LGT.dock = { refresh, get ids() { return sig; }, get layout() { return layout.map((l) => ({ id: l.id, slot: l.slot })); } };
   return LGT.dock;
 }
+
