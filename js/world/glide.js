@@ -16,6 +16,7 @@ export const FLY_CFG = Object.freeze({
   tilt: 0.38,                          // rad: thân chúi về trước khi bay
   camK: 2.4, camHold: 0.9,             // camera xoay ra sau lưng (hằng số bám /s); sau khi người chơi tự kéo camera thì nhường camHold giây
   fov: 0.035,                          // mở góc nhìn thêm 3,5% khi đang bay (cảm giác nhanh)
+  camUpK: 20,                          // Phiên 199: hằng số bám của camera khi nhân vật BAY LÊN (phải trùng damp(airSm, …, 20) trong world.js camStep)
   boostK: 0.8, boostGap: 0.35,         // Phiên 197: bấm Nhảy thêm khi đang bay → đạp gió: xung đẩy mới = 80% xung đầu, theo hướng đang di chuyển; cách nhau tối thiểu 0,35 s
 });
 
@@ -75,3 +76,10 @@ export function followYaw(yaw, ry, dt, k = FLY_CFG.camK) {
   const d = wrapPi(yawBehind(ry) - num(yaw));
   return num(yaw) + d * (1 - Math.exp(-Math.max(0, num(k)) * Math.max(0, num(dt))));
 }
+
+/**
+ * Phiên 199: độ cao MỤC TIÊU gửi cho camera (world.setAirY). Camera làm mượt bậc 1 với hằng số camUpK nên khi nhân vật lao lên với vận tốc vy (m/s)
+ * nó luôn tụt phía sau vy/camUpK mét (bậc 8: vy ≈ 22 m/s → tụt ~1,1 m, nhân vật trồi lên khỏi giữa khung). Cộng trước phần dẫn vy/camUpK khi đang LÊN
+ * thì độ trễ ở trạng thái ổn định về ~0 → nhân vật luôn nằm giữa khung. Đang xuống / đứng yên: không cộng (camera hạ êm như cũ).
+ */
+export const camAirTarget = (y, vy) => Math.max(0, num(y)) + (num(vy) > 0 ? num(vy) / FLY_CFG.camUpK : 0);

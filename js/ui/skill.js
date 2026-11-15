@@ -2,7 +2,7 @@
 // Logic ở js/world/skills.js (có test). File này KHÔNG sửa world.js: nó bọc avatar.update để cộng độ cao nhảy vào vị trí nhân vật sau khi world.js đặt xong mỗi khung hình
 // (world.js đặt lại vị trí từ đầu mỗi khung nên không cộng dồn). Đổi tên/áo/kiểu đầu dựng lại nhân vật → bộ đếm 500 ms tự bọc lại.
 import { khinhBac, loadKhinh, jumpHeightAt, canJump, createJump, trainPlan, leapPlan, glidePlan, flyPlan, nextAction, LEAP_CFG, GLIDE_CFG, KHINH_YEU_CAU, KHINH_TEN, MAX_BAC } from '../world/skills.js';
-import { flySpeed, flyBrake, steerDir, cushionH, boostSpeed, FLY_CFG } from '../world/glide.js';   // Phiên 196: bay lướt; Phiên 197: đạp gió
+import { flySpeed, flyBrake, steerDir, cushionH, boostSpeed, camAirTarget, FLY_CFG } from '../world/glide.js';   // Phiên 196: bay lướt; Phiên 197: đạp gió
 import { CHARGE_CFG, chargeLevel, chargeFrac, ringScale, isFull, crouchPose } from '../world/charge.js';   // Phiên 197: gồng lực nhảy
 import { landing } from '../world/strength.js';
 import { levelOf } from '../world/quests.js';
@@ -123,7 +123,7 @@ export function initSkill(hud, { toast = () => {}, getSen = () => 0, spendSen = 
     av.update = (dt) => {
       orig(dt); const y = jump.step(dt); if (y > 0 && av.group) av.group.position.y += y; if (jump.air) lastAirAt = performance.now();
       const W = LGT.world, p = W && W.pos; glideCd = Math.max(0, glideCd - Math.max(0, Math.min(0.25, dt)));
-      if (W && W.setAirY) W.setAirY(y);   // Phiên 197: camera cộng độ cao nhảy → bay cao vẫn nằm giữa khung hình
+      if (W && W.setAirY) W.setAirY(camAirTarget(y, jump.air ? jump.vy : 0));   // Phiên 199: cộng phần dẫn vy/k khi đang lên → camera không tụt sau, nhân vật không trồi khỏi khung   // Phiên 197: camera cộng độ cao nhảy → bay cao vẫn nằm giữa khung hình
       if (flight && W && !W.flying) flight = null;
       if (chargeT >= 0 && av.group) {   // đang gồng: nhún thấp người, đứng yên sau 0,15 s, vòng tròn nở
         const d = Math.max(0, Math.min(0.25, dt)); chargeT += d;
