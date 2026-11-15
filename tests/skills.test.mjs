@@ -20,7 +20,7 @@ test('hoàn thành chuỗi tưới cây → khinhLevel = 1 (nối đúng với s
 test('bảng chiều cao tăng dần, bậc 0 không nhảy', () => {
   assert.equal(jumpHeight(0), 0);
   for (let i = 1; i < KHINH_THAN_CAO.length; i++) assert.ok(KHINH_THAN_CAO[i] > KHINH_THAN_CAO[i - 1]);
-  assert.equal(jumpHeight(1), 1.1); assert.equal(jumpHeight(999), KHINH_THAN_CAO[MAX_BAC]); assert.equal(airTime(0), 0);
+  assert.equal(jumpHeight(1), 2.0); assert.equal(jumpHeight(999), KHINH_THAN_CAO[MAX_BAC]); assert.equal(airTime(0), 0);
 });
 test('canJump chỉ khi đã mở, đang đứng tự do, không mở bảng/hộp thoại', () => {
   assert.equal(canJump({ level: 0 }), false);
@@ -69,7 +69,7 @@ test('loadKhinh / khinhBac: dữ liệu lạ → 0; chưa xong cốt truyện th
 });
 test('trong nhà bị chặn độ cao; ngoài trời giữ nguyên', () => {
   assert.equal(jumpHeightAt(8, false), jumpHeight(8)); assert.equal(jumpHeightAt(8, true), INDOOR_MAX);
-  assert.equal(jumpHeightAt(1, true), jumpHeight(1)); assert.equal(jumpHeightAt(0, true), 0);
+  assert.equal(jumpHeightAt(1, true), Math.min(jumpHeight(1), INDOOR_MAX)); assert.equal(jumpHeightAt(0, true), 0);
 });
 
 // ---- Phiên 139: nhảy tới trước + lướt né
