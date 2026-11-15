@@ -1,5 +1,5 @@
 // TƯ THẾ CHIẾN ĐẤU theo clip mẫu (Phiên 119): logic THUẦN (không three.js), có test: tests/combo.test.mjs.
-//  • Đòn đánh thường nối thành CHUỖI 4 đòn (Phiên 126): MÚA côn trước người (xoay như chong chóng), chém ngang trái→phải, chém ngang phải→trái, xoay người 360° (đòn cuối, côn xoay theo).
+//  • Đòn đánh thường nối thành CHUỖI 3 đòn (Phiên 198, trước đó 4 đòn từ Phiên 126): chém ngang trái→phải, chém ngang phải→trái, xoay người 360° (đòn cuối, côn xoay theo, có sát thương lan — logic ở js/world/basicCombo.js).
 //  • Skill "Chém khí" (conKhi): nhún lấy đà, giơ côn thật cao rồi bổ xuống, lao người tới trước.
 //  • THẾ SẴN SÀNG (stance): khi đang giao chiến, đứng hơi khom, một chân trước một chân sau, gối gập, tay cầm côn đưa trước thấp, tay kia thủ; chạy thì người nghiêng tới trước, tay côn giữ vững.
 // avatarChibi.js dùng comboPose / nextKind / applyStance; js/ui/combatPose.js dùng SLASH (vệt chém) cho js/scene/slashFx.js.
@@ -21,7 +21,7 @@ export const KINDS = {
   xoay: { hit: 0.34, keys: [[0, -1.2, 0, 0, 0, '', 0], [0.12, -1.55, -0.2, -0.6, 0, 'o', 0], [0.58, -1.5, 0.18, TAU - 0.4, 0.18, 'io', 2 * TAU], [0.80, -1.45, 0.15, TAU - 0.2, 0.1, 'o', 2 * TAU], [1.1, -1.2, 0, TAU, 0, 'io', 2 * TAU]] },
   khi: { hit: RELEASE_S, keys: [[0, -1.2, 0, 0, 0], [RELEASE_S * 0.65, -2.85, -0.3, 0, -0.05, 'o'], [RELEASE_S, -0.45, 0.55, 0, 0.2, 'i'], [swingEnd, -0.6, 0.45, 0, 0.14, 'o'], [swingEnd + 0.35, -1.2, 0, 0, 0, 'io']] },
 };
-export const CHAIN = ['mua', 'ngang', 'nguoc', 'xoay'];
+export const CHAIN = ['ngang', 'nguoc', 'xoay'];   // Phiên 198: combo 3 đòn (chém ngang → chém ngược → xoay 360° có sát thương lan); kiểu 'mua' (múa côn) vẫn còn trong KINDS nhưng không nằm trong chuỗi
 export const CHAIN_GAP = 0.6;   // giây (sau khi đòn trước xong) còn nối được đòn kế tiếp
 
 /** Đòn kế tiếp trong chuỗi: prev = đòn vừa đánh ('' nếu chưa), gap = số giây từ lúc đòn đó kết thúc (âm = còn đang vung). Quá hạn hoặc vừa xong đòn cuối → quay về đòn đầu. */

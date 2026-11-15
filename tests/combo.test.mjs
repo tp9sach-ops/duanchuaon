@@ -8,15 +8,15 @@ import { armAngle, elbowAngle, wristAngle, kneeAngle, legPoints, LM, CHIBI_H } f
 const TAU = Math.PI * 2, Z = () => ({ x: 0, y: 0, z: 0 });
 const base = () => ({ spine: Z(), head: { x: 0 }, armL: armAngle(1, 0.12, 0.14), armR: armAngle(-1, 0.12, 0.14), foreL: elbowAngle(1, 0.2), foreR: elbowAngle(-1, 0.2), handL: wristAngle(1, 0.2), handR: wristAngle(-1, 0.2), legL: Z(), legR: Z(), shinL: kneeAngle(0.06), shinR: kneeAngle(0.06), footL: Z(), footR: Z(), hipsDrop: 0 });
 
-test('chuỗi đòn: múa → ngang → ngược → xoay, quá hạn hoặc xong đòn cuối thì về đầu', () => {
-  assert.deepEqual(CHAIN, ['mua', 'ngang', 'nguoc', 'xoay']);
-  assert.equal(nextKind('', 0), 'mua');
-  assert.equal(nextKind('mua', 0.2), 'ngang');
+test('chuỗi đòn (Phiên 198): ngang → ngược → xoay (3 đòn), quá hạn hoặc xong đòn cuối thì về đầu', () => {
+  assert.deepEqual(CHAIN, ['ngang', 'nguoc', 'xoay']);
+  assert.equal(new Set(CHAIN).size, 3, '3 động tác khác nhau');
+  assert.equal(nextKind('', 0), 'ngang');
   assert.equal(nextKind('ngang', 0.2), 'nguoc');
   assert.equal(nextKind('nguoc', -0.1), 'xoay');
-  assert.equal(nextKind('xoay', 0.1), 'mua');
-  assert.equal(nextKind('ngang', CHAIN_GAP + 0.01), 'mua');
-  assert.equal(nextKind('khi', 0), 'mua');
+  assert.equal(nextKind('xoay', 0.1), 'ngang');
+  assert.equal(nextKind('ngang', CHAIN_GAP + 0.01), 'ngang');
+  assert.equal(nextKind('khi', 0), 'ngang');
 });
 
 test('mọi kiểu đòn: liên tục, hữu hạn, đầu và cuối về tư thế nghỉ', () => {
