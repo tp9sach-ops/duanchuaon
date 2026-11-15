@@ -77,9 +77,9 @@ export function initHeSkill(hud, { toast = () => {} } = {}) {
     const t = document.createElement('span'), k = document.createElement('span'), lvEl = document.createElement('span'); k.className = 'hs-k'; k.textContent = KEYTXT[s]; t.className = 'hs-n'; lvEl.className = 'hs-lv';
     b.append(t, k, lvEl); let timer = 0, held = false, icoId = '';
     const stop = () => { clearTimeout(timer); timer = 0; if (held) hideTip(); };
-    b.addEventListener('pointerdown', (e) => { if (e.pointerType === 'mouse' && e.button !== 0) return; e.preventDefault(); held = false; clearTimeout(timer); timer = setTimeout(() => { timer = 0; held = showTip(s); }, HOLD_MS); });
+    b.addEventListener('pointerdown', (e) => { if (e.pointerType === 'mouse' && e.button !== 0) return; e.preventDefault(); try { b.setPointerCapture(e.pointerId); } catch (_) { /* bỏ qua */ } held = false; clearTimeout(timer); timer = setTimeout(() => { timer = 0; held = showTip(s); }, HOLD_MS); });   // Phiên 178: giữ con trỏ trên nút → ngón hơi trượt (đang vừa chạy vừa bấm) cũng không bị hủy cú bấm
     b.addEventListener('pointerup', () => { const was = held, pend = !!timer; stop(); if (!was && pend) cast(s); held = false; });
-    b.addEventListener('pointercancel', () => { stop(); held = false; }); b.addEventListener('pointerleave', () => { stop(); held = false; });
+    b.addEventListener('pointercancel', () => { stop(); held = false; });   // Phiên 178: bỏ pointerleave (đã giữ con trỏ bằng setPointerCapture nên nhả tay ở đâu cũng về nút này)
     b.addEventListener('contextmenu', (e) => e.preventDefault());
     bar.appendChild(b); btns[s] = { b, t, lv: lvEl, get ico() { return icoId; }, set ico(v) { icoId = v; } };
   }

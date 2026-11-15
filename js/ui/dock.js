@@ -32,7 +32,7 @@ export function initDock(hud, { toast = () => {} } = {}) {
     lan: () => LGT.swim && LGT.swim.toggleDive(), vantruot: () => LGT.board && LGT.board.toggle(),
     tui: () => (LGT.inHouse && LGT.furni ? LGT.furni.openBag() : LGT.bag ? LGT.bag.open() : toast('Túi đồ chưa sẵn sàng.', 2500)),
   };
-  const FAST = new Set(['tap', 'nhay', 'da', 'thuong', 'chemkhi', 'thietdau', 'khiengnguoi', 'nemnguoi']);   // phản xạ nhanh: bấm xuống là chạy (khiêng/ném người chỉ có cửa sổ 2 giây; Thương/Chém khí cũng cần nhạy khi đánh liên tục)
+  const FAST = new Set(['tap', 'nhay', 'da', 'thuong', 'chemkhi', 'thietdau', 'khiengnguoi', 'nemnguoi', 'vantruot', 'lan', 'tudong', 'khieng', 'nem', 'ha', 'nemyq', 'nemnpc', 'thanguoi', 'cast', 'thu', 'phong']);   // Phiên 178: thêm nút cưỡi (thương/gậy/ván), lặn, tự động, khiêng/ném/thả, câu cá — bấm xuống là chạy ngay, để VỪA GIỮ CẦN ĐI (một ngón) VỪA BẤM nút (ngón kia) vẫn được: trình duyệt điện thoại hay không sinh sự kiện click khi đang có ngón khác chạm. KHÔNG đưa nút mở bảng (kynang, tui) vào đây vì bảng hiện lên ngay dưới ngón sẽ nhận nhầm cú nhả tay   // phản xạ nhanh: bấm xuống là chạy (khiêng/ném người chỉ có cửa sổ 2 giây; Thương/Chém khí cũng cần nhạy khi đánh liên tục)
   function press(id) {
     if (!seen.includes(id)) { seen.push(id); saveSeen(); }   // bấm rồi thì không nhắc chỗ này nữa
     try { const f = ACT[id]; if (f) f(); } catch (_) { /* nút không làm sập game */ }
@@ -41,8 +41,9 @@ export function initDock(hud, { toast = () => {} } = {}) {
   function make(b) {
     const btn = el('button', 'dk-b'); btn.type = 'button'; btn.dataset.id = b.id;
     btn.append(el('span', 'dk-ic', ICON[b.id] || '•'), el('span', 'dk-tx', b.label), el('span', 'dk-key'));
-    if (FAST.has(b.id)) btn.addEventListener('pointerdown', (e) => { if (e.pointerType === 'mouse' && e.button !== 0) return; e.preventDefault(); skipClick = true; press(b.id); });
-    btn.addEventListener('click', () => { if (skipClick) { skipClick = false; return; } press(b.id); });
+    let downAt = 0;   // Phiên 178: mốc bấm xuống của RIÊNG nút này (trước đây một cờ chung → nút khác bị nuốt mất một lần bấm khi click không bao giờ tới)
+    if (FAST.has(b.id)) btn.addEventListener('pointerdown', (e) => { if (e.pointerType === 'mouse' && e.button !== 0) return; e.preventDefault(); downAt = performance.now(); press(b.id); });
+    btn.addEventListener('click', () => { if (downAt && performance.now() - downAt < 700) { downAt = 0; return; } press(b.id); });   // click đến ngay sau pointerdown = cùng một lần bấm → bỏ; Enter/Space (bàn phím) vẫn chạy
     return { btn };
   }
   const place = (it, L) => {   // đặt nút vào ô của nó: hàng 1 ở DƯỚI nên đảo thứ tự hàng của lưới
