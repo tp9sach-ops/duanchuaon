@@ -26,9 +26,14 @@ Mô tả: lửa thật là nhiều **lưỡi lửa hình giọt** chồng nhau, 
 - Số lưỡi/khói/tàn: yếu 6/0/0 · vừa 14/5/24 · cao 26/9/48.
 - File: `js/world/lua.js` (+ `tests/lua.test.mjs`), `js/scene/fxLua.js`, nối ở `js/scene/chieuFx.js`.
 
-### Mục 2 — BĂNG THẬT (Hệ thủy: thuy_1, thuy_3, thuy_huyenbang_4 dùng băng; thuy_2, thuy_camlo_4, thuy_tuyet là nước)
+### Mục 2 — BĂNG THẬT (Hệ thủy: thuy_1, thuy_3, thuy_huyenbang_4 dùng băng; thuy_2, thuy_camlo_4, thuy_tuyet là nước)  ← **XONG ở Phiên 180**
 Mô tả: **tinh thể băng 3D** (lăng trụ sáu cạnh nhọn đầu, vật liệu trong mờ ánh xanh, viền sáng), mọc từ mặt đất theo hàng/gai, vỡ thành mảnh khi hết hiệu lực; sương lạnh trôi sát đất; hơi thở trắng; mặt đất đóng băng loang dần (decal phản chiếu); mảnh băng vỡ bay tung kèm lấp lánh.
 - Nước (3 chiêu còn lại): cột nước/sóng cuộn (lưới dải uốn), giọt nước rơi bắn tóe, vòng sóng loang, bọt trắng.
+
+**Đã làm (Phiên 180):** `js/world/bang.js` (logic thuần + `tests/bang.test.mjs` 9 test) + `js/scene/fxBang.js` (vẽ), nối ở `chieuFx.js` lớp 2 (`p.he === 'thuy'`, `p.loai` 'bang' → băng, 'nuoc' → nước).
+- BĂNG (thuy_1, thuy_3, huyền băng): tinh thể 3D lăng trụ sáu cạnh nhọn đầu (3 tỉ lệ), trong mờ ánh xanh + lõi sáng + viền sáng; mọc từ đất nhanh (vọt nhẹ rồi hạ), đứng, rồi VỠ thành mảnh đa diện (InstancedMesh) bay tung rơi xuống; chiêu bay (tia) có mũi băng xoay ở đầu + gai mọc dọc đường đi; sương lạnh; mặt đất đóng băng loang (nhánh bông tuyết); lấp lánh sao ở ngọn; lúc gồng 3 tinh thể nhỏ xoay quanh người.
+- NƯỚC (thuy_2, cam lồ, tuyết): chiêu nổ = 1–3 sóng vành mép cuộn (mặt tròn xoay) + vòng sóng loang trên nền + cột nước bùng lên rồi sập + giọt nước bắn tóe (InstancedMesh) + bọt trắng; chiêu xoay = 2–4 dải nước xoắn ốc (ống 3D) quanh người; kết cấu dòng chảy cuộn liên tục; lúc gồng 3 quầng nước xoay.
+- Số vật thể yếu/vừa/cao: tinh thể 5/12/22 · mảnh 0/18/36 · giọt 0/24/48 · sương 0/5/9 · bọt 0/4/7; máy yếu bỏ sương/mảnh/giọt/bọt/mặt đóng băng.
 
 ### Mục 3 — KIM LOẠI / SÉT (Hệ kim, 6 chiêu)
 Mô tả: **vệt chém hình lưỡi liềm** thon (dải cong, sáng giữa mờ mép), tia lóe kim loại, mảnh kim loại xoay lấp lánh, tia sét/điện chạy zích zắc (dải gấp khúc phát sáng, nhấp nháy), vết cắt trên nền.
