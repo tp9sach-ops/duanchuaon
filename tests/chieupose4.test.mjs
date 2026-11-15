@@ -69,3 +69,11 @@ test('thẻ tư thế: đủ 4 khung Gồng/Phát/Trúng/Hồi với góc nguyê
     for (const x of b) { assert.ok(Number.isInteger(x.thanChui) && Number.isInteger(x.thanXoay) && x.tayPhai.every(Number.isInteger) && x.tayTrai.every(Number.isInteger), id); assert.equal(x.nhin, 'mục tiêu'); assert.ok(Number.isFinite(x.haHong) && x.haHong >= 0); }
   }
 });
+
+test('nối vào nhân vật: avatarChibi dùng castSample4 (4 khung), không còn castSample ba khung', async () => {
+  const { readFileSync } = await import('node:fs');
+  const src = readFileSync(new URL('../js/world/avatarChibi.js', import.meta.url), 'utf8');
+  assert.match(src, /import \{ castSample4 \} from '\.\/chieuPose4\.js'/);
+  assert.match(src, /castF = castSample4\(castId, castT\)/);
+  assert.doesNotMatch(src, /castSample\(castId/);
+});

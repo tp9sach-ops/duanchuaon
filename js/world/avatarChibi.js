@@ -11,7 +11,8 @@ import { DEFAULT_COLOR, colorById, hairById, beardById, cleanName, cleanSay, bub
 import { swingPose, SWING_S } from './conKhi.js';
 import { comboPose, comboEnd, nextKind, applyStance, weaponVisible, KINDS } from './combo.js';
 import { chibiPose, CHIBI_H, LM } from './chibiRig.js';
-import { castSample, castTimeline, applyCast, hasCast } from './chieuPose.js';   // Phiên 159: tư thế 30 chiêu Ngũ Hành
+import { castTimeline, applyCast, hasCast } from './chieuPose.js';   // Phiên 159: tư thế 30 chiêu Ngũ Hành
+import { castSample4 } from './chieuPose4.js';   // Phiên 171: bốn khung gồng → phát → TRÚNG (giữ đỉnh) → HỒI (thở ra)
 import { showPose, SHOW_S } from './fishPose.js';   // Phiên 128: giơ cá bằng hai tay
 import { buildChibi, applyChibiPose } from '../scene/chibiBody.js';
 import { logoTexture, casaTexture, makeSprite, nameTexture, bubbleTexture } from './avatar.js';
@@ -174,7 +175,7 @@ export function createChibiAvatar({ name = 'Khách', color = DEFAULT_COLOR, hair
     if (swingT >= 0) { swingT += dt; swing = comboPose(swingKind, swingT) || swingPose(swingT); if (swingT >= (comboEnd(swingKind) || SWING_S + 0.35)) { lastEnd = clock; swingT = -1; swingKind = ''; swing = null; } }
     if (st.act) { st.actT += dt; const len = ACT_S[st.act]; if (st.actT >= len) st.act = null; else act = { name: st.act, k: st.actT / len }; }
     let castF = null;   // Phiên 159: khung tư thế chiêu Ngũ Hành (null = không đang thi triển)
-    if (castT >= 0) { castT += dt; castF = castSample(castId, castT); if (!castF) { castT = -1; castId = ''; } }
+    if (castT >= 0) { castT += dt; castF = castSample4(castId, castT); if (!castF) { castT = -1; castId = ''; } }
     st.walk += ((st.state === 'walk' ? 1 : 0) - st.walk) * Math.min(1, 10 * dt);
     st.stance += ((st.wantStance && (st.state === 'idle' || st.state === 'walk') ? 1 : 0) - st.stance) * Math.min(1, 7 * dt);
     staff.visible = weaponVisible(st.stance, swing ? swing.vis : 0);   // Phiên 120: cầm sẵn khi vào thế chiến đấu

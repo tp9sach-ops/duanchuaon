@@ -1,5 +1,7 @@
 # HANDOFF — Web tâm linh "DIỆU GIANG TỰ" (chùa Việt 3D) — tên cũ: Linh Giang Tự (Phiên 5 đổi tên theo ptg)
 
+> **Cập nhật Phiên 171 (2026-11-15): prompt chiêu thức 3D mục 3 — khung TRÚNG + HỒI đã nối vào nhân vật (`avatarChibi.js` dùng `castSample4`), test `chieupose4` vào `npm test` — ĐỌC `docs/PHIEN171.md` (có danh sách 11 mục + VIỆC KẾ = mục 4 VFX). Mạch khác: `docs/PHIEN170.md`.**
+
 > **Cập nhật Phiên 127 (2026-11-12): BỎ NÉM ĐÁ (nút `da` = Đánh thường cận chiến) + TỰ ĐỘNG LAO vào quái + QUÁI TRÂU HƠN — ĐỌC `docs/PHIEN127.md` (có "VIỆC KẾ": chiêu theo hệ phái, Chân khí thật). Phiên 126: `docs/PHIEN126.md` (múa côn, hồ lô, hồn bay vào hồ lô, thanh máu/mana). `sw.js` = `dgt-v119`.**
 
 > **Cập nhật Phiên 100 (2026-11-11): CHIẾN ĐẤU YÊU QUÁI DỰNG LẠI (mô hình, hiệu ứng, thanh máu, nút chiến đấu) — ĐỌC `docs/PHIEN100.md`. `sw.js` = `dgt-v107`. 4 test đỏ là LỖI CÓ SẴN (#322, #328, #355, #767).**
