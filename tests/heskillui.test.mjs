@@ -28,7 +28,7 @@ test('Phiên 189: nút Kỹ năng ở cụm phải-trên dưới Túi hồ lô, 
 });
 test('Phiên 192: cung tròn chiêu — không hai nút nào chồng nhau, không chồng hàng đáy, thu nhỏ khi màn thấp', () => {
   for (const base of [48, 56, 64, 80, 92]) for (const f of [1, 0.8, 0.55]) {
-    const { pts } = arcPoints(38, base, f), keys = Object.keys(pts);
+    const { pts } = arcPoints(38, base, f, 58), keys = Object.keys(pts);   // Phiên 195: truyền m = 58 (đường kính nút hàng đáy) — Phiên 193 thêm tham số này; trước đây test gọi không có m nên không tránh hàng đáy
     assert.deepEqual(keys.sort(), Object.keys(ARC_POS).sort());
     for (let i = 0; i < keys.length; i++) for (let j = i + 1; j < keys.length; j++) { const a = pts[keys[i]], b = pts[keys[j]]; assert.ok(Math.hypot(a.dx - b.dx, a.dy - b.dy) >= (a.s + b.s) / 2, `${keys[i]}-${keys[j]} base=${base} f=${f}`); }
     for (const k of keys) { const p = pts[k]; assert.ok(Math.hypot(p.dx, p.dy) >= 38 + p.s / 2, 'chồng nút Đánh thường ' + k); assert.ok(p.dy > 0 && p.dx <= 0 + 1e-6, 'phải ở phía trên-trái ' + k); }
@@ -42,4 +42,10 @@ test('Phiên 192: cung tròn chiêu — không hai nút nào chồng nhau, khôn
 });
 test('Phiên 192: btnScale.js nạp bố cục cung tròn', () => {
   const bs = readFileSync(new URL('../js/ui/btnScale.js', import.meta.url), 'utf8'); assert.match(bs, /initActionArc/);
+});
+test('Phiên 195 (mục 2): khu luyện tập — nút chiêu theo HỆ ĐANG TẬP, không cần Hệ người chơi', () => {
+  const hs = readFileSync(new URL('../js/ui/heSkill.js', import.meta.url), 'utf8');
+  assert.match(hs, /const zoneHe = \(\) => \(inLuyen\(\) \? \(LGT\.luyenChieu\.he \|\| null\) : null\)/);
+  assert.match(hs, /sync\(\); if \(inLuyen\(\)\) return luyenCast\(slot\);\s*\n\s*if \(!rt\) return false;/);   // luyện tập không đòi runtime chiêu của người chơi
+  assert.match(hs, /showBar = \(!!rt \|\| inLuyen\(\)\)/);
 });
