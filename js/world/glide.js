@@ -8,7 +8,7 @@ export const FLY_CFG = Object.freeze({
   v0Base: 6.2, v0PerBac: 0.4,          // m/s: xung đẩy đầu = base + perBac × bậc
   cruiseBase: 2.1, cruisePerBac: 0.12, // m/s: tốc độ lướt duy trì sau khi xung yếu dần
   tau: 0.5,                            // s: hằng số thời gian xung yếu dần (v = cruise + (v0 − cruise)·e^(−t/τ))
-  fallMin: 1.1, fallMax: 3.0, fallTime: 2.4,   // m/s: tốc độ rơi tối đa = độ cao / fallTime, kẹp [fallMin, fallMax] → hạ từ từ, không quá ~2,4 s
+  fallMin: 1.1, fallMax: 5.0, fallTime: 2.8,   // m/s: tốc độ rơi tối đa = độ cao / fallTime, kẹp [fallMin, fallMax] → hạ từ từ (Phiên 197: nâng trần vì độ cao nhảy đã tăng, vẫn hạ êm)
   upG: 0.8, downG: 0.8,                // hệ số trọng lực lúc còn lên / lúc xuống (nhẹ thân)
   cushionT: 0.075, cushionKeep: 0.3,   // vùng đệm cuối: vận tốc rơi giảm còn 30% khi chạm đất; tổng thời gian đệm ≈ 0,13 s (100–150 ms)
   brakeKeep: 0.45,                     // trong vùng đệm tốc độ ngang giảm còn 45%
@@ -16,6 +16,7 @@ export const FLY_CFG = Object.freeze({
   tilt: 0.38,                          // rad: thân chúi về trước khi bay
   camK: 2.4, camHold: 0.9,             // camera xoay ra sau lưng (hằng số bám /s); sau khi người chơi tự kéo camera thì nhường camHold giây
   fov: 0.035,                          // mở góc nhìn thêm 3,5% khi đang bay (cảm giác nhanh)
+  boostK: 0.8, boostGap: 0.35,         // Phiên 197: bấm Nhảy thêm khi đang bay → đạp gió: xung đẩy mới = 80% xung đầu, theo hướng đang di chuyển; cách nhau tối thiểu 0,35 s
 });
 
 const num = (v, d = 0) => (Number.isFinite(+v) ? +v : d);
@@ -44,6 +45,12 @@ export function flyVy(vy, y, fall, dt, g) {
 export function flySpeed(plan, t) {
   const p = plan || {}, tau = Math.max(0.05, num(p.tau, FLY_CFG.tau));
   return num(p.cruise) + (num(p.v0) - num(p.cruise)) * Math.exp(-Math.max(0, num(t)) / tau);
+}
+
+/** Phiên 197: tốc độ ngang (m/s) sau `tb` giây kể từ lần ĐẠP GIÓ (bấm Nhảy thêm khi đang bay): xung boostK×v0 yếu dần về mức lướt duy trì. Chưa đạp lần nào → tb = Infinity → trả cruise. */
+export function boostSpeed(plan, tb) {
+  const p = plan || {}, tau = Math.max(0.05, num(p.tau, FLY_CFG.tau)), t = Number.isFinite(+tb) ? Math.max(0, +tb) : Infinity;
+  return num(p.cruise) + (num(p.v0) * FLY_CFG.boostK - num(p.cruise)) * Math.exp(-t / tau);
 }
 
 /** Hệ số phanh tốc độ ngang khi đang ở vùng đệm cuối (1 = không phanh; còn brakeKeep sát đất). */
