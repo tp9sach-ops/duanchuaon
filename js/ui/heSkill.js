@@ -5,6 +5,7 @@
 // Phiên 184: CHIÊU HỖ TRỢ TUNG ĐƯỢC THẬT (trước chỉ báo "sắp có"): bấm là hồi chiêu + tư thế/hiệu ứng 3D theo id chiêu + "hiệu lực" có giờ hiện trên nút (js/world/skillBuff.js); không cần quái ở gần. Tăng sát thương thật cho Cuồng Long Phẫn Nộ (LGT.buffMul, nhân vào đòn ở js/ui/farm.js). Nút rung khi chưa dùng được; thanh chiêu báo chiều cao qua --hs-h để bong bóng chỉ chỗ của cụm nút không bị đè.
 // Phiên 182 (mục 2): NÚT CHIÊU BẤM ĐƯỢC — .hud có pointer-events:none (css/hud.css) và thuộc tính này KẾ THỪA xuống con, trước đây #hs-bar không tự bật lại nên mọi cú chạm xuyên qua. Thêm pointer-events:auto cho #hs-bar, .hs-b, #hs-pm. Nút to hơn (biến --hs-s, mặc định 60px — mục 3 sẽ cho người chơi chỉnh), biểu tượng có nền đặc + màu Hệ + hoạ tiết trắng + chữ lớn, tên chiêu nằm ở đáy nút.
 // Phiên 185 (kế hoạch hiệu ứng 3D, bước 1): HIỆU ỨNG 3D KHI ĐÁNH QUÁI THẬT. Trước đây createChieuFx (js/scene/chieuFx.js: vùng cảnh báo, lõi sáng, lửa/băng/kim, hạt, vệt, quầng, decal, tiếng) chỉ được nối trong Võ đường luyện chiêu (js/ui/luyenChieu.js); ngoài bãi rừng bấm chiêu chỉ có tư thế + chữ nên "không thấy hiệu ứng gì". Giờ pose() quay mặt về quái đang nhắm, làm tư thế, rồi gọi cfx.cast với vị trí người chơi + vị trí quái (đọc từ LGT.farmView). Bộ hiệu ứng nạp lười (một lần, sau khi LGT.scene sẵn sàng); nạp/dựng lỗi thì chiêu vẫn đánh được như cũ. CHƯA nhìn bằng mắt (môi trường AI không có WebGL).
+// Phiên 191 (Mục 1): (a) SỬA LỖI paint(): biến `locked` bị dùng trước khi khai báo (const → ReferenceError mỗi 150 ms, nút chiêu không vẽ được tên/hình/hồi chiêu); (b) thanh chiêu HIỆN CẢ Ở KHU LUYỆN TẬP — cùng một cụm nút với ngoài bãi rừng / trong chùa (trước đây bị ẩn và thay bằng hàng nút riêng).
 import { createSkillRuntime, skillLevelCap } from '../world/skillEngine.js';
 import { skillFor, phapMonOfHe } from '../world/skillCatalog.js';
 import { SKILL_CAP } from '../data/combatSkills.js';
@@ -165,7 +166,7 @@ export function initHeSkill(hud, { toast = () => {} } = {}) {
 
   function paint() {
     sync(); fxReady();
-    const showBar = !!rt && !!LGT.world && !inLuyen() && !LGT.inHouse && !LGT.panelOpen && (LGT.world.mode === 'free'); bar.hidden = !showBar; if (!showBar) { const dk = document.getElementById('dock'); if (dk && dk._hsh) { dk._hsh = 0; dk.style.setProperty('--hs-h', '0px'); } return; }
+    const showBar = !!rt && !!LGT.world && !LGT.inHouse && !LGT.panelOpen && (LGT.world.mode === 'free'); bar.hidden = !showBar; if (!showBar) { const dk = document.getElementById('dock'); if (dk && dk._hsh) { dk._hsh = 0; dk.style.setProperty('--hs-h', '0px'); } return; }   // Phiên 191: hiện cả ở khu luyện tập (trước đây có thêm điều kiện !inLuyen())
     const dock = document.getElementById('dock');
     if (dock) { const hh = bar.hidden ? 0 : Math.ceil(bar.getBoundingClientRect().height); if (dock._hsh !== hh) { dock._hsh = hh; dock.style.setProperty('--hs-h', hh + 'px'); } }   // Phiên 184
     if (dock && !dock.hidden) { const r = dock.getBoundingClientRect(); if (r.width) { bar.style.right = Math.max(8, Math.round(innerWidth - r.right)) + 'px'; bar.style.bottom = Math.round(innerHeight - r.top + 8) + 'px'; } }
@@ -178,8 +179,9 @@ export function initHeSkill(hud, { toast = () => {} } = {}) {
         lkEl.hidden = !lk; b.className = `hs-b he-${he}${lk ? ' lock' : ''}${b.classList.contains('hs-no') ? ' hs-no' : ''}`; b.style.setProperty('--cd', '0'); b.setAttribute('aria-label', lk ? `Pháp Môn (mở ở cấp ${SKILL_CAP[4]})` : 'Chọn Pháp Môn'); continue;
       }
       b.hidden = false;
-      const icoKey = sk.id + (locked ? ':l' : ''); if (bs.ico !== icoKey) { const old = b.querySelector('svg'); if (old) old.remove(); b.insertBefore(drawIcon(sk.id, locked), b.firstChild); bs.ico = icoKey; }
+      // Phiên 191: khai báo `locked` TRƯỚC khi dùng (trước đây dùng ở icoKey rồi mới khai báo → ReferenceError mỗi lần vẽ)
       const locked = !zone && eff() < SKILL_CAP[s], zc = zone && LGT.luyenChieu.cdOf ? LGT.luyenChieu.cdOf(sk.id) : null, left = zone ? (zc ? zc.left : 0) : rt.cooldownLeft(sk.id, nowSec()), cdTot = zone ? (zc ? zc.total : 0) : sk.cd, lvNow = rt.effectiveLevel(sk.id), on = buffs.left(sk.id, nowSec());
+      const icoKey = sk.id + (locked ? ':l' : ''); if (bs.ico !== icoKey) { const old = b.querySelector('svg'); if (old) old.remove(); b.insertBefore(drawIcon(sk.id, locked), b.firstChild); bs.ico = icoKey; }
       lkEl.hidden = !locked; cdn.textContent = left > 0 ? String(Math.ceil(left)) : ''; t.textContent = locked ? `Cấp ${SKILL_CAP[s]}` : sk.ten; lv.textContent = locked ? '' : zone ? 'Tập' : on > 0 ? `${Math.ceil(on)}s` : (s === 'tuyet' ? `${rt.tamAn}/5` : `Lv${lvNow}`);
       b.className = `hs-b he-${he}${locked ? ' lock' : ''}${on > 0 ? ' hs-on' : ''}${left > 0 ? ' hs-cd' : ''}${b.classList.contains('hs-no') ? ' hs-no' : ''}`;   // giữ lớp rung (paint chạy mỗi 150 ms sẽ xóa mất nếu không giữ)
       b.style.setProperty('--cd', cdTot > 0 ? Math.min(1, left / cdTot).toFixed(3) : '0');
