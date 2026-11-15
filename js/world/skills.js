@@ -4,7 +4,7 @@
 import { FLY_CFG, flyVy, fallSpeed } from './glide.js';   // Phiên 196: bay lướt trên không (đệm hạ cánh, rơi chậm)
 
 /** Chiều cao nhảy (m) theo bậc 0..8. Bậc 0 = chưa mở, không nhảy được. */
-export const KHINH_THAN_CAO = [0, 1.1, 1.6, 2.2, 2.9, 3.7, 4.6, 5.6, 6.8];
+export const KHINH_THAN_CAO = [0, 2.0, 3.2, 4.6, 6.2, 8.0, 10.0, 12.3, 15.0];   // Phiên 197: nâng cao (trước 1,1…6,8 m). Đây là độ cao TỐI ĐA của bậc — phải ấn giữ nút Nhảy đủ lâu (gồng lực, js/world/charge.js) mới lên tới; bấm nhẹ chỉ ~35%
 export const MAX_BAC = KHINH_THAN_CAO.length - 1;
 /** Trọng lực (m/s²) khi nhảy: nhỏ hơn thật cho cảm giác "nhẹ thân". */
 export const GRAVITY = 16;
@@ -27,11 +27,11 @@ export function canJump({ level = 0, mode = 'free', panelOpen = false, dialogOpe
 
 /** Bộ mô phỏng một cú nhảy theo phương thẳng đứng: { y (m, ≥ 0 so với mặt đất), air, start(cao), step(dt) }. */
 export function createJump() {
-  let y = 0, vy = 0, air = false, gliding = false, fall = 0;
+  let y = 0, vy = 0, air = false, gliding = false, fall = 0, apex = 0;
   return {
-    get y() { return y; }, get air() { return air; }, get vy() { return vy; }, get gliding() { return gliding; }, get fall() { return fall; },
+    get y() { return y; }, get air() { return air; }, get vy() { return vy; }, get gliding() { return gliding; }, get fall() { return fall; }, get apex() { return apex; },   // apex (Phiên 197): độ cao đỉnh của cú nhảy đang/vừa thực hiện — bay lướt tính tốc độ rơi theo đó
     /** Bắt đầu nhảy cao `cao` m. Đang ở trên không hoặc cao ≤ 0 → false (không nhảy chồng). */
-    start(cao) { if (air || !(cao > 0)) return false; vy = Math.sqrt(2 * GRAVITY * cao); air = true; gliding = false; return true; },
+    start(cao) { if (air || !(cao > 0)) return false; vy = Math.sqrt(2 * GRAVITY * cao); air = true; gliding = false; apex = +cao; return true; },
     /** Phiên 196: chuyển sang BAY LƯỚT (đang trên không, chưa bay): rơi chậm tối đa `fallV` m/s, hạ cánh có đoạn đệm. Không đủ điều kiện → false. */
     glide(fallV) {
       if (!air || gliding || !(+fallV > 0)) return false;
@@ -49,7 +49,7 @@ export function createJump() {
       }
       return y;
     },
-    reset() { y = 0; vy = 0; air = false; gliding = false; fall = 0; },
+    reset() { y = 0; vy = 0; air = false; gliding = false; fall = 0; apex = 0; },
   };
 }
 
@@ -95,9 +95,10 @@ export const LEAP_CFG = Object.freeze({ tam: true, minSpeed: 0.4, base: 2.2, per
 export const GLIDE_CFG = Object.freeze({ tam: true, base: 3, perBac: 0.2, dur: 0.26, guard: 0.45, cd: 1.2, windowAfterLand: 0.6, minDist: 0.4 });   // quãng lướt, giây lướt, giây bất tử, hồi chiêu, cửa sổ sau khi chạm đất, quãng tối thiểu để tính là lướt được
 const bacClamp = (lv) => Math.max(0, Math.min(MAX_BAC, Math.floor(+lv) || 0));
 /** Kế hoạch bật tới trước: { dist (m), dur (giây = thời gian trên không) }. Bậc 0 hoặc trong nhà → null. */
-export function leapPlan(lv, indoor = false) {
+export function leapPlan(lv, indoor = false, frac = 1) {   // Phiên 197: frac = tỉ lệ gồng (0,35..1) của cú nhảy — nhảy thấp bật tới ngắn hơn, nhảy cao bật xa hơn
   const b = bacClamp(lv); if (b <= 0 || indoor) return null;
-  return { dist: Math.round((LEAP_CFG.base + LEAP_CFG.perBac * b) * 100) / 100, dur: airTime(jumpHeight(b)) };
+  const f = Math.max(0.1, Math.min(1, Number.isFinite(+frac) ? +frac : 1));
+  return { dist: Math.round((LEAP_CFG.base + LEAP_CFG.perBac * b) * (0.6 + 0.4 * f) * 100) / 100, dur: airTime(jumpHeight(b) * f) };
 }
 /** Kế hoạch lướt né: { dist, dur, guard (giây bất tử) }. Bậc 0 hoặc trong nhà → null. */
 export function glidePlan(lv, indoor = false) {
@@ -108,10 +109,10 @@ export function glidePlan(lv, indoor = false) {
  * Phiên 196 — kế hoạch BAY LƯỚT (nhảy lần 2 khi còn trên không): { v0 (m/s xung đẩy đầu), cruise (m/s lướt duy trì), tau (s xung yếu dần), fall (m/s rơi tối đa),
  * turn (rad/s bẻ hướng), tilt (rad chúi thân), guard (s bất tử đầu) }. Bậc 0 hoặc trong nhà → null. Bậc cao bay xa + lâu hơn (đỉnh nhảy cao hơn → hạ lâu hơn).
  */
-export function flyPlan(lv, indoor = false) {
+export function flyPlan(lv, indoor = false, apex) {   // Phiên 197: apex = độ cao đỉnh THẬT của cú nhảy (đã gồng); bỏ trống → độ cao tối đa của bậc
   const b = bacClamp(lv); if (b <= 0 || indoor) return null;
   const r = (v) => Math.round(v * 100) / 100;
-  return { v0: r(FLY_CFG.v0Base + FLY_CFG.v0PerBac * b), cruise: r(FLY_CFG.cruiseBase + FLY_CFG.cruisePerBac * b), tau: FLY_CFG.tau, fall: r(fallSpeed(jumpHeight(b))), turn: FLY_CFG.turn, tilt: FLY_CFG.tilt, guard: GLIDE_CFG.guard };
+  return { v0: r(FLY_CFG.v0Base + FLY_CFG.v0PerBac * b), cruise: r(FLY_CFG.cruiseBase + FLY_CFG.cruisePerBac * b), tau: FLY_CFG.tau, fall: r(fallSpeed(Number.isFinite(+apex) && +apex > 0 ? +apex : jumpHeight(b))), turn: FLY_CFG.turn, tilt: FLY_CFG.tilt, guard: GLIDE_CFG.guard };
 }
 /**
  * Bấm Nhảy lúc này làm gì? 'jump' (nhảy tại chỗ) | 'leap' (đang đi: bật tới trước) | 'glide' (lướt né) | 'none'.
