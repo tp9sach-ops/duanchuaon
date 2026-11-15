@@ -2,8 +2,9 @@
 // Chiêu gây sát thương (heSo > 0) đánh quái gần nhất qua LGT.farm.skillHit; chiêu hỗ trợ (heSo = 0: khiên, hồi máu, ẩn thân…) tung được từ Phiên 184 (hiệu lực có giờ trên nút, không cần quái).
 // Bộ máy hồi chiêu / cấp chiêu: js/world/skillEngine.js; dữ liệu: js/data/combatSkills.js (TẠM). Phím tắt máy tính: Q, W, E. Mọi chữ qua textContent.
 // Phiên 163: TU VỄ LÀ ĐỂ TĂNG CẤP CHIÊU — cấp mỗi chiêu tự theo Tu Vị (js/ui/farm.js): cấp = Tu Vị ÷ 10 (tối thiểu 1, tối đa 10, skillLevelCap ở skillEngine.js); mỗi cấp +6% hệ số sát thương. Trước đây không chỗ nào nâng cấp nên chiêu luôn ở cấp 1. Nút chiêu hiện "Lv N"; giữ nhấn xem bảng thông tin cũng theo cấp này.
-// Phiên 184 (mục 1): CHIÊU HỖ TRỢ TUNG ĐƯỢC THẬT (trước chỉ báo "sắp có"): bấm là hồi chiêu + tư thế/hiệu ứng 3D theo id chiêu + "hiệu lực" có giờ hiện trên nút (js/world/skillBuff.js); không cần quái ở gần. Tăng sát thương thật cho Cuồng Long Phẫn Nộ (LGT.buffMul, nhân vào đòn ở js/ui/farm.js). Nút rung khi chưa dùng được; thanh chiêu báo chiều cao qua --hs-h để bong bóng chỉ chỗ của cụm nút không bị đè.
+// Phiên 184: CHIÊU HỖ TRỢ TUNG ĐƯỢC THẬT (trước chỉ báo "sắp có"): bấm là hồi chiêu + tư thế/hiệu ứng 3D theo id chiêu + "hiệu lực" có giờ hiện trên nút (js/world/skillBuff.js); không cần quái ở gần. Tăng sát thương thật cho Cuồng Long Phẫn Nộ (LGT.buffMul, nhân vào đòn ở js/ui/farm.js). Nút rung khi chưa dùng được; thanh chiêu báo chiều cao qua --hs-h để bong bóng chỉ chỗ của cụm nút không bị đè.
 // Phiên 182 (mục 2): NÚT CHIÊU BẤM ĐƯỢC — .hud có pointer-events:none (css/hud.css) và thuộc tính này KẾ THỪA xuống con, trước đây #hs-bar không tự bật lại nên mọi cú chạm xuyên qua. Thêm pointer-events:auto cho #hs-bar, .hs-b, #hs-pm. Nút to hơn (biến --hs-s, mặc định 60px — mục 3 sẽ cho người chơi chỉnh), biểu tượng có nền đặc + màu Hệ + hoạ tiết trắng + chữ lớn, tên chiêu nằm ở đáy nút.
+// Phiên 185 (kế hoạch hiệu ứng 3D, bước 1): HIỆU ỨNG 3D KHI ĐÁNH QUÁI THẬT. Trước đây createChieuFx (js/scene/chieuFx.js: vùng cảnh báo, lõi sáng, lửa/băng/kim, hạt, vệt, quầng, decal, tiếng) chỉ được nối trong Võ đường luyện chiêu (js/ui/luyenChieu.js); ngoài bãi rừng bấm chiêu chỉ có tư thế + chữ nên "không thấy hiệu ứng gì". Giờ pose() quay mặt về quái đang nhắm, làm tư thế, rồi gọi cfx.cast với vị trí người chơi + vị trí quái (đọc từ LGT.farmView). Bộ hiệu ứng nạp lười (một lần, sau khi LGT.scene sẵn sàng); nạp/dựng lỗi thì chiêu vẫn đánh được như cũ. CHƯA nhìn bằng mắt (môi trường AI không có WebGL).
 import { createSkillRuntime, skillLevelCap } from '../world/skillEngine.js';
 import { skillFor, phapMonOfHe } from '../world/skillCatalog.js';
 import { SKILL_CAP } from '../data/combatSkills.js';
@@ -13,6 +14,7 @@ import { loadHe } from '../world/khaiNgo.js';
 import { KHAI_NGO } from '../data/skillCfg.js';
 import { createBuffs, buffNote } from '../world/skillBuff.js';   // Phiên 184: hiệu lực chiêu hỗ trợ
 import { infoOf, infoRows, iconSpec } from '../world/chieuInfo.js';   // Phiên 162: biểu tượng + bảng giữ-để-xem
+import { tierOf } from '../world/chieuFxPlan.js';   // Phiên 185: bậc máy (cao / vừa / yếu) cho hiệu ứng 3D
 
 // Phiên 180: đủ 5 ô — 1, 2, 3 (Q, W, E) + ô 4 = Pháp Môn (T, mở cấp 30, chọn 1 trong 2 Pháp Môn của Hệ) + Tuyệt Học (Y, mở cấp 60, tiêu 5 Tâm Ấn).
 const SLOTS = [1, 2, 3, 4, 'tuyet'], KEYS = { 1: 'KeyQ', 2: 'KeyW', 3: 'KeyE', 4: 'KeyT', tuyet: 'KeyY' }, KEYTXT = { 1: 'Q', 2: 'W', 3: 'E', 4: 'T', tuyet: 'Y' }, PM_KEY = 'lgt.phapmon';   // lgt.* tự đồng bộ theo tài khoản   // Phiên 159c: chiêu phái = Q, W, E (R = Thương ở farm.js; 1–5 = ô nút trong dock)
@@ -110,12 +112,34 @@ export function initHeSkill(hud, { toast = () => {} } = {}) {
     bar.appendChild(b); btns[s] = { b, t, lv: lvEl, get ico() { return icoId; }, set ico(v) { icoId = v; } };
   }
 
+  // Phiên 185: HIỆU ỨNG 3D (js/scene/chieuFx.js) cho chiêu đánh quái thật. Nạp lười MỘT lần khi LGT.scene sẵn sàng (paint() gọi mỗi 150 ms); lỗi nạp/dựng thì cfx = null và chiêu vẫn đánh được như cũ.
+  let cfx = null, cfxTried = false;
+  function fxReady() {
+    if (cfx || cfxTried || !LGT.scene) return;
+    cfxTried = true;
+    import('../scene/chieuFx.js').then((m) => {
+      cfx = m.createChieuFx(LGT.scene, { getTier: () => tierOf(LGT.perfLevel), onShake: (c) => { try { LGT.camFeel && LGT.camFeel.rung(c); } catch (_) { /* bỏ qua */ } }, onHitStop: (g) => { try { LGT.camFeel && LGT.camFeel.khung(g); } catch (_) { /* bỏ qua */ } } });
+    }).catch((e) => { cfx = null; console.warn('[Diệu Giang Tự] Hiệu ứng chiêu 3D lỗi:', e && e.message); });
+  }
+  // Quái đang bị nhắm = quái js/ui/farm.js đặt vào LGT.farmView.target (uid). Đọc TRƯỚC khi gây sát thương vì đòn kết liễu sẽ gỡ quái khỏi danh sách.
+  const targetNow = () => { try { const v = LGT.farmView, m = v && v.target && v.mons && v.mons.find((x) => x.uid === v.target); return m && Number.isFinite(+m.x) && Number.isFinite(+m.z) ? { x: +m.x, z: +m.z } : null; } catch (_) { return null; } };
+  function fxCast(sk, tg) {
+    try {
+      const W = LGT.world, p = W && W.pos; if (!cfx || !p) return;
+      const ry = tg ? Math.atan2(tg.x - p.x, tg.z - p.z) : (W.facing || 0);
+      cfx.cast(sk.id, { x: p.x, z: p.z, ry, tx: tg ? tg.x : null, tz: tg ? tg.z : null });
+    } catch (_) { /* hiệu ứng hỏng thì thôi, chiêu vẫn đánh */ }
+  }
+
   const failText = (sk, r) => (r.reason === 'hoi-chieu' ? `${sk.ten} đang hồi chiêu, còn ${Math.ceil(r.left || 0)} giây.` : r.reason === 'tam-an' ? `${sk.ten} cần ${r.need} Tâm Ấn (bạn có ${r.have}). Ra đòn trúng quái để tích Tâm Ấn.` : 'Chưa dùng được chiêu này.');
-  function pose(sk) { try { const av = LGT.world && LGT.world.avatar; if (av && typeof av.cast === 'function') av.cast(sk.id); } catch (_) { /* bỏ qua */ } }   // Phiên 162: tư thế gồng → phát → thu (+ hiệu ứng 3D theo id chiêu)
+  function pose(sk, tg) {   // Phiên 162: tư thế gồng → phát → thu (+ hiệu ứng 3D theo id chiêu); Phiên 185: quay mặt về quái rồi dựng hiệu ứng 3D tại chỗ
+    try { const W = LGT.world, av = W && W.avatar, p = W && W.pos; if (tg && W && W.face && p) W.face(Math.atan2(tg.x - p.x, tg.z - p.z)); if (av && typeof av.cast === 'function') av.cast(sk.id); } catch (_) { /* bỏ qua */ }
+    fxCast(sk, tg);
+  }
   // Phiên 184: chiêu HỖ TRỢ (khiên, giáp, hồi sinh, ẩn thân, khống chế...) tung được THẬT, không cần quái ở gần.
   function castSupport(slot, sk) {
     const r = rt.tryCast(slot, nowSec()); if (!r.ok) { toast(failText(sk, r), 2200); nope(slot); return false; }
-    buffs.start(sk, slot, nowSec()); pose(sk);
+    buffs.start(sk, slot, nowSec()); pose(sk, null);
     toast(buffNote(sk, r.level), 3200); if (LGT.sfx) LGT.sfx.play('tu-dong-bat'); if (LGT.act) LGT.act('dungchieu');
     return true;
   }
@@ -129,14 +153,15 @@ export function initHeSkill(hud, { toast = () => {} } = {}) {
     const pre = LGT.farm.skillReady(); if (!pre.ok) { toast(WHY[pre.reason] || 'Chưa dùng được.', 2200); nope(slot); return false; }
     const r = rt.tryCast(slot, nowSec());
     if (!r.ok) { toast(failText(sk, r), 2200); nope(slot); return false; }
+    const tg = targetNow();   // Phiên 185: vị trí quái bị nhắm, đọc trước skillHit
     const h = LGT.farm.skillHit(r.heSo);
-    pose(sk);
+    pose(sk, tg);
     if (h.ok) { try { rt.onHit(1); } catch (_) { /* bỏ qua */ } toast(`${sk.ten} Lv${r.level}! −${h.dmg} Oán Khí ${h.ten}`, 1800); if (LGT.sfx) LGT.sfx.play('thuong'); if (LGT.act) LGT.act('dungchieu'); }
     return h.ok;
   }
 
   function paint() {
-    sync();
+    sync(); fxReady();
     const showBar = !!rt && !!LGT.world && !LGT.inHouse && !LGT.panelOpen && (LGT.world.mode === 'free'); bar.hidden = !showBar; if (!showBar) { const dk = document.getElementById('dock'); if (dk && dk._hsh) { dk._hsh = 0; dk.style.setProperty('--hs-h', '0px'); } return; }
     const dock = document.getElementById('dock');
     if (dock) { const hh = bar.hidden ? 0 : Math.ceil(bar.getBoundingClientRect().height); if (dock._hsh !== hh) { dock._hsh = hh; dock.style.setProperty('--hs-h', hh + 'px'); } }   // Phiên 184
