@@ -1,5 +1,6 @@
 // Khung HUD Phiên 13b: thanh menu dưới 9 nút, lưới 6 nút hành động, cụm nút phải-trên, toast giữa-trên, bảng "Bản đồ chùa".
 // Logic và dữ liệu ở menuLogic.js (có test). Biểu tượng SVG tự vẽ (không dùng ảnh của trang mẫu). Mọi nút chưa có tính năng: mờ + báo "sắp có".
+// Phiên 186 (mục 2): nút Túi hồ lô (id 'tui') vẽ RIÊNG trong #hm-bagrow, ngay DƯỚI dấu ? (Trợ giúp); màu đỏ, biểu tượng hồ lô đỏ (P.gourd). CHƯA nhìn bằng mắt.
 import { initPractice } from './practice.js';
 import { initDen } from './den.js';
 import { initNpc } from './npc.js';
@@ -40,6 +41,7 @@ import { BOTTOM_MENU, ACTIONS, TOP_ICONS, WALLET_PLACEHOLDER, HELP_TEXT, WELCOME
 const P = {
   scroll: '<path d="M8 4h10v13a3 3 0 0 0 3 3H8a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3z"/><path d="M10 9h6M10 13h6"/>',
   bag: '<path d="M6 8h12l1 12H5L6 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/>',
+  gourd: '<path fill="currentColor" fill-opacity=".5" d="M12 3.4c1.1 0 1.9.6 1.9 1.5 0 .6-.3 1-.7 1.3 1.5.6 2.6 1.9 2.6 3.5 0 .9-.3 1.7-.9 2.4 1.6.9 2.6 2.5 2.6 4.4 0 2.9-2.7 5.1-5.5 5.1s-5.5-2.2-5.5-5.1c0-1.9 1-3.5 2.6-4.4-.6-.7-.9-1.5-.9-2.4 0-1.6 1.1-2.9 2.6-3.5-.4-.3-.7-.7-.7-1.3 0-.9.8-1.5 1.9-1.5z"/><path d="M10.2 6.2h3.6M9.2 11.3c1.8 1 3.8 1 5.6 0"/>',
   shop: '<path d="M4 9l1-4h14l1 4M4 9v10h16V9"/><path d="M4 9a2.7 2.7 0 0 0 5.3 0 2.7 2.7 0 0 0 5.4 0A2.7 2.7 0 0 0 20 9"/><path d="M10 19v-5h4v5"/>',
   people: '<circle cx="9" cy="8" r="3"/><path d="M3 19a6 6 0 0 1 12 0"/><path d="M16 5.5a2.6 2.6 0 0 1 0 5M17.5 14a5 5 0 0 1 3.5 5"/>',
   rank: '<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3"/>',
@@ -85,6 +87,7 @@ export function initHudMenu(hud) {
         <span class="hm-pill" title="Ngọc (giá trị tạm)">${svg('ngoc')}<b>${formatCount(WALLET_PLACEHOLDER.ngoc)}</b></span>
       </div>
       <div class="hm-icons" id="hm-icons"></div>
+      <div class="hm-bagrow" id="hm-bagrow"></div>
     </div>
     <button type="button" class="hm-stand" id="hm-stand" hidden>Đứng dậy</button>
     <div class="hm-grid" id="hm-grid" role="group" aria-label="Hành động"></div>
@@ -217,7 +220,10 @@ export function initHudMenu(hud) {
     b.addEventListener('click', () => press(item));
     return b;
   };
-  TOP_ICONS.forEach((it) => $('hm-icons').appendChild(mkBtn(it, 'hm-ic', false)));
+  TOP_ICONS.forEach((it) => {   // Phiên 186: Túi hồ lô ('tui') nằm hàng riêng ngay dưới dấu ?, màu đỏ; các nút còn lại trong cụm như cũ
+    const b = mkBtn(it, 'hm-ic', false);
+    if (it.id === 'tui') { b.classList.add('hm-bag'); $('hm-bagrow').appendChild(b); } else $('hm-icons').appendChild(b);
+  });
   ACTIONS.forEach((it) => $('hm-grid').appendChild(mkBtn(it, 'hm-act', true)));
   BOTTOM_MENU.forEach((it) => $('hm-bar').appendChild(mkBtn(it, 'hm-mi', true)));
 
