@@ -160,26 +160,45 @@ function terrainBlocked(x, z) {
   return false;
 }
 
+// ---- ĐỨNG TRÊN VẬT (Phiên 200) ---------------------------------------------------------------------------------------------------------------------
+// Vật cản có `top` (m, mặt đứng được: mái nhà, đá, cây, tượng, tháp...) hoặc `h` (vật thấp: chậu, ghế) thì người ở TRÊN độ cao đó (feetH = độ cao chân so với mặt đất) bay/đi qua phía trên được và đáp xuống đứng lên;
+// thấp hơn thì vẫn bị chặn như cũ. Vật không có top/h chặn mọi độ cao (không đứng lên được, không bay xuyên).
+/** Mặt đứng KHÔNG chắn đường (tán cây, mái hiên cao...): {x,z,r,top} hoặc {x0,x1,z0,z1,top}. Chỉ dùng cho floorAt; đi bộ vẫn đi qua phía dưới. Chỉ ở khu chùa (hub). */
+export const DECKS = [];
+export const addDeck = (d) => DECKS.push(d);
+export const STEP_UP = 0.6;   // bước lên tối đa (m) khi đang đi sát mép: đứng cao hơn mặt vật 0,6 m trở xuống vẫn lên được
+const topOf = (o) => (Number.isFinite(+o.top) ? +o.top : (Number.isFinite(+o.h) ? +o.h : Infinity));
+const overTop = (o, feetH) => feetH >= topOf(o) - 0.05;
+/** Độ cao MẶT ĐỨNG tại (x, z) cho người có chân ở feetH: mặt đất/sàn/cầu hoặc mặt trên vật cản (đang nằm trong chân vật) mà chân đã ở trên hoặc chỉ thấp hơn ≤ STEP_UP. */
+export function floorAt(x, z, feetH = 0) {
+  let f = groundY(x, z);
+  const lim = feetH + STEP_UP;
+  for (const c of CIRCLES) { const t = topOf(c); if (t !== Infinity && t <= lim && t > f && Math.hypot(x - c.x, z - c.z) < c.r) f = t; }
+  for (const q of RECTS) { const t = topOf(q); if (t !== Infinity && t <= lim && t > f && inRect(x, z, q)) f = t; }
+  if (activeZone === HUB) for (const d of DECKS) { const t = +d.top; if (t <= lim && t > f && (d.r !== undefined ? Math.hypot(x - d.x, z - d.z) < d.r : inRect(x, z, d))) f = t; }
+  return f;
+}
+
 /** Điểm (x, z) có bị chặn không (không xét việc chuyển vùng; xem canStep). */
-export function blocked(x, z) {
+export function blocked(x, z, feetH = 0) {
   if (terrainBlocked(x, z)) return true;
-  for (const c of CIRCLES) if (Math.hypot(x - c.x, z - c.z) < c.r) return true;
-  for (const q of RECTS) if (inRect(x, z, q)) return true;
+  for (const c of CIRCLES) if (Math.hypot(x - c.x, z - c.z) < c.r && !overTop(c, feetH)) return true;
+  for (const q of RECTS) if (inRect(x, z, q) && !overTop(q, feetH)) return true;
   return false;
 }
 
 /** Có đi được từ (x0,z0) tới (x1,z1) không: không chặn và chỉ chuyển vùng đất↔bậc↔sàn. */
-export function canStep(x0, z0, x1, z1) {
-  if (blocked(x1, z1)) return false;
+export function canStep(x0, z0, x1, z1, feetH = 0) {
+  if (blocked(x1, z1, feetH)) return false;
   const a = region(x0, z0), b = region(x1, z1);
   return a === b || (a !== 'ground' || b !== 'plat') && (a !== 'plat' || b !== 'ground');
 }
 
 /** Di chuyển một bước dx,dz có trượt dọc vật cản: thử cả hai trục. Trả { x, z }. */
-export function move(x, z, dx, dz) {
-  if (canStep(x, z, x + dx, z + dz)) return { x: x + dx, z: z + dz };
-  if (dx !== 0 && canStep(x, z, x + dx, z)) return { x: x + dx, z };
-  if (dz !== 0 && canStep(x, z, x, z + dz)) return { x, z: z + dz };
+export function move(x, z, dx, dz, feetH = 0) {
+  if (canStep(x, z, x + dx, z + dz, feetH)) return { x: x + dx, z: z + dz };
+  if (dx !== 0 && canStep(x, z, x + dx, z, feetH)) return { x: x + dx, z };
+  if (dz !== 0 && canStep(x, z, x, z + dz, feetH)) return { x, z: z + dz };
   return { x, z };
 }
 
@@ -193,10 +212,10 @@ const RING = Array.from({ length: 8 }, (_, k) => [Math.cos(k * Math.PI / 4) * PL
  * Thân người tại (x, z) có chạm vật cản không: vật tròn/chữ nhật (đo đúng bán kính thân), ranh giới/ao/tường (8 điểm quanh thân),
  * và mép nền chính điện (đất sát nền hoặc sàn sát mép: thân không được gác lên mép nền đá; chỉ qua bậc thềm).
  */
-export function bodyBlocked(x, z) {
+export function bodyBlocked(x, z, feetH = 0) {
   if (terrainBlocked(x, z)) return true;
-  for (const c of CIRCLES) if (Math.hypot(x - c.x, z - c.z) < c.r + PLAYER_R) return true;
-  for (const q of RECTS) if (x > q.x0 - PLAYER_R && x < q.x1 + PLAYER_R && z > q.z0 - PLAYER_R && z < q.z1 + PLAYER_R) return true;
+  for (const c of CIRCLES) if (Math.hypot(x - c.x, z - c.z) < c.r + PLAYER_R && !overTop(c, feetH)) return true;
+  for (const q of RECTS) if (x > q.x0 - PLAYER_R && x < q.x1 + PLAYER_R && z > q.z0 - PLAYER_R && z < q.z1 + PLAYER_R && !overTop(q, feetH)) return true;
   const rc = region(x, z);
   for (const [dx, dz] of RING) {
     const px = x + dx, pz = z + dz;
@@ -208,16 +227,16 @@ export function bodyBlocked(x, z) {
 }
 
 /** Như canStep nhưng cho THÂN người: tâm đi được và thân ở vị trí mới không chạm gì. */
-export const canStepBody = (x0, z0, x1, z1) => canStep(x0, z0, x1, z1) && !bodyBlocked(x1, z1);
+export const canStepBody = (x0, z0, x1, z1, feetH = 0) => canStep(x0, z0, x1, z1, feetH) && !bodyBlocked(x1, z1, feetH);
 
 /**
  * Như move nhưng thân người có bán kính PLAYER_R (trượt dọc vật cản). Nếu thân ĐANG chạm sẵn (vừa dịch chuyển tới, vừa đứng dậy khỏi bồ đoàn sát cột...)
  * thì dùng va chạm điểm như cũ để vẫn bước ra được, không bị kẹt cứng.
  */
-export function moveBody(x, z, dx, dz) {
-  if (bodyBlocked(x, z)) return move(x, z, dx, dz);
-  if (canStepBody(x, z, x + dx, z + dz)) return { x: x + dx, z: z + dz };
-  if (dx !== 0 && canStepBody(x, z, x + dx, z)) return { x: x + dx, z };
-  if (dz !== 0 && canStepBody(x, z, x, z + dz)) return { x, z: z + dz };
+export function moveBody(x, z, dx, dz, feetH = 0) {
+  if (bodyBlocked(x, z, feetH)) return move(x, z, dx, dz, feetH);
+  if (canStepBody(x, z, x + dx, z + dz, feetH)) return { x: x + dx, z: z + dz };
+  if (dx !== 0 && canStepBody(x, z, x + dx, z, feetH)) return { x: x + dx, z };
+  if (dz !== 0 && canStepBody(x, z, x, z + dz, feetH)) return { x, z: z + dz };
   return { x, z };
 }
