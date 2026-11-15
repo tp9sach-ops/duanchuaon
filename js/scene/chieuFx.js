@@ -5,6 +5,8 @@ import * as THREE from 'three';
 import { lapKeHoach } from '../world/chieuFxPlan.js';
 import { FX_LOAI, HAT_TOI_DA } from '../data/chieuFx.js';
 import { lapLop, doSangLop, chiaHat, CO_HAT } from '../world/chieuLop.js';
+import { taoBang } from './fxBang.js';   // Phiên 183: nối BĂNG + NƯỚC thật (mã Phiên 180 đã viết nhưng chưa được gọi) cho chiêu Hệ thủy
+import { taoKim } from './fxKim.js';   // Phiên 183: nối KIM LOẠI + SÉT thật (mã Phiên 181 đã viết nhưng chưa được gọi) cho chiêu Hệ kim
 import { taoLua } from './fxLua.js';   // Phiên 177 (mục 1): lửa thật cho chiêu Hệ hỏa — lưỡi lửa nhiều lớp, khói, tàn lửa, vũng sáng nền
 import * as TX from './fxTex.js';   // Phiên 176: kết cấu tròn mềm/quầng/khói/vệt/sóng/tia sao (hết ô vuông)
 import { lapAm } from '../world/chieuAm.js';   // Phiên 173: gồng/phát/trúng/dư âm theo Hệ + chất liệu kẻ địch   // Phiên 172: sáu lớp (lõi, thân, quầng+vệt, hạt 3 cỡ, decal nền, tàn dư), màu từ bảng màu
@@ -47,7 +49,16 @@ export function createChieuFx(scene, { getTier = () => 'vua', onShake = () => {}
       const spr = (tex, mau, ty) => { const m = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, color: mau, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, depthTest: true })); m.frustumCulled = false; m.position.set(0, 1.1, 0); root.add(m); return m; };
       const halo1 = spr(TX.glow(), lp.loi.mau), halo2 = spr(TX.glow(), lp.quang.mau), flare = spr(TX.flare(), lp.loi.mau);   // quầng trắng ngà + quầng màu Hệ (bloom giả) + tia sao lúc bùng nổ
       // lớp 2: thân năng lượng — Hệ hỏa vẽ LỬA THẬT (Phiên 177); Hệ khác chưa có bộ riêng thì bỏ qua
-      let lua = null; if (p.he === 'hoa' && lp.than.bat) { try { lua = taoLua({ tier: p.tier, mode: p.mode, co: lp.loi.co, reach, R2, zD }); root.add(lua.group); } catch (_) { lua = null; } }
+      let lua = null;   // tên giữ nguyên cho gọn: là bộ vật thể "thân" của Hệ (lửa / băng·nước / kim·sét); Hệ mộc, thổ chưa có thì null
+      if (lp.than.bat) {
+        const o2 = { tier: p.tier, mode: p.mode, co: lp.loi.co, reach, R2, zD };
+        try {
+          if (p.he === 'hoa') lua = taoLua(o2);
+          else if (p.he === 'thuy' && (p.loai === 'bang' || p.loai === 'nuoc')) lua = taoBang({ ...o2, loai: p.loai });
+          else if (p.he === 'kim' && p.loai === 'kim') lua = taoKim(o2);
+          if (lua) root.add(lua.group);
+        } catch (_) { lua = null; }   // vẽ hỏng thì bỏ lớp thân, game vẫn chạy
+      }
       // lớp 4: hạt chia 3 cỡ cùng lúc (lớn chậm, vừa, nhỏ nhanh); vị trí là hàm của (hạt, u) nên không cộng dồn
       const cap = HAT_TOI_DA[p.tier] * 2 - total(), n = Math.max(0, Math.min(p.n, cap)), split = chiaHat(n), groups = [], lo = FX_LOAI[p.loai], mixC = new THREE.Color();
       for (const [k, cnt] of [['lon', split.lon], ['vua', split.vua], ['nho', split.nho]]) {
