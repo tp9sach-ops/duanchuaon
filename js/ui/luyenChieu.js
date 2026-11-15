@@ -2,6 +2,7 @@
 // có 3 mộc nhân; hàng NÚT TRÒN TO (Phiên 189, không còn khung bảng) cho TẤT CẢ chiêu của Hệ đó (ô 1, 2, 3, 4 hai Pháp Môn, tuyệt học), bấm là thử: không khóa cấp, hồi chiêu ngắn, không ảnh hưởng chỉ số thật.
 // Logic thuần: js/world/zoneLuyen.js, js/world/luyenChieu.js (có test). Cảnh + hiệu ứng: js/scene/luyen.js, js/scene/voDai.js (createFx). CHƯA nhìn bằng mắt. Mọi chữ qua textContent.
 // Phiên 163 (Bản 2 mục 5, 4/4): bấm chiêu → nhân vật quay về mộc nhân gần nhất và làm tư thế gồng → phát → thu (avatar.cast, js/world/chieuPose.js); luồng khí và nháy mộc nhân chờ đúng lúc khung "phát".
+// Phiên 191 (Mục 1): ĐỒNG BỘ NÚT — ở khu luyện tập dùng CHUNG cụm nút với ngoài bãi rừng / trong chùa (thanh chiêu js/ui/heSkill.js + cụm Đánh thường/Thương/Nhảy js/ui/dock.js). Hàng nút riêng #lc-pad nay luôn ẩn (chỉ còn thanh "Về bồ đoàn"). Thêm basic(kind) = Đánh thường / Thương vào mộc nhân (không sát thương thật) và status() cho vòng hồi chiêu.
 import { LUYEN_ID, LUYEN_DUMMIES, returnSpawnName } from '../world/zoneLuyen.js';
 import { listForHe, describeSkill, createDemoRuntime } from '../world/luyenChieu.js';
 import { castTimeline } from '../world/chieuPose.js';
@@ -10,6 +11,7 @@ import { normHe } from '../world/elements.js';
 import { tierOf } from '../world/chieuFxPlan.js';
 import { trangThaiTuChieu } from '../world/chieuTrung.js';
 import { glyphOf } from '../world/chieuInfo.js';
+import { STONE, SPEAR } from '../world/yeuquai.js';   // Phiên 191: thời gian hồi của Đánh thường / Thương (cùng số với ngoài bãi rừng)
 import { drawGlyphIcon } from './skillIcon.js';   // Phiên 189: hình chiêu dùng chung với nút chiêu ngoài bãi rừng   // Phiên 174: trạng thái hiển thị từ hiệu ứng của chiêu
 
 export async function initLuyenChieu({ toast = () => {} } = {}) {
@@ -83,6 +85,24 @@ export async function initLuyenChieu({ toast = () => {} } = {}) {
     }
   }
 
+  // Phiên 191 (Mục 1): ĐÁNH THƯỜNG / THƯƠNG ở khu luyện tập — cùng nút (js/ui/dock.js) với ngoài bãi rừng. Quay về mộc nhân gần nhất, múa côn (LGT.combatPose.strike), mộc nhân nháy nếu đứng đủ gần. KHÔNG sát thương thật, không đụng chỉ số.
+  const bCd = { da: 0, thuong: 0 }, B_RANGE = 4.5;
+  function basic(kind) {
+    const k = kind === 'thuong' ? 'thuong' : 'da', p = player(); if (!p || busy || Z.current !== LUYEN_ID) return false;
+    const t = nowSec(); if (bCd[k] > t) return false;
+    bCd[k] = t + (k === 'thuong' ? SPEAR.cd : STONE.cd);
+    const tg = nearestDummy(p), ry = Math.atan2(tg.d.x - p.x, tg.d.z - p.z);
+    try {
+      const W = LGT.world;
+      if (LGT.combatPose && LGT.combatPose.strike) LGT.combatPose.strike(ry);
+      else { if (W && W.face) W.face(ry); if (W && W.avatar && W.avatar.swing) W.avatar.swing(); }
+    } catch (_) { /* không có tư thế thì thôi */ }
+    if (LGT.sfx) LGT.sfx.play(k === 'thuong' ? 'thuong' : 'nem-da');
+    if (hooks && tg.dist <= B_RANGE) { try { hooks.hit(tg.i); } catch (_) { /* bỏ qua */ } }
+    return true;
+  }
+  const status = () => { const t = nowSec(); return { stoneCd: Math.max(0, bCd.da - t), spearCd: Math.max(0, bCd.thuong - t) }; };
+
   async function travelTo(to, spawn) {
     const r = await Z.travel(to, { spawn }); if (r && r.ok) { LGT.world.teleport(r.spawn.x, r.spawn.z, r.spawn.ry); return { ok: true }; }
     return { ok: false, reason: (r && r.reason) || 'Chưa đi được' };
@@ -98,7 +118,7 @@ export async function initLuyenChieu({ toast = () => {} } = {}) {
       const W = LGT.world; if (W.mode !== 'free') W.stand();
       he = hh; build();
       const r = await travelTo(LUYEN_ID, 'default'); if (!r.ok) { toast(r.reason, 2600); return r; }
-      toast('Võ đường luyện chiêu: bấm các nút chiêu to bên phải để thử.', 3200); return r;
+      toast('Võ đường luyện chiêu: dùng các nút chiêu và nút Đánh thường bên phải để thử trên mộc nhân.', 3200); return r;
     } finally { busy = false; }
   }
   /** Về chánh điện, đứng sau bồ đoàn của Hệ vừa tập và ngồi lại để chọn Hệ. */
@@ -114,12 +134,12 @@ export async function initLuyenChieu({ toast = () => {} } = {}) {
   back.addEventListener('click', () => { leave(true); });
 
   setInterval(() => {
-    const inside = Z.current === LUYEN_ID; top.hidden = !inside; pad.hidden = !inside; if (!inside) return;
+    const inside = Z.current === LUYEN_ID; top.hidden = !inside; pad.hidden = true; if (!inside) return;   // Phiên 191: hàng nút riêng luôn ẩn — dùng chung cụm nút của dock + thanh chiêu phái
     const t = nowSec(); items.forEach((it, i) => { const b = btns[i]; if (!b) return; const left = rt.left(it, t); b.classList.toggle('lc-cd', left > 0); b.style.setProperty('--cd', it.demoCd > 0 ? Math.min(1, left / it.demoCd).toFixed(3) : '0'); cdn[i].textContent = left > 0 ? String(Math.ceil(left)) : ''; });
   }, 150);
   // Phiên 187: nút chiêu của phái (js/ui/heSkill.js) dùng được ngay trong khu luyện tập: tung chiêu theo id, và hỏi hồi chiêu để vẽ số giây trên nút.
   const castById = (id) => { const i = items.findIndex((x) => x.skill.id === id); if (i < 0 || busy) return false; const it = items[i]; if (rt.left(it, nowSec()) > 0) { cast(i); return false; } cast(i); return true; };
   const cdOf = (id) => { const it = items.find((x) => x.skill.id === id); return it ? { left: rt.left(it, nowSec()), total: it.demoCd } : null; };
-  LGT.luyenChieu = { enter, leave, castById, cdOf, get inside() { return Z.current === LUYEN_ID; }, get he() { return he; } };
+  LGT.luyenChieu = { enter, leave, castById, cdOf, basic, status, get inside() { return Z.current === LUYEN_ID; }, get he() { return he; } };
   return LGT.luyenChieu;
 }
