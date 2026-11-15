@@ -3,6 +3,7 @@
 // Logic tính toán ở worldLogic.js (có test); file này chỉ nối với three.js, DOM và vòng lặp cảnh.
 import * as THREE from 'three';
 import './placements.js';                                  // đăng ký vật cản của hoa viên, nhà... vào layout.js
+import './standTops.js';                                  // Phiên 202: gắn mặt đứng (top) cho đá, cây, tháp, mái nhà... → đứng được lên trên, không đi xuyên
 import { createAvatar } from './avatar.js';
 import { DEFAULT_COLOR } from './avatarLogic.js';
 import { SPAWN, solidAt } from './layout.js';
@@ -264,6 +265,9 @@ export function createWorld({ scene, camera, canvas, coarse = false, LGT = windo
     if (heldS) { heldS = null; avatar.group.rotation.x = 0; }
     return false;
   }
+  /** Phiên 202: độ cao chân TUYỆT ĐỐI (m) do js/ui/skill.js ghi mỗi khung (LGT.feetH). Chưa có / hỏng → 0 (hành vi cũ: mọi vật cản đều chặn). */
+  const feetNow = () => { const h = +LGT.feetH; return Number.isFinite(h) && h > 0 ? Math.min(h, 60) : 0; };
+
   /** Gọi mỗi khung hình (thay rail.update khi ở chế độ đi bộ). */
   function update(dt) {
     let v = null, spd = WALK_SPEED;
@@ -294,9 +298,10 @@ export function createWorld({ scene, camera, canvas, coarse = false, LGT = windo
     if (flyFn) {                                              // Phiên 196: đang bay lướt
       let f = null; try { f = flyFn(dt, blockedNow() ? { x: 0, z: 0, mag: 0 } : moveVector(keys, joy, yaw)); } catch (_) { f = null; }
       if (f && Number.isFinite(+f.dx) && Number.isFinite(+f.dz) && Number.isFinite(+f.speed)) {
-        const r = walkStep(P, { x: +f.dx, z: +f.dz, mag: 1 }, dt, Math.max(0, +f.speed));
-        P.x = r.x; P.z = r.z; P.y = damp(P.y, r.y, 14, dt); speedNow = 0; flyRy = facingOf(+f.dx, +f.dz); avatar.setFacing(flyRy);
-        avatar.setState(f.state || 'idle', 0); avatar.group.position.set(P.x, P.y, P.z); avatar.update(dt * camTocDo); avatar.group.rotation.x = Number.isFinite(+f.tilt) ? +f.tilt : 0;
+        const r = walkStep(P, { x: +f.dx, z: +f.dz, mag: 1 }, dt, Math.max(0, +f.speed), feetNow());   // Phiên 202: chân đủ cao thì bay qua PHÍA TRÊN nhà/đá/cây/tượng; thấp hơn thì bị chặn (không xuyên)
+        const busy = !!(avatar.casting || avatar.swinging);   // Phiên 202: đang tung chiêu / đánh thường giữa không trung → giữ hướng mặt về quái, không chúi người, vẫn bay tiếp
+        P.x = r.x; P.z = r.z; P.y = damp(P.y, r.y, 14, dt); speedNow = 0; flyRy = facingOf(+f.dx, +f.dz); if (!busy) avatar.setFacing(flyRy);
+        avatar.setState(f.state || 'idle', 0); avatar.group.position.set(P.x, P.y, P.z); avatar.update(dt * camTocDo); avatar.group.rotation.x = !busy && Number.isFinite(+f.tilt) ? +f.tilt : 0;
         camStep(dt); return;
       }
       flyFn = null; avatar.group.rotation.x = 0;              // hạ cánh xong → quay lại điều khiển thường ngay khung này
@@ -308,7 +313,7 @@ export function createWorld({ scene, camera, canvas, coarse = false, LGT = windo
     } else { nav.clear(); arrival.cancel(); showHint(null); }
     if (!nav.active) mark.visible = false;
     if (v) {
-      const r = walkStep(P, v, dt, spd * (v.mag ?? 1) * (LGT.swim ? LGT.swim.speedMul : 1) * (LGT.board ? LGT.board.speedMul : 1));   // Phiên 92: đứng trên ván trượt → ×2
+      const r = walkStep(P, v, dt, spd * (v.mag ?? 1) * (LGT.swim ? LGT.swim.speedMul : 1) * (LGT.board ? LGT.board.speedMul : 1), feetNow());   // Phiên 92: đứng trên ván trượt → ×2
       speedNow = damp(speedNow, r.moved / Math.max(dt, 1e-4), 12, dt); P.x = r.x; P.z = r.z; P.y = damp(P.y, r.y, 14, dt);
       if (r.moved > 1e-4) avatar.setFacing(facingOf(v.x, v.z));
     } else { speedNow = damp(speedNow, 0, 14, dt); P.y = damp(P.y, walkStep(P, { x: 0, z: 0 }, dt, 0).y, 14, dt); }
@@ -330,7 +335,7 @@ export function createWorld({ scene, camera, canvas, coarse = false, LGT = windo
   const setAirY = (y) => { airY = Number.isFinite(+y) ? Math.max(0, Math.min(40, +y)) : 0; };
   const camFeel = createCamFeel({ tuyChon: (() => { try { return localStorage.getItem('lgt.camfeel'); } catch (_) { return null; } })(), giamHeThong: (() => { try { return !!(matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches); } catch (_) { return false; } })() });
   LGT.camFeel = { rung: (c) => camFeel.rung(c), khung: (g) => camFeel.khung(g), chieu: (l) => camFeel.chieu(l), set: (o) => { camFeel.set(o); try { localStorage.setItem('lgt.camfeel', JSON.stringify(camFeel.tuyChon)); } catch (_) {} }, get tuyChon() { return camFeel.tuyChon; }, get tocDo() { return camTocDo; } };
-  let camTocDo = 1;   // < 1 trong lúc khựng/chậm: chỉ nhân vật dùng, không đóng bƒÉng thế giới (PvP)
+  let camTocDo = 1;   // < 1 trong lúc khựng/chậm: chỉ nhân vật dùng, không đóng bƒÄm thế giới (PvP)
 
   /** Camera: bám theo, làm mượt (giật cục khi va tường thì mượt hơn). */
   function camStep(dt) {
@@ -338,7 +343,7 @@ export function createWorld({ scene, camera, canvas, coarse = false, LGT = windo
     if (shot) shotCur = shotPose(shot, avatar.group.rotation.y) || shotCur;   // góc quay bám hướng nhìn nhân vật (Phiên 120)
     if (flyFn && !shot && performance.now() - camDragAt > FLY_CFG.camHold * 1000) yaw = followYaw(yaw, flyRy, dt);   // Phiên 196: đang bay → camera tự xoay ra sau lưng theo hướng bay (người chơi tự kéo camera thì nhường)
     flyFov = damp(flyFov, flyFn && !camFeel.giam ? FLY_CFG.fov : 0, 4, dt);
-    airSm = damp(airSm, airY, airY > airSm ? 20 : 9, dt);   // Phiên 197: lên nhanh (nhân vật không vượt khung), xuống êm
+    airSm = damp(airSm, airY, airY > airSm ? 20 : 9, dt);   // Phiên 197: lên nhanh (nhân vật không vượt khung), xuống ê
     const e = blendShot({ yaw, pitch, dist }, shotK > 0 ? shotCur : null, shotK);
     e.dist *= 1 + Math.min(0.5, airSm * 0.035);   // càng cao camera càng lùi ra (tối đa +50%) để thấy cả mặt đất bên dưới
     const want = clipCamDist(P, e.yaw, e.pitch, e.dist, solidAt);   // Phiên 31: camera không xuyên tường/vật cản
