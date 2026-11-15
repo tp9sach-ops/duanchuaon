@@ -70,13 +70,17 @@ test('chữ nhãn nút tròn phải-trên (Phiên 69): có chữ, ngắn, không
   assert.ok(LONG_PRESS_MS >= 300 && LONG_PRESS_MS <= 700);
 });
 
-test('Phiên 181 (mục 1): Túi đồ nằm ở cụm tròn phải-trên, KHÔNG còn vẽ trong cụm nút phải-dưới', async () => {
+test('Phiên 181 + 186: nút Túi hồ lô ở cụm tròn phải-trên, nằm ngay sau nút ? Trợ giúp, KHÔNG còn vẽ trong cụm nút phải-dưới', async () => {
   const it = TOP_ICONS.find((a) => a.id === 'tui');
-  assert.ok(it && it.label === 'Túi đồ' && it.action === 'bag', 'có nút Túi đồ ở cụm phải-trên');
-  assert.equal(TOP_ICONS[0].id, 'tui', 'đứng đầu cụm (gần góc nhất)');
+  assert.ok(it && it.label === 'Túi hồ lô' && it.icon === 'gourd' && it.action === 'bag', 'có nút Túi hồ lô (biểu tượng hồ lô) ở cụm phải-trên');
+  assert.equal(TOP_ICONS[TOP_ICONS.length - 1].id, 'tui', 'đứng cuối cụm');
+  assert.equal(TOP_ICONS[TOP_ICONS.length - 2].id, 'trogiup', 'ngay sau dấu ?');
   assert.deepEqual(pressResult(it), { kind: 'bag' });
   const { readFileSync } = await import('node:fs');
   const d = readFileSync(new URL('../js/ui/dock.js', import.meta.url), 'utf8');
   assert.match(d, /dockButtons\(c\)\.filter\(\(b\) => b\.id !== 'tui'\)/, 'dock không vẽ nút tui');
   assert.match(d, /e\.code === 'KeyB'/, 'phím B vẫn mở túi');
+  const h = readFileSync(new URL('../js/ui/hudMenu.js', import.meta.url), 'utf8');
+  assert.match(h, /hm-bagrow/, 'hudMenu đặt nút túi vào hàng riêng dưới cụm');
+  assert.match(h, /gourd:/, 'có biểu tượng hồ lô');
 });

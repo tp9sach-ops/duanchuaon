@@ -16,7 +16,7 @@ export const BOTTOM_MENU = [
   { id: 'caidat',    label: 'Cài đặt',    icon: 'gear',   status: 'soon' },
 ];
 
-/** Lưới 3×2 nút hành động phải-dưới. "Dâng lễ" mở bảng thắp nhang 1/3/9 (js/ui/den.js, Phiên 14c); Linh thú còn khóa. */
+/** Lưới 3×2 nút hành động phải-dưới. "Dâng lễ" mở bảng thắt nhang 1/3/9 (js/ui/den.js, Phiên 14c); Linh thú còn khóa. */
 export const ACTIONS = [
   { id: 'lay',     label: 'Lạy Phật',  icon: 'bow',    status: 'ready', action: 'bow' },
   { id: 'trenghat', label: 'Tràng hạt', icon: 'beads',  status: 'ready', action: 'beads' },
@@ -26,9 +26,8 @@ export const ACTIONS = [
   { id: 'linhthu', label: 'Linh thú',  icon: 'paw',    status: 'soon', locked: true },
 ];
 
-/** Cụm nút tròn nhỏ phải-trên (sau hai ô số). Túi đồ đứng đầu cụm. */
+/** Cụm nút tròn nhỏ phải-trên (sau hai ô số). Phiên 186: Túi hồ lô đứng CUỐI mảng (hudMenu.js vẽ nút này riêng, ngay DƯỚI dấu ? Trợ giúp, màu đỏ, biểu tượng hồ lô). */
 export const TOP_ICONS = [
-  { id: 'tui',      label: 'Túi đồ',    icon: 'bag',   status: 'ready', action: 'bag' },   // Phiên 181 (mục 1): Túi đồ dời từ cụm nút phải-dưới lên cạnh phải gần góc trên (nút cũ trong js/ui/dock.js đã bỏ)
   { id: 'den',      label: 'Đèn nguyện', icon: 'lamp',  status: 'ready', action: 'den' },
   { id: 'thongbao', label: 'Thông báo', icon: 'bell',  status: 'soon' },
   { id: 'qua',      label: 'Quà',       icon: 'gift',  status: 'soon' },
@@ -36,6 +35,7 @@ export const TOP_ICONS = [
   { id: 'cauca',    label: 'Câu cá',    icon: 'fish',  status: 'ready', action: 'fish' },
   { id: 'chiase',   label: 'Chia sẻ',   icon: 'share', status: 'ready', action: 'share' },
   { id: 'trogiup',  label: 'Trợ giúp',  icon: 'help',  status: 'ready', action: 'help' },
+  { id: 'tui',      label: 'Túi hồ lô', icon: 'gourd', status: 'ready', action: 'bag' },   // Phiên 181: Túi đồ dời từ cụm nút phải-dưới lên cụm này (nút cũ trong js/ui/dock.js đã bỏ); Phiên 186: đổi tên Túi hồ lô + hồ lô đỏ, đặt dưới dấu ?
 ];
 
 /** Chữ hiện dưới nút tròn phải-trên (Phiên 69): người mới không đoán biểu tượng. Dùng nhãn gốc; chỉ rút gọn khi quá dài để không đè nút bên cạnh. */
