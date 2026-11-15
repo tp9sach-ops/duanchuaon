@@ -3,10 +3,12 @@
 // Bộ máy hồi chiêu / cấp chiêu: js/world/skillEngine.js; dữ liệu: js/data/combatSkills.js (TẠM). Phím tắt máy tính: Q, W, E. Mọi chữ qua textContent.
 // Phiên 163: TU VỄ LÀ ĐỂ TĂNG CẤP CHIÊU — cấp mỗi chiêu tự theo Tu Vị (js/ui/farm.js): cấp = Tu Vị ÷ 10 (tối thiểu 1, tối đa 10, skillLevelCap ở skillEngine.js); mỗi cấp +6% hệ số sát thương. Trước đây không chỗ nào nâng cấp nên chiêu luôn ở cấp 1. Nút chiêu hiện "Lv N"; giữ nhấn xem bảng thông tin cũng theo cấp này.
 // Phiên 184: CHIÊU HỖ TRỢ TUNG ĐƯỢC THẬT (trước chỉ báo "sắp có"): bấm là hồi chiêu + tư thế/hiệu ứng 3D theo id chiêu + "hiệu lực" có giờ hiện trên nút (js/world/skillBuff.js); không cần quái ở gần. Tăng sát thương thật cho Cuồng Long Phẫn Nộ (LGT.buffMul, nhân vào đòn ở js/ui/farm.js). Nút rung khi chưa dùng được; thanh chiêu báo chiều cao qua --hs-h để bong bóng chỉ chỗ của cụm nút không bị đè.
-// Phiên 182 (mục 2): NÚT CHIÊU BẤM ĐƯỢC — .hud có pointer-events:none (css/hud.css) và thuộc tính này KẾ THẪA xuống con, trước đây #hs-bar không tự bật lại nên mọi cú chạm xuyên qua. Thêm pointer-events:auto cho #hs-bar, .hs-b, #hs-pm. Nút to hơn (biến --hs-s, mặc định 60px — mục 3 sẽ cho người chơi chỉnh), biểu tượng có nền đặc + màu Hệ + hoạ tiết trắng + chữ lớn, tên chiêu nằm ở đáy nút.
+// Phiên 182 (mục 2): NÚT CHIÊU BẤM ĐƯỢC — .hud có pointer-events:none (css/hud.css) và thuộc tính này KẾ THỪA xuống con, trước đây #hs-bar không tự bật lại nên mọi cú chạm xuyên qua. Thêm pointer-events:auto cho #hs-bar, .hs-b, #hs-pm. Nút to hơn (biến --hs-s, mặc định 60px — mục 3 sẽ cho người chơi chỉnh), biểu tượng có nền đặc + màu Hệ + họa tiết trắng + chữ lớn, tên chiêu nằm ở đáy nút.
 // Phiên 185 (kế hoạch hiệu ứng 3D, bước 1): HIỆU ỨNG 3D KHI ĐÁNH QUÁI THẬT. Trước đây createChieuFx (js/scene/chieuFx.js: vùng cảnh báo, lõi sáng, lửa/băng/kim, hạt, vệt, quầng, decal, tiếng) chỉ được nối trong Võ đường luyện chiêu (js/ui/luyenChieu.js); ngoài bãi rừng bấm chiêu chỉ có tư thế + chữ nên "không thấy hiệu ứng gì". Giờ pose() quay mặt về quái đang nhắm, làm tư thế, rồi gọi cfx.cast với vị trí người chơi + vị trí quái (đọc từ LGT.farmView). Bộ hiệu ứng nạp lười (một lần, sau khi LGT.scene sẵn sàng); nạp/dựng lỗi thì chiêu vẫn đánh được như cũ. CHƯA nhìn bằng mắt (môi trường AI không có WebGL).
 // Phiên 195 (mục 2): KHU LUYỆN TẬP — nút chiêu theo HỆ ĐANG TẬP (LGT.luyenChieu.he) thay vì Hệ người chơi (lệch Hệ thì bấm không ra chiêu); không cần runtime chiêu của người chơi; xem thông tin giữ-nhấn cũng theo Hệ đang tập.
 // Phiên 191 (Mục 1): (a) SỬA LỖI paint(): biến `locked` bị dùng trước khi khai báo (const → ReferenceError mỗi 150 ms, nút chiêu không vẽ được tên/hình/hồi chiêu); (b) thanh chiêu HIỆN CẢ Ở KHU LUYỆN TẬP — cùng một cụm nút với ngoài bãi rừng / trong chùa (trước đây bị ẩn và thay bằng hàng nút riêng).
+// Phiên 198 (mục 2, đợt D): LƯỚT TAY ĐỂ TUNG CHIÊU. Bấm giữ nút chiêu rồi LƯỚT ngón tay ≥ SWIPE_PX (js/world/aimSwipe.js) → hiện mũi tên hướng, thả tay thì tung chiêu. Chiêu ĐỊNH HƯỚNG (vùng báo dạng đường/nón) bay theo HƯỚNG LƯỚT (hướng trên màn hình đổi sang hướng thế giới theo góc camera) và chỉ đánh quái nằm trong vùng báo theo hướng đó (LGT.farm.skillHitDir);
+//   không có quái trong hướng lướt thì chiêu vẫn tung (hoạt ảnh + hiệu ứng 3D bay theo hướng lướt) nhưng KHÔNG gây sát thương. Chiêu vòng tròn / hỗ trợ không cần hướng: lướt hay chạm đều tung như cũ. Lướt rồi kéo ngược về chỗ bấm = hủy. Chạm nhanh (không lướt) = như cũ (đánh quái gần nhất); giữ yên ≥ 380 ms = xem thông tin.
 import { createSkillRuntime, skillLevelCap } from '../world/skillEngine.js';
 import { skillFor, phapMonOfHe } from '../world/skillCatalog.js';
 import { SKILL_CAP } from '../data/combatSkills.js';
@@ -18,6 +20,7 @@ import { createBuffs, buffNote } from '../world/skillBuff.js';   // Phiên 184: 
 import { infoOf, infoRows, iconSpec, glyphOf, HE_COLOR } from '../world/chieuInfo.js';   // Phiên 162: biểu tượng + bảng giữ-để-xem
 import { tierOf } from '../world/chieuFxPlan.js';
 import { drawGlyphIcon } from './skillIcon.js';   // Phiên 189: hình chiêu dùng chung với khu luyện tập   // Phiên 185: bậc máy (cao / vừa / yếu) cho hiệu ứng 3D
+import { swipeDir, isDirectional, hinhOf, SWIPE_PX } from '../world/aimSwipe.js';   // Phiên 198: lướt tay định hướng chiêu
 
 // Phiên 180: đủ 5 ô — 1, 2, 3 (Q, W, E) + ô 4 = Pháp Môn (T, mở cấp 30, chọn 1 trong 2 Pháp Môn của Hệ) + Tuyệt Học (Y, mở cấp 60, tiêu 5 Tâm Ấn).
 const SLOTS = [1, 2, 3, 4, 'tuyet'], KEYS = { 1: 'KeyQ', 2: 'KeyW', 3: 'KeyE', 4: 'KeyT', tuyet: 'KeyY' }, KEYTXT = { 1: 'Q', 2: 'W', 3: 'E', 4: 'T', tuyet: 'Y' }, PM_KEY = 'lgt.phapmon';   // lgt.* tự đồng bộ theo tài khoản   // Phiên 159c: chiêu phái = Q, W, E (R = Thương ở farm.js; 1–5 = ô nút trong dock)
@@ -52,11 +55,12 @@ export function initHeSkill(hud, { toast = () => {} } = {}) {
 
   const st = document.createElement('style');
   st.textContent = '#hs-bar{--hs-s:calc(var(--btn-k,1) * clamp(64px,11vmin,92px));position:fixed;z-index:9;display:flex;flex-wrap:wrap-reverse;justify-content:flex-end;gap:8px;max-width:calc(var(--hs-s) * 3 + 24px);gap:12px;right:12px;bottom:200px;touch-action:none;pointer-events:auto}#hs-pm{pointer-events:auto;position:fixed;z-index:13;left:50%;top:50%;transform:translate(-50%,-50%);width:min(340px,90vw);padding:14px;border-radius:14px;border:1px solid rgba(241,219,159,.8);background:rgba(28,19,9,.97);color:#f6e7c1;font:13px/1.4 system-ui,sans-serif;box-shadow:0 10px 40px rgba(0,0,0,.6)}#hs-pm[hidden]{display:none}#hs-pm h4{margin:0 0 8px;font-size:15px}#hs-pm button{display:block;width:100%;margin:6px 0 0;padding:10px;border-radius:10px;border:1px solid rgba(241,219,159,.6);background:rgba(60,42,20,.9);color:#fff;text-align:left;font:inherit;cursor:pointer}#hs-pm button small{display:block;opacity:.75}#hs-pm .x{text-align:center;background:transparent}#hs-bar[hidden]{display:none}'
-    + '.hs-b{pointer-events:auto;touch-action:manipulation;-webkit-tap-highlight-color:transparent;box-shadow:0 3px 10px rgba(0,0,0,.55);position:relative;width:var(--hs-s);height:var(--hs-s);border-radius:50%;border:3px solid rgba(241,219,159,.85);background:rgba(22,15,8,.96);color:#f6e7c1;font:600 11px/1.15 system-ui,sans-serif;padding:2px;cursor:pointer;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}'
+    + '.hs-b{pointer-events:auto;touch-action:none;-webkit-tap-highlight-color:transparent;box-shadow:0 3px 10px rgba(0,0,0,.55);position:relative;width:var(--hs-s);height:var(--hs-s);border-radius:50%;border:3px solid rgba(241,219,159,.85);background:rgba(22,15,8,.96);color:#f6e7c1;font:600 11px/1.15 system-ui,sans-serif;padding:2px;cursor:pointer;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}'
     + '.hs-b .hs-k{display:none}   /* Phiên 189: không hiện chữ Q/W/E/T/Y trên nút (phím tắt máy tính vẫn dùng được) */.hs-b.lock,.hs-b.soon{opacity:.6}.hs-b:active{transform:scale(.92)}.hs-b .hs-cdn{position:absolute;z-index:3;inset:0;display:none;align-items:center;justify-content:center;font:800 calc(var(--hs-s)*.36)/1 system-ui,sans-serif;color:#fff;text-shadow:0 0 4px #000,0 1px 3px #000;pointer-events:none}.hs-b.hs-cd .hs-cdn{display:flex}.hs-b .hs-lock{position:absolute;z-index:3;right:2px;bottom:calc(var(--hs-s)*.28);font-size:calc(var(--hs-s)*.22);line-height:1;filter:drop-shadow(0 1px 2px #000);pointer-events:none}.hs-b.hs-cd::after{content:"";position:absolute;left:0;right:0;bottom:0;height:calc(var(--cd,0)*100%);background:rgba(0,0,0,.55)}'
     + '.hs-b svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}.hs-b .hs-n{position:absolute;z-index:1;left:50%;bottom:4px;transform:translateX(-50%);max-width:96%;padding:0 5px;border-radius:8px;background:rgba(0,0,0,.7);font-size:calc(var(--hs-s)*.15);line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 2px #000}.hs-b.hs-empty .hs-n{position:static;transform:none;background:none;font-size:11px;white-space:normal;max-width:none}'
     + '.hs-b .hs-lv{position:absolute;z-index:2;left:8px;top:2px;font-size:calc(var(--hs-s)*.16);font-weight:700;color:#ffe08a;text-shadow:0 1px 2px #000;pointer-events:none}'
     + '#hs-tip{position:fixed;z-index:12;max-width:min(300px,86vw);padding:9px 11px;border-radius:10px;border:1px solid rgba(241,219,159,.8);background:rgba(28,19,9,.96);color:#f6e7c1;font:12px/1.4 system-ui,sans-serif;pointer-events:none;box-shadow:0 4px 18px rgba(0,0,0,.55)}#hs-tip[hidden]{display:none}#hs-tip h4{margin:0 0 4px;font-size:14px}#hs-tip .r{margin:2px 0}#hs-tip .r b{color:#f1db9f;font-weight:600}'
+    + '#hs-aim{position:fixed;z-index:14;width:0;height:0;pointer-events:none}#hs-aim[hidden]{display:none}#hs-aim i{position:absolute;left:-3px;top:-110px;width:6px;height:110px;border-radius:3px;background:linear-gradient(to top,rgba(255,224,138,0),rgba(255,224,138,.95));transform-origin:50% 100%}#hs-aim i::after{content:"";position:absolute;left:-7px;top:-12px;border:10px solid transparent;border-top:0;border-bottom:16px solid rgba(255,224,138,.95)}'   // Phiên 198: mũi tên hướng lướt
     + '.hs-b.hs-on{box-shadow:0 0 0 3px rgba(255,224,138,.95),0 0 16px rgba(255,224,138,.75)}.hs-b.hs-no{animation:hsno .42s}@keyframes hsno{0%,100%{transform:translateX(0)}20%{transform:translateX(-5px)}40%{transform:translateX(5px)}60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}@media (prefers-reduced-motion:reduce){.hs-b.hs-no{animation:none}}'
     + '.hs-b.he-kim{border-color:#dfe3e8}.hs-b.he-moc{border-color:#3f9b4a}.hs-b.he-thuy{border-color:#2f6fd0}.hs-b.he-hoa{border-color:#d9432b}.hs-b.he-tho{border-color:#c9a227}';
   document.head.appendChild(st);
@@ -69,6 +73,10 @@ export function initHeSkill(hud, { toast = () => {} } = {}) {
     return drawGlyphIcon(ic.mau, glyphOf(id), ic.tuyet, dim);
   }
   const tip = document.createElement('div'); tip.id = 'hs-tip'; tip.hidden = true; tip.setAttribute('role', 'tooltip'); hud.appendChild(tip);
+  // Phiên 198: mũi tên hướng lướt (hiện từ tâm nút chiêu khi đang lướt, xoay theo hướng ngón tay trên màn hình).
+  const aimEl = document.createElement('div'), aimI = document.createElement('i'); aimEl.id = 'hs-aim'; aimEl.hidden = true; aimEl.setAttribute('aria-hidden', 'true'); aimEl.appendChild(aimI); hud.appendChild(aimEl);
+  const showAim = (b, dx, dy) => { const r = b.getBoundingClientRect(); aimEl.style.left = (r.left + r.width / 2) + 'px'; aimEl.style.top = (r.top + r.height / 2) + 'px'; aimI.style.transform = `rotate(${Math.atan2(dx, -dy) * 180 / Math.PI}deg)`; aimEl.hidden = false; };
+  const hideAim = () => { aimEl.hidden = true; };
   // Chọn Pháp Môn (ô 4): hiện khi chạm ô 4 đã mở mà chưa chọn. Lưu ở localStorage (lgt.phapmon).
   const pmBox = document.createElement('div'); pmBox.id = 'hs-pm'; pmBox.hidden = true; pmBox.setAttribute('role', 'dialog'); hud.appendChild(pmBox);
   function openPm() {
@@ -96,11 +104,15 @@ export function initHeSkill(hud, { toast = () => {} } = {}) {
   for (const s of SLOTS) {
     const b = document.createElement('button'); b.type = 'button'; b.dataset.slot = String(s);
     const t = document.createElement('span'), k = document.createElement('span'), lvEl = document.createElement('span'), cdn = document.createElement('span'), lk = document.createElement('span'); cdn.className = 'hs-cdn'; lk.className = 'hs-lock'; lk.hidden = true; lk.textContent = '🔒'; k.className = 'hs-k'; k.textContent = KEYTXT[s]; t.className = 'hs-n'; lvEl.className = 'hs-lv';
-    b.append(t, k, lvEl, cdn, lk); let timer = 0, held = false, icoId = '';
-    const stop = () => { clearTimeout(timer); timer = 0; if (held) hideTip(); };
-    b.addEventListener('pointerdown', (e) => { if (e.pointerType === 'mouse' && e.button !== 0) return; e.preventDefault(); try { b.setPointerCapture(e.pointerId); } catch (_) { /* bỏ qua */ } held = false; clearTimeout(timer); timer = setTimeout(() => { timer = 0; held = showTip(s); }, HOLD_MS); });   // Phiên 178: giữ con trỏ trên nút → ngón hơi trượt (đang vừa chạy vừa bấm) cũng không bị hủy cú bấm
-    b.addEventListener('pointerup', () => { const was = held, pend = !!timer; stop(); if (!was && pend) cast(s); held = false; });
-    b.addEventListener('pointercancel', () => { stop(); held = false; });   // Phiên 178: bỏ pointerleave (đã giữ con trỏ bằng setPointerCapture nên nhả tay ở đâu cũng về nút này)
+    b.append(t, k, lvEl, cdn, lk); let timer = 0, held = false, icoId = '', down = false, sx = 0, sy = 0, sw = null;   // Phiên 198: sx/sy = chỗ bắt đầu bấm; sw = vết lướt { dx, dy } (≥ SWIPE_PX) — thả tay thì tung chiêu theo hướng lướt
+    const stop = () => { clearTimeout(timer); timer = 0; if (held) hideTip(); hideAim(); };
+    b.addEventListener('pointerdown', (e) => { if (e.pointerType === 'mouse' && e.button !== 0) return; e.preventDefault(); try { b.setPointerCapture(e.pointerId); } catch (_) { /* bỏ qua */ } held = false; down = true; sx = e.clientX; sy = e.clientY; sw = null; clearTimeout(timer); timer = setTimeout(() => { timer = 0; held = showTip(s); }, HOLD_MS); });   // Phiên 178: giữ con trỏ trên nút → ngón hơi trượt (đang vừa chạy vừa bấm) cũng không bị hủy cú bấm
+    b.addEventListener('pointermove', (e) => {   // Phiên 198: lướt ≥ SWIPE_PX → hủy "giữ để xem thông tin", hiện mũi tên hướng; kéo ngược về gần chỗ bấm = hủy lướt
+      if (!down || held) return; const dx = e.clientX - sx, dy = e.clientY - sy;
+      if (Math.hypot(dx, dy) >= SWIPE_PX) { if (timer) { clearTimeout(timer); timer = 0; } sw = { dx, dy }; showAim(b, dx, dy); } else if (sw) { sw = null; hideAim(); }
+    });
+    b.addEventListener('pointerup', () => { const was = held, pend = !!timer, swp = sw; down = false; sw = null; stop(); if (!was && (pend || swp)) cast(s, swp); held = false; });
+    b.addEventListener('pointercancel', () => { down = false; sw = null; stop(); held = false; });   // Phiên 178: bỏ pointerleave (đã giữ con trỏ bằng setPointerCapture nên nhả tay ở đâu cũng về nút này)
     b.addEventListener('contextmenu', (e) => e.preventDefault());
     bar.appendChild(b); btns[s] = { b, t, lv: lvEl, cdn, lk, get ico() { return icoId; }, set ico(v) { icoId = v; } };
   }
@@ -136,6 +148,17 @@ export function initHeSkill(hud, { toast = () => {} } = {}) {
     toast(buffNote(sk, r.level), 3200); if (LGT.sfx) LGT.sfx.play('tu-dong-bat'); if (LGT.act) LGT.act('dungchieu');
     return true;
   }
+  // Phiên 198: chiêu ĐỊNH HƯỚNG tung bằng lướt tay. sd = swipeDir(...) = { ry, ... }. Hồi chiêu tính như thật; chỉ đánh quái nằm TRONG vùng báo theo hướng lướt; không có thì vẫn tung (hiệu ứng bay theo hướng lướt) nhưng không gây sát thương, không tích Tâm Ấn.
+  function castDir(slot, sk, sd) {
+    const r = rt.tryCast(slot, nowSec()); if (!r.ok) { toast(failText(sk, r), 2200); nope(slot); return false; }
+    const W = LGT.world, p = W && W.pos, hinh = hinhOf(sk.id), reach = hinh && +hinh.dai > 0 ? +hinh.dai : 8;
+    const tg = p ? { x: p.x + Math.sin(sd.ry) * reach, z: p.z + Math.cos(sd.ry) * reach } : null;   // điểm giả ở cuối vùng báo theo hướng lướt: nhân vật quay mặt + hiệu ứng 3D bay về phía đó
+    const h = LGT.farm && LGT.farm.skillHitDir ? LGT.farm.skillHitDir(r.heSo, sd.ry, hinh) : { ok: false };
+    pose(sk, tg);
+    if (h.ok) { try { rt.onHit(1); } catch (_) { /* bỏ qua */ } toast(`${sk.ten} Lv${r.level}! −${h.dmg} Oán Khí ${h.ten}`, 1800); if (LGT.sfx) LGT.sfx.play('thuong'); if (LGT.act) LGT.act('dungchieu'); }
+    else { toast(`${sk.ten}! Không có quái trong hướng lướt — không gây sát thương ai.`, 2200); if (LGT.sfx) LGT.sfx.play('tu-dong-bat'); }
+    return true;
+  }
   // Phiên 187: Ở KHU LUYỆN TẬP (js/ui/luyenChieu.js) nút chiêu dùng được luôn trên mộc nhân — không khóa cấp, không cần quái, không mất gì. Ô 4 chưa chọn Pháp Môn thì tập Pháp Môn đầu của Hệ.
   const inLuyen = () => !!(LGT.luyenChieu && LGT.luyenChieu.inside);
   // Phiên 195 (mục 2): ở khu luyện tập, nút chiêu theo HỆ ĐANG TẬP (LGT.luyenChieu.he, chọn ở bồ đoàn) chứ không theo Hệ của người chơi — trước đây hai Hệ lệch nhau thì id chiêu không có trong danh sách luyện nên bấm không ra chiêu.
@@ -149,7 +172,8 @@ export function initHeSkill(hud, { toast = () => {} } = {}) {
     const sk = skillShown(slot), L = LGT.luyenChieu; if (!sk || !L || !L.castById) return false;
     const r = L.castById(sk.id); if (!r) nope(slot); return !!r;
   }
-  function cast(slot) {
+  /** Tung chiêu ở ô `slot`. swipe (tùy chọn) = { dx, dy } vết lướt tay (px, dx sang phải, dy xuống dưới): chiêu định hướng bay theo hướng lướt (Phiên 198). */
+  function cast(slot, swipe) {
     sync(); if (inLuyen()) return luyenCast(slot);
     if (!rt) return false;
     // Phiên 190: không có farm thì vẫn tung (không sát thương)
@@ -158,6 +182,7 @@ export function initHeSkill(hud, { toast = () => {} } = {}) {
     if (!sk) return false;
     if (eff() < SKILL_CAP[slot]) { toast(`Chiêu này mở ở cấp ${SKILL_CAP[slot]} (bạn cấp ${eff()}).`, 2400); nope(slot); return false; }
     if (!(sk.heSo > 0)) return castSupport(slot, sk);
+    if (swipe) { const sd = swipeDir(swipe.dx, swipe.dy, LGT.world && LGT.world.camera ? LGT.world.camera.yaw : 0); if (sd && isDirectional(sk.id)) return castDir(slot, sk, sd); }   // Phiên 198: lướt tay + chiêu định hướng → bay theo hướng lướt
     const pre = LGT.farm ? LGT.farm.skillReady() : { ok: false, reason: 'khong-quai' };
     const r = rt.tryCast(slot, nowSec());
     if (!r.ok) { toast(failText(sk, r), 2200); nope(slot); return false; }
