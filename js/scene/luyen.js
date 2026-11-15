@@ -50,6 +50,8 @@ export function luyenHooks(scene) {
       if (gateOff) { gateOff(); gateOff = null; }
       if (grp) { disposeObj(grp); grp = null; }
     },
+    /** Mục tiêu dựng sẵn cho js/scene/chieuTrungFx.js (giật/ngã/số sát thương/trạng thái) của mộc nhân thứ i; không có → null. */
+    target(i) { const d = dummies[i]; return d ? { g: d.g, ry: 0, co: 'thuong', dai: 2.5 } : null; },
     /** Mộc nhân thứ i bị trúng đòn: rung + nháy cam 0,45 giây. */
     hit(i) { const d = dummies[i]; if (!d) return; d.t = 0.45; if (!raf) { last = performance.now(); raf = requestAnimationFrame(loop); } },
   };

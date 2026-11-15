@@ -8,15 +8,17 @@ import { castTimeline } from '../world/chieuPose.js';
 import { HE_COLOR, HE_SEAT_ID, heLabel } from '../world/heSeats.js';
 import { normHe } from '../world/elements.js';
 import { tierOf } from '../world/chieuFxPlan.js';
+import { trangThaiTuChieu } from '../world/chieuTrung.js';   // Phiên 174: trạng thái hiển thị từ hiệu ứng của chiêu
 
 export async function initLuyenChieu({ toast = () => {} } = {}) {
   const LGT = window.LGT || (window.LGT = {}), Z = LGT.zones; if (!Z || !LGT.scene || !Z.get(LUYEN_ID)) return null;
-  let hooks = null, fx = null, cfx = null;   // cfx = hiệu ứng 30 chiêu (Phiên 165, js/scene/chieuFx.js)
+  let hooks = null, fx = null, cfx = null, ctfx = null;   // cfx = hiệu ứng 30 chiêu (Phiên 165, js/scene/chieuFx.js)
   try {
     const sc = await import('../scene/luyen.js'), vd = await import('../scene/voDai.js');
     hooks = sc.luyenHooks(LGT.scene); fx = vd.createFx(LGT.scene);
     try { cfx = (await import('../scene/chieuFx.js')).createChieuFx(LGT.scene, { getTier: () => tierOf(LGT.perfLevel) }); } catch (_) { cfx = null; }   // lỗi thì dùng hiệu ứng cũ
-    const def = Z.get(LUYEN_ID); def.load = hooks.load; def.dispose = () => { try { fx.clear(); if (cfx) cfx.clear(); } catch (_) { /* bỏ qua */ } hooks.dispose(); };
+    try { ctfx = (await import('../scene/chieuTrungFx.js')).createChieuTrungFx(LGT.scene, { getTier: () => tierOf(LGT.perfLevel) }); } catch (_) { ctfx = null; }   // Phiên 174: mộc nhân giật/ngã, số sát thương, trạng thái; lỗi thì dùng nháy cũ
+    const def = Z.get(LUYEN_ID); def.load = hooks.load; def.dispose = () => { try { fx.clear(); if (cfx) cfx.clear(); if (ctfx) ctfx.clear(); } catch (_) { /* bỏ qua */ } hooks.dispose(); };
   } catch (e) { console.warn('[Diệu Giang Tự] Cảnh luyện chiêu lỗi:', e && e.message); return null; }
 
   const rt = createDemoRuntime(); let he = null, items = [], busy = false;
@@ -65,7 +67,8 @@ export async function initLuyenChieu({ toast = () => {} } = {}) {
       if (!plan) fx.wave(p.x, p.z, ry, n.dist, speed, lead, color);
       setTimeout(() => {
         if (!hooks) return; const area = f.dienRong || f.noLan || f.mua || f.song || f.docLan || f.suongDoc;
-        if (area) { if (!plan) fx.ring(n.d.x, n.d.z, (area && area.r) || 4, 1.0, color); LUYEN_DUMMIES.forEach((_, k) => hooks.hit(k)); } else hooks.hit(n.i);
+        const trung = (k) => { const t = ctfx && hooks.target ? hooks.target(k) : null; if (!t) { hooks.hit(k); return; } ctfx.hit(t, { ax: p.x, az: p.z, id: it.skill.id, damage: r.dmg }); for (const x of trangThaiTuChieu(it.skill.fx)) ctfx.status(t, x.loai, x.giay); };   // Phiên 174: phản ứng trúng đòn mục 7; chưa có thì nháy cũ
+        if (area) { if (!plan) fx.ring(n.d.x, n.d.z, (area && area.r) || 4, 1.0, color); LUYEN_DUMMIES.forEach((_, k) => trung(k)); } else trung(n.i);
         if (!plan) fx.ring(n.d.x, n.d.z, 1.6, 0.6, color);
       }, Math.round((lead + delay) * 1000));
       toast(`${it.skill.ten}! −${r.dmg} (số mẫu) · ${describeSkill(it.skill)}`, 2400);
