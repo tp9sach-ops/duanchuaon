@@ -91,6 +91,7 @@ export function initFarm(hud, { toast = () => {} } = {}) {
     else if (s.expCapped) toast('Hôm nay bạn đã nhận đủ Tu Vi từ thu phục yêu quái. Mai quay lại nhận tiếp!', 3600);
     return s;
   }
+  const buffMul = () => { try { const m = LGT.buffMul ? +LGT.buffMul() : 1; return m > 1 && m < 10 ? m : 1; } catch (_) { return 1; } };   // Phiên 184: hiệu lực chiêu hỗ trợ (Cuồng Long Phẫn Nộ +40%) — js/ui/heSkill.js
   function hit(uid, dmg) {
     const m = view.mons.find((x) => x.uid === uid), sp = m && spOf(m); if (!m || !sp) return;
     const r = hitMonster(sp, m.id, dmg, 'ban', rng); m.flash = 0.35; hudUntil = performance.now() + 2500;
@@ -104,11 +105,11 @@ export function initFarm(hud, { toast = () => {} } = {}) {
   }
   function stone() {
     if (!here() || bossOn() || cdStone > 0) return; const t = aim(true); if (!t) return;
-    cdStone = STONE.cd; if (LGT.sfx) LGT.sfx.play('nem-da'); hit(t.uid, stoneDamage(str()));   // Phiên 127: Đánh thường = đòn cận chiến trúng ngay (không còn ném đá)
+    cdStone = STONE.cd; if (LGT.sfx) LGT.sfx.play('nem-da'); hit(t.uid, Math.max(1, Math.round(stoneDamage(str()) * buffMul())));   // Phiên 127: Đánh thường = đòn cận chiến trúng ngay (không còn ném đá)
   }
   function spear() {
     if (!here() || bossOn() || cdSpear > 0) return; const t = aim(true); if (!t) return;
-    cdSpear = SPEAR.cd; if (LGT.sfx) LGT.sfx.play('thuong'); hit(t.uid, spearDamage(str()));
+    cdSpear = SPEAR.cd; if (LGT.sfx) LGT.sfx.play('thuong'); hit(t.uid, Math.max(1, Math.round(spearDamage(str()) * buffMul())));
   }
 
   // Tự Động Hàng Yêu (Phiên 108; Phiên 127: tự LAO tới quái rồi Thương/Đánh thường, trong tầm autoRange). Dừng khi mở bảng, vào nhà, có yêu quái hằng tháng, hoặc hết thời gian hôm nay (60 phút + phần Trà sữa xoài hoàng kim đã uống).
@@ -178,7 +179,7 @@ export function initFarm(hud, { toast = () => {} } = {}) {
   function skillReady() { const t = target(); if (!t) return { ok: false, reason: 'khong-quai' }; if (gap(t, pos()) - bodyOf(t) > SPEAR.range + 3) return { ok: false, reason: 'xa' }; return { ok: true, ten: t.ten }; }
   function skillHit(heSo) {
     const t = target(); if (!t) return { ok: false, reason: 'khong-quai' };
-    const dmg = Math.max(1, Math.round(skillDamage(spearDamage(str()), heSo) * kHeOf(LGT.he, t.he)));
+    const dmg = Math.max(1, Math.round(skillDamage(spearDamage(str()), heSo) * kHeOf(LGT.he, t.he) * buffMul()));
     hit(t.uid, dmg); return { ok: true, dmg, ten: t.ten };
   }
 
