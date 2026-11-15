@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 // Test KIM LOẠI + SÉT THẬT (Phiên 181, mục 3 kế hoạch hiệu ứng 3D): số vật thể theo bậc máy, vệt chém lưỡi liềm (bay/vòng/tỏa), mảnh kim loại, tia sét zích zắc (đầu cuối đứng yên, đổi hình theo nhấp nháy), không ra NaN.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -70,4 +71,14 @@ test('sét: giáng từ trên cao xuống đất (no), chạy dọc đường ch
   const st = lapKim('cao', 'tia').set[0], t1 = setSet(st, 'tia', 0.2, ctx); assert.ok(t1.hien && t1.b[2] <= ctx.reach && t1.a[2] <= t1.b[2]);
   const sx = lapKim('cao', 'xoay').set[0], x1 = setSet(sx, 'xoay', sx.tre + 0.2, ctx); assert.ok(x1.hien && x1.a[0] === 0 && Math.hypot(x1.b[0], x1.b[2]) > 0.3);
   for (const mode of MODES) for (const s of lapKim('cao', mode).set) { let tat = 0, sang = 0; for (let a = -0.1; a < 1.1; a += 0.01) { const q = setSet(s, mode, a, ctx); assert.ok(fin(q), JSON.stringify(q)); assert.ok(q.op >= 0 && q.op <= 1.0001); if (q.hien) (q.op < 0.5 ? tat++ : sang++); } assert.ok(sang > 0); }
+});
+
+test('chieuFx.js thật sự GỌI lớp thân của lửa, băng/nước và kim/sét (Phiên 183: trước đó fxBang/fxKim viết rồi nhưng chưa nối)', () => {
+  const sc = readFileSync(new URL('../js/scene/chieuFx.js', import.meta.url), 'utf8');
+  for (const ten of ['taoLua', 'taoBang', 'taoKim']) {
+    assert.ok(new RegExp("import \\{ " + ten + " \\} from './fx").test(sc), 'thiếu import ' + ten);
+    assert.ok(sc.includes(ten + '('), 'chưa gọi ' + ten);
+  }
+  assert.ok(/p\.he === 'thuy' && \(p\.loai === 'bang' \|\| p\.loai === 'nuoc'\)/.test(sc), 'thiếu điều kiện băng/nước');
+  assert.ok(/p\.he === 'kim' && p\.loai === 'kim'/.test(sc), 'thiếu điều kiện kim');
 });
