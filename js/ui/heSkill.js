@@ -1,7 +1,8 @@
 // Thanh CHIÊU CỦA PHÁI (Phiên 141): sau Lễ Khai Ngộ (js/ui/khaiNgo.js) người chơi có Hệ → hiện 3 nút chiêu (ô 1, 2, 3) phía trên cụm nút góc phải-dưới.
-// Chiêu gây sát thương (heSo > 0) đánh quái gần nhất qua LGT.farm.skillHit; chiêu hỗ trợ (heSo = 0: khiên, hồi máu, ẩn thân…) hiện mờ "sắp có" (hiệu ứng làm ở bước sau).
+// Chiêu gây sát thương (heSo > 0) đánh quái gần nhất qua LGT.farm.skillHit; chiêu hỗ trợ (heSo = 0: khiên, hồi máu, ẩn thân…) tung được từ Phiên 184 (hiệu lực có giờ trên nút, không cần quái).
 // Bộ máy hồi chiêu / cấp chiêu: js/world/skillEngine.js; dữ liệu: js/data/combatSkills.js (TẠM). Phím tắt máy tính: Q, W, E. Mọi chữ qua textContent.
 // Phiên 163: TU VỄ LÀ ĐỂ TĂNG CẤP CHIÊU — cấp mỗi chiêu tự theo Tu Vị (js/ui/farm.js): cấp = Tu Vị ÷ 10 (tối thiểu 1, tối đa 10, skillLevelCap ở skillEngine.js); mỗi cấp +6% hệ số sát thương. Trước đây không chỗ nào nâng cấp nên chiêu luôn ở cấp 1. Nút chiêu hiện "Lv N"; giữ nhấn xem bảng thông tin cũng theo cấp này.
+// Phiên 184 (mục 1): CHIÊU HỖ TRỢ TUNG ĐƯỢC THẬT (trước chỉ báo "sắp có"): bấm là hồi chiêu + tư thế/hiệu ứng 3D theo id chiêu + "hiệu lực" có giờ hiện trên nút (js/world/skillBuff.js); không cần quái ở gần. Tăng sát thương thật cho Cuồng Long Phẫn Nộ (LGT.buffMul, nhân vào đòn ở js/ui/farm.js). Nút rung khi chưa dùng được; thanh chiêu báo chiều cao qua --hs-h để bong bóng chỉ chỗ của cụm nút không bị đè.
 // Phiên 182 (mục 2): NÚT CHIÊU BẤM ĐƯỢC — .hud có pointer-events:none (css/hud.css) và thuộc tính này KẾ THỪA xuống con, trước đây #hs-bar không tự bật lại nên mọi cú chạm xuyên qua. Thêm pointer-events:auto cho #hs-bar, .hs-b, #hs-pm. Nút to hơn (biến --hs-s, mặc định 60px — mục 3 sẽ cho người chơi chỉnh), biểu tượng có nền đặc + màu Hệ + hoạ tiết trắng + chữ lớn, tên chiêu nằm ở đáy nút.
 import { createSkillRuntime, skillLevelCap } from '../world/skillEngine.js';
 import { skillFor, phapMonOfHe } from '../world/skillCatalog.js';
@@ -10,6 +11,7 @@ import { effLevel } from '../world/heQuest.js';
 import { levelOf } from '../world/quests.js';
 import { loadHe } from '../world/khaiNgo.js';
 import { KHAI_NGO } from '../data/skillCfg.js';
+import { createBuffs, buffNote } from '../world/skillBuff.js';   // Phiên 184: hiệu lực chiêu hỗ trợ
 import { infoOf, infoRows, iconSpec } from '../world/chieuInfo.js';   // Phiên 162: biểu tượng + bảng giữ-để-xem
 
 // Phiên 180: đủ 5 ô — 1, 2, 3 (Q, W, E) + ô 4 = Pháp Môn (T, mở cấp 30, chọn 1 trong 2 Pháp Môn của Hệ) + Tuyệt Học (Y, mở cấp 60, tiêu 5 Tâm Ấn).
@@ -27,6 +29,8 @@ export function initHeSkill(hud, { toast = () => {} } = {}) {
   const tuViNow = () => (LGT.farm ? LGT.farm.tuvi : 0);   // Phiên 163: cấp chiêu chỉ theo Tu Vị (không tính cấp công hạnh)
 
   let rt = null, he = null, pm = null;
+  const buffs = createBuffs(); LGT.buffMul = () => buffs.damageMul(nowSec());   // Phiên 184: farm.js nhân hệ số này vào mọi đòn đánh quái
+  const nope = (slot) => { const e = btns[slot]; if (!e) return; e.b.classList.remove('hs-no'); void e.b.offsetWidth; e.b.classList.add('hs-no'); setTimeout(() => e.b.classList.remove('hs-no'), 460); };   // rung nút khi chưa dùng được
   const currentPm = (h) => { try { const id = localStorage.getItem(PM_KEY); return phapMonOfHe(h).some((p) => p.id === id) ? id : null; } catch (_) { return null; } };
   const currentHe = () => { try { return loadHe(localStorage.getItem(KHAI_NGO.heKey)); } catch (_) { return LGT.he || null; } };
   function sync() {
@@ -48,6 +52,7 @@ export function initHeSkill(hud, { toast = () => {} } = {}) {
     + '.hs-b svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}.hs-b .hs-n{position:absolute;z-index:1;left:50%;bottom:3px;transform:translateX(-50%);max-width:94%;padding:0 4px;border-radius:7px;background:rgba(0,0,0,.62);font-size:9px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 2px #000}.hs-b.hs-empty .hs-n{position:static;transform:none;background:none;font-size:11px;white-space:normal;max-width:none}'
     + '.hs-b .hs-lv{position:absolute;z-index:2;left:7px;top:1px;font-size:9px;font-weight:700;color:#ffe08a;text-shadow:0 1px 2px #000;pointer-events:none}'
     + '#hs-tip{position:fixed;z-index:12;max-width:min(300px,86vw);padding:9px 11px;border-radius:10px;border:1px solid rgba(241,219,159,.8);background:rgba(28,19,9,.96);color:#f6e7c1;font:12px/1.4 system-ui,sans-serif;pointer-events:none;box-shadow:0 4px 18px rgba(0,0,0,.55)}#hs-tip[hidden]{display:none}#hs-tip h4{margin:0 0 4px;font-size:14px}#hs-tip .r{margin:2px 0}#hs-tip .r b{color:#f1db9f;font-weight:600}'
+    + '.hs-b.hs-on{box-shadow:0 0 0 3px rgba(255,224,138,.95),0 0 16px rgba(255,224,138,.75)}.hs-b.hs-no{animation:hsno .42s}@keyframes hsno{0%,100%{transform:translateX(0)}20%{transform:translateX(-5px)}40%{transform:translateX(5px)}60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}@media (prefers-reduced-motion:reduce){.hs-b.hs-no{animation:none}}'
     + '.hs-b.he-kim{border-color:#dfe3e8}.hs-b.he-moc{border-color:#3f9b4a}.hs-b.he-thuy{border-color:#2f6fd0}.hs-b.he-hoa{border-color:#d9432b}.hs-b.he-tho{border-color:#c9a227}';
   document.head.appendChild(st);
   const bar = document.createElement('div'); bar.id = 'hs-bar'; bar.hidden = true; bar.setAttribute('role', 'group'); bar.setAttribute('aria-label', 'Chiêu của phái'); hud.appendChild(bar);
@@ -105,26 +110,36 @@ export function initHeSkill(hud, { toast = () => {} } = {}) {
     bar.appendChild(b); btns[s] = { b, t, lv: lvEl, get ico() { return icoId; }, set ico(v) { icoId = v; } };
   }
 
+  const failText = (sk, r) => (r.reason === 'hoi-chieu' ? `${sk.ten} đang hồi chiêu, còn ${Math.ceil(r.left || 0)} giây.` : r.reason === 'tam-an' ? `${sk.ten} cần ${r.need} Tâm Ấn (bạn có ${r.have}). Ra đòn trúng quái để tích Tâm Ấn.` : 'Chưa dùng được chiêu này.');
+  function pose(sk) { try { const av = LGT.world && LGT.world.avatar; if (av && typeof av.cast === 'function') av.cast(sk.id); } catch (_) { /* bỏ qua */ } }   // Phiên 162: tư thế gồng → phát → thu (+ hiệu ứng 3D theo id chiêu)
+  // Phiên 184: chiêu HỖ TRỢ (khiên, giáp, hồi sinh, ẩn thân, khống chế...) tung được THẬT, không cần quái ở gần.
+  function castSupport(slot, sk) {
+    const r = rt.tryCast(slot, nowSec()); if (!r.ok) { toast(failText(sk, r), 2200); nope(slot); return false; }
+    buffs.start(sk, slot, nowSec()); pose(sk);
+    toast(buffNote(sk, r.level), 3200); if (LGT.sfx) LGT.sfx.play('tu-dong-bat'); if (LGT.act) LGT.act('dungchieu');
+    return true;
+  }
   function cast(slot) {
     sync(); if (!rt || !LGT.farm) return false;
     const sk = skillFor(he, slot, pm);
-    if (!sk && slot === 4) { if (eff() < SKILL_CAP[4]) toast(`Chiêu này mở ở cấp ${SKILL_CAP[4]} (bạn cấp ${eff()}).`, 2400); else openPm(); return false; }
+    if (!sk && slot === 4) { if (eff() < SKILL_CAP[4]) { toast(`Chiêu này mở ở cấp ${SKILL_CAP[4]} (bạn cấp ${eff()}).`, 2400); nope(4); } else openPm(); return false; }
     if (!sk) return false;
-    if (eff() < SKILL_CAP[slot]) { toast(`Chiêu này mở ở cấp ${SKILL_CAP[slot]} (bạn cấp ${eff()}).`, 2400); return false; }
-    if (!(sk.heSo > 0)) { toast(`${sk.ten}: chiêu hỗ trợ, hiệu ứng sẽ mở ở bước sau.`, 2600); return false; }
-    const pre = LGT.farm.skillReady(); if (!pre.ok) { toast(WHY[pre.reason] || 'Chưa dùng được.', 2200); return false; }
+    if (eff() < SKILL_CAP[slot]) { toast(`Chiêu này mở ở cấp ${SKILL_CAP[slot]} (bạn cấp ${eff()}).`, 2400); nope(slot); return false; }
+    if (!(sk.heSo > 0)) return castSupport(slot, sk);
+    const pre = LGT.farm.skillReady(); if (!pre.ok) { toast(WHY[pre.reason] || 'Chưa dùng được.', 2200); nope(slot); return false; }
     const r = rt.tryCast(slot, nowSec());
-    if (!r.ok) { toast(r.reason === 'hoi-chieu' ? `${sk.ten} đang hồi chiêu, còn ${Math.ceil(r.left || 0)} giây.` : r.reason === 'tam-an' ? `${sk.ten} cần ${r.need} Tâm Ấn (bạn có ${r.have}). Ra đòn trúng quái để tích Tâm Ấn.` : 'Chưa dùng được chiêu này.', 2200); return false; }
+    if (!r.ok) { toast(failText(sk, r), 2200); nope(slot); return false; }
     const h = LGT.farm.skillHit(r.heSo);
-    try { const av = LGT.world && LGT.world.avatar; if (av && typeof av.cast === 'function') av.cast(sk.id); } catch (_) {}   // Phiên 162: tư thế gồng → phát → thu
+    pose(sk);
     if (h.ok) { try { rt.onHit(1); } catch (_) { /* bỏ qua */ } toast(`${sk.ten} Lv${r.level}! −${h.dmg} Oán Khí ${h.ten}`, 1800); if (LGT.sfx) LGT.sfx.play('thuong'); if (LGT.act) LGT.act('dungchieu'); }
     return h.ok;
   }
 
   function paint() {
     sync();
-    const showBar = !!rt && !!LGT.world && !LGT.inHouse && !LGT.panelOpen && (LGT.world.mode === 'free'); bar.hidden = !showBar; if (!showBar) return;
+    const showBar = !!rt && !!LGT.world && !LGT.inHouse && !LGT.panelOpen && (LGT.world.mode === 'free'); bar.hidden = !showBar; if (!showBar) { const dk = document.getElementById('dock'); if (dk && dk._hsh) { dk._hsh = 0; dk.style.setProperty('--hs-h', '0px'); } return; }
     const dock = document.getElementById('dock');
+    if (dock) { const hh = bar.hidden ? 0 : Math.ceil(bar.getBoundingClientRect().height); if (dock._hsh !== hh) { dock._hsh = hh; dock.style.setProperty('--hs-h', hh + 'px'); } }   // Phiên 184
     if (dock && !dock.hidden) { const r = dock.getBoundingClientRect(); if (r.width) { bar.style.right = Math.max(8, Math.round(innerWidth - r.right)) + 'px'; bar.style.bottom = Math.round(innerHeight - r.top + 8) + 'px'; } }
     for (const s of SLOTS) {
       const sk = skillFor(he, s, pm), bs = btns[s], { b, t, lv } = bs;
@@ -132,15 +147,15 @@ export function initHeSkill(hud, { toast = () => {} } = {}) {
         if (s !== 4) { b.hidden = true; continue; }
         b.hidden = false; const old = b.querySelector('svg'); if (old) old.remove(); bs.ico = '';
         const lk = eff() < SKILL_CAP[4]; t.textContent = lk ? `Cấp ${SKILL_CAP[4]}` : 'Chọn Pháp Môn'; lv.textContent = '';
-        b.className = `hs-b hs-empty he-${he}${lk ? ' lock' : ''}`; b.style.setProperty('--cd', '0'); b.setAttribute('aria-label', lk ? `Pháp Môn (mở ở cấp ${SKILL_CAP[4]})` : 'Chọn Pháp Môn'); continue;
+        b.className = `hs-b hs-empty he-${he}${lk ? ' lock' : ''}${b.classList.contains('hs-no') ? ' hs-no' : ''}`; b.style.setProperty('--cd', '0'); b.setAttribute('aria-label', lk ? `Pháp Môn (mở ở cấp ${SKILL_CAP[4]})` : 'Chọn Pháp Môn'); continue;
       }
       b.hidden = false;
       if (bs.ico !== sk.id) { const old = b.querySelector('svg'); if (old) old.remove(); b.insertBefore(drawIcon(sk.id), b.firstChild); bs.ico = sk.id; }
-      const locked = eff() < SKILL_CAP[s], soon = !locked && !(sk.heSo > 0), left = rt.cooldownLeft(sk.id, nowSec()), lvNow = rt.effectiveLevel(sk.id);
-      t.textContent = locked ? `Cấp ${SKILL_CAP[s]}` : sk.ten; lv.textContent = locked ? '' : (s === 'tuyet' ? `${rt.tamAn}/5` : `Lv${lvNow}`);
-      b.className = `hs-b he-${he}${locked ? ' lock' : ''}${soon ? ' soon' : ''}${left > 0 ? ' hs-cd' : ''}`;
+      const locked = eff() < SKILL_CAP[s], left = rt.cooldownLeft(sk.id, nowSec()), lvNow = rt.effectiveLevel(sk.id), on = buffs.left(sk.id, nowSec());
+      t.textContent = locked ? `Cấp ${SKILL_CAP[s]}` : sk.ten; lv.textContent = locked ? '' : on > 0 ? `${Math.ceil(on)}s` : (s === 'tuyet' ? `${rt.tamAn}/5` : `Lv${lvNow}`);
+      b.className = `hs-b he-${he}${locked ? ' lock' : ''}${on > 0 ? ' hs-on' : ''}${left > 0 ? ' hs-cd' : ''}${b.classList.contains('hs-no') ? ' hs-no' : ''}`;   // giữ lớp rung (paint chạy mỗi 150 ms sẽ xóa mất nếu không giữ)
       b.style.setProperty('--cd', sk.cd > 0 ? Math.min(1, left / sk.cd).toFixed(3) : '0');
-      b.setAttribute('aria-label', `${sk.ten}${locked ? '' : ` cấp ${lvNow}`}${locked ? ` (mở ở cấp ${SKILL_CAP[s]})` : soon ? ' (sắp có)' : left > 0 ? ' (đang hồi chiêu)' : ''}`);
+      b.setAttribute('aria-label', `${sk.ten}${locked ? '' : ` cấp ${lvNow}`}${locked ? ` (mở ở cấp ${SKILL_CAP[s]})` : on > 0 ? ` (đang có hiệu lực ${Math.ceil(on)} giây)` : left > 0 ? ' (đang hồi chiêu)' : ''}`);
     }
   }
   addEventListener('keydown', (e) => {
