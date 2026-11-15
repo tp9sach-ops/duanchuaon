@@ -3,6 +3,9 @@
 // Nút Ném đá / Thương dùng lại ACT.da / ACT.thuong của js/ui/dock.js: js/ui/yeuquai.js chuyển sang LGT.farm khi KHÔNG có yêu quái hằng tháng.
 // Quái không đánh trả (bãi rừng an toàn để luyện); đòn dùng stoneDamage/spearDamage theo sức mạnh như khi đánh yêu quái. Chưa có Hệ người chơi nên chưa tính khắc/sinh (G2).
 // Phiên 163: Tu Vi quyết định CẤP CHIÊU (js/ui/heSkill.js: cấp chiêu = Tu Vi ÷ 10, tối đa 10) nên thông báo lên cấp nhắc điều đó. Trà sữa xoài hoàng kim (Tách Hoa, js/ui/items.js) gọi LGT.farm.addAutoMinutes(30) để cộng thêm thời gian Tự động hàng yêu hôm nay.
+// Phiên 198 (mục 2, đợt C): ĐÁNH THƯỜNG = LAO TỚI + COMBO 3 ĐÒN. Bấm khi quái còn xa tầm đâm nhưng trong tầm lao (basicCombo.BASIC.dashRange) → nhân vật lao tới sát quái (chưa ra đòn); bấm tiếp → đòn 1, 2, 3 (3 động tác khác nhau, js/world/combo.js CHAIN);
+//   đòn 3 (xoay 360°) mạnh hơn và có SÁT THƯƠNG LAN lên mọi quái quanh người chơi; quái nào dính đòn thì Oán Khí giảm → js/ui/farmCombat.js cho quái đó nổi giận đánh trả. Không có quái vẫn vung được (không sát thương ai).
+//   Chiêu ĐỊNH HƯỚNG lướt tay: LGT.farm.skillHitDir(heSo, ry, hinh) chỉ đánh quái nằm trong vùng báo theo hướng lướt (js/world/aimSwipe.js); lướt trúng chỗ trống thì không gây sát thương.
 import { MONSTERS, FARM_ZONES, FARM_CFG } from '../data/monsters.js';
 import { createSpawner, tickSpawner, hitMonster, nearestMonster, setNight, isNight, rectsOf, ZONE_IDS } from '../world/spawn.js';
 import { pickMonster, LOCK_RANGE } from '../world/mouseTarget.js';   // Phiên 159: chuột phải 2 lần vào quái = khóa mục tiêu
@@ -14,6 +17,9 @@ import { blocked } from '../world/layout.js';
 import { bgTick } from '../bgTick.js';
 import { skillDamage } from '../world/heQuest.js';
 import { kHeOf } from '../world/elements.js';
+import { planTap, stepMul, splashTargets, BASIC } from '../world/basicCombo.js';   // Phiên 198: lao tới + combo 3 đòn + sát thương lan
+import { nextKind, CHAIN, comboEnd } from '../world/combo.js';   // Phiên 198: chuỗi động tác dùng chung với hoạt ảnh nhân vật
+import { pickInDir } from '../world/aimSwipe.js';   // Phiên 198: chiêu định hướng chỉ trúng quái trong vùng báo
 
 const KEY = 'lgt.farm', AKEY = 'lgt.farmauto';
 const HE_TEN = { kim: 'Kim', moc: 'Mộc', thuy: 'Thủy', hoa: 'Hỏa', tho: 'Thổ' };
@@ -103,20 +109,38 @@ export function initFarm(hud, { toast = () => {} } = {}) {
     if (needNear && gap(t, pos()) - bodyOf(t) > SPEAR.range) { toast('Lại gần quái hơn mới đánh được.', 1800); return null; }
     return t;
   }
+  // Phiên 198: chuỗi đánh thường 3 đòn. Dùng CHUNG hàm nextKind của combo.js (cùng quy tắc nối đòn với hoạt ảnh nhân vật) nên đòn trúng đang là đòn thứ mấy thì nhân vật đang múa đúng động tác đó.
+  // Mọi lần ra đòn (đánh thường trúng / vung không khí / Thương) đều nối chuỗi vì hoạt ảnh (js/ui/combatPose.js → avatar.swing) cũng nối chung một chuỗi.
+  let lastKind = '', lastHitAt = -1e9, dashLock = 0, farAt = -1e9;   // lastHitAt / dashLock / farAt: performance.now() (ms)
+  const chainNext = (now) => { const k = nextKind(lastKind, (now - lastHitAt) / 1000 - comboEnd(lastKind)); return { kind: k, step: CHAIN.indexOf(k) + 1 }; };
+  const advanceChain = (now) => { const ck = chainNext(now); lastKind = ck.kind; lastHitAt = now; return ck; };
   // Phiên 190: KHÔNG có quái vẫn ĐÁNH THƯỜNG / THƯƠNG được — chỉ vung vào không khí (hoạt ảnh + tiếng, combatPose.js tự vung khi hồi chiêu tăng), KHÔNG gây sát thương ai.
   let airToast = -1e9;
   function airSwing(cdKind) {
     if (cdKind === 'stone') cdStone = STONE.cd; else cdSpear = SPEAR.cd;
+    advanceChain(performance.now());
     if (LGT.sfx) LGT.sfx.play(cdKind === 'stone' ? 'nem-da' : 'thuong');
     const now = performance.now(); if (now - airToast > 12000) { airToast = now; toast('Chưa có quái nào gần — đánh vào không khí, không gây sát thương ai.', 2600); }
   }
+  /** Phiên 198: ĐÁNH THƯỜNG. Không quái → vung không khí; quái xa tầm đâm nhưng trong tầm lao → LAO tới (chưa ra đòn); trong tầm đâm → đòn 1/2/3 (đòn 3 mạnh hơn + lan); quá xa → nhắc lại gần. */
   function stone() {
-    if (!here() || bossOn() || cdStone > 0) return; const t0 = target(); if (!t0) { airSwing('stone'); return; } const t = aim(true); if (!t) return;
-    cdStone = STONE.cd; if (LGT.sfx) LGT.sfx.play('nem-da'); hit(t.uid, Math.max(1, Math.round(stoneDamage(str()) * buffMul())));   // Phiên 127: Đánh thường = đòn cận chiến trúng ngay (không còn ném đá)
+    if (!here() || bossOn() || cdStone > 0) return;
+    const W = LGT.world, now = performance.now(); if ((W && W.dashing) || now < dashLock) return;   // đang lao / vừa lao xong: chưa ra đòn ngay (chống bấm dồn)
+    const t = target(), p = pos();
+    const plan = planTap({ has: !!t, gap: t && p ? gap(t, p) : Infinity, body: t ? bodyOf(t) : 0, melee: STONE.range });
+    const tooFar = () => { if (now - farAt > 2500) { farAt = now; toast('Lại gần quái hơn mới đánh được.', 1800); } };
+    if (plan === 'air') { airSwing('stone'); return; }
+    if (plan === 'far') { tooFar(); return; }
+    if (plan === 'dash') { if (rush(t)) dashLock = now + BASIC.dashCd * 1000; else tooFar(); return; }
+    const ck = advanceChain(now); cdStone = STONE.cd; if (LGT.sfx) LGT.sfx.play('nem-da');
+    const dmg = Math.max(1, Math.round(stoneDamage(str()) * buffMul() * stepMul(ck.step)));   // Phiên 127: Đánh thường = đòn cận chiến trúng ngay (không còn ném đá); Phiên 198: nhân theo đòn (đòn 3 ×1,5)
+    const around = ck.step === BASIC.steps ? splashTargets(p, view.mons, BASIC.splashR, t.uid, bodyOf) : [];   // đòn 3 xoay 360°: mọi quái quanh người (trừ mục tiêu chính) dính sát thương lan
+    hit(t.uid, dmg);
+    for (const m of around) hit(m.uid, Math.max(1, Math.round(dmg * BASIC.splashPct)));
   }
   function spear() {
     if (!here() || bossOn() || cdSpear > 0) return; const t0 = target(); if (!t0) { airSwing('spear'); return; } const t = aim(true); if (!t) return;
-    cdSpear = SPEAR.cd; if (LGT.sfx) LGT.sfx.play('thuong'); hit(t.uid, Math.max(1, Math.round(spearDamage(str()) * buffMul())));
+    cdSpear = SPEAR.cd; advanceChain(performance.now()); if (LGT.sfx) LGT.sfx.play('thuong'); hit(t.uid, Math.max(1, Math.round(spearDamage(str()) * buffMul())));
   }
 
   // Tự Động Hàng Yêu (Phiên 108; Phiên 127: tự LAO tới quái rồi Thương/Đánh thường, trong tầm autoRange). Dừng khi mở bảng, vào nhà, có yêu quái hằng tháng, hoặc hết thời gian hôm nay (60 phút + phần Trà sữa xoài hoàng kim đã uống).
@@ -144,10 +168,12 @@ export function initFarm(hud, { toast = () => {} } = {}) {
     else if (act === 'rush') rush(best);
   }
   // Phiên 127: Tự động LAO vào quái (trong autoRange) — đạp đất chạy nhanh tới sát tầm đâm, không xuyên cây/tường; tới nơi thì autoStep tự Thương/Đánh thường.
+  // Phiên 198: trả true nếu đã lao (nút Đánh thường dùng chung hàm này khi quái xa tầm đâm nhưng trong tầm lao).
   function rush(m) {
-    const W = LGT.world; if (!W || !W.dash || W.dashing) return;
-    const to = rushTarget(pos(), m, { body: bodyOf(m), stand: 2.2, isBlocked: blocked }); if (!to) return;
-    W.dash(to, Math.max(0.25, Math.min(1.4, to.dist / 9)), { tilt: false }); if (LGT.sfx) LGT.sfx.play('thiet-dau');
+    const W = LGT.world; if (!W || !W.dash || W.dashing) return false;
+    const to = rushTarget(pos(), m, { body: bodyOf(m), stand: 2.2, isBlocked: blocked }); if (!to) return false;
+    const ok = W.dash(to, Math.max(0.25, Math.min(1.4, to.dist / 9)), { tilt: false }); if (ok && LGT.sfx) LGT.sfx.play('thiet-dau');
+    return !!ok;
   }
 
   function tick() {
@@ -189,9 +215,16 @@ export function initFarm(hud, { toast = () => {} } = {}) {
     const dmg = Math.max(1, Math.round(skillDamage(spearDamage(str()), heSo) * kHeOf(LGT.he, t.he) * buffMul()));
     hit(t.uid, dmg); return { ok: true, dmg, ten: t.ten };
   }
+  // Phiên 198: chiêu ĐỊNH HƯỚNG tung bằng lướt tay — chỉ đánh quái GẦN NHẤT nằm trong vùng báo (đường/nón) theo hướng `ry` (rad, như facingOf); không có quái trong hướng đó → { ok:false } (chiêu vẫn tung, không sát thương).
+  function skillHitDir(heSo, ry, hinh) {
+    const p = pos(); if (!p || !here() || bossOn()) return { ok: false, reason: 'khong-quai' };
+    const t = pickInDir(p, ry, view.mons, hinh, bodyOf); if (!t) return { ok: false, reason: 'khong-quai' };
+    const dmg = Math.max(1, Math.round(skillDamage(spearDamage(str()), heSo) * kHeOf(LGT.he, t.he) * buffMul()));
+    hit(t.uid, dmg); return { ok: true, dmg, ten: t.ten };
+  }
 
   LGT.farm = {
-    skillReady, skillHit, pickAt, unlock, stopAttack, get attacking() { return attackOn; }, get locked() { return lockUid; }, get tuviInfo() { return tuViOf(farm); },
+    skillReady, skillHit, skillHitDir, pickAt, unlock, stopAttack, get attacking() { return attackOn; }, get locked() { return lockUid; }, get tuviInfo() { return tuViOf(farm); },
     stone, spear, toggleAuto, grantBoss, addAutoMinutes,
     get tuvi() { return tuViOf(farm).tuvi; }, get state() { return farm; },
     status() { const t = target(); return { active: !!t || running, ten: t ? t.ten : '', stoneCd: cdStone, spearCd: cdSpear, canAuto: true, auto: running, autoLeft: Math.floor(autoLeft(auto, Date.now()) / 60) }; },
