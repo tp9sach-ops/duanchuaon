@@ -26,8 +26,9 @@ export const ACTIONS = [
   { id: 'linhthu', label: 'Linh thú',  icon: 'paw',    status: 'soon', locked: true },
 ];
 
-/** Cụm nút tròn nhỏ phải-trên (sau hai ô số). */
+/** Cụm nút tròn nhỏ phải-trên (sau hai ô số). Túi đồ đứng đầu cụm. */
 export const TOP_ICONS = [
+  { id: 'tui',      label: 'Túi đồ',    icon: 'bag',   status: 'ready', action: 'bag' },   // Phiên 181 (mục 1): Túi đồ dời từ cụm nút phải-dưới lên cạnh phải gần góc trên (nút cũ trong js/ui/dock.js đã bỏ)
   { id: 'den',      label: 'Đèn nguyện', icon: 'lamp',  status: 'ready', action: 'den' },
   { id: 'thongbao', label: 'Thông báo', icon: 'bell',  status: 'soon' },
   { id: 'qua',      label: 'Quà',       icon: 'gift',  status: 'soon' },
