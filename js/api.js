@@ -15,7 +15,9 @@ export const apiEnabled = () => !!CONFIG.apiUrl;
 const SLOW_ACTIONS = /^acct(Create|Login|Save|Load)$/;
 const timeoutFor = (action) => (SLOW_ACTIONS.test(action) ? Math.max(CONFIG.apiTimeoutMs, 30000) : CONFIG.apiTimeoutMs);
 // Phiên 169: khi fetch đã bị chặn đọc (blocked) mà phải thử đường khung dự phòng, chỉ chờ tối đa chừng này (trước đây chờ cả 30 giây nữa → màn tạo nhân vật treo quá lâu rồi mới báo lỗi).
-const FRAME_FALLBACK_MS = 12000;
+// Phiên 170: 12000 → 8000, và thăm dò no-cors 8000 → 3000: lúc máy chủ bị chặn, tổng thời gian chờ từ ~20 giây còn ~11 giây.
+const FRAME_FALLBACK_MS = 8000;
+const PROBE_MS = 3000;
 
 /** Chỉ nhận thư từ máy chủ Google (trang HtmlService chạy ở *.googleusercontent.com hoặc script.google.com). */
 const googleOrigin = (o) => { try { const h = new URL(o).hostname; return h === 'script.google.com' || h === 'googleusercontent.com' || h.endsWith('.googleusercontent.com'); } catch (_) { return false; } };
@@ -62,7 +64,7 @@ export function callViaFrame(body, { timeoutMs = 30000, doc = globalThis.documen
 async function classifyFetchFailure() {
   try {
     if (typeof navigator !== 'undefined' && navigator.onLine === false) return 'network';
-    const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 8000);
+    const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), PROBE_MS);
     try { await fetch(CONFIG.apiUrl, { method: 'GET', mode: 'no-cors', signal: ctl.signal }); return 'blocked'; } finally { clearTimeout(t); }
   } catch (_) { return 'network'; }
 }
