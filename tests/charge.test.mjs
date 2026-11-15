@@ -69,7 +69,7 @@ test('nối dây (đọc mã): nút Nhảy giữ-để-gồng/thả-để-bay; S
   const sk = rd('js/ui/skill.js'), dk = rd('js/ui/dock.js'), wd = rd('js/world/world.js'), css = rd('css/dock.css');
   assert.match(sk, /function press\(\)/); assert.match(sk, /function release\(\)/); assert.match(sk, /addEventListener\('keyup'/); assert.match(sk, /chargeFrac\(c\)/);
   assert.match(sk, /if \(jump\.air && flight\) return flight\.boost\(\)/); assert.match(sk, /boostSpeed\(plan, tb\)/); assert.match(sk, /flyPlan\(lv, indoor, jump\.apex\)/);
-  assert.match(sk, /W\.setAirY\(y\)/); assert.match(sk, /--jump-ring/);
+  assert.match(sk, /W\.setAirY\(camAirTarget\(y, jump\.air \? jump\.vy : 0\)\)/); assert.match(sk, /--jump-ring/);
   assert.match(dk, /LGT\.skill\.press\(\)/); assert.match(dk, /\['pointerup', 'pointercancel', 'lostpointercapture'\]/);
   assert.match(wd, /setAirY/); assert.match(wd, /cam\.y \+ cf\.dy \+ airSm/); assert.match(wd, /e\.dist \*= 1 \+ Math\.min\(0\.5, airSm/);
   assert.match(css, /--jump-ring/); assert.match(css, /body\.jump-charging/); assert.match(css, /body\.jump-full/);
