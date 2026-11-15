@@ -1,7 +1,8 @@
 // Thanh CHIÊU CỦA PHÁI (Phiên 141): sau Lễ Khai Ngộ (js/ui/khaiNgo.js) người chơi có Hệ → hiện 3 nút chiêu (ô 1, 2, 3) phía trên cụm nút góc phải-dưới.
 // Chiêu gây sát thương (heSo > 0) đánh quái gần nhất qua LGT.farm.skillHit; chiêu hỗ trợ (heSo = 0: khiên, hồi máu, ẩn thân…) hiện mờ "sắp có" (hiệu ứng làm ở bước sau).
 // Bộ máy hồi chiêu / cấp chiêu: js/world/skillEngine.js; dữ liệu: js/data/combatSkills.js (TẠM). Phím tắt máy tính: Q, W, E. Mọi chữ qua textContent.
-// Phiên 163: TU VI LÀ ĐỂ TĂNG CẤP CHIÊU — cấp mỗi chiêu tự theo Tu Vi (js/ui/farm.js): cấp = Tu Vi ÷ 10 (tối thiểu 1, tối đa 10, skillLevelCap ở skillEngine.js); mỗi cấp +6% hệ số sát thương. Trước đây không chỗ nào nâng cấp nên chiêu luôn ở cấp 1. Nút chiêu hiện "Lv N"; giữ nhấn xem bảng thông tin cũng theo cấp này.
+// Phiên 163: TU VỄ LÀ ĐỂ TĂNG CẤP CHIÊU — cấp mỗi chiêu tự theo Tu Vị (js/ui/farm.js): cấp = Tu Vị ÷ 10 (tối thiểu 1, tối đa 10, skillLevelCap ở skillEngine.js); mỗi cấp +6% hệ số sát thương. Trước đây không chỗ nào nâng cấp nên chiêu luôn ở cấp 1. Nút chiêu hiện "Lv N"; giữ nhấn xem bảng thông tin cũng theo cấp này.
+// Phiên 182 (mục 2): NÚT CHIÊU BẤM ĐƯỢC — .hud có pointer-events:none (css/hud.css) và thuộc tính này KẾ THỪA xuống con, trước đây #hs-bar không tự bật lại nên mọi cú chạm xuyên qua. Thêm pointer-events:auto cho #hs-bar, .hs-b, #hs-pm. Nút to hơn (biến --hs-s, mặc định 60px — mục 3 sẽ cho người chơi chỉnh), biểu tượng có nền đặc + màu Hệ + hoạ tiết trắng + chữ lớn, tên chiêu nằm ở đáy nút.
 import { createSkillRuntime, skillLevelCap } from '../world/skillEngine.js';
 import { skillFor, phapMonOfHe } from '../world/skillCatalog.js';
 import { SKILL_CAP } from '../data/combatSkills.js';
@@ -22,8 +23,8 @@ export function initHeSkill(hud, { toast = () => {} } = {}) {
   const nowSec = () => performance.now() / 1000;
   const capCH = () => levelOf(LGT.quests && LGT.quests.prog ? LGT.quests.prog.xp : 0).lv;
   const eff = () => effLevel(LGT.farm ? LGT.farm.tuvi : 0, capCH());
-  LGT.capHieuDung = eff;   // cấp hiệu dụng = max(Tu Vi, Cấp công hạnh) — dùng cho Lễ Khai Ngộ, nhiệm vụ gia nhập phái, ô chiêu
-  const tuViNow = () => (LGT.farm ? LGT.farm.tuvi : 0);   // Phiên 163: cấp chiêu chỉ theo Tu Vi (không tính cấp công hạnh)
+  LGT.capHieuDung = eff;   // cấp hiệu dụng = max(Tu Vị, Cấp công hạnh) — dùng cho Lễ Khai Ngộ, nhiệm vụ gia nhập phái, ô chiêu
+  const tuViNow = () => (LGT.farm ? LGT.farm.tuvi : 0);   // Phiên 163: cấp chiêu chỉ theo Tu Vị (không tính cấp công hạnh)
 
   let rt = null, he = null, pm = null;
   const currentPm = (h) => { try { const id = localStorage.getItem(PM_KEY); return phapMonOfHe(h).some((p) => p.id === id) ? id : null; } catch (_) { return null; } };
@@ -35,16 +36,16 @@ export function initHeSkill(hud, { toast = () => {} } = {}) {
     else if (npm !== pm) { pm = npm; rt.setHe(he, pm); }   // cùng Hệ: chỉ đổi Pháp Môn, giữ cấp chiêu
     if (rt) {
       rt.setTuVi(eff());
-      const lv = Math.max(1, skillLevelCap(tuViNow()));   // Phiên 163: Tu Vi tăng → cấp chiêu tăng (setLevel không bao giờ hạ cấp)
+      const lv = Math.max(1, skillLevelCap(tuViNow()));   // Phiên 163: Tu Vị tăng → cấp chiêu tăng (setLevel không bao giờ hạ cấp)
       for (const s of SLOTS) { const sk = skillFor(he, s, pm); if (sk) rt.setLevel(sk.id, lv); }
     }
   }
 
   const st = document.createElement('style');
-  st.textContent = '#hs-bar{position:fixed;z-index:9;display:flex;flex-wrap:wrap-reverse;justify-content:flex-end;gap:8px;max-width:182px;right:12px;bottom:200px;touch-action:none}#hs-pm{position:fixed;z-index:13;left:50%;top:50%;transform:translate(-50%,-50%);width:min(340px,90vw);padding:14px;border-radius:14px;border:1px solid rgba(241,219,159,.8);background:rgba(28,19,9,.97);color:#f6e7c1;font:13px/1.4 system-ui,sans-serif;box-shadow:0 10px 40px rgba(0,0,0,.6)}#hs-pm[hidden]{display:none}#hs-pm h4{margin:0 0 8px;font-size:15px}#hs-pm button{display:block;width:100%;margin:6px 0 0;padding:10px;border-radius:10px;border:1px solid rgba(241,219,159,.6);background:rgba(60,42,20,.9);color:#fff;text-align:left;font:inherit;cursor:pointer}#hs-pm button small{display:block;opacity:.75}#hs-pm .x{text-align:center;background:transparent}#hs-bar[hidden]{display:none}'
-    + '.hs-b{position:relative;width:54px;height:54px;border-radius:50%;border:1px solid rgba(241,219,159,.7);background:rgba(40,28,14,.88);color:#f6e7c1;font:600 10px/1.15 system-ui,sans-serif;padding:2px;cursor:pointer;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}'
-    + '.hs-b .hs-k{position:absolute;top:1px;right:6px;font-size:9px;opacity:.7}.hs-b.lock,.hs-b.soon{opacity:.45}.hs-b.hs-cd::after{content:"";position:absolute;left:0;right:0;bottom:0;height:calc(var(--cd,0)*100%);background:rgba(0,0,0,.55)}'
-    + '.hs-b svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}.hs-b .hs-n{position:relative;z-index:1;font-size:8.5px;margin-top:26px;text-shadow:0 1px 2px #000}'
+  st.textContent = '#hs-bar{position:fixed;z-index:9;display:flex;flex-wrap:wrap-reverse;justify-content:flex-end;gap:8px;max-width:calc(var(--hs-s,60px)*3 + 16px);right:12px;bottom:200px;touch-action:none;pointer-events:auto}#hs-pm{pointer-events:auto;position:fixed;z-index:13;left:50%;top:50%;transform:translate(-50%,-50%);width:min(340px,90vw);padding:14px;border-radius:14px;border:1px solid rgba(241,219,159,.8);background:rgba(28,19,9,.97);color:#f6e7c1;font:13px/1.4 system-ui,sans-serif;box-shadow:0 10px 40px rgba(0,0,0,.6)}#hs-pm[hidden]{display:none}#hs-pm h4{margin:0 0 8px;font-size:15px}#hs-pm button{display:block;width:100%;margin:6px 0 0;padding:10px;border-radius:10px;border:1px solid rgba(241,219,159,.6);background:rgba(60,42,20,.9);color:#fff;text-align:left;font:inherit;cursor:pointer}#hs-pm button small{display:block;opacity:.75}#hs-pm .x{text-align:center;background:transparent}#hs-bar[hidden]{display:none}'
+    + '.hs-b{pointer-events:auto;touch-action:manipulation;-webkit-tap-highlight-color:transparent;box-shadow:0 3px 10px rgba(0,0,0,.55);position:relative;width:var(--hs-s,60px);height:var(--hs-s,60px);border-radius:50%;border:2px solid rgba(241,219,159,.85);background:rgba(22,15,8,.96);color:#f6e7c1;font:600 10px/1.15 system-ui,sans-serif;padding:2px;cursor:pointer;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}'
+    + '.hs-b .hs-k{position:absolute;top:1px;right:6px;font-size:9px;opacity:.7}.hs-b.lock,.hs-b.soon{opacity:.55}.hs-b.hs-cd::after{content:"";position:absolute;left:0;right:0;bottom:0;height:calc(var(--cd,0)*100%);background:rgba(0,0,0,.55)}'
+    + '.hs-b svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}.hs-b .hs-n{position:absolute;z-index:1;left:50%;bottom:3px;transform:translateX(-50%);max-width:94%;padding:0 4px;border-radius:7px;background:rgba(0,0,0,.62);font-size:9px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 2px #000}.hs-b.hs-empty .hs-n{position:static;transform:none;background:none;font-size:11px;white-space:normal;max-width:none}'
     + '.hs-b .hs-lv{position:absolute;z-index:2;left:7px;top:1px;font-size:9px;font-weight:700;color:#ffe08a;text-shadow:0 1px 2px #000;pointer-events:none}'
     + '#hs-tip{position:fixed;z-index:12;max-width:min(300px,86vw);padding:9px 11px;border-radius:10px;border:1px solid rgba(241,219,159,.8);background:rgba(28,19,9,.96);color:#f6e7c1;font:12px/1.4 system-ui,sans-serif;pointer-events:none;box-shadow:0 4px 18px rgba(0,0,0,.55)}#hs-tip[hidden]{display:none}#hs-tip h4{margin:0 0 4px;font-size:14px}#hs-tip .r{margin:2px 0}#hs-tip .r b{color:#f1db9f;font-weight:600}'
     + '.hs-b.he-kim{border-color:#dfe3e8}.hs-b.he-moc{border-color:#3f9b4a}.hs-b.he-thuy{border-color:#2f6fd0}.hs-b.he-hoa{border-color:#d9432b}.hs-b.he-tho{border-color:#c9a227}';
@@ -54,15 +55,17 @@ export function initHeSkill(hud, { toast = () => {} } = {}) {
   const el = (n, a, p) => { const e = document.createElementNS(SVGNS, n); for (const k in a) e.setAttribute(k, a[k]); if (p) p.appendChild(e); return e; };
   function drawIcon(id) {
     const ic = iconSpec(id), svg = el('svg', { viewBox: '0 0 54 54', 'aria-hidden': 'true' }); if (!ic) return svg;
-    el('circle', { cx: 27, cy: 27, r: 26, fill: ic.mau, opacity: ic.tuyet ? 0.4 : 0.22 }, svg);
-    const g = el('g', { stroke: ic.mau, 'stroke-width': 2, fill: 'none', opacity: 0.85 }, svg);
+    el('circle', { cx: 27, cy: 27, r: 26, fill: '#1c1309' }, svg);
+    el('circle', { cx: 27, cy: 27, r: 24, fill: ic.mau, opacity: ic.tuyet ? 0.75 : 0.55 }, svg);
+    el('circle', { cx: 27, cy: 27, r: 25, fill: 'none', stroke: ic.mau, 'stroke-width': 2 }, svg);
+    const g = el('g', { stroke: '#fff', 'stroke-width': 2.2, fill: 'none', opacity: 0.5 }, svg);
     if (ic.van === 'vachCheo') { el('path', { d: 'M10 40L40 10M18 46L46 18M6 30L30 6' }, g); }
     else if (ic.van === 'hoaVanLa') { el('path', { d: 'M27 8C40 16 40 34 27 44C14 34 14 16 27 8ZM27 12V42' }, g); }
     else if (ic.van === 'gonSong') { el('path', { d: 'M6 20q5-6 10 0t10 0t10 0t10 0M6 30q5-6 10 0t10 0t10 0t10 0' }, g); }
     else if (ic.van === 'oVuong') { el('path', { d: 'M12 12h30v30H12ZM12 27h30M27 12v30' }, g); }
     else { el('path', { d: 'M27 6L33 24L50 27L33 30L27 48L21 30L4 27L21 24Z' }, g); }
     if (ic.tuyet) el('circle', { cx: 27, cy: 27, r: 24, stroke: '#f1db9f', 'stroke-width': 2, fill: 'none' }, svg);
-    const t = el('text', { x: 27, y: 33, 'text-anchor': 'middle', 'font-size': 20, 'font-weight': 700, fill: '#fff', stroke: '#000', 'stroke-width': 0.6 }, svg); t.textContent = ic.chu;
+    const t = el('text', { x: 27, y: 29, 'text-anchor': 'middle', 'font-size': 23, 'font-weight': 800, fill: '#fff', stroke: '#000', 'stroke-width': 1 }, svg); t.textContent = ic.chu;
     return svg;
   }
   const tip = document.createElement('div'); tip.id = 'hs-tip'; tip.hidden = true; tip.setAttribute('role', 'tooltip'); hud.appendChild(tip);
@@ -129,7 +132,7 @@ export function initHeSkill(hud, { toast = () => {} } = {}) {
         if (s !== 4) { b.hidden = true; continue; }
         b.hidden = false; const old = b.querySelector('svg'); if (old) old.remove(); bs.ico = '';
         const lk = eff() < SKILL_CAP[4]; t.textContent = lk ? `Cấp ${SKILL_CAP[4]}` : 'Chọn Pháp Môn'; lv.textContent = '';
-        b.className = `hs-b he-${he}${lk ? ' lock' : ''}`; b.style.setProperty('--cd', '0'); b.setAttribute('aria-label', lk ? `Pháp Môn (mở ở cấp ${SKILL_CAP[4]})` : 'Chọn Pháp Môn'); continue;
+        b.className = `hs-b hs-empty he-${he}${lk ? ' lock' : ''}`; b.style.setProperty('--cd', '0'); b.setAttribute('aria-label', lk ? `Pháp Môn (mở ở cấp ${SKILL_CAP[4]})` : 'Chọn Pháp Môn'); continue;
       }
       b.hidden = false;
       if (bs.ico !== sk.id) { const old = b.querySelector('svg'); if (old) old.remove(); b.insertBefore(drawIcon(sk.id), b.firstChild); bs.ico = sk.id; }
