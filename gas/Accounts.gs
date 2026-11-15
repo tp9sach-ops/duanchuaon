@@ -2,22 +2,24 @@
  * Diệu Giang Tự — TÀI KHOẢN NHÂN VẬT (Phiên 53). Dán cạnh Code.gs + Storage.gs trong cùng dự án Apps Script.
  *
  * Một tài khoản = (tên nhân vật + mật khẩu). Sheet "Accounts" (tự tạo nếu chưa có), mỗi hàng một nhân vật:
- *   aid | accKey | name | ngayTao | lanDangNhap | tokens | rev | sid | capNhat | d1 | d2 | d3 | d4
+ *   aid | accKey | name | ngayTao | lanDangNhap | tokens | rev | sid | capNhat | d1 | d2 | d3 | d4 | grants
  *  - accKey = sha256('lgt-acct-v1|' + key) với key = PBKDF2 do TRÌNH DUYỆT tính từ (mật khẩu, tên). Mật khẩu thật KHÔNG bao giờ tới đây
  *    và trong Sheet cũng không có mật khẩu hay khóa đăng nhập dùng lại được. accKey là khóa duy nhất → cùng tên + cùng mật khẩu thì báo trùng.
  *  - tokens = JSON các sha256(token) của từng máy đã đăng nhập (tối đa 8, máy mới nhất giữ lại). Máy nào có token thì lưu/đọc được dữ liệu.
  *  - rev = số lần lưu (tăng 1 mỗi lần). Máy gửi kèm `base` = rev nó đã biết; lệch → báo 'stale' để KHÔNG ghi đè tiến trình của máy khác.
  *  - sid = mã của lần lưu cuối: gửi lại đúng lần lưu (do mạng chập chờn, client tự thử lại) thì coi như đã xong, không báo stale oan.
  *  - d1..d4 = bản lưu dữ liệu game (JSON các khóa lgt.* của trình duyệt), chia 4 ô ≤ 45.000 ký tự (giới hạn của một ô Sheet là 50.000).
+ *  - grants (cột N, Phiên 170) = JSON danh sách quà quản trị tặng [{ id, sen, t }] (tối đa 10, mới nhất giữ lại). KHÔNG nằm trong bản lưu và KHÔNG đổi rev,
+ *    nên không bao giờ gây xung đột "stale". Máy chơi nhận danh sách này khi mở trang / mỗi lần lưu, tự cộng các quà có id chưa nhận (lgt.grantDone) rồi lưu lại.
  *
  * Hành động (POST text/plain như các hàm khác): acctCreate, acctLogin, acctLoad, acctSave, acctLogout (xem Code.gs → doPost).
  * Quy tắc phải GIỐNG js/engines/account.js. Sau khi sửa: Deploy → Manage deployments → Edit → New version (URL /exec giữ nguyên).
  */
-var ACCT = { SALT: 'lgt-acct-v1|', NAME_MAX: 20, MAX_SAVE: 150000, CELL: 45000, CELLS: 4, TOKENS_KEEP: 8, FAIL_MAX: 15, FAIL_SEC: 900 };
+var ACCT = { SALT: 'lgt-acct-v1|', NAME_MAX: 20, MAX_SAVE: 150000, CELL: 45000, CELLS: 4, TOKENS_KEEP: 8, FAIL_MAX: 15, FAIL_SEC: 900, GRANTS_KEEP: 10, GRANT_MAX_SEN: 10000000 };
 /** Khóa localStorage chỉ là cài đặt thiết bị — không bao giờ lưu lên tài khoản (giữ giống DEVICE_KEYS trong js/engines/account.js). */
 var ACCT_DEVICE_KEYS = ['lgt.acct', 'lgt.perf', 'lgt.sound', 'lgt.vol', 'lgt.vfx', 'lgt.mm', 'lgt.tut', 'lgt.khinhHint'];
 // Cột (1-based) trong sheet Accounts
-var AC = { AID: 1, KEY: 2, NAME: 3, CREATED: 4, LOGIN: 5, TOKENS: 6, REV: 7, SID: 8, UPDATED: 9, DATA: 10 };
+var AC = { AID: 1, KEY: 2, NAME: 3, CREATED: 4, LOGIN: 5, TOKENS: 6, REV: 7, SID: 8, UPDATED: 9, DATA: 10, GRANT: 14 };
 
 function acctNow_() { return Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyy-MM-dd'T'HH:mm:ss"); }
 
@@ -69,6 +71,17 @@ function acctAppend_(sh, rec) {
   if (row > sh.getMaxRows()) sh.insertRowsAfter(sh.getMaxRows(), 200);
   acctPut_(sh, row, 1, rec);
 }
+
+/** Quà quản trị của một hàng (cột GRANT) → mảng [{ id, sen, t }]; lỗi/không có → []. Không bao giờ ném lỗi (để không làm hỏng đọc/lưu bình thường). */
+function acctGrants_(sh, row) {
+  try {
+    var raw = String(sh.getRange(row, AC.GRANT, 1, 1).getValues()[0][0] || '');
+    var a = raw ? JSON.parse(raw) : [];
+    return Array.isArray(a) ? a.slice(-ACCT.GRANTS_KEEP) : [];
+  } catch (e) { return []; }
+}
+/** Gắn `grants` vào phản hồi nếu có quà. */
+function acctWithGrants_(res, sh, row) { var g = acctGrants_(sh, row); if (g.length) res.grants = g; return res; }
 
 function acctTokens_(cell) { try { var a = JSON.parse(cell || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; } }
 function acctHasToken_(cell, token) {
@@ -173,15 +186,15 @@ function acctAuth_(req) {
   return { sh: sh, row: row, rec: rec };
 }
 
-/** Máy đã đăng nhập hỏi "có bản mới hơn không?": cùng rev → changed:false; khác → trả bản lưu mới. rev = -1 để buộc lấy. */
+/** Máy đã đăng nhập hỏi "có bản mới hơn không?": cùng rev → changed:false; khác → trả bản lưu mới. rev = -1 để buộc lấy. Kèm `grants` (quà quản trị) nếu có. */
 function acctLoad_(req) {
   var a = acctAuth_(req); if (a.error) return { ok: false, error: a.error };
   var cur = Number(a.rec[AC.REV - 1]) || 1;
-  if (Number(req.rev) === cur) return { ok: true, changed: false, rev: cur };
-  return { ok: true, changed: true, rev: cur, name: a.rec[AC.NAME - 1], save: acctParse_(acctJoin_(a.rec)) };
+  if (Number(req.rev) === cur) return acctWithGrants_({ ok: true, changed: false, rev: cur }, a.sh, a.row);
+  return acctWithGrants_({ ok: true, changed: true, rev: cur, name: a.rec[AC.NAME - 1], save: acctParse_(acctJoin_(a.rec)) }, a.sh, a.row);
 }
 
-/** Lưu tiến trình. base = rev máy này đã biết; lệch → 'stale' (trừ khi force). Cùng sid với lần lưu cuối → ok (gửi lại). */
+/** Lưu tiến trình. base = rev máy này đã biết; lệch → 'stale' (trừ khi force). Cùng sid với lần lưu cuối → ok (gửi lại). Phản hồi kèm `grants` nếu có. */
 function acctSave_(req) {
   var blob = acctBlob_(req.save); if (blob.error) return { ok: false, error: blob.error };
   var lock = LockService.getScriptLock();
@@ -190,13 +203,13 @@ function acctSave_(req) {
     var a = acctAuth_(req); if (a.error) return { ok: false, error: a.error };
     var rec = a.rec, cur = Number(rec[AC.REV - 1]) || 1, sid = clean_(req.sid, 64);
     if (!req.force && Number(req.base) !== cur) {
-      if (sid && sid === rec[AC.SID - 1]) return { ok: true, rev: cur, dup: true };
-      return { ok: false, error: 'stale', rev: cur };
+      if (sid && sid === rec[AC.SID - 1]) return acctWithGrants_({ ok: true, rev: cur, dup: true }, a.sh, a.row);
+      return acctWithGrants_({ ok: false, error: 'stale', rev: cur }, a.sh, a.row);
     }
-    if (!req.force && acctJoin_(rec) === blob.s) return { ok: true, rev: cur, same: true };   // không có gì mới
+    if (!req.force && acctJoin_(rec) === blob.s) return acctWithGrants_({ ok: true, rev: cur, same: true }, a.sh, a.row);   // không có gì mới
     var parts = acctSplit_(blob.s);
     acctPut_(a.sh, a.row, AC.REV, [String(cur + 1), sid, acctNow_()].concat(parts));   // rev, sid, capNhat, d1..d4 là các cột liền nhau
-    return { ok: true, rev: cur + 1 };
+    return acctWithGrants_({ ok: true, rev: cur + 1 }, a.sh, a.row);
   } finally { lock.releaseLock(); }
 }
 
@@ -210,4 +223,43 @@ function acctLogout_(req) {
     acctPut_(a.sh, a.row, AC.TOKENS, [JSON.stringify(list)]);
     return { ok: true };
   } finally { lock.releaseLock(); }
+}
+
+// ---------------------------------------------------------------- QUẢN TRỊ (Phiên 170): chạy tay trong trình soạn Apps Script, KHÔNG gọi được từ web.
+
+/**
+ * TẶNG hạt sen cho một nhân vật (CỘNG THÊM `sen` vào ví hiện có của người chơi).
+ * Cách hoạt động: ghi một "quà" vào cột grants của nhân vật (không đụng bản lưu, không đổi rev → không bao giờ gây xung đột).
+ * Lần tới người chơi mở game (hoặc đang chơi và game tự lưu) sẽ nhận quà đúng 1 lần.
+ * name: tên nhân vật (không phân biệt hoa/thường). aid (tùy chọn, cột A) dùng khi có nhiều nhân vật trùng tên.
+ */
+function adminGiveSen(name, sen, aid) {
+  sen = Math.floor(Number(sen));
+  if (!isFinite(sen) || sen < 1 || sen > ACCT.GRANT_MAX_SEN) throw new Error('sen phải là số nguyên từ 1 đến ' + ACCT.GRANT_MAX_SEN);
+  var lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    var sh = acctSheet_(), last = sh.getLastRow();
+    if (last < 2) throw new Error('Sheet Accounts trống');
+    var rows = sh.getRange(2, 1, last - 1, AC.NAME).getValues(), hits = [];
+    for (var i = 0; i < rows.length; i++) {
+      var ok = aid ? str_(rows[i][AC.AID - 1]) === String(aid)
+                   : acctNorm_(rows[i][AC.NAME - 1]) === acctNorm_(name);
+      if (ok) hits.push(i + 2);
+    }
+    if (!hits.length) throw new Error('Không thấy nhân vật "' + name + '"');
+    if (hits.length > 1) throw new Error('Có ' + hits.length + ' nhân vật trùng tên, hãy truyền thêm aid (cột A) làm tham số thứ 3');
+    var row = hits[0];
+    if (sh.getMaxColumns() < AC.GRANT) sh.insertColumnsAfter(sh.getMaxColumns(), AC.GRANT - sh.getMaxColumns());
+    var list = acctGrants_(sh, row);
+    list.push({ id: 'g' + Date.now() + '-' + Math.floor(Math.random() * 1000), sen: sen, t: acctNow_() });
+    list = list.slice(-ACCT.GRANTS_KEEP);
+    acctPut_(sh, row, AC.GRANT, [JSON.stringify(list)]);
+    Logger.log('Đã ghi quà +' + sen + ' hạt sen cho "' + str_(rows[row - 2][AC.NAME - 1]) + '" (hàng ' + row + '). Người chơi mở game / game tự lưu là nhận.');
+  } finally { lock.releaseLock(); }
+}
+
+/** Sửa tên và số sen ở đây rồi bấm Run. */
+function chayTangSen() {
+  adminGiveSen('Sang Hướng Thiện', 5000);
 }
