@@ -14,6 +14,7 @@ import {
   WALK_SPEED, RUN_SPEED, CLICK_SPEED, CAM_DIST, CAM_PITCH, moveVector, joyVector, joyRun, moveKeyOf, walkStep, createNavigator, camPose, clipCamDist, dragCamera, zoomCamera, facingOf,
 } from './worldLogic.js';
 import { shotPose, blendShot } from './fishShot.js';   // Phiên 120: góc camera câu cá / cầm cá
+import { FLY_CFG, followYaw } from './glide.js';   // Phiên 196: bay lướt (camera đi theo hướng bay)
 import { createCamFeel, fovNhay, kBamDoc } from './camFeel.js';   // Phiên 175: rung màn, khựng hình, đẩy gần, bám nhảy mượt (mục 11)
 
 const isEditable = (el) => !!el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName));
@@ -80,7 +81,7 @@ export function createWorld({ scene, camera, canvas, coarse = false, LGT = windo
     if (ptrs.size === 2) { const [a, b] = [...ptrs.values()], d = Math.hypot(a.x - b.x, a.y - b.y); dist = zoomCamera(dist, -(d - pinch) * 2.2); pinch = d; return; }
     if (down && down.id === e.pointerId) {
       down.moved += Math.abs(dx) + Math.abs(dy);
-      if (down.moved > 8 && !blockedNow()) { const r = dragCamera(yaw, pitch, dx, dy); yaw = r.yaw; pitch = r.pitch; }
+      if (down.moved > 8 && !blockedNow()) { const r = dragCamera(yaw, pitch, dx, dy); yaw = r.yaw; pitch = r.pitch; camDragAt = performance.now(); }   // Phiên 196: người chơi tự xoay camera → lúc bay không tự xoay lại ngay
     }
   });
   const end = (e) => {
@@ -237,6 +238,14 @@ export function createWorld({ scene, camera, canvas, coarse = false, LGT = windo
     avatar.group.position.set(P.x, P.y, P.z);
   }
 
+  // Phiên 196: BAY LƯỚT trên không (Khinh thân). fn(dt, input) chạy MỖI KHUNG HÌNH, trả { dx, dz, speed, tilt, state } (hướng đơn vị, m/s, rad) hoặc null = hạ cánh xong.
+  // Chuyển động đi qua walkStep nên vẫn trượt dọc tường, không xuyên vật cản. Độ cao (nhảy) do js/ui/skill.js lo như cũ; ở đây chỉ lo ngang + tư thế + camera.
+  let flyFn = null, flyRy = 0, camDragAt = -1e9, flyFov = 0;
+  function fly(fn) {
+    if (typeof fn !== 'function' || flyFn || heldS) return false;
+    if (dashS) { dashS = null; avatar.group.rotation.x = 0; }   // đang bật tới trước → bay tiếp từ chỗ đang đứng
+    release(); arrival.cancel(); showHint(null); nav.clear(); mark.visible = false; flyFn = fn; return true;
+  }
   // Phiên 90: Thiết đầu công — lao đầu về phía trước rất nhanh (nhân vật chúi đầu), bỏ qua đi bộ trong lúc lao.
   let dashS = null;
   function dash(to, dur = 0.32, opts) {
@@ -282,6 +291,16 @@ export function createWorld({ scene, camera, canvas, coarse = false, LGT = windo
       if (k >= 1) { dashS = null; avatar.group.rotation.x = 0; }
       camStep(dt); return;
     }
+    if (flyFn) {                                              // Phiên 196: đang bay lướt
+      let f = null; try { f = flyFn(dt, blockedNow() ? { x: 0, z: 0, mag: 0 } : moveVector(keys, joy, yaw)); } catch (_) { f = null; }
+      if (f && Number.isFinite(+f.dx) && Number.isFinite(+f.dz) && Number.isFinite(+f.speed)) {
+        const r = walkStep(P, { x: +f.dx, z: +f.dz, mag: 1 }, dt, Math.max(0, +f.speed));
+        P.x = r.x; P.z = r.z; P.y = damp(P.y, r.y, 14, dt); speedNow = 0; flyRy = facingOf(+f.dx, +f.dz); avatar.setFacing(flyRy);
+        avatar.setState(f.state || 'idle', 0); avatar.group.position.set(P.x, P.y, P.z); avatar.update(dt * camTocDo); avatar.group.rotation.x = Number.isFinite(+f.tilt) ? +f.tilt : 0;
+        camStep(dt); return;
+      }
+      flyFn = null; avatar.group.rotation.x = 0;              // hạ cánh xong → quay lại điều khiển thường ngay khung này
+    }
     if (!blockedNow()) {
       const m = moveVector(keys, joy, yaw);
       if (m.mag > 0) { v = m; spd = (keys.run || joyRunning ? RUN_SPEED : WALK_SPEED); }
@@ -316,6 +335,8 @@ export function createWorld({ scene, camera, canvas, coarse = false, LGT = windo
   function camStep(dt) {
     shotK = damp(shotK, shot ? 1 : 0, shot ? 3.2 : 2.4, dt); if (!shot && shotK < 0.002) { shotK = 0; shotCur = null; }
     if (shot) shotCur = shotPose(shot, avatar.group.rotation.y) || shotCur;   // góc quay bám hướng nhìn nhân vật (Phiên 120)
+    if (flyFn && !shot && performance.now() - camDragAt > FLY_CFG.camHold * 1000) yaw = followYaw(yaw, flyRy, dt);   // Phiên 196: đang bay → camera tự xoay ra sau lưng theo hướng bay (người chơi tự kéo camera thì nhường)
+    flyFov = damp(flyFov, flyFn && !camFeel.giam ? FLY_CFG.fov : 0, 4, dt);
     const e = blendShot({ yaw, pitch, dist }, shotK > 0 ? shotCur : null, shotK);
     const want = clipCamDist(P, e.yaw, e.pitch, e.dist, solidAt);   // Phiên 31: camera không xuyên tường/vật cản
     camD = camD == null ? want : damp(camD, want, want < camD ? 16 : 3, dt);   // bị chắn thì lùi vào nhanh, thoáng thì ra từ từ
@@ -326,11 +347,11 @@ export function createWorld({ scene, camera, canvas, coarse = false, LGT = windo
     cam.lx = damp(cam.lx, c.look.x, 12, dt); cam.ly = damp(cam.ly, c.look.y, 12, dt); cam.lz = damp(cam.lz, c.look.z, 12, dt);
     const cf = camFeel.step(dt); camTocDo = cf.tocDo;
     camera.position.set(cam.x + cf.dx, Math.max(0.5, cam.y + cf.dy), cam.z); camera.lookAt(cam.lx, cam.ly, cam.lz);
-    const zm = 1 / (1 + cf.fov + (camFeel.giam ? 0 : fovNhay(vy, 9)));   // zoom thay vì sửa fov để không đụng chỉnh FOV màn dọc ở scene/index.js
+    const zm = 1 / (1 + cf.fov + (camFeel.giam ? 0 : fovNhay(vy, 9)) + flyFov);   // zoom thay vì sửa fov để không đụng chỉnh FOV màn dọc ở scene/index.js
     if (Math.abs(camera.zoom - zm) > 1e-4) { camera.zoom = zm; camera.updateProjectionMatrix(); }
   }
 
-  LGT.world = { setProfile, zoom, walkTo, sit, bow, meditate, chant, beads, rest, stand, get mode() { return act.mode; }, seats: SEATS, get pos() { return { x: P.x, z: P.z, y: P.y }; }, get facing() { return avatar.group.rotation.y; }, get dashing() { return !!dashS; }, get held() { return !!heldS; }, hold, dash, face(ry) { if (Number.isFinite(ry)) avatar.setFacing(ry, true); }, teleport, goTo, get avatar() { return avatar; }, get camera() { return { yaw, pitch, dist }; }, shot(name) { shot = name === 'cast' || name === 'show' ? name : ''; }, get shotName() { return shot; }, nav };
+  LGT.world = { setProfile, zoom, walkTo, sit, bow, meditate, chant, beads, rest, stand, get mode() { return act.mode; }, seats: SEATS, get pos() { return { x: P.x, z: P.z, y: P.y }; }, get facing() { return avatar.group.rotation.y; }, get dashing() { return !!dashS; }, get flying() { return !!flyFn; }, fly, get held() { return !!heldS; }, hold, dash, face(ry) { if (Number.isFinite(ry)) avatar.setFacing(ry, true); }, teleport, goTo, get avatar() { return avatar; }, get camera() { return { yaw, pitch, dist }; }, shot(name) { shot = name === 'cast' || name === 'show' ? name : ''; }, get shotName() { return shot; }, nav };
   update(0.016);
   return { update, get avatar() { return avatar; }, setProfile, zoom, walkTo, sit, bow, meditate, chant, beads, rest, stand, teleport, goTo, get pos() { return { x: P.x, z: P.z, y: P.y }; } };
 }

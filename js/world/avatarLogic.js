@@ -94,7 +94,7 @@ export function wrapText(text, maxChars = 18, maxLines = 4) {
   return lines;
 }
 
-export const STATES = ['idle', 'walk', 'sit', 'mo', 'beads', 'bow'];   // đứng, đi, ngồi thiền, gõ mõ (ngồi), cúi lạy
+export const STATES = ['idle', 'walk', 'sit', 'mo', 'beads', 'bow'];   // đứng, đi, ngồi thiền, gõ mõ (ngồi), cúi lạy. 'glide' (Phiên 196, bay lướt) CHỈ dùng cục bộ: không nằm ở đây vì luật Firebase (firebase/database.rules.json) chỉ nhận danh sách này; js/net/room.js gửi 'idle' thay cho 'glide'
 
 /**
  * Tư thế (góc quay rad, độ cao) theo trạng thái và thời gian t (giây). Thuần hàm.
@@ -121,6 +121,9 @@ export function poseFor(state, t, speed = 0) {
     case 'bow': {  // lạy: cúi thân rồi lên, chu kỳ 3 giây
       const u = (Math.sin(t * 2.1 - Math.PI / 2) + 1) / 2;
       P.lean = u * 1.05; P.armL = P.armR = -0.4 - u * 0.7; P.dy = -u * 0.25; P.head = u * 0.3; break;
+    }
+    case 'glide': {   // Phiên 196: bay lướt — hai tay giang ra hai bên như cánh, chân duỗi theo gió, thân hơi nâng (độ chúi do world.fly đặt ở group.rotation.x)
+      P.armL = P.armR = 0.5 + Math.sin(t * 3.2) * 0.06; P.legL = 0.28; P.legR = -0.16; P.dy = 0.03 + Math.sin(t * 2.4) * 0.01; P.head = -0.12; break;
     }
     default: { P.armL = Math.sin(t * 1.2) * 0.03; P.armR = -P.armL; P.dy = Math.sin(t * 1.6) * 0.004; }   // idle: thở nhẹ
   }

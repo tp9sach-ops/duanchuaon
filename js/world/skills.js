@@ -1,6 +1,7 @@
 // Kỹ năng người chơi (Phiên 4 master prompt, bước đầu): KHINH THÂN = nhảy cao. LOGIC THUẦN (không DOM, không three.js), có test: tests/skills.test.mjs.
 // Bậc của kỹ năng lấy từ cốt truyện: js/world/story.js đặt story.skills.khinhthan = 1 khi xong chuỗi tưới cây. Trước file này KHÔNG có chỗ nào đọc con số đó nên mở khóa xong không thấy gì.
 // Mọi con số (chiều cao, trọng lực) là QUY ƯỚC TẠM của dự án, chờ ptg duyệt. Mới có bậc 1 được chốt từ cốt truyện; bậc 2–8 để sẵn bảng cho các phiên sau.
+import { FLY_CFG, flyVy, fallSpeed } from './glide.js';   // Phiên 196: bay lướt trên không (đệm hạ cánh, rơi chậm)
 
 /** Chiều cao nhảy (m) theo bậc 0..8. Bậc 0 = chưa mở, không nhảy được. */
 export const KHINH_THAN_CAO = [0, 1.1, 1.6, 2.2, 2.9, 3.7, 4.6, 5.6, 6.8];
@@ -26,19 +27,29 @@ export function canJump({ level = 0, mode = 'free', panelOpen = false, dialogOpe
 
 /** Bộ mô phỏng một cú nhảy theo phương thẳng đứng: { y (m, ≥ 0 so với mặt đất), air, start(cao), step(dt) }. */
 export function createJump() {
-  let y = 0, vy = 0, air = false;
+  let y = 0, vy = 0, air = false, gliding = false, fall = 0;
   return {
-    get y() { return y; }, get air() { return air; }, get vy() { return vy; },
+    get y() { return y; }, get air() { return air; }, get vy() { return vy; }, get gliding() { return gliding; }, get fall() { return fall; },
     /** Bắt đầu nhảy cao `cao` m. Đang ở trên không hoặc cao ≤ 0 → false (không nhảy chồng). */
-    start(cao) { if (air || !(cao > 0)) return false; vy = Math.sqrt(2 * GRAVITY * cao); air = true; return true; },
+    start(cao) { if (air || !(cao > 0)) return false; vy = Math.sqrt(2 * GRAVITY * cao); air = true; gliding = false; return true; },
+    /** Phiên 196: chuyển sang BAY LƯỚT (đang trên không, chưa bay): rơi chậm tối đa `fallV` m/s, hạ cánh có đoạn đệm. Không đủ điều kiện → false. */
+    glide(fallV) {
+      if (!air || gliding || !(+fallV > 0)) return false;
+      gliding = true; fall = +fallV; return true;   // đang lên thì cứ lên nốt tới đỉnh (trọng lực nhẹ hơn 20%) rồi mới hạ chậm → bậc cao bay lâu hơn
+    },
     /** Tiến `dt` giây, trả độ cao mới. Chạm đất thì dừng hẳn (y = 0). */
     step(dt) {
       if (!air) return 0;
       let left = Math.max(0, Math.min(Number.isFinite(+dt) ? +dt : 0, 0.25));
-      while (left > 0 && air) { const h = Math.min(left, MAX_STEP); vy -= GRAVITY * h; y += vy * h; left -= h; if (y <= 0) { y = 0; vy = 0; air = false; } }
+      while (left > 0 && air) {
+        const h = Math.min(left, MAX_STEP);
+        vy = gliding ? flyVy(vy, y, fall, h, GRAVITY) : vy - GRAVITY * h;
+        y += vy * h; left -= h;
+        if (y <= 0) { y = 0; vy = 0; air = false; gliding = false; }
+      }
       return y;
     },
-    reset() { y = 0; vy = 0; air = false; },
+    reset() { y = 0; vy = 0; air = false; gliding = false; fall = 0; },
   };
 }
 
@@ -92,6 +103,15 @@ export function leapPlan(lv, indoor = false) {
 export function glidePlan(lv, indoor = false) {
   const b = bacClamp(lv); if (b <= 0 || indoor) return null;
   return { dist: Math.round((GLIDE_CFG.base + GLIDE_CFG.perBac * b) * 100) / 100, dur: GLIDE_CFG.dur, guard: GLIDE_CFG.guard };
+}
+/**
+ * Phiên 196 — kế hoạch BAY LƯỚT (nhảy lần 2 khi còn trên không): { v0 (m/s xung đẩy đầu), cruise (m/s lướt duy trì), tau (s xung yếu dần), fall (m/s rơi tối đa),
+ * turn (rad/s bẻ hướng), tilt (rad chúi thân), guard (s bất tử đầu) }. Bậc 0 hoặc trong nhà → null. Bậc cao bay xa + lâu hơn (đỉnh nhảy cao hơn → hạ lâu hơn).
+ */
+export function flyPlan(lv, indoor = false) {
+  const b = bacClamp(lv); if (b <= 0 || indoor) return null;
+  const r = (v) => Math.round(v * 100) / 100;
+  return { v0: r(FLY_CFG.v0Base + FLY_CFG.v0PerBac * b), cruise: r(FLY_CFG.cruiseBase + FLY_CFG.cruisePerBac * b), tau: FLY_CFG.tau, fall: r(fallSpeed(jumpHeight(b))), turn: FLY_CFG.turn, tilt: FLY_CFG.tilt, guard: GLIDE_CFG.guard };
 }
 /**
  * Bấm Nhảy lúc này làm gì? 'jump' (nhảy tại chỗ) | 'leap' (đang đi: bật tới trước) | 'glide' (lướt né) | 'none'.

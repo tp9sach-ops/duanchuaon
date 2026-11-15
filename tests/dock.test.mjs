@@ -73,7 +73,7 @@ test('yêu quái: có yêu quái → Ném đá + Thương (+ Ném yêu quái n�
 });
 test('nối dây: nút yêu quái + tự co lại không đè menu + Nhảy mờ chỉ cách mở', () => {
   const d = read('js/ui/dock.js'), css = read('css/dock.css');
-  assert.match(d, /da: \(\) => LGT\.yq && LGT\.yq\.stone\(\)/); assert.match(d, /thuong: \(\) => LGT\.yq && LGT\.yq\.spear\(\)/); assert.match(d, /nemyq: \(\) => LGT\.yq && LGT\.yq\.throwBoss\(\)/);
+  assert.match(d, /da: \(\) => \{ const L = luyen\(\); return L \? L\.basic\('da'\) : LGT\.yq && LGT\.yq\.stone\(\); \}/); assert.match(d, /thuong: \(\) => \{ const L = luyen\(\); return L \? L\.basic\('thuong'\) : LGT\.yq && LGT\.yq\.spear\(\); \}/);   // Phiên 191+: ở khu luyện tập gọi LGT.luyenChieu.basic, ngoài đó gọi yq như cũ assert.match(d, /nemyq: \(\) => LGT\.yq && LGT\.yq\.throwBoss\(\)/);
   assert.match(d, /function fit\(\)/); assert.match(d, /classList\.add\('small'\)/); assert.match(css, /\.dk\.small\{/); assert.match(css, /\.dk-b\.lock/); assert.match(d, /Khinh thân chưa mở/);
 });
 

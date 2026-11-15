@@ -1,7 +1,8 @@
 // Kỹ năng Khinh thân (nhảy): phím Space + nút "Nhảy" trên điện thoại, chỉ hiện khi đã mở bậc 1 từ cốt truyện tưới cây.
 // Logic ở js/world/skills.js (có test). File này KHÔNG sửa world.js: nó bọc avatar.update để cộng độ cao nhảy vào vị trí nhân vật sau khi world.js đặt xong mỗi khung hình
 // (world.js đặt lại vị trí từ đầu mỗi khung nên không cộng dồn). Đổi tên/áo/kiểu đầu dựng lại nhân vật → bộ đếm 500 ms tự bọc lại.
-import { khinhBac, loadKhinh, jumpHeightAt, canJump, createJump, trainPlan, leapPlan, glidePlan, nextAction, LEAP_CFG, GLIDE_CFG, KHINH_YEU_CAU, KHINH_TEN, MAX_BAC } from '../world/skills.js';
+import { khinhBac, loadKhinh, jumpHeightAt, canJump, createJump, trainPlan, leapPlan, glidePlan, flyPlan, nextAction, LEAP_CFG, GLIDE_CFG, KHINH_YEU_CAU, KHINH_TEN, MAX_BAC } from '../world/skills.js';
+import { flySpeed, flyBrake, steerDir, cushionH } from '../world/glide.js';   // Phiên 196: bay lướt
 import { landing } from '../world/strength.js';
 import { levelOf } from '../world/quests.js';
 
@@ -30,6 +31,28 @@ export function initSkill(hud, { toast = () => {}, getSen = () => 0, spendSen = 
     document.body.appendChild(btn);
   }
 
+  /**
+   * Phiên 196: bay lướt. Xung đẩy đầu theo hướng nhìn (cần/phím bẻ hướng được), yếu dần về mức lướt; rơi chậm; sát đất có đoạn đệm ~0,13 s phanh bớt rồi đứng thẳng lại.
+   * Độ cao do `jump` (createJump.glide) lo; hướng + tốc độ ngang + chúi thân do world.fly gọi hàm bên dưới mỗi khung hình. Hết bay khi chạm đất.
+   */
+  function startFlight(lv, indoor) {
+    const W = LGT.world, plan = flyPlan(lv, indoor);
+    if (!W || !plan || typeof W.fly !== 'function' || W.flying || jump.gliding || !jump.air) return false;
+    const ry0 = Number.isFinite(W.facing) ? W.facing : 0; let dir = { x: Math.sin(ry0), z: Math.cos(ry0) }, t = 0, tilt = 0;
+    if (!jump.glide(plan.fall)) return false;
+    const ok = W.fly((dt, inp) => {
+      if (!jump.air) return null;   // chạm đất → hết bay
+      t += dt; dir = steerDir(dir, inp, plan.turn, dt);
+      const hc = cushionH(plan.fall);
+      tilt += ((jump.y < hc ? 0 : plan.tilt) - tilt) * Math.min(1, (jump.y < hc ? 16 : 7) * dt);   // sát đất: đứng thẳng lại nhanh hơn (đệm), không giật khi chạm
+      return { dx: dir.x, dz: dir.z, speed: flySpeed(plan, t) * flyBrake(jump.y, plan.fall), tilt, state: 'glide' };
+    });
+    if (!ok) return false;   // hiếm: world từ chối (đang bị khiêng...) → chỉ rơi chậm tại chỗ, không bay ngang
+    glideQ = false; glideCd = GLIDE_CFG.cd;   // không tự lướt né thêm khi chạm đất
+    try { const v = LGT.farmCombat && LGT.farmCombat.vitals; if (v && v.guard) v.guard(plan.guard); } catch (_) { /* bỏ qua */ }
+    if (LGT.sfx) LGT.sfx.play('nhay');
+    return true;
+  }
   let lastAirAt = -1e9;   // Phiên 90: lần cuối còn trên không (cho nút Thiết đầu công)
   let speed = 0, glideCd = 0, glideQ = false, lastP = null;   // Phiên 139: tốc độ đi (m/s), hồi chiêu lướt, lướt đang chờ, vị trí khung trước
   function doJump() {
@@ -40,7 +63,10 @@ export function initSkill(hud, { toast = () => {}, getSen = () => 0, spendSen = 
     if (!canJump({ level: lv, mode: W.mode, panelOpen: !!LGT.panelOpen, dialogOpen: dialogOpen() })) return false;
     const indoor = !!LGT.inHouse, sinceAir = jump.air ? 0 : (performance.now() - lastAirAt) / 1000;
     const act = nextAction({ lv, air: jump.air, sinceAir, moving: speed > LEAP_CFG.minSpeed, glideCd, indoor });   // Phiên 139: đi + Nhảy = bật tới trước; Nhảy tiếp = lướt né
-    if (act === 'glide') { if (W.dashing && glideQ) return false; glideQ = true; return true; }   // lướt ngay khi hết cú bật (xem wrap)
+    if (act === 'glide') {   // Phiên 196: ĐANG TRÊN KHÔNG bấm Nhảy → BAY LƯỚT từ từ rồi hạ nhẹ (camera theo hướng bay). Vừa chạm đất (≤ 0,6 s) bấm → lướt né ngắn như Phiên 139.
+      if (jump.air) return startFlight(lv, indoor);
+      if (W.dashing && glideQ) return false; glideQ = true; return true;   // lướt ngay khi hết cú bật (xem wrap)
+    }
     if (act === 'none') return false;
     const ok = jump.start(jumpHeightAt(lv, indoor));
     if (ok && act === 'leap') { const p = leapPlan(lv, indoor), pos = W.pos, ry = Number.isFinite(W.facing) ? W.facing : 0; if (p && !W.dashing) { const l = landing(pos.x, pos.z, ry, p.dist); if (l.dist > 0.3 && W.dash({ x: l.x, z: l.z }, p.dur, { tilt: false }) && glideCd <= 0) glideQ = true; } }   // Phiên 151: bật tới trước xong thì TỰ lướt thêm một đoạn theo hướng đi (không cần bấm Nhảy lần nữa)
@@ -62,7 +88,7 @@ export function initSkill(hud, { toast = () => {}, getSen = () => 0, spendSen = 
     av.update = (dt) => {
       orig(dt); const y = jump.step(dt); if (y > 0 && av.group) av.group.position.y += y; if (jump.air) lastAirAt = performance.now();
       const W = LGT.world, p = W && W.pos; glideCd = Math.max(0, glideCd - Math.max(0, Math.min(0.25, dt)));
-      if (p && lastP && dt > 1e-4 && !W.dashing) speed = Math.hypot(p.x - lastP.x, p.z - lastP.z) / dt; else if (W && W.dashing) speed = 0;   // đang lao/lướt không tính là "đang đi"
+      if (p && lastP && dt > 1e-4 && !W.dashing && !W.flying) speed = Math.hypot(p.x - lastP.x, p.z - lastP.z) / dt; else if (W && (W.dashing || W.flying)) speed = 0;   // đang lao/lướt không tính là "đang đi"
       lastP = p ? { x: p.x, z: p.z } : null;
       if (glideQ && W && !W.dashing) {   // Phiên 139: lướt né một đoạn + bất tử ngắn (hết cú bật tới trước mới lướt)
         glideQ = false; const gp = glidePlan(level(), !!LGT.inHouse), pos = W.pos, ry = Number.isFinite(W.facing) ? W.facing : 0;
@@ -138,6 +164,6 @@ export function initSkill(hud, { toast = () => {}, getSen = () => 0, spendSen = 
   addEventListener('keydown', (e) => { if (e.code === 'Escape' && !box.hidden) { closeBox(); e.stopPropagation(); } }, true);
   setInterval(paintChip, 700); paintChip();
 
-  LGT.skill = { get air() { return jump.air; }, get sinceAir() { return jump.air ? 0 : (performance.now() - lastAirAt) / 1000; }, get level() { return level(); }, get canTrain() { return !!plan().ok; }, jump: doJump, open: openBox, close: closeBox, train };
+  LGT.skill = { get air() { return jump.air; }, get gliding() { return jump.gliding; }, get sinceAir() { return jump.air ? 0 : (performance.now() - lastAirAt) / 1000; }, get level() { return level(); }, get canTrain() { return !!plan().ok; }, jump: doJump, open: openBox, close: closeBox, train };
   return LGT.skill;
 }
