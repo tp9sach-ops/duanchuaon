@@ -1,7 +1,7 @@
 // Cảnh quan mở rộng của Diệu Giang Tự (Phiên 14f). DỮ LIỆU THUẦN (không three.js, có test): cảnh 3D (js/scene/landscape.js, glbprops.js)
 // dựng từ đây, còn nhân vật va chạm qua layout.js. Import file này là tự đăng ký vật cản và hồ nước (một lần).
 // Đổi vị trí ở ĐÂY (một nơi duy nhất) rồi chạy `npm test`: tests/landscape.test.mjs kiểm đường đi không chạm vật cản và mọi điểm đến đi tới được.
-import { addCircle, addRect, addWater, BOUNDS, GATE, blocked } from './layout.js';
+import { addCircle, addRect, addDeck, addWater, BOUNDS, GATE, blocked } from './layout.js';
 import { TREES, BUILDINGS } from './placements.js';
 
 /** Sân lát gạch chỉ nằm trong khung này; ngoài khung là bãi cỏ. */
@@ -78,6 +78,8 @@ function distToSeg(px, pz, [ax, az], [bx, bz]) {
 }
 export const distToPaths = (x, z) => Math.min(...STONE_PATHS.flatMap((p) => p.pts.slice(1).map((q, i) => distToSeg(x, z, p.pts[i], q) - p.w / 2)));
 export const TREE_COLLIDE_R = 0.6;
+/** Phiên 202: độ cao mặt đứng (m) của vật cảnh quan — QUY ƯỚC TẠM, ptg thử rồi báo vật nào đứng chìm/lơ lửng để chỉnh một chỗ này. Cây GLB: thân cao trunk×s, tán (deck) cao canopy×s bán kính canopyR×s (đi bên dưới vẫn qua). */
+export const TOPS = { teahouse: 3.8, guanyin: 7, pagoda: 9, trunk: 7, canopy: 3.4, canopyR: 1.8 };
 /** Khu KHÔNG trồng cây (m): chánh điện + bồ đoàn ngồi thiền + sân trước + hai hành lang + phía sau điện tới đường 'hau'; vườn thiền (sân sỏi) có lề 4 m. Cây cao 9–14 m, tán rộng nên lề ra ngoài hành lang. */
 export const NO_TREE_ZONES = [
   { id: 'chanh-dien', x0: -36, x1: 36, z0: -62, z1: 36 },
@@ -108,15 +110,16 @@ let done = false, registeredTrees = [];
 /** Đăng ký vật cản: nhà, đá, tượng, tháp, hồ (một lần dù import nhiều lần). Cây GLB đăng ký riêng bằng registerGlbTrees(). */
 export function registerLandscape() {
   if (done) return; done = true;
-  addRect({ x0: TEAHOUSE.cx - TEAHOUSE.w / 2, x1: TEAHOUSE.cx + TEAHOUSE.w / 2, z0: TEAHOUSE.cz - TEAHOUSE.d / 2, z1: TEAHOUSE.cz + TEAHOUSE.d / 2 });
-  ZEN_ROCKS.forEach((r) => addCircle({ x: r.x, z: r.z, r: r.r }));
+  // Phiên 202: `top` = mặt đứng được (m): chân đủ cao thì bay/đi qua phía trên rồi đáp lên đứng; thấp hơn vẫn bị chặn. Mọi con số là QUY ƯỚC TẠM (chỉnh Ở ĐÂY).
+  addRect({ x0: TEAHOUSE.cx - TEAHOUSE.w / 2, x1: TEAHOUSE.cx + TEAHOUSE.w / 2, z0: TEAHOUSE.cz - TEAHOUSE.d / 2, z1: TEAHOUSE.cz + TEAHOUSE.d / 2, top: TOPS.teahouse });
+  ZEN_ROCKS.forEach((r) => addCircle({ x: r.x, z: r.z, r: r.r, top: Math.max(0.9, r.r * 0.9 * (r.s || 1)) }));
   addWater({ x: KOI.x, z: KOI.z, r: KOI.r, bridges: KOI.bridges });
-  addCircle({ x: GUANYIN.x, z: GUANYIN.z, r: GUANYIN.r });
-  PAGODAS.forEach((p) => addCircle({ x: p.x, z: p.z, r: p.r }));
+  addCircle({ x: GUANYIN.x, z: GUANYIN.z, r: GUANYIN.r, top: TOPS.guanyin });
+  PAGODAS.forEach((p) => addCircle({ x: p.x, z: p.z, r: p.r, top: TOPS.pagoda }));
 }
 /** Đăng ký va chạm gốc cây cho danh sách cây GLB đã dựng (gọi cùng danh sách với cảnh 3D). */
 export function registerGlbTrees(list) {
-  for (const t of list) { if (registeredTrees.includes(t)) continue; registeredTrees.push(t); addCircle({ x: t.x, z: t.z, r: TREE_COLLIDE_R * t.s }); }
+  for (const t of list) { if (registeredTrees.includes(t)) continue; registeredTrees.push(t); const s = Number.isFinite(+t.s) ? +t.s : 1; addCircle({ x: t.x, z: t.z, r: TREE_COLLIDE_R * s, top: TOPS.trunk * s }); addDeck({ x: t.x, z: t.z, r: TOPS.canopyR * s, top: TOPS.canopy * s }); }   // Phiên 202: thân cây đứng được trên ngọn; tán thấp đáp được
 }
 registerLandscape();
 export { TREES, BUILDINGS };
