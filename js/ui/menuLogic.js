@@ -72,7 +72,7 @@ export function pressResult(item) {
   if (!item) return { kind: 'none' };
   if (!isReady(item)) return { kind: 'soon', text: soonText(item) };
   if (item.action === 'goto') return { kind: 'goto', id: item.target };
-  if (['map', 'share', 'help', 'bow', 'meditate', 'le', 'den', 'chat', 'quest', 'beads', 'chant', 'bag', 'shop', 'fish', 'rank'].includes(item.action)) return { kind: item.action };
+  if (['map', 'share', 'help', 'bow', 'meditate', 'le', 'den', 'chat', 'quest', 'beads', 'chant', 'bag', 'shop', 'fish', 'rank', 'kynang'].includes(item.action)) return { kind: item.action };
   return { kind: 'soon', text: soonText(item) };
 }
 

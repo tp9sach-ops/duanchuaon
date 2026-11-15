@@ -14,7 +14,8 @@ import { loadHe } from '../world/khaiNgo.js';
 import { KHAI_NGO } from '../data/skillCfg.js';
 import { createBuffs, buffNote } from '../world/skillBuff.js';   // Phiên 184: hiệu lực chiêu hỗ trợ
 import { infoOf, infoRows, iconSpec, glyphOf, HE_COLOR } from '../world/chieuInfo.js';   // Phiên 162: biểu tượng + bảng giữ-để-xem
-import { tierOf } from '../world/chieuFxPlan.js';   // Phiên 185: bậc máy (cao / vừa / yếu) cho hiệu ứng 3D
+import { tierOf } from '../world/chieuFxPlan.js';
+import { drawGlyphIcon } from './skillIcon.js';   // Phiên 189: hình chiêu dùng chung với khu luyện tập   // Phiên 185: bậc máy (cao / vừa / yếu) cho hiệu ứng 3D
 
 // Phiên 180: đủ 5 ô — 1, 2, 3 (Q, W, E) + ô 4 = Pháp Môn (T, mở cấp 30, chọn 1 trong 2 Pháp Môn của Hệ) + Tuyệt Học (Y, mở cấp 60, tiêu 5 Tâm Ấn).
 const SLOTS = [1, 2, 3, 4, 'tuyet'], KEYS = { 1: 'KeyQ', 2: 'KeyW', 3: 'KeyE', 4: 'KeyT', tuyet: 'KeyY' }, KEYTXT = { 1: 'Q', 2: 'W', 3: 'E', 4: 'T', tuyet: 'Y' }, PM_KEY = 'lgt.phapmon';   // lgt.* tự đồng bộ theo tài khoản   // Phiên 159c: chiêu phái = Q, W, E (R = Thương ở farm.js; 1–5 = ô nút trong dock)
@@ -50,7 +51,7 @@ export function initHeSkill(hud, { toast = () => {} } = {}) {
   const st = document.createElement('style');
   st.textContent = '#hs-bar{--hs-s:calc(var(--btn-k,1) * clamp(64px,11vmin,92px));position:fixed;z-index:9;display:flex;flex-wrap:wrap-reverse;justify-content:flex-end;gap:8px;max-width:calc(var(--hs-s) * 3 + 24px);gap:12px;right:12px;bottom:200px;touch-action:none;pointer-events:auto}#hs-pm{pointer-events:auto;position:fixed;z-index:13;left:50%;top:50%;transform:translate(-50%,-50%);width:min(340px,90vw);padding:14px;border-radius:14px;border:1px solid rgba(241,219,159,.8);background:rgba(28,19,9,.97);color:#f6e7c1;font:13px/1.4 system-ui,sans-serif;box-shadow:0 10px 40px rgba(0,0,0,.6)}#hs-pm[hidden]{display:none}#hs-pm h4{margin:0 0 8px;font-size:15px}#hs-pm button{display:block;width:100%;margin:6px 0 0;padding:10px;border-radius:10px;border:1px solid rgba(241,219,159,.6);background:rgba(60,42,20,.9);color:#fff;text-align:left;font:inherit;cursor:pointer}#hs-pm button small{display:block;opacity:.75}#hs-pm .x{text-align:center;background:transparent}#hs-bar[hidden]{display:none}'
     + '.hs-b{pointer-events:auto;touch-action:manipulation;-webkit-tap-highlight-color:transparent;box-shadow:0 3px 10px rgba(0,0,0,.55);position:relative;width:var(--hs-s);height:var(--hs-s);border-radius:50%;border:3px solid rgba(241,219,159,.85);background:rgba(22,15,8,.96);color:#f6e7c1;font:600 11px/1.15 system-ui,sans-serif;padding:2px;cursor:pointer;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}'
-    + '.hs-b .hs-k{position:absolute;top:2px;right:7px;font-size:10px;opacity:.75;text-shadow:0 1px 2px #000}.hs-b.lock,.hs-b.soon{opacity:.6}.hs-b:active{transform:scale(.92)}.hs-b .hs-cdn{position:absolute;z-index:3;inset:0;display:none;align-items:center;justify-content:center;font:800 calc(var(--hs-s)*.36)/1 system-ui,sans-serif;color:#fff;text-shadow:0 0 4px #000,0 1px 3px #000;pointer-events:none}.hs-b.hs-cd .hs-cdn{display:flex}.hs-b .hs-lock{position:absolute;z-index:3;right:2px;bottom:calc(var(--hs-s)*.28);font-size:calc(var(--hs-s)*.22);line-height:1;filter:drop-shadow(0 1px 2px #000);pointer-events:none}.hs-b.hs-cd::after{content:"";position:absolute;left:0;right:0;bottom:0;height:calc(var(--cd,0)*100%);background:rgba(0,0,0,.55)}'
+    + '.hs-b .hs-k{display:none}   /* Phiên 189: không hiện chữ Q/W/E/T/Y trên nút (phím tắt máy tính vẫn dùng được) */.hs-b.lock,.hs-b.soon{opacity:.6}.hs-b:active{transform:scale(.92)}.hs-b .hs-cdn{position:absolute;z-index:3;inset:0;display:none;align-items:center;justify-content:center;font:800 calc(var(--hs-s)*.36)/1 system-ui,sans-serif;color:#fff;text-shadow:0 0 4px #000,0 1px 3px #000;pointer-events:none}.hs-b.hs-cd .hs-cdn{display:flex}.hs-b .hs-lock{position:absolute;z-index:3;right:2px;bottom:calc(var(--hs-s)*.28);font-size:calc(var(--hs-s)*.22);line-height:1;filter:drop-shadow(0 1px 2px #000);pointer-events:none}.hs-b.hs-cd::after{content:"";position:absolute;left:0;right:0;bottom:0;height:calc(var(--cd,0)*100%);background:rgba(0,0,0,.55)}'
     + '.hs-b svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}.hs-b .hs-n{position:absolute;z-index:1;left:50%;bottom:4px;transform:translateX(-50%);max-width:96%;padding:0 5px;border-radius:8px;background:rgba(0,0,0,.7);font-size:calc(var(--hs-s)*.15);line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 2px #000}.hs-b.hs-empty .hs-n{position:static;transform:none;background:none;font-size:11px;white-space:normal;max-width:none}'
     + '.hs-b .hs-lv{position:absolute;z-index:2;left:8px;top:2px;font-size:calc(var(--hs-s)*.16);font-weight:700;color:#ffe08a;text-shadow:0 1px 2px #000;pointer-events:none}'
     + '#hs-tip{position:fixed;z-index:12;max-width:min(300px,86vw);padding:9px 11px;border-radius:10px;border:1px solid rgba(241,219,159,.8);background:rgba(28,19,9,.96);color:#f6e7c1;font:12px/1.4 system-ui,sans-serif;pointer-events:none;box-shadow:0 4px 18px rgba(0,0,0,.55)}#hs-tip[hidden]{display:none}#hs-tip h4{margin:0 0 4px;font-size:14px}#hs-tip .r{margin:2px 0}#hs-tip .r b{color:#f1db9f;font-weight:600}'
@@ -61,23 +62,6 @@ export function initHeSkill(hud, { toast = () => {} } = {}) {
   // Biểu tượng chiêu: nền màu Hệ + hoa văn theo vùng báo + chữ cái; toàn bộ vẽ bằng SVG (createElementNS), không innerHTML.
   const el = (n, a, p) => { const e = document.createElementNS(SVGNS, n); for (const k in a) e.setAttribute(k, a[k]); if (p) p.appendChild(e); return e; };
   // Phiên 187: HÌNH thật cho mỗi chiêu (khiên, hồi máu, ẩn thân, tia, lao, chém, vùng...) theo glyphOf(id) — không còn chỉ là hai chữ cái. Vẽ hai lớp (viền đen dày + nét trắng) để thấy rõ trên mọi nền.
-  const GLYPH_D = {
-    hoi: 'M27 12V42M12 27H42', an: 'M15 41V26a12 12 0 0 1 24 0V41l-6-4-6 4-6-4ZM22 26h.1M32 26h.1', khien: 'M27 10L41 16V28C41 37 34 42 27 45C20 42 13 37 13 28V16Z',
-    toc: 'M12 14L25 27L12 40M26 14L39 27L26 40', khoa: 'M27 9V45M11 18L43 36M11 36L43 18', lao: 'M9 27H41M31 16L43 27L31 38M9 19H21M9 35H21',
-    tia: 'M10 44L40 14M31 12H42V23M14 30L24 40', vung: 'M27 21a6 6 0 1 0 .1 0ZM27 12a15 15 0 1 0 .1 0Z', chem: 'M12 43Q14 18 43 12M20 43Q23 26 43 20M9 36Q11 25 25 21',
-    chon: 'M12 19H42M12 35H42M19 12L12 19L19 26M35 28L42 35L35 42',
-  };
-  function drawGlyphIcon(mau, glyph, tuyet, dim) {
-    const svg = el('svg', { viewBox: '0 0 54 54', 'aria-hidden': 'true' });
-    el('circle', { cx: 27, cy: 27, r: 26, fill: '#1c1309' }, svg);
-    el('circle', { cx: 27, cy: 27, r: 24, fill: mau, opacity: dim ? 0.35 : tuyet ? 0.85 : 0.72 }, svg);
-    el('circle', { cx: 27, cy: 27, r: 25, fill: 'none', stroke: mau, 'stroke-width': 2 }, svg);
-    if (tuyet) el('circle', { cx: 27, cy: 27, r: 22.5, stroke: '#f1db9f', 'stroke-width': 1.6, fill: 'none' }, svg);
-    const d = GLYPH_D[glyph] || GLYPH_D.chem;
-    el('path', { d, fill: 'none', stroke: '#000', 'stroke-width': 7, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', opacity: 0.6, transform: 'translate(27 27) scale(.88) translate(-27 -27)' }, svg);
-    el('path', { d, fill: 'none', stroke: '#fff', 'stroke-width': 3.6, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', opacity: dim ? 0.6 : 1, transform: 'translate(27 27) scale(.88) translate(-27 -27)' }, svg);
-    return svg;
-  }
   function drawIcon(id, dim) {
     const ic = iconSpec(id); if (!ic) return el('svg', { viewBox: '0 0 54 54', 'aria-hidden': 'true' });
     return drawGlyphIcon(ic.mau, glyphOf(id), ic.tuyet, dim);
@@ -178,7 +162,7 @@ export function initHeSkill(hud, { toast = () => {} } = {}) {
 
   function paint() {
     sync(); fxReady();
-    const showBar = !!rt && !!LGT.world && !LGT.inHouse && !LGT.panelOpen && (LGT.world.mode === 'free'); bar.hidden = !showBar; if (!showBar) { const dk = document.getElementById('dock'); if (dk && dk._hsh) { dk._hsh = 0; dk.style.setProperty('--hs-h', '0px'); } return; }
+    const showBar = !!rt && !!LGT.world && !inLuyen() && !LGT.inHouse && !LGT.panelOpen && (LGT.world.mode === 'free'); bar.hidden = !showBar; if (!showBar) { const dk = document.getElementById('dock'); if (dk && dk._hsh) { dk._hsh = 0; dk.style.setProperty('--hs-h', '0px'); } return; }
     const dock = document.getElementById('dock');
     if (dock) { const hh = bar.hidden ? 0 : Math.ceil(bar.getBoundingClientRect().height); if (dock._hsh !== hh) { dock._hsh = hh; dock.style.setProperty('--hs-h', hh + 'px'); } }   // Phiên 184
     if (dock && !dock.hidden) { const r = dock.getBoundingClientRect(); if (r.width) { bar.style.right = Math.max(8, Math.round(innerWidth - r.right)) + 'px'; bar.style.bottom = Math.round(innerHeight - r.top + 8) + 'px'; } }

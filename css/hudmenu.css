@@ -22,6 +22,7 @@
 .hm-ic svg{width:17px;height:17px}
 /* Phiên 69: chữ nhãn dưới nút tròn — chỉ máy tính/tablet rộng; điện thoại giữ gọn (nhấn giữ để xem tên) */
 .hm-ic{position:relative}
+.hm-skillrow{display:flex;justify-content:flex-end}.hm-skill[hidden]{display:none}.hm-skill.hm-hot{border-color:#fff;animation:hmhot .6s ease-in-out infinite alternate}@keyframes hmhot{to{transform:scale(1.15);box-shadow:0 0 12px rgba(241,219,160,.9)}}@media (prefers-reduced-motion:reduce){.hm-skill.hm-hot{animation:none}}   /* Phiên 189 */
 .hm-ic-tx{display:none}
 @media (min-width:900px){
   .hm-icons{column-gap:14px;row-gap:18px;max-width:300px;padding-bottom:12px}

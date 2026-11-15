@@ -1,5 +1,5 @@
 // Khu LUYỆN CHIÊU (Phiên 150, mục 1 danh sách 14/11): từ bảng bồ đoàn (js/ui/khaiNgo.js) bấm "Luyện tập chiêu" → sang zone riêng "Võ đường luyện chiêu"
-// có 3 mộc nhân; bảng liệt kê TẤT CẢ chiêu của Hệ đó (ô 1, 2, 3, 4 hai Pháp Môn, tuyệt học), bấm là thử: không khóa cấp, hồi chiêu ngắn, không ảnh hưởng chỉ số thật.
+// có 3 mộc nhân; hàng NÚT TRÒN TO (Phiên 189, không còn khung bảng) cho TẤT CẢ chiêu của Hệ đó (ô 1, 2, 3, 4 hai Pháp Môn, tuyệt học), bấm là thử: không khóa cấp, hồi chiêu ngắn, không ảnh hưởng chỉ số thật.
 // Logic thuần: js/world/zoneLuyen.js, js/world/luyenChieu.js (có test). Cảnh + hiệu ứng: js/scene/luyen.js, js/scene/voDai.js (createFx). CHƯA nhìn bằng mắt. Mọi chữ qua textContent.
 // Phiên 163 (Bản 2 mục 5, 4/4): bấm chiêu → nhân vật quay về mộc nhân gần nhất và làm tư thế gồng → phát → thu (avatar.cast, js/world/chieuPose.js); luồng khí và nháy mộc nhân chờ đúng lúc khung "phát".
 import { LUYEN_ID, LUYEN_DUMMIES, returnSpawnName } from '../world/zoneLuyen.js';
@@ -8,7 +8,9 @@ import { castTimeline } from '../world/chieuPose.js';
 import { HE_COLOR, HE_SEAT_ID, heLabel } from '../world/heSeats.js';
 import { normHe } from '../world/elements.js';
 import { tierOf } from '../world/chieuFxPlan.js';
-import { trangThaiTuChieu } from '../world/chieuTrung.js';   // Phiên 174: trạng thái hiển thị từ hiệu ứng của chiêu
+import { trangThaiTuChieu } from '../world/chieuTrung.js';
+import { glyphOf } from '../world/chieuInfo.js';
+import { drawGlyphIcon } from './skillIcon.js';   // Phiên 189: hình chiêu dùng chung với nút chiêu ngoài bãi rừng   // Phiên 174: trạng thái hiển thị từ hiệu ứng của chiêu
 
 export async function initLuyenChieu({ toast = () => {} } = {}) {
   const LGT = window.LGT || (window.LGT = {}), Z = LGT.zones; if (!Z || !LGT.scene || !Z.get(LUYEN_ID)) return null;
@@ -23,28 +25,34 @@ export async function initLuyenChieu({ toast = () => {} } = {}) {
 
   const rt = createDemoRuntime(); let he = null, items = [], busy = false;
   const nowSec = () => performance.now() / 1000;
+  // Phiên 189 (mục 3): KHÔNG còn khung bảng — mỗi chiêu là một NÚT TRÒN TO có hình (glyphOf), tên dưới nút, số giây hồi chiêu giữa nút; cỡ theo --btn-k (nút ⚙ Cỡ nút). Thanh nhỏ ở giữa-trên: tên Hệ + "Về bồ đoàn".
   const st = document.createElement('style');
-  st.textContent = '#lc-panel{position:fixed;left:50%;transform:translateX(-50%);bottom:max(12px,env(safe-area-inset-bottom));z-index:13;width:min(96vw,520px);max-height:46vh;overflow:auto;padding:10px;border-radius:14px;background:rgba(30,22,12,.93);color:#f6e7c1;font:14px/1.35 system-ui,sans-serif;box-shadow:0 4px 18px rgba(0,0,0,.45)}#lc-panel[hidden]{display:none}'
-    + '#lc-panel h3{margin:0 0 2px;font-size:15px;text-align:center}#lc-panel .lc-sub{font-size:12px;opacity:.8;text-align:center;margin-bottom:8px}#lc-panel .lc-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}'
-    + '#lc-panel .lc-b{position:relative;text-align:left;min-height:52px;padding:6px 8px;border-radius:10px;border:1px solid #d9b25f;background:#4a3418;color:#f6e7c1;font:inherit;overflow:hidden}#lc-panel .lc-b b{display:block;font-size:13px}#lc-panel .lc-b small{display:block;font-size:11px;opacity:.8}'
-    + '#lc-panel .lc-b.lc-cd::after{content:"";position:absolute;left:0;right:0;bottom:0;height:calc(var(--cd,0)*100%);background:rgba(0,0,0,.5)}#lc-panel .lc-row{display:flex;gap:8px;justify-content:center;margin-top:8px}#lc-panel .lc-back{min-height:42px;padding:6px 14px;border-radius:10px;border:1px solid #d9b25f;background:#d9b25f;color:#2a1c08;font:inherit}';
+  st.textContent = '#lc-top{position:fixed;left:50%;transform:translateX(-50%);top:max(12px,env(safe-area-inset-top));z-index:13;display:flex;align-items:center;gap:10px;padding:6px 8px 6px 14px;border-radius:999px;background:rgba(30,22,12,.9);color:#f6e7c1;font:600 14px/1.2 system-ui,sans-serif;box-shadow:0 3px 12px rgba(0,0,0,.45);pointer-events:auto}#lc-top[hidden],#lc-pad[hidden]{display:none}'
+    + '#lc-top .lc-back{min-height:44px;padding:6px 16px;border-radius:999px;border:1px solid #d9b25f;background:#d9b25f;color:#2a1c08;font:700 14px system-ui,sans-serif;cursor:pointer;touch-action:manipulation}'
+    + '#lc-pad{--lc-s:calc(var(--btn-k,1) * clamp(72px,13vmin,108px));position:fixed;right:max(12px,env(safe-area-inset-right));bottom:max(200px,calc(env(safe-area-inset-bottom) + 190px));z-index:13;display:flex;flex-wrap:wrap-reverse;justify-content:flex-end;gap:10px 12px;max-width:calc(var(--lc-s) * 3 + 28px);pointer-events:auto;touch-action:manipulation}'
+    + '#lc-pad .lc-b{position:relative;width:var(--lc-s);padding:0;border:0;background:none;color:#f6e7c1;font:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;-webkit-tap-highlight-color:transparent;touch-action:manipulation}#lc-pad .lc-b:active .lc-ic{transform:scale(.92)}'
+    + '#lc-pad .lc-ic{position:relative;width:var(--lc-s);height:var(--lc-s);border-radius:50%;box-shadow:0 3px 10px rgba(0,0,0,.55);overflow:hidden;transition:transform .08s}#lc-pad .lc-ic svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}'
+    + '#lc-pad .lc-ic::after{content:"";position:absolute;left:0;right:0;bottom:0;height:calc(var(--cd,0)*100%);background:rgba(0,0,0,.55)}#lc-pad .lc-n{position:absolute;z-index:2;inset:0 0 auto 0;height:var(--lc-s);display:none;align-items:center;justify-content:center;font:800 calc(var(--lc-s)*.36)/1 system-ui,sans-serif;color:#fff;text-shadow:0 0 4px #000,0 1px 3px #000;pointer-events:none}#lc-pad .lc-b.lc-cd .lc-n{display:flex}'
+    + '#lc-pad .lc-t{max-width:calc(var(--lc-s) + 12px);padding:1px 6px;border-radius:8px;background:rgba(0,0,0,.7);font:600 calc(var(--lc-s)*.15)/1.25 system-ui,sans-serif;text-align:center;text-shadow:0 1px 2px #000}';
   document.head.appendChild(st);
-  const panel = document.createElement('section'); panel.id = 'lc-panel'; panel.hidden = true; panel.setAttribute('role', 'dialog'); panel.setAttribute('aria-label', 'Luyện chiêu');
-  const h3 = document.createElement('h3'), sub = document.createElement('div'), grid = document.createElement('div'), row = document.createElement('div'), back = document.createElement('button');
-  sub.className = 'lc-sub'; grid.className = 'lc-grid'; row.className = 'lc-row'; back.type = 'button'; back.className = 'lc-back'; back.textContent = 'Về bồ đoàn'; row.appendChild(back);
-  panel.append(h3, sub, grid, row); document.body.appendChild(panel);
-  const btns = [];
+  const top = document.createElement('section'), h3 = document.createElement('span'), back = document.createElement('button'), pad = document.createElement('div');
+  top.id = 'lc-top'; top.hidden = true; top.setAttribute('role', 'group'); top.setAttribute('aria-label', 'Luyện chiêu'); pad.id = 'lc-pad'; pad.hidden = true; pad.setAttribute('role', 'group'); pad.setAttribute('aria-label', 'Các chiêu để thử');
+  back.type = 'button'; back.className = 'lc-back'; back.textContent = 'Về bồ đoàn'; top.append(h3, back); document.body.append(top, pad);
+  const btns = [], cdn = [];
 
   function build() {
-    grid.textContent = ''; btns.length = 0; rt.reset();
+    pad.textContent = ''; btns.length = 0; cdn.length = 0; rt.reset();
     items = listForHe(he);
     h3.textContent = `Luyện chiêu · ${heLabel(he)}`;
-    sub.textContent = 'Thử mọi chiêu, không mất gì. Chọn Hệ ở bồ đoàn sau khi thử xong.';
     items.forEach((it, i) => {
-      const b = document.createElement('button'); b.type = 'button'; b.className = 'lc-b'; b.style.borderColor = '#' + (HE_COLOR[he] || 0xd9b25f).toString(16).padStart(6, '0');
-      const n = document.createElement('b'), l = document.createElement('small'), d = document.createElement('small');
-      n.textContent = it.skill.ten; l.textContent = `${it.label} (mở ở cấp ${it.cap})`; d.textContent = describeSkill(it.skill);
-      b.append(n, l, d); b.addEventListener('click', () => cast(i)); grid.appendChild(b); btns.push(b);
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'lc-b'; b.setAttribute('aria-label', `${it.skill.ten} — ${it.label}`);
+      const ic = document.createElement('span'), t = document.createElement('span'), n = document.createElement('span');
+      ic.className = 'lc-ic'; t.className = 'lc-t'; n.className = 'lc-n'; t.textContent = it.skill.ten;
+      ic.appendChild(drawGlyphIcon('#' + (HE_COLOR[he] || 0xd9b25f).toString(16).padStart(6, '0'), glyphOf(it.skill.id), it.skill.slot === 'tuyet', false)); ic.appendChild(n);
+      b.append(ic, t);
+      b.addEventListener('pointerdown', (e) => { if (e.pointerType === 'mouse' && e.button !== 0) return; e.preventDefault(); b._t = performance.now(); cast(i); });   // bấm xuống là ra chiêu ngay, không trễ
+      b.addEventListener('click', () => { if (b._t && performance.now() - b._t < 700) { b._t = 0; return; } cast(i); });   // Enter/Space (bàn phím)
+      pad.appendChild(b); btns.push(b); cdn.push(n);
     });
   }
 
@@ -90,7 +98,7 @@ export async function initLuyenChieu({ toast = () => {} } = {}) {
       const W = LGT.world; if (W.mode !== 'free') W.stand();
       he = hh; build();
       const r = await travelTo(LUYEN_ID, 'default'); if (!r.ok) { toast(r.reason, 2600); return r; }
-      toast('Võ đường luyện chiêu: thử các chiêu ở bảng phía dưới.', 3200); return r;
+      toast('Võ đường luyện chiêu: bấm các nút chiêu to bên phải để thử.', 3200); return r;
     } finally { busy = false; }
   }
   /** Về chánh điện, đứng sau bồ đoàn của Hệ vừa tập và ngồi lại để chọn Hệ. */
@@ -106,8 +114,8 @@ export async function initLuyenChieu({ toast = () => {} } = {}) {
   back.addEventListener('click', () => { leave(true); });
 
   setInterval(() => {
-    const inside = Z.current === LUYEN_ID; panel.hidden = !inside; if (!inside) return;
-    const t = nowSec(); items.forEach((it, i) => { const b = btns[i]; if (!b) return; const left = rt.left(it, t); b.classList.toggle('lc-cd', left > 0); b.style.setProperty('--cd', it.demoCd > 0 ? Math.min(1, left / it.demoCd).toFixed(3) : '0'); });
+    const inside = Z.current === LUYEN_ID; top.hidden = !inside; pad.hidden = !inside; if (!inside) return;
+    const t = nowSec(); items.forEach((it, i) => { const b = btns[i]; if (!b) return; const left = rt.left(it, t); b.classList.toggle('lc-cd', left > 0); b.style.setProperty('--cd', it.demoCd > 0 ? Math.min(1, left / it.demoCd).toFixed(3) : '0'); cdn[i].textContent = left > 0 ? String(Math.ceil(left)) : ''; });
   }, 150);
   // Phiên 187: nút chiêu của phái (js/ui/heSkill.js) dùng được ngay trong khu luyện tập: tung chiêu theo id, và hỏi hồi chiêu để vẽ số giây trên nút.
   const castById = (id) => { const i = items.findIndex((x) => x.skill.id === id); if (i < 0 || busy) return false; const it = items[i]; if (rt.left(it, nowSec()) > 0) { cast(i); return false; } cast(i); return true; };

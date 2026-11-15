@@ -41,6 +41,7 @@ import { BOTTOM_MENU, ACTIONS, TOP_ICONS, WALLET_PLACEHOLDER, HELP_TEXT, WELCOME
 const P = {
   scroll: '<path d="M8 4h10v13a3 3 0 0 0 3 3H8a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3z"/><path d="M10 9h6M10 13h6"/>',
   bag: '<path d="M6 8h12l1 12H5L6 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/>',
+  bolt: '<path d="M13 3L5 13h6l-1 8 8-10h-6l1-8z"/>',
   gourd: '<path fill="currentColor" fill-opacity=".5" d="M12 3.4c1.1 0 1.9.6 1.9 1.5 0 .6-.3 1-.7 1.3 1.5.6 2.6 1.9 2.6 3.5 0 .9-.3 1.7-.9 2.4 1.6.9 2.6 2.5 2.6 4.4 0 2.9-2.7 5.1-5.5 5.1s-5.5-2.2-5.5-5.1c0-1.9 1-3.5 2.6-4.4-.6-.7-.9-1.5-.9-2.4 0-1.6 1.1-2.9 2.6-3.5-.4-.3-.7-.7-.7-1.3 0-.9.8-1.5 1.9-1.5z"/><path d="M10.2 6.2h3.6M9.2 11.3c1.8 1 3.8 1 5.6 0"/>',
   shop: '<path d="M4 9l1-4h14l1 4M4 9v10h16V9"/><path d="M4 9a2.7 2.7 0 0 0 5.3 0 2.7 2.7 0 0 0 5.4 0A2.7 2.7 0 0 0 20 9"/><path d="M10 19v-5h4v5"/>',
   people: '<circle cx="9" cy="8" r="3"/><path d="M3 19a6 6 0 0 1 12 0"/><path d="M16 5.5a2.6 2.6 0 0 1 0 5M17.5 14a5 5 0 0 1 3.5 5"/>',
@@ -88,6 +89,7 @@ export function initHudMenu(hud) {
       </div>
       <div class="hm-icons" id="hm-icons"></div>
       <div class="hm-bagrow" id="hm-bagrow"></div>
+      <div class="hm-skillrow" id="hm-skillrow"></div>
     </div>
     <button type="button" class="hm-stand" id="hm-stand" hidden>Đứng dậy</button>
     <div class="hm-grid" id="hm-grid" role="group" aria-label="Hành động"></div>
@@ -193,6 +195,7 @@ export function initHudMenu(hud) {
     if (r.kind === 'quest') return quest.toggle();
     if (r.kind === 'rank') return LGT.rank ? LGT.rank.toggle() : toast('Bảng xếp hạng chưa sẵn sàng.', 2500);
     if (r.kind === 'bag') return (!LGT.inHouse && LGT.bag) ? LGT.bag.open() : LGT.furni ? LGT.furni.openBag() : toast('Túi đồ chưa sẵn sàng.', 2500);   // Phiên 62: ngoài nhà → xem đồ đang có
+    if (r.kind === 'kynang') return LGT.skill ? LGT.skill.open() : toast('Kỹ năng chưa sẵn sàng.', 2500);   // Phiên 189: nút Kỹ năng dời từ cụm phải-dưới lên dưới Túi hồ lô
     if (r.kind === 'shop') return LGT.furni ? LGT.furni.openShop() : toast('Cửa hàng chưa sẵn sàng.', 2500);
     if (r.kind === 'fish') return LGT.fishing ? LGT.fishing.open('cast') : toast('Câu cá chưa sẵn sàng.', 2500);
     if (r.kind === 'le') return den.openLe();
@@ -224,6 +227,9 @@ export function initHudMenu(hud) {
     const b = mkBtn(it, 'hm-ic', false);
     if (it.id === 'tui') { b.classList.add('hm-bag'); $('hm-bagrow').appendChild(b); } else $('hm-icons').appendChild(b);
   });
+  // Phiên 189: nút KỸ NĂNG (Khinh thân) dời từ cụm phải-dưới lên NGAY DƯỚI Túi hồ lô để trống chỗ thao tác đánh. Chỉ hiện khi đã mở Khinh thân; nhấp nháy khi đủ điều kiện luyện bậc kế.
+  const skillItem = { id: 'kynang', label: 'Kỹ năng', icon: 'bolt', status: 'ready', action: 'kynang' }, skillBtn = mkBtn(skillItem, 'hm-ic', false); skillBtn.classList.add('hm-skill'); skillBtn.hidden = true; $('hm-skillrow').appendChild(skillBtn);
+  setInterval(() => { const S = LGT.skill, show = !!S && S.level > 0, hot = show && !!S.canTrain; if (skillBtn.hidden === show) skillBtn.hidden = !show; skillBtn.classList.toggle('hm-hot', hot); }, 300);
   ACTIONS.forEach((it) => $('hm-grid').appendChild(mkBtn(it, 'hm-act', true)));
   BOTTOM_MENU.forEach((it) => $('hm-bar').appendChild(mkBtn(it, 'hm-mi', true)));
 

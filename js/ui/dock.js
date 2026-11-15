@@ -66,7 +66,7 @@ export function initDock(hud, { toast = () => {} } = {}) {
     const bds = LGT.board ? LGT.board.status() : null;
     const c = { swim: sws, board: bds, inHouse: !!LGT.inHouse, ply: ps ? { near: ps.near, holding: ps.holding, heldName: ps.heldName, left: ps.left } : null, npc: nps ? { near: nps.near } : null, head: hds, khi: khs ? { cd: khs.cd } : null, yq: ys ? { active: ys.active, ten: ys.ten, canThrow: ys.canThrow, stoneCd: ys.stoneCd, spearCd: ys.spearCd } : null, carry: cs ? { holding: cs.holding, heldName: cs.heldName, near: cs.near } : null, free: !!W && W.mode === 'free' && !LGT.panelOpen && !LGT.heldBy && !document.querySelector('.st-dlg:not([hidden])'), farm: fms ? { active: fms.active, ten: fms.ten, stoneCd: fms.stoneCd, spearCd: fms.spearCd, canAuto: fms.canAuto, auto: fms.auto, autoLeft: fms.autoLeft } : null, khinh: LGT.skill ? LGT.skill.level : 0, canTrain: !!(LGT.skill && LGT.skill.canTrain), water: !!fs.water && !LGT.inHouse, fish: fs };
     lastCtx = c;
-    const list = dockButtons(c).filter((b) => b.id !== 'tui'); for (const b of list) if (b.id === 'vantruot' && bds && bds.label) b.label = bds.label;   // Mục 1: nhãn nút cưỡi theo đồ đang cầm (Cưỡi thương / Cưỡi gậy / Lướt ván)
+    const list = dockButtons(c).filter((b) => b.id !== 'tui' && b.id !== 'kynang'); for (const b of list) if (b.id === 'vantruot' && bds && bds.label) b.label = bds.label;   // Mục 1: nhãn nút cưỡi theo đồ đang cầm (Cưỡi thương / Cưỡi gậy / Lướt ván)
     const next = list.map((b) => b.id).join(',');
     root.hidden = !list.length;
     if (next !== sig) {   // bộ nút đổi → tính lại ô, dựng nút còn thiếu, bỏ nút thừa (nút còn lại GIỮ NGUYÊN ô của nó)

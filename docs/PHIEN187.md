@@ -36,3 +36,12 @@ Khi Gp nói "tiếp tục" → Mục 2 (cài đặt cỡ nút). Cập nhật `PR
 5. **Đánh thường + combo:** bấm Đánh thường → LAO tới mục tiêu trong phạm vi ngắn; bấm tiếp → combo 3 đòn, 3 hoạt ảnh khác nhau; đòn 3 có sát thương LAN; quái dính lan thì ĐÁNH TRẢ.
 6. **Chiêu định hướng:** nhấn vào nút chiêu rồi LƯỚT ngón tay → chiêu bay theo hướng lướt (chiêu không định hướng thì tung như cũ).
 7. **Không có quái vẫn dùng được:** chiêu và đánh thường vẫn tung (hoạt ảnh/hiệu ứng) nhưng không gây sát thương ai. (Hiện `cast()` ở `heSkill.js` chặn bằng `LGT.farm.skillReady()`; nút Đánh thường ở `js/ui/farm.js`/`LGT.yq.stone`.)
+
+---
+# PHIÊN 189 — Mục 3/4 xong + dời nút Kỹ năng + bỏ nhãn Q/W/E
+- **Khu luyện tập = nút tròn to có hình** (`js/ui/luyenChieu.js`): bỏ `#lc-panel`; hàng nút `#lc-pad` (phải-dưới, 3 cột, cỡ `--btn-k × clamp(72px,13vmin,108px)`), tên dưới nút, số giây hồi chiêu giữa nút; thanh nhỏ `#lc-top` (tên Hệ + "Về bồ đoàn") giữa-trên. Bấm xuống là ra chiêu. Thanh chiêu ngoài (`#hs-bar`) tự ẩn trong khu luyện (`!inLuyen()` ở heSkill.js) để không trùng.
+- `js/ui/skillIcon.js` (mới): `GLYPH_D` + `drawGlyphIcon` tách từ heSkill.js dùng chung.
+- **Nút Kỹ năng (Khinh thân) dời** từ cụm phải-dưới lên `#hm-skillrow` NGAY DƯỚI Túi hồ lô (`js/ui/hudMenu.js`, `css/hudmenu.css`, `menuLogic.js` thêm action `kynang`); `dock.js` lọc bỏ 'kynang' (logic dock + test giữ nguyên). Chỉ hiện khi Khinh thân ≥ 1, nhấp nháy khi đủ điều kiện luyện.
+- **Bỏ chữ phím Q/W/E/T/Y** trên nút chiêu và nhãn phím ở cụm dock (phím tắt vẫn chạy).
+- `sw.js` = `dgt-v178`. `npm test` 1257/1257. CHƯA nhìn bằng mắt.
+- Việc kế: Mục 4 (rà điều khiển tổng thể) → rồi hàng đợi 5–7 ở trên.

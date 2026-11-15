@@ -78,7 +78,7 @@ test('Phiên 181 + 186: nút Túi hồ lô ở cụm tròn phải-trên, nằm n
   assert.deepEqual(pressResult(it), { kind: 'bag' });
   const { readFileSync } = await import('node:fs');
   const d = readFileSync(new URL('../js/ui/dock.js', import.meta.url), 'utf8');
-  assert.match(d, /dockButtons\(c\)\.filter\(\(b\) => b\.id !== 'tui'\)/, 'dock không vẽ nút tui');
+  assert.match(d, /dockButtons\(c\)\.filter\(\(b\) => b\.id !== 'tui' && b\.id !== 'kynang'\)/, 'dock không vẽ nút tui, kynang');
   assert.match(d, /e\.code === 'KeyB'/, 'phím B vẫn mở túi');
   const h = readFileSync(new URL('../js/ui/hudMenu.js', import.meta.url), 'utf8');
   assert.match(h, /hm-bagrow/, 'hudMenu đặt nút túi vào hàng riêng dưới cụm');
