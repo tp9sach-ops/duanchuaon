@@ -2,7 +2,8 @@
 // Logic ở js/world/skills.js (có test). File này KHÔNG sửa world.js: nó bọc avatar.update để cộng độ cao nhảy vào vị trí nhân vật sau khi world.js đặt xong mỗi khung hình
 // (world.js đặt lại vị trí từ đầu mỗi khung nên không cộng dồn). Đổi tên/áo/kiểu đầu dựng lại nhân vật → bộ đếm 500 ms tự bọc lại.
 import { khinhBac, loadKhinh, jumpHeightAt, canJump, createJump, trainPlan, leapPlan, glidePlan, flyPlan, nextAction, LEAP_CFG, GLIDE_CFG, KHINH_YEU_CAU, KHINH_TEN, MAX_BAC } from '../world/skills.js';
-import { flySpeed, flyBrake, steerDir, cushionH } from '../world/glide.js';   // Phiên 196: bay lướt
+import { flySpeed, flyBrake, steerDir, cushionH, boostSpeed, FLY_CFG } from '../world/glide.js';   // Phiên 196: bay lướt; Phiên 197: đạp gió
+import { CHARGE_CFG, chargeLevel, chargeFrac, ringScale, isFull, crouchPose } from '../world/charge.js';   // Phiên 197: gồng lực nhảy
 import { landing } from '../world/strength.js';
 import { levelOf } from '../world/quests.js';
 
@@ -27,7 +28,8 @@ export function initSkill(hud, { toast = () => {}, getSen = () => 0, spendSen = 
     st.textContent = '#jump-btn{position:fixed;right:max(18px,env(safe-area-inset-right));bottom:max(96px,calc(env(safe-area-inset-bottom) + 80px));width:64px;height:64px;border-radius:50%;z-index:9;touch-action:none;border:1px solid rgba(217,178,95,.7);background:rgba(6,7,13,.45);color:#f1dba0;font-size:12px;letter-spacing:.06em;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}#jump-btn[hidden]{display:none}.panel-open #jump-btn{display:none}';
     document.head.appendChild(st);
     btn = document.createElement('button'); btn.id = 'jump-btn'; btn.type = 'button'; btn.textContent = 'Nhảy'; btn.hidden = true; btn.setAttribute('aria-label', 'Nhảy (Khinh thân)');
-    btn.addEventListener('pointerdown', (e) => { e.preventDefault(); doJump(); });
+    btn.addEventListener('pointerdown', (e) => { e.preventDefault(); try { btn.setPointerCapture(e.pointerId); } catch (_) { /* bỏ qua */ } press(); });
+    ['pointerup', 'pointercancel', 'lostpointercapture'].forEach((ev) => btn.addEventListener(ev, release));
     document.body.appendChild(btn);
   }
 
@@ -35,18 +37,20 @@ export function initSkill(hud, { toast = () => {}, getSen = () => 0, spendSen = 
    * Phiên 196: bay lướt. Xung đẩy đầu theo hướng nhìn (cần/phím bẻ hướng được), yếu dần về mức lướt; rơi chậm; sát đất có đoạn đệm ~0,13 s phanh bớt rồi đứng thẳng lại.
    * Độ cao do `jump` (createJump.glide) lo; hướng + tốc độ ngang + chúi thân do world.fly gọi hàm bên dưới mỗi khung hình. Hết bay khi chạm đất.
    */
+  let flight = null;   // Phiên 197: chuyến bay đang diễn ra { boost() } — bấm Nhảy thêm giữa không trung = đạp gió theo hướng đang bay, lặp đến khi chạm đất
   function startFlight(lv, indoor) {
-    const W = LGT.world, plan = flyPlan(lv, indoor);
+    const W = LGT.world, plan = flyPlan(lv, indoor, jump.apex);   // apex = độ cao thật của cú nhảy (đã gồng) → hạ chậm đúng theo độ cao
     if (!W || !plan || typeof W.fly !== 'function' || W.flying || jump.gliding || !jump.air) return false;
-    const ry0 = Number.isFinite(W.facing) ? W.facing : 0; let dir = { x: Math.sin(ry0), z: Math.cos(ry0) }, t = 0, tilt = 0;
+    const ry0 = Number.isFinite(W.facing) ? W.facing : 0; let dir = { x: Math.sin(ry0), z: Math.cos(ry0) }, t = 0, tb = Infinity, tilt = 0;   // tb = giây kể từ lần đạp gió gần nhất (Infinity = chưa đạp)
     if (!jump.glide(plan.fall)) return false;
     const ok = W.fly((dt, inp) => {
-      if (!jump.air) return null;   // chạm đất → hết bay
-      t += dt; dir = steerDir(dir, inp, plan.turn, dt);
+      if (!jump.air) { flight = null; return null; }   // chạm đất → hết bay
+      t += dt; tb += dt; dir = steerDir(dir, inp, plan.turn, dt);
       const hc = cushionH(plan.fall);
       tilt += ((jump.y < hc ? 0 : plan.tilt) - tilt) * Math.min(1, (jump.y < hc ? 16 : 7) * dt);   // sát đất: đứng thẳng lại nhanh hơn (đệm), không giật khi chạm
-      return { dx: dir.x, dz: dir.z, speed: flySpeed(plan, t) * flyBrake(jump.y, plan.fall), tilt, state: 'glide' };
+      return { dx: dir.x, dz: dir.z, speed: Math.max(flySpeed(plan, t), boostSpeed(plan, tb)) * flyBrake(jump.y, plan.fall), tilt, state: 'glide' };
     });
+    if (ok) flight = { boost() { if (tb < FLY_CFG.boostGap) return true; tb = 0; if (LGT.sfx) LGT.sfx.play('nhay'); return true; } };   // bấm dồn dưới 0,35 s: nuốt lần bấm, không đạp
     if (!ok) return false;   // hiếm: world từ chối (đang bị khiêng...) → chỉ rơi chậm tại chỗ, không bay ngang
     glideQ = false; glideCd = GLIDE_CFG.cd;   // không tự lướt né thêm khi chạm đất
     try { const v = LGT.farmCombat && LGT.farmCombat.vitals; if (v && v.guard) v.guard(plan.guard); } catch (_) { /* bỏ qua */ }
@@ -55,7 +59,7 @@ export function initSkill(hud, { toast = () => {}, getSen = () => 0, spendSen = 
   }
   let lastAirAt = -1e9;   // Phiên 90: lần cuối còn trên không (cho nút Thiết đầu công)
   let speed = 0, glideCd = 0, glideQ = false, lastP = null;   // Phiên 139: tốc độ đi (m/s), hồi chiêu lướt, lướt đang chờ, vị trí khung trước
-  function doJump() {
+  function doJump(frac = 0.6) {   // frac = tỉ lệ gồng (0,35..1) của cú nhảy; gọi không tham số (Enter trên nút, thanh nhanh) = nhảy vừa 60%
     const W = LGT.world; if (!W) return false;
     if (LGT.swim && LGT.swim.active) return false;   // đang bơi/lặn: không nhảy
     if (LGT.heldBy) return false;   // Phiên 91: đang bị người khác khiêng trên vai
@@ -68,18 +72,49 @@ export function initSkill(hud, { toast = () => {}, getSen = () => 0, spendSen = 
       if (W.dashing && glideQ) return false; glideQ = true; return true;   // lướt ngay khi hết cú bật (xem wrap)
     }
     if (act === 'none') return false;
-    const ok = jump.start(jumpHeightAt(lv, indoor));
-    if (ok && act === 'leap') { const p = leapPlan(lv, indoor), pos = W.pos, ry = Number.isFinite(W.facing) ? W.facing : 0; if (p && !W.dashing) { const l = landing(pos.x, pos.z, ry, p.dist); if (l.dist > 0.3 && W.dash({ x: l.x, z: l.z }, p.dur, { tilt: false }) && glideCd <= 0) glideQ = true; } }   // Phiên 151: bật tới trước xong thì TỰ lướt thêm một đoạn theo hướng đi (không cần bấm Nhảy lần nữa)
+    const fr = Math.max(CHARGE_CFG.minFrac, Math.min(1, Number.isFinite(+frac) ? +frac : 0.6)), ok = jump.start(jumpHeightAt(lv, indoor) * fr);
+    if (ok && act === 'leap') { const p = leapPlan(lv, indoor, fr), pos = W.pos, ry = Number.isFinite(W.facing) ? W.facing : 0; if (p && !W.dashing) { const l = landing(pos.x, pos.z, ry, p.dist); if (l.dist > 0.3 && W.dash({ x: l.x, z: l.z }, p.dur, { tilt: false }) && glideCd <= 0) glideQ = true; } }   // Phiên 151: bật tới trước xong thì TỰ lướt thêm một đoạn theo hướng đi (không cần bấm Nhảy lần nữa)
     if (ok) { if (LGT.sfx) LGT.sfx.play('nhay'); }
     if (ok && LGT.act) LGT.act('khinhthan');   // Phiên 52: nhiệm vụ “Thử Khinh thân” (3 lần nhảy)
     return ok;
+  }
+  // ---- Phiên 197: GỒNG LỰC. Ấn GIỮ nút Nhảy / phím Space → nhân vật đứng gồng nhún, vòng tròn nhỏ trong nút nở dần; THẢ ra mới bay lên (càng lâu càng cao, đầy vòng = tối đa bậc).
+  // Đang trên không: bấm Nhảy ngay (không gồng) → lần 1 bay lướt, các lần sau đạp gió theo hướng đang bay cho tới khi chạm đất.
+  let chargeT = -1;   // giây đã ấn giữ; −1 = không gồng
+  const setRing = (c, on) => { try { const b = document.body; b.style.setProperty('--jump-ring', String(on ? ringScale(c) : 0)); b.classList.toggle('jump-charging', on); b.classList.toggle('jump-full', on && isFull(c)); } catch (_) { /* bỏ qua */ } };
+  function cancelCharge() {
+    if (chargeT < 0) return false;
+    chargeT = -1; LGT.jumpCharging = false; setRing(0, false);
+    try { const av = LGT.world && LGT.world.avatar; if (av && av.group) av.group.scale.set(1, 1, 1); } catch (_) { /* bỏ qua */ }
+    return true;
+  }
+  function press() {
+    const W = LGT.world; if (!W || chargeT >= 0) return false;
+    if (LGT.swim && LGT.swim.active || LGT.heldBy) return false;
+    const lv = level();
+    if (!canJump({ level: lv, mode: W.mode, panelOpen: !!LGT.panelOpen, dialogOpen: dialogOpen() })) return false;
+    if (jump.air && flight) return flight.boost();   // đang bay: đạp gió
+    if (jump.air) return doJump(1);                  // trên không, chưa bay: bắt đầu bay lướt
+    const indoor = !!LGT.inHouse, sinceAir = (performance.now() - lastAirAt) / 1000;
+    const act = nextAction({ lv, air: false, sinceAir, moving: speed > LEAP_CFG.minSpeed, glideCd, indoor });
+    if (act === 'glide') return doJump(1);           // vừa chạm đất (≤ 0,6 s): lướt né ngắn như Phiên 139, không gồng
+    if (act === 'none') return false;
+    chargeT = 0; setRing(0, true); return true;      // đứng/đi: bắt đầu gồng (thả ra mới nhảy)
+  }
+  function release() {
+    if (chargeT < 0) return false;
+    const c = chargeLevel(chargeT); cancelCharge();
+    return doJump(chargeFrac(c));
   }
   addEventListener('keydown', (e) => {
     if (e.code !== 'Space' || e.repeat || isEditable(e.target) || e.ctrlKey || e.metaKey || e.altKey) return;
     if (dialogOpen() || LGT.panelOpen) return;   // Space đang dùng để lật trang hội thoại
     if (e.target && e.target.tagName === 'BUTTON') return;   // Space đang bấm một nút
-    if (level() > 0) { e.preventDefault(); doJump(); }
+    if (level() > 0) { e.preventDefault(); press(); }
   });
+  addEventListener('keyup', (e) => { if (e.code === 'Space') release(); });
+  addEventListener('blur', cancelCharge);   // rời cửa sổ giữa lúc gồng → hủy, không nhảy bất ngờ
+  document.addEventListener('visibilitychange', () => { if (document.hidden) cancelCharge(); });
 
   // ---- bọc avatar.update (mỗi nhân vật chỉ bọc một lần)
   function wrap() {
@@ -88,6 +123,13 @@ export function initSkill(hud, { toast = () => {}, getSen = () => 0, spendSen = 
     av.update = (dt) => {
       orig(dt); const y = jump.step(dt); if (y > 0 && av.group) av.group.position.y += y; if (jump.air) lastAirAt = performance.now();
       const W = LGT.world, p = W && W.pos; glideCd = Math.max(0, glideCd - Math.max(0, Math.min(0.25, dt)));
+      if (W && W.setAirY) W.setAirY(y);   // Phiên 197: camera cộng độ cao nhảy → bay cao vẫn nằm giữa khung hình
+      if (flight && W && !W.flying) flight = null;
+      if (chargeT >= 0 && av.group) {   // đang gồng: nhún thấp người, đứng yên sau 0,15 s, vòng tròn nở
+        const d = Math.max(0, Math.min(0.25, dt)); chargeT += d;
+        if (chargeT > CHARGE_CFG.maxHold || !canJump({ level: level(), mode: W ? W.mode : 'free', panelOpen: !!LGT.panelOpen, dialogOpen: dialogOpen() }) || jump.air) cancelCharge();
+        else { const c = chargeLevel(chargeT), cp = crouchPose(c, chargeT); LGT.jumpCharging = chargeT > 0.15; setRing(c, true); av.group.scale.set(cp.sxz, cp.sy, cp.sxz); av.group.position.y += cp.dy; }
+      }
       if (p && lastP && dt > 1e-4 && !W.dashing && !W.flying) speed = Math.hypot(p.x - lastP.x, p.z - lastP.z) / dt; else if (W && (W.dashing || W.flying)) speed = 0;   // đang lao/lướt không tính là "đang đi"
       lastP = p ? { x: p.x, z: p.z } : null;
       if (glideQ && W && !W.dashing) {   // Phiên 139: lướt né một đoạn + bất tử ngắn (hết cú bật tới trước mới lướt)
@@ -164,6 +206,6 @@ export function initSkill(hud, { toast = () => {}, getSen = () => 0, spendSen = 
   addEventListener('keydown', (e) => { if (e.code === 'Escape' && !box.hidden) { closeBox(); e.stopPropagation(); } }, true);
   setInterval(paintChip, 700); paintChip();
 
-  LGT.skill = { get air() { return jump.air; }, get gliding() { return jump.gliding; }, get sinceAir() { return jump.air ? 0 : (performance.now() - lastAirAt) / 1000; }, get level() { return level(); }, get canTrain() { return !!plan().ok; }, jump: doJump, open: openBox, close: closeBox, train };
+  LGT.skill = { get air() { return jump.air; }, get gliding() { return jump.gliding; }, get sinceAir() { return jump.air ? 0 : (performance.now() - lastAirAt) / 1000; }, get level() { return level(); }, get canTrain() { return !!plan().ok; }, jump: doJump, press, release, get charging() { return chargeT >= 0; }, open: openBox, close: closeBox, train };
   return LGT.skill;
 }
