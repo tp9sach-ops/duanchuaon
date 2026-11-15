@@ -13,7 +13,7 @@ import { levelOf } from '../world/quests.js';
 import { loadHe } from '../world/khaiNgo.js';
 import { KHAI_NGO } from '../data/skillCfg.js';
 import { createBuffs, buffNote } from '../world/skillBuff.js';   // Phiên 184: hiệu lực chiêu hỗ trợ
-import { infoOf, infoRows, iconSpec } from '../world/chieuInfo.js';   // Phiên 162: biểu tượng + bảng giữ-để-xem
+import { infoOf, infoRows, iconSpec, glyphOf, HE_COLOR } from '../world/chieuInfo.js';   // Phiên 162: biểu tượng + bảng giữ-để-xem
 import { tierOf } from '../world/chieuFxPlan.js';   // Phiên 185: bậc máy (cao / vừa / yếu) cho hiệu ứng 3D
 
 // Phiên 180: đủ 5 ô — 1, 2, 3 (Q, W, E) + ô 4 = Pháp Môn (T, mở cấp 30, chọn 1 trong 2 Pháp Môn của Hệ) + Tuyệt Học (Y, mở cấp 60, tiêu 5 Tâm Ấn).
@@ -48,11 +48,11 @@ export function initHeSkill(hud, { toast = () => {} } = {}) {
   }
 
   const st = document.createElement('style');
-  st.textContent = '#hs-bar{position:fixed;z-index:9;display:flex;flex-wrap:wrap-reverse;justify-content:flex-end;gap:8px;max-width:calc(var(--hs-s,60px)*3 + 16px);right:12px;bottom:200px;touch-action:none;pointer-events:auto}#hs-pm{pointer-events:auto;position:fixed;z-index:13;left:50%;top:50%;transform:translate(-50%,-50%);width:min(340px,90vw);padding:14px;border-radius:14px;border:1px solid rgba(241,219,159,.8);background:rgba(28,19,9,.97);color:#f6e7c1;font:13px/1.4 system-ui,sans-serif;box-shadow:0 10px 40px rgba(0,0,0,.6)}#hs-pm[hidden]{display:none}#hs-pm h4{margin:0 0 8px;font-size:15px}#hs-pm button{display:block;width:100%;margin:6px 0 0;padding:10px;border-radius:10px;border:1px solid rgba(241,219,159,.6);background:rgba(60,42,20,.9);color:#fff;text-align:left;font:inherit;cursor:pointer}#hs-pm button small{display:block;opacity:.75}#hs-pm .x{text-align:center;background:transparent}#hs-bar[hidden]{display:none}'
-    + '.hs-b{pointer-events:auto;touch-action:manipulation;-webkit-tap-highlight-color:transparent;box-shadow:0 3px 10px rgba(0,0,0,.55);position:relative;width:var(--hs-s,60px);height:var(--hs-s,60px);border-radius:50%;border:2px solid rgba(241,219,159,.85);background:rgba(22,15,8,.96);color:#f6e7c1;font:600 10px/1.15 system-ui,sans-serif;padding:2px;cursor:pointer;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}'
-    + '.hs-b .hs-k{position:absolute;top:1px;right:6px;font-size:9px;opacity:.7}.hs-b.lock,.hs-b.soon{opacity:.55}.hs-b.hs-cd::after{content:"";position:absolute;left:0;right:0;bottom:0;height:calc(var(--cd,0)*100%);background:rgba(0,0,0,.55)}'
-    + '.hs-b svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}.hs-b .hs-n{position:absolute;z-index:1;left:50%;bottom:3px;transform:translateX(-50%);max-width:94%;padding:0 4px;border-radius:7px;background:rgba(0,0,0,.62);font-size:9px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 2px #000}.hs-b.hs-empty .hs-n{position:static;transform:none;background:none;font-size:11px;white-space:normal;max-width:none}'
-    + '.hs-b .hs-lv{position:absolute;z-index:2;left:7px;top:1px;font-size:9px;font-weight:700;color:#ffe08a;text-shadow:0 1px 2px #000;pointer-events:none}'
+  st.textContent = '#hs-bar{--hs-s:calc(var(--btn-k,1) * clamp(64px,11vmin,92px));position:fixed;z-index:9;display:flex;flex-wrap:wrap-reverse;justify-content:flex-end;gap:8px;max-width:calc(var(--hs-s) * 3 + 24px);gap:12px;right:12px;bottom:200px;touch-action:none;pointer-events:auto}#hs-pm{pointer-events:auto;position:fixed;z-index:13;left:50%;top:50%;transform:translate(-50%,-50%);width:min(340px,90vw);padding:14px;border-radius:14px;border:1px solid rgba(241,219,159,.8);background:rgba(28,19,9,.97);color:#f6e7c1;font:13px/1.4 system-ui,sans-serif;box-shadow:0 10px 40px rgba(0,0,0,.6)}#hs-pm[hidden]{display:none}#hs-pm h4{margin:0 0 8px;font-size:15px}#hs-pm button{display:block;width:100%;margin:6px 0 0;padding:10px;border-radius:10px;border:1px solid rgba(241,219,159,.6);background:rgba(60,42,20,.9);color:#fff;text-align:left;font:inherit;cursor:pointer}#hs-pm button small{display:block;opacity:.75}#hs-pm .x{text-align:center;background:transparent}#hs-bar[hidden]{display:none}'
+    + '.hs-b{pointer-events:auto;touch-action:manipulation;-webkit-tap-highlight-color:transparent;box-shadow:0 3px 10px rgba(0,0,0,.55);position:relative;width:var(--hs-s);height:var(--hs-s);border-radius:50%;border:3px solid rgba(241,219,159,.85);background:rgba(22,15,8,.96);color:#f6e7c1;font:600 11px/1.15 system-ui,sans-serif;padding:2px;cursor:pointer;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}'
+    + '.hs-b .hs-k{position:absolute;top:2px;right:7px;font-size:10px;opacity:.75;text-shadow:0 1px 2px #000}.hs-b.lock,.hs-b.soon{opacity:.6}.hs-b:active{transform:scale(.92)}.hs-b .hs-cdn{position:absolute;z-index:3;inset:0;display:none;align-items:center;justify-content:center;font:800 calc(var(--hs-s)*.36)/1 system-ui,sans-serif;color:#fff;text-shadow:0 0 4px #000,0 1px 3px #000;pointer-events:none}.hs-b.hs-cd .hs-cdn{display:flex}.hs-b .hs-lock{position:absolute;z-index:3;right:2px;bottom:calc(var(--hs-s)*.28);font-size:calc(var(--hs-s)*.22);line-height:1;filter:drop-shadow(0 1px 2px #000);pointer-events:none}.hs-b.hs-cd::after{content:"";position:absolute;left:0;right:0;bottom:0;height:calc(var(--cd,0)*100%);background:rgba(0,0,0,.55)}'
+    + '.hs-b svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}.hs-b .hs-n{position:absolute;z-index:1;left:50%;bottom:4px;transform:translateX(-50%);max-width:96%;padding:0 5px;border-radius:8px;background:rgba(0,0,0,.7);font-size:calc(var(--hs-s)*.15);line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 2px #000}.hs-b.hs-empty .hs-n{position:static;transform:none;background:none;font-size:11px;white-space:normal;max-width:none}'
+    + '.hs-b .hs-lv{position:absolute;z-index:2;left:8px;top:2px;font-size:calc(var(--hs-s)*.16);font-weight:700;color:#ffe08a;text-shadow:0 1px 2px #000;pointer-events:none}'
     + '#hs-tip{position:fixed;z-index:12;max-width:min(300px,86vw);padding:9px 11px;border-radius:10px;border:1px solid rgba(241,219,159,.8);background:rgba(28,19,9,.96);color:#f6e7c1;font:12px/1.4 system-ui,sans-serif;pointer-events:none;box-shadow:0 4px 18px rgba(0,0,0,.55)}#hs-tip[hidden]{display:none}#hs-tip h4{margin:0 0 4px;font-size:14px}#hs-tip .r{margin:2px 0}#hs-tip .r b{color:#f1db9f;font-weight:600}'
     + '.hs-b.hs-on{box-shadow:0 0 0 3px rgba(255,224,138,.95),0 0 16px rgba(255,224,138,.75)}.hs-b.hs-no{animation:hsno .42s}@keyframes hsno{0%,100%{transform:translateX(0)}20%{transform:translateX(-5px)}40%{transform:translateX(5px)}60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}@media (prefers-reduced-motion:reduce){.hs-b.hs-no{animation:none}}'
     + '.hs-b.he-kim{border-color:#dfe3e8}.hs-b.he-moc{border-color:#3f9b4a}.hs-b.he-thuy{border-color:#2f6fd0}.hs-b.he-hoa{border-color:#d9432b}.hs-b.he-tho{border-color:#c9a227}';
@@ -60,20 +60,27 @@ export function initHeSkill(hud, { toast = () => {} } = {}) {
   const bar = document.createElement('div'); bar.id = 'hs-bar'; bar.hidden = true; bar.setAttribute('role', 'group'); bar.setAttribute('aria-label', 'Chiêu của phái'); hud.appendChild(bar);
   // Biểu tượng chiêu: nền màu Hệ + hoa văn theo vùng báo + chữ cái; toàn bộ vẽ bằng SVG (createElementNS), không innerHTML.
   const el = (n, a, p) => { const e = document.createElementNS(SVGNS, n); for (const k in a) e.setAttribute(k, a[k]); if (p) p.appendChild(e); return e; };
-  function drawIcon(id) {
-    const ic = iconSpec(id), svg = el('svg', { viewBox: '0 0 54 54', 'aria-hidden': 'true' }); if (!ic) return svg;
+  // Phiên 187: HÌNH thật cho mỗi chiêu (khiên, hồi máu, ẩn thân, tia, lao, chém, vùng...) theo glyphOf(id) — không còn chỉ là hai chữ cái. Vẽ hai lớp (viền đen dày + nét trắng) để thấy rõ trên mọi nền.
+  const GLYPH_D = {
+    hoi: 'M27 12V42M12 27H42', an: 'M15 41V26a12 12 0 0 1 24 0V41l-6-4-6 4-6-4ZM22 26h.1M32 26h.1', khien: 'M27 10L41 16V28C41 37 34 42 27 45C20 42 13 37 13 28V16Z',
+    toc: 'M12 14L25 27L12 40M26 14L39 27L26 40', khoa: 'M27 9V45M11 18L43 36M11 36L43 18', lao: 'M9 27H41M31 16L43 27L31 38M9 19H21M9 35H21',
+    tia: 'M10 44L40 14M31 12H42V23M14 30L24 40', vung: 'M27 21a6 6 0 1 0 .1 0ZM27 12a15 15 0 1 0 .1 0Z', chem: 'M12 43Q14 18 43 12M20 43Q23 26 43 20M9 36Q11 25 25 21',
+    chon: 'M12 19H42M12 35H42M19 12L12 19L19 26M35 28L42 35L35 42',
+  };
+  function drawGlyphIcon(mau, glyph, tuyet, dim) {
+    const svg = el('svg', { viewBox: '0 0 54 54', 'aria-hidden': 'true' });
     el('circle', { cx: 27, cy: 27, r: 26, fill: '#1c1309' }, svg);
-    el('circle', { cx: 27, cy: 27, r: 24, fill: ic.mau, opacity: ic.tuyet ? 0.75 : 0.55 }, svg);
-    el('circle', { cx: 27, cy: 27, r: 25, fill: 'none', stroke: ic.mau, 'stroke-width': 2 }, svg);
-    const g = el('g', { stroke: '#fff', 'stroke-width': 2.2, fill: 'none', opacity: 0.5 }, svg);
-    if (ic.van === 'vachCheo') { el('path', { d: 'M10 40L40 10M18 46L46 18M6 30L30 6' }, g); }
-    else if (ic.van === 'hoaVanLa') { el('path', { d: 'M27 8C40 16 40 34 27 44C14 34 14 16 27 8ZM27 12V42' }, g); }
-    else if (ic.van === 'gonSong') { el('path', { d: 'M6 20q5-6 10 0t10 0t10 0t10 0M6 30q5-6 10 0t10 0t10 0t10 0' }, g); }
-    else if (ic.van === 'oVuong') { el('path', { d: 'M12 12h30v30H12ZM12 27h30M27 12v30' }, g); }
-    else { el('path', { d: 'M27 6L33 24L50 27L33 30L27 48L21 30L4 27L21 24Z' }, g); }
-    if (ic.tuyet) el('circle', { cx: 27, cy: 27, r: 24, stroke: '#f1db9f', 'stroke-width': 2, fill: 'none' }, svg);
-    const t = el('text', { x: 27, y: 29, 'text-anchor': 'middle', 'font-size': 23, 'font-weight': 800, fill: '#fff', stroke: '#000', 'stroke-width': 1 }, svg); t.textContent = ic.chu;
+    el('circle', { cx: 27, cy: 27, r: 24, fill: mau, opacity: dim ? 0.35 : tuyet ? 0.85 : 0.72 }, svg);
+    el('circle', { cx: 27, cy: 27, r: 25, fill: 'none', stroke: mau, 'stroke-width': 2 }, svg);
+    if (tuyet) el('circle', { cx: 27, cy: 27, r: 22.5, stroke: '#f1db9f', 'stroke-width': 1.6, fill: 'none' }, svg);
+    const d = GLYPH_D[glyph] || GLYPH_D.chem;
+    el('path', { d, fill: 'none', stroke: '#000', 'stroke-width': 7, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', opacity: 0.6, transform: 'translate(27 27) scale(.88) translate(-27 -27)' }, svg);
+    el('path', { d, fill: 'none', stroke: '#fff', 'stroke-width': 3.6, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', opacity: dim ? 0.6 : 1, transform: 'translate(27 27) scale(.88) translate(-27 -27)' }, svg);
     return svg;
+  }
+  function drawIcon(id, dim) {
+    const ic = iconSpec(id); if (!ic) return el('svg', { viewBox: '0 0 54 54', 'aria-hidden': 'true' });
+    return drawGlyphIcon(ic.mau, glyphOf(id), ic.tuyet, dim);
   }
   const tip = document.createElement('div'); tip.id = 'hs-tip'; tip.hidden = true; tip.setAttribute('role', 'tooltip'); hud.appendChild(tip);
   // Chọn Pháp Môn (ô 4): hiện khi chạm ô 4 đã mở mà chưa chọn. Lưu ở localStorage (lgt.phapmon).
@@ -102,14 +109,14 @@ export function initHeSkill(hud, { toast = () => {} } = {}) {
   const btns = {};
   for (const s of SLOTS) {
     const b = document.createElement('button'); b.type = 'button'; b.dataset.slot = String(s);
-    const t = document.createElement('span'), k = document.createElement('span'), lvEl = document.createElement('span'); k.className = 'hs-k'; k.textContent = KEYTXT[s]; t.className = 'hs-n'; lvEl.className = 'hs-lv';
-    b.append(t, k, lvEl); let timer = 0, held = false, icoId = '';
+    const t = document.createElement('span'), k = document.createElement('span'), lvEl = document.createElement('span'), cdn = document.createElement('span'), lk = document.createElement('span'); cdn.className = 'hs-cdn'; lk.className = 'hs-lock'; lk.hidden = true; lk.textContent = '🔒'; k.className = 'hs-k'; k.textContent = KEYTXT[s]; t.className = 'hs-n'; lvEl.className = 'hs-lv';
+    b.append(t, k, lvEl, cdn, lk); let timer = 0, held = false, icoId = '';
     const stop = () => { clearTimeout(timer); timer = 0; if (held) hideTip(); };
     b.addEventListener('pointerdown', (e) => { if (e.pointerType === 'mouse' && e.button !== 0) return; e.preventDefault(); try { b.setPointerCapture(e.pointerId); } catch (_) { /* bỏ qua */ } held = false; clearTimeout(timer); timer = setTimeout(() => { timer = 0; held = showTip(s); }, HOLD_MS); });   // Phiên 178: giữ con trỏ trên nút → ngón hơi trượt (đang vừa chạy vừa bấm) cũng không bị hủy cú bấm
     b.addEventListener('pointerup', () => { const was = held, pend = !!timer; stop(); if (!was && pend) cast(s); held = false; });
     b.addEventListener('pointercancel', () => { stop(); held = false; });   // Phiên 178: bỏ pointerleave (đã giữ con trỏ bằng setPointerCapture nên nhả tay ở đâu cũng về nút này)
     b.addEventListener('contextmenu', (e) => e.preventDefault());
-    bar.appendChild(b); btns[s] = { b, t, lv: lvEl, get ico() { return icoId; }, set ico(v) { icoId = v; } };
+    bar.appendChild(b); btns[s] = { b, t, lv: lvEl, cdn, lk, get ico() { return icoId; }, set ico(v) { icoId = v; } };
   }
 
   // Phiên 185: HIỆU ỨNG 3D (js/scene/chieuFx.js) cho chiêu đánh quái thật. Nạp lười MỘT lần khi LGT.scene sẵn sàng (paint() gọi mỗi 150 ms); lỗi nạp/dựng thì cfx = null và chiêu vẫn đánh được như cũ.
@@ -143,8 +150,17 @@ export function initHeSkill(hud, { toast = () => {} } = {}) {
     toast(buffNote(sk, r.level), 3200); if (LGT.sfx) LGT.sfx.play('tu-dong-bat'); if (LGT.act) LGT.act('dungchieu');
     return true;
   }
+  // Phiên 187: Ở KHU LUYỆN TẬP (js/ui/luyenChieu.js) nút chiêu dùng được luôn trên mộc nhân — không khóa cấp, không cần quái, không mất gì. Ô 4 chưa chọn Pháp Môn thì tập Pháp Môn đầu của Hệ.
+  const inLuyen = () => !!(LGT.luyenChieu && LGT.luyenChieu.inside);
+  const skillShown = (slot) => { let sk = skillFor(he, slot, pm); if (!sk && slot === 4 && inLuyen()) { const f = phapMonOfHe(he)[0]; sk = f ? skillFor(he, 4, f.id) : null; } return sk; };
+  function luyenCast(slot) {
+    const sk = skillShown(slot), L = LGT.luyenChieu; if (!sk || !L || !L.castById) return false;
+    const r = L.castById(sk.id); if (!r) nope(slot); return !!r;
+  }
   function cast(slot) {
-    sync(); if (!rt || !LGT.farm) return false;
+    sync(); if (!rt) return false;
+    if (inLuyen()) return luyenCast(slot);
+    if (!LGT.farm) return false;
     const sk = skillFor(he, slot, pm);
     if (!sk && slot === 4) { if (eff() < SKILL_CAP[4]) { toast(`Chiêu này mở ở cấp ${SKILL_CAP[4]} (bạn cấp ${eff()}).`, 2400); nope(4); } else openPm(); return false; }
     if (!sk) return false;
@@ -167,19 +183,19 @@ export function initHeSkill(hud, { toast = () => {} } = {}) {
     if (dock) { const hh = bar.hidden ? 0 : Math.ceil(bar.getBoundingClientRect().height); if (dock._hsh !== hh) { dock._hsh = hh; dock.style.setProperty('--hs-h', hh + 'px'); } }   // Phiên 184
     if (dock && !dock.hidden) { const r = dock.getBoundingClientRect(); if (r.width) { bar.style.right = Math.max(8, Math.round(innerWidth - r.right)) + 'px'; bar.style.bottom = Math.round(innerHeight - r.top + 8) + 'px'; } }
     for (const s of SLOTS) {
-      const sk = skillFor(he, s, pm), bs = btns[s], { b, t, lv } = bs;
+      const sk = skillShown(s), bs = btns[s], { b, t, lv, cdn, lk: lkEl } = bs, zone = inLuyen();
       if (!sk) {   // ô 4 chưa chọn Pháp Môn: vẫn hiện nút (khóa tới cấp 30, rồi bấm để chọn)
         if (s !== 4) { b.hidden = true; continue; }
-        b.hidden = false; const old = b.querySelector('svg'); if (old) old.remove(); bs.ico = '';
+        b.hidden = false; if (bs.ico !== 'chon') { const old = b.querySelector('svg'); if (old) old.remove(); b.insertBefore(drawGlyphIcon(HE_COLOR[he] || '#f1db9f', 'chon', false, eff() < SKILL_CAP[4]), b.firstChild); bs.ico = 'chon'; } cdn.textContent = ''; lkEl.hidden = true;
         const lk = eff() < SKILL_CAP[4]; t.textContent = lk ? `Cấp ${SKILL_CAP[4]}` : 'Chọn Pháp Môn'; lv.textContent = '';
-        b.className = `hs-b hs-empty he-${he}${lk ? ' lock' : ''}${b.classList.contains('hs-no') ? ' hs-no' : ''}`; b.style.setProperty('--cd', '0'); b.setAttribute('aria-label', lk ? `Pháp Môn (mở ở cấp ${SKILL_CAP[4]})` : 'Chọn Pháp Môn'); continue;
+        lkEl.hidden = !lk; b.className = `hs-b he-${he}${lk ? ' lock' : ''}${b.classList.contains('hs-no') ? ' hs-no' : ''}`; b.style.setProperty('--cd', '0'); b.setAttribute('aria-label', lk ? `Pháp Môn (mở ở cấp ${SKILL_CAP[4]})` : 'Chọn Pháp Môn'); continue;
       }
       b.hidden = false;
-      if (bs.ico !== sk.id) { const old = b.querySelector('svg'); if (old) old.remove(); b.insertBefore(drawIcon(sk.id), b.firstChild); bs.ico = sk.id; }
-      const locked = eff() < SKILL_CAP[s], left = rt.cooldownLeft(sk.id, nowSec()), lvNow = rt.effectiveLevel(sk.id), on = buffs.left(sk.id, nowSec());
-      t.textContent = locked ? `Cấp ${SKILL_CAP[s]}` : sk.ten; lv.textContent = locked ? '' : on > 0 ? `${Math.ceil(on)}s` : (s === 'tuyet' ? `${rt.tamAn}/5` : `Lv${lvNow}`);
+      const icoKey = sk.id + (locked ? ':l' : ''); if (bs.ico !== icoKey) { const old = b.querySelector('svg'); if (old) old.remove(); b.insertBefore(drawIcon(sk.id, locked), b.firstChild); bs.ico = icoKey; }
+      const locked = !zone && eff() < SKILL_CAP[s], zc = zone && LGT.luyenChieu.cdOf ? LGT.luyenChieu.cdOf(sk.id) : null, left = zone ? (zc ? zc.left : 0) : rt.cooldownLeft(sk.id, nowSec()), cdTot = zone ? (zc ? zc.total : 0) : sk.cd, lvNow = rt.effectiveLevel(sk.id), on = buffs.left(sk.id, nowSec());
+      lkEl.hidden = !locked; cdn.textContent = left > 0 ? String(Math.ceil(left)) : ''; t.textContent = locked ? `Cấp ${SKILL_CAP[s]}` : sk.ten; lv.textContent = locked ? '' : zone ? 'Tập' : on > 0 ? `${Math.ceil(on)}s` : (s === 'tuyet' ? `${rt.tamAn}/5` : `Lv${lvNow}`);
       b.className = `hs-b he-${he}${locked ? ' lock' : ''}${on > 0 ? ' hs-on' : ''}${left > 0 ? ' hs-cd' : ''}${b.classList.contains('hs-no') ? ' hs-no' : ''}`;   // giữ lớp rung (paint chạy mỗi 150 ms sẽ xóa mất nếu không giữ)
-      b.style.setProperty('--cd', sk.cd > 0 ? Math.min(1, left / sk.cd).toFixed(3) : '0');
+      b.style.setProperty('--cd', cdTot > 0 ? Math.min(1, left / cdTot).toFixed(3) : '0');
       b.setAttribute('aria-label', `${sk.ten}${locked ? '' : ` cấp ${lvNow}`}${locked ? ` (mở ở cấp ${SKILL_CAP[s]})` : on > 0 ? ` (đang có hiệu lực ${Math.ceil(on)} giây)` : left > 0 ? ' (đang hồi chiêu)' : ''}`);
     }
   }

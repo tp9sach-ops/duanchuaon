@@ -91,3 +91,21 @@ export function iconSpec(id) {
   const words = sk.ten.trim().split(/\s+/);
   return { id, he: sk.he, mau: HE_COLOR[sk.he] || '#f1db9f', van, chu: (words[0] || '?').slice(0, 1) + (words.length > 1 ? words[words.length - 1].slice(0, 1) : ''), tuyet: sk.slot === 'tuyet', hoTro: !(sk.heSo > 0) };
 }
+
+/** Phiên 187: HÌNH BIỂU TƯỢNG của chiêu (không còn chỉ là chữ cái). Chọn theo việc chiêu làm: hoi (hồi máu), an (ẩn thân), khien (khiên/giáp/bất khả xâm phạm), toc (tăng tốc/chí mạng),
+ *  khoa (khống chế: đóng băng, kéo, vùng), lao (lao tới), tia (tia/rồng xuyên), vung (đánh diện rộng/khói/mưa/sóng), chem (đòn chém thường). Mọi chiêu đều ra một hình. */
+export const GLYPHS = ['hoi', 'an', 'khien', 'toc', 'khoa', 'lao', 'tia', 'vung', 'chem'];
+export function glyphOf(id) {
+  const sk = skillById(id); if (!sk) return 'chem';
+  const f = sk.fx || {}, has = (...k) => k.some((x) => f[x]), atk = sk.heSo > 0;
+  if (has('hoiSinhLuc', 'hoiSinhLucDoi')) return 'hoi';
+  if (has('anThan', 'anThanSuotChieu') && !atk) return 'an';
+  if (!atk && has('giap', 'khienBang', 'hapThu', 'khienDoi', 'batKhaXamPham', 'giamSatThuong')) return 'khien';
+  if (!atk && has('tocChay', 'tocDanh', 'chiMang')) return 'toc';
+  if (!atk && has('dongBang', 'vung', 'keQuai', 'choang', 'giamQuai')) return 'khoa';
+  if (has('lao', 'laoSauLung')) return 'lao';
+  if (has('duongRong', 'tia', 'xuyen')) return 'tia';
+  if (has('dienRong', 'noLan', 'mua', 'song', 'docLan', 'suongDoc')) return 'vung';
+  if (!atk) return 'khien';
+  return 'chem';
+}

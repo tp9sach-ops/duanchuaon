@@ -1,7 +1,7 @@
 // Thông tin + biểu tượng chiêu (Phiên 162, Bản 2 mục 1): đủ 30 chiêu, số khớp dữ liệu nguồn, id lạ an toàn.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { infoOf, infoRows, iconSpec, HE_COLOR } from '../js/world/chieuInfo.js';
+import { infoOf, infoRows, iconSpec, glyphOf, GLYPHS, HE_COLOR } from '../js/world/chieuInfo.js';
 import { COMBAT_SKILLS, SKILL_CAP } from '../js/data/combatSkills.js';
 import { congOf } from '../js/world/stats.js';
 import { effectiveHeSo } from '../js/world/skillEngine.js';
@@ -35,4 +35,11 @@ test('Hỏa có nội tại Thiêu đốt và nối tiếp; id lạ → null', (
   assert.ok(i.noiTai.some((x) => /Thiêu đốt/.test(x)));
   assert.deepEqual(i.moc.length, 1);
   assert.equal(infoOf('khong_co'), null); assert.equal(iconSpec('khong_co'), null); assert.deepEqual(infoRows(null), []);
+});
+
+test('Phiên 187: mọi chiêu đều có HÌNH biểu tượng hợp lệ, đúng loại chiêu', () => {
+  for (const s of COMBAT_SKILLS) assert.ok(GLYPHS.includes(glyphOf(s.id)), s.id);
+  assert.equal(glyphOf('thuy_2'), 'hoi'); assert.equal(glyphOf('kim_2'), 'khien'); assert.equal(glyphOf('moc_2'), 'an');
+  assert.equal(glyphOf('hoa_2'), 'toc'); assert.equal(glyphOf('thuy_3'), 'khoa'); assert.equal(glyphOf('kim_3'), 'lao');
+  assert.equal(glyphOf('hoa_3'), 'tia'); assert.equal(glyphOf('hoa_1'), 'vung'); assert.equal(glyphOf('khong_co'), 'chem');
 });

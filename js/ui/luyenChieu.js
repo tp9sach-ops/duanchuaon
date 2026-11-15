@@ -109,6 +109,9 @@ export async function initLuyenChieu({ toast = () => {} } = {}) {
     const inside = Z.current === LUYEN_ID; panel.hidden = !inside; if (!inside) return;
     const t = nowSec(); items.forEach((it, i) => { const b = btns[i]; if (!b) return; const left = rt.left(it, t); b.classList.toggle('lc-cd', left > 0); b.style.setProperty('--cd', it.demoCd > 0 ? Math.min(1, left / it.demoCd).toFixed(3) : '0'); });
   }, 150);
-  LGT.luyenChieu = { enter, leave, get inside() { return Z.current === LUYEN_ID; }, get he() { return he; } };
+  // Phiên 187: nút chiêu của phái (js/ui/heSkill.js) dùng được ngay trong khu luyện tập: tung chiêu theo id, và hỏi hồi chiêu để vẽ số giây trên nút.
+  const castById = (id) => { const i = items.findIndex((x) => x.skill.id === id); if (i < 0 || busy) return false; const it = items[i]; if (rt.left(it, nowSec()) > 0) { cast(i); return false; } cast(i); return true; };
+  const cdOf = (id) => { const it = items.find((x) => x.skill.id === id); return it ? { left: rt.left(it, nowSec()), total: it.demoCd } : null; };
+  LGT.luyenChieu = { enter, leave, castById, cdOf, get inside() { return Z.current === LUYEN_ID; }, get he() { return he; } };
   return LGT.luyenChieu;
 }
