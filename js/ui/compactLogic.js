@@ -23,7 +23,7 @@ export const GROUPS = [
 export const IDS = GROUPS.map((g) => g.id);
 /** Thứ tự tự ẩn TẠM (không lưu) khi cột trái-trên chạm tới joystick/nút camera: bản đồ nhỏ trước, nút chánh điện sau cùng. */
 export const AUTO_ORDER = ['map', 'meta', 'chip', 'hall'];
-export const STORE_KEY = 'lgt.ui2';
+export const STORE_KEY = 'lgt.ui3';   // Phiên 178: đổi từ lgt.ui2 để máy từng bị kẹt kiểu "Gọn" (mất nút trên cùng khi mở bằng Chrome trong khung) được đặt lại về mặc định mới
 
 /** Ba kiểu hiển thị. hide = nhóm bị ẩn; autoClose = menu chính tự đóng sau khi chọn một mục. */
 export const PRESETS = {
@@ -62,10 +62,11 @@ export function toggleFocus(st, fallbackHide = []) {
   if (matchPreset(st) === 'min') return { ...st, hide: cleanHide(st.prev || fallbackHide), prev: null };
   return { ...st, prev: cleanHide(st.hide), hide: cleanHide(PRESETS.min.hide), ac: true };
 }
-/** Kiểu mặc định theo thiết bị: cảm ứng hoặc khung thấp → gọn; khung rất thấp (≤ 400) → tối giản; màn hình lớn → đầy đủ. */
+/** Kiểu mặc định theo thiết bị (Phiên 178): trước đây cứ cảm ứng hoặc nằm trong khung (iframe của baocaonoibo.io.vn) là ép "Gọn" → Chrome trên máy tính bảng mất hết nút trên cùng
+ *  (tên chùa, online, giờ game, menu chính, Thông báo/Quà/Thư). Nay chỉ gọn khi màn hình THẬT SỰ nhỏ: rộng ≤ 520, hoặc cao ≤ 620, hoặc cảm ứng mà rộng < 700. Khung rất thấp (≤ 400) → tối giản. */
 export function presetFor({ coarse = false, framed = false, w = 1280, h = 720 } = {}) {
   if ((coarse || framed) && h <= 400) return 'min';
-  if (coarse || h <= 620 || w <= 520) return 'gon';
+  if (w <= 520 || h <= 620 || (coarse && w < 700)) return 'gon';
   return 'day';
 }
 

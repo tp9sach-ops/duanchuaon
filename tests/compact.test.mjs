@@ -44,6 +44,8 @@ test('kiểu mặc định theo thiết bị', () => {
   assert.equal(presetFor({ coarse: false, framed: false, w: 1280, h: 720 }), 'day');
   assert.equal(presetFor({ coarse: true, w: 390, h: 800 }), 'gon');
   assert.equal(presetFor({ coarse: false, framed: true, w: 900, h: 500 }), 'gon');
+  assert.equal(presetFor({ coarse: true, framed: true, w: 874, h: 900 }), 'day');   // Phiên 178: máy tính bảng + Chrome trong khung phải thấy đủ nút
+  assert.equal(presetFor({ coarse: true, framed: true, w: 1100, h: 800 }), 'day');
   assert.equal(presetFor({ coarse: true, w: 740, h: 360 }), 'min');
   assert.equal(presetFor({ coarse: false, framed: false, w: 1280, h: 560 }), 'gon');
   assert.equal(presetFor(), 'day');
