@@ -1,7 +1,7 @@
 // Vị trí các vật mới của sân chùa (hoa viên, đèn đá, ghế, Nhà Tổ, Nhà Khách) VÀ vật cản của các vật dụng cũ (js/scene/props.js).
 // Là dữ liệu thuần: cảnh 3D (js/scene/garden.js, nhato.js) dựng từ đây, còn nhân vật va chạm qua layout.js. Import file này là tự đăng ký vật cản.
 // Đổi vị trí ở ĐÂY (một nơi duy nhất) rồi chạy `npm test`: test kiểm không chặn lối đi và mọi chỗ quan trọng vẫn đi tới được.
-import { addCircle, addRect } from './layout.js';
+import { addCircle, addRect, addDeck } from './layout.js';
 
 /** Luống hoa chữ nhật {x0,x1,z0,z1, hoa: màu hoa} — hai luống trước lư hương, hai luống hai bên ao. */
 export const BEDS = [
@@ -65,12 +65,12 @@ let done = false;
 /** Đăng ký vật cản vào layout.js (chỉ một lần dù import nhiều lần). */
 export function registerPlacements() {
   if (done) return; done = true;
-  BEDS.forEach((b) => addRect(bedRect(b)));
-  ROUND_BEDS.forEach((b) => addCircle({ x: b.x, z: b.z, r: b.r + 0.3 }));
-  STONE_LANTERNS.forEach((l) => addCircle({ x: l.x, z: l.z, r: 0.55 }));
-  BENCHES.forEach((b) => addRect({ x0: b.x - b.w / 2, x1: b.x + b.w / 2, z0: b.z - b.d / 2, z1: b.z + b.d / 2 }));
-  BUILDINGS.forEach((b) => addRect({ x0: b.cx - b.w / 2, x1: b.cx + b.w / 2, z0: b.cz - b.d / 2, z1: b.cz + b.d / 2 }));
-  TREES.forEach((t) => addCircle({ x: t.x, z: t.z, r: TREE_R }));
+  BEDS.forEach((b) => addRect({ ...bedRect(b), top: 0.5 }));   // Phiên 200: `top` = mặt đứng được (đáp lên từ trên cao)
+  ROUND_BEDS.forEach((b) => addCircle({ x: b.x, z: b.z, r: b.r + 0.3, top: 0.5 }));
+  STONE_LANTERNS.forEach((l) => addCircle({ x: l.x, z: l.z, r: 0.55, top: 1.7 }));
+  BENCHES.forEach((b) => addRect({ x0: b.x - b.w / 2, x1: b.x + b.w / 2, z0: b.z - b.d / 2, z1: b.z + b.d / 2, top: 0.55 }));
+  BUILDINGS.forEach((b) => addRect({ x0: b.cx - b.w / 2, x1: b.cx + b.w / 2, z0: b.cz - b.d / 2, z1: b.cz + b.d / 2, top: 4.5 }));   // mái nhà
+  TREES.forEach((t) => { addCircle({ x: t.x, z: t.z, r: TREE_R }); addDeck({ x: t.x, z: t.z, r: 1.5, top: 3.6 }); });   // tán cây: đứng được, đi bên dưới vẫn qua
   OLD_PROP_CIRCLES.forEach(addCircle); OLD_PROP_RECTS.forEach(addRect);
 }
 registerPlacements();

@@ -58,12 +58,12 @@ export function joyVector(dx, dy, radius) {
  * Đi một bước có va chạm: p = {x,z}, v = vectơ hướng (độ dài ≤ 1), speed m/s. Thân người có bán kính (layout.moveBody), trượt dọc tường. Trả {x, z, y, moved}.
  * Mỗi bước con tối đa MAX_SUBSTEP (0,2 m) để không xuyên tường khi khung hình chậm.
  */
-export function walkStep(p, v, dt, speed) {
+export function walkStep(p, v, dt, speed, feetH = 0) {   // feetH (Phiên 200): độ cao chân so với mặt đất — đủ cao thì bay/đi qua phía trên vật cản có `top`
   const len = Math.hypot(v.x, v.z) * speed * dt;
   if (len < 1e-9) return { x: p.x, z: p.z, y: groundY(p.x, p.z), moved: 0 };
   const n = Math.max(1, Math.ceil(len / MAX_SUBSTEP)), sx = v.x * speed * dt / n, sz = v.z * speed * dt / n;
   let x = p.x, z = p.z;
-  for (let i = 0; i < n; i++) { const q = moveBody(x, z, sx, sz); x = q.x; z = q.z; }
+  for (let i = 0; i < n; i++) { const q = moveBody(x, z, sx, sz, feetH); x = q.x; z = q.z; }
   return { x, z, y: groundY(x, z), moved: Math.hypot(x - p.x, z - p.z) };
 }
 
