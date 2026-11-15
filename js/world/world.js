@@ -302,9 +302,9 @@ export function createWorld({ scene, camera, canvas, coarse = false, LGT = windo
       flyFn = null; avatar.group.rotation.x = 0;              // hạ cánh xong → quay lại điều khiển thường ngay khung này
     }
     if (!blockedNow()) {
-      const m = moveVector(keys, joy, yaw);
+      const m = LGT.jumpCharging ? { x: 0, z: 0, mag: 0 } : moveVector(keys, joy, yaw);   // Phiên 197: đang gồng lực nhảy (ấn giữ nút Nhảy) → đứng yên
       if (m.mag > 0) { v = m; spd = (keys.run || joyRunning ? RUN_SPEED : WALK_SPEED); }
-      else { const d = nav.dir(P, dt); if (d) { v = d; spd = CLICK_SPEED; } }
+      else if (!LGT.jumpCharging) { const d = nav.dir(P, dt); if (d) { v = d; spd = CLICK_SPEED; } }
     } else { nav.clear(); arrival.cancel(); showHint(null); }
     if (!nav.active) mark.visible = false;
     if (v) {
@@ -326,10 +326,11 @@ export function createWorld({ scene, camera, canvas, coarse = false, LGT = windo
     camStep(dt);
   }
 
-  let camPrevY = 0;
+  let camPrevY = 0, airY = 0, airSm = 0;   // Phiên 197: độ cao nhảy (m) do js/ui/skill.js báo mỗi khung; airSm = bản làm mượt để camera bám theo
+  const setAirY = (y) => { airY = Number.isFinite(+y) ? Math.max(0, Math.min(40, +y)) : 0; };
   const camFeel = createCamFeel({ tuyChon: (() => { try { return localStorage.getItem('lgt.camfeel'); } catch (_) { return null; } })(), giamHeThong: (() => { try { return !!(matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches); } catch (_) { return false; } })() });
   LGT.camFeel = { rung: (c) => camFeel.rung(c), khung: (g) => camFeel.khung(g), chieu: (l) => camFeel.chieu(l), set: (o) => { camFeel.set(o); try { localStorage.setItem('lgt.camfeel', JSON.stringify(camFeel.tuyChon)); } catch (_) {} }, get tuyChon() { return camFeel.tuyChon; }, get tocDo() { return camTocDo; } };
-  let camTocDo = 1;   // < 1 trong lúc khựng/chậm: chỉ nhân vật dùng, không đóng băng thế giới (PvP)
+  let camTocDo = 1;   // < 1 trong lúc khựng/chậm: chỉ nhân vật dùng, không đóng bƒÉng thế giới (PvP)
 
   /** Camera: bám theo, làm mượt (giật cục khi va tường thì mượt hơn). */
   function camStep(dt) {
@@ -337,7 +338,9 @@ export function createWorld({ scene, camera, canvas, coarse = false, LGT = windo
     if (shot) shotCur = shotPose(shot, avatar.group.rotation.y) || shotCur;   // góc quay bám hướng nhìn nhân vật (Phiên 120)
     if (flyFn && !shot && performance.now() - camDragAt > FLY_CFG.camHold * 1000) yaw = followYaw(yaw, flyRy, dt);   // Phiên 196: đang bay → camera tự xoay ra sau lưng theo hướng bay (người chơi tự kéo camera thì nhường)
     flyFov = damp(flyFov, flyFn && !camFeel.giam ? FLY_CFG.fov : 0, 4, dt);
+    airSm = damp(airSm, airY, airY > airSm ? 20 : 9, dt);   // Phiên 197: lên nhanh (nhân vật không vượt khung), xuống êm
     const e = blendShot({ yaw, pitch, dist }, shotK > 0 ? shotCur : null, shotK);
+    e.dist *= 1 + Math.min(0.5, airSm * 0.035);   // càng cao camera càng lùi ra (tối đa +50%) để thấy cả mặt đất bên dưới
     const want = clipCamDist(P, e.yaw, e.pitch, e.dist, solidAt);   // Phiên 31: camera không xuyên tường/vật cản
     camD = camD == null ? want : damp(camD, want, want < camD ? 16 : 3, dt);   // bị chắn thì lùi vào nhanh, thoáng thì ra từ từ
     const c = camPose(P, e.yaw, e.pitch, camD);
@@ -346,12 +349,12 @@ export function createWorld({ scene, camera, canvas, coarse = false, LGT = windo
     const k = 9; cam.x = damp(cam.x, c.pos.x, k, dt); cam.y = damp(cam.y, c.pos.y, kBamDoc(tren, k), dt); cam.z = damp(cam.z, c.pos.z, k, dt);
     cam.lx = damp(cam.lx, c.look.x, 12, dt); cam.ly = damp(cam.ly, c.look.y, 12, dt); cam.lz = damp(cam.lz, c.look.z, 12, dt);
     const cf = camFeel.step(dt); camTocDo = cf.tocDo;
-    camera.position.set(cam.x + cf.dx, Math.max(0.5, cam.y + cf.dy), cam.z); camera.lookAt(cam.lx, cam.ly, cam.lz);
+    camera.position.set(cam.x + cf.dx, Math.max(0.5, cam.y + cf.dy + airSm), cam.z); camera.lookAt(cam.lx, cam.ly + airSm, cam.lz);   // Phiên 197: cộng độ cao nhảy → camera đi theo nhân vật bay lên
     const zm = 1 / (1 + cf.fov + (camFeel.giam ? 0 : fovNhay(vy, 9)) + flyFov);   // zoom thay vì sửa fov để không đụng chỉnh FOV màn dọc ở scene/index.js
     if (Math.abs(camera.zoom - zm) > 1e-4) { camera.zoom = zm; camera.updateProjectionMatrix(); }
   }
 
-  LGT.world = { setProfile, zoom, walkTo, sit, bow, meditate, chant, beads, rest, stand, get mode() { return act.mode; }, seats: SEATS, get pos() { return { x: P.x, z: P.z, y: P.y }; }, get facing() { return avatar.group.rotation.y; }, get dashing() { return !!dashS; }, get flying() { return !!flyFn; }, fly, get held() { return !!heldS; }, hold, dash, face(ry) { if (Number.isFinite(ry)) avatar.setFacing(ry, true); }, teleport, goTo, get avatar() { return avatar; }, get camera() { return { yaw, pitch, dist }; }, shot(name) { shot = name === 'cast' || name === 'show' ? name : ''; }, get shotName() { return shot; }, nav };
+  LGT.world = { setAirY, setProfile, zoom, walkTo, sit, bow, meditate, chant, beads, rest, stand, get mode() { return act.mode; }, seats: SEATS, get pos() { return { x: P.x, z: P.z, y: P.y }; }, get facing() { return avatar.group.rotation.y; }, get dashing() { return !!dashS; }, get flying() { return !!flyFn; }, fly, get held() { return !!heldS; }, hold, dash, face(ry) { if (Number.isFinite(ry)) avatar.setFacing(ry, true); }, teleport, goTo, get avatar() { return avatar; }, get camera() { return { yaw, pitch, dist }; }, shot(name) { shot = name === 'cast' || name === 'show' ? name : ''; }, get shotName() { return shot; }, nav };
   update(0.016);
   return { update, get avatar() { return avatar; }, setProfile, zoom, walkTo, sit, bow, meditate, chant, beads, rest, stand, teleport, goTo, get pos() { return { x: P.x, z: P.z, y: P.y }; } };
 }
