@@ -113,3 +113,12 @@ test('nối dây (đọc mã): Nhảy lần 2 trên không → startFlight; worl
   assert.match(wd, /function fly\(fn\)/); assert.match(wd, /yaw = followYaw\(yaw, flyRy, dt\)/); assert.match(wd, /camDragAt/); assert.match(wd, /get flying\(\)/); assert.match(wd, /\+ flyFov\)/);
   assert.match(wd, /walkStep\(P, \{ x: \+f\.dx, z: \+f\.dz, mag: 1 \}/, 'bay qua walkStep → trượt dọc tường, không xuyên vật cản');
 });
+
+test('từ bậc 1 đã bay lướt; bậc càng cao bay càng CAO và lướt càng XA (tăng nghiêm ngặt qua cả 8 bậc)', () => {
+  let prev = null;
+  for (let b = 1; b <= MAX_BAC; b++) {
+    const r = sim(b); assert.equal(r.glid, true, 'bậc ' + b + ' bay được');
+    if (prev) { assert.ok(r.apex > prev.apex, `bậc ${b}: độ cao ${r.apex.toFixed(2)} > ${prev.apex.toFixed(2)}`); assert.ok(r.dist > prev.dist, `bậc ${b}: quãng ${r.dist.toFixed(1)} > ${prev.dist.toFixed(1)}`); }
+    prev = r;
+  }
+});
