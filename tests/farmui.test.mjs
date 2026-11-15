@@ -44,12 +44,18 @@ test('trong nhà hoặc đang có yêu quái hằng tháng: quái bãi rừng kh
   LGT.yq = { active: true }; assert.equal(api.status().active, false); LGT.yq = undefined;
 });
 
-test('Đánh thường (Phiên 127, thay Ném đá): cận chiến, trúng ngay, không còn đá bay; đứng xa thì báo lại gần; hồi chiêu chặn bấm liên tục', () => {
+test('Đánh thường (Phiên 127 cận chiến; Phiên 198: lao tới + combo 3 đòn): quá xa thì báo lại gần; trong tầm lao thì LAO tới (chưa ra đòn); sát quái trúng ngay, không còn đá bay; hồi chiêu chặn bấm liên tục', () => {
   step(0.2); const p = LGT.world.pos, near = LGT.farmView.mons.filter((m) => Math.hypot(m.x - p.x, m.z - p.z) <= 18).sort((a, b) => Math.hypot(a.x - p.x, a.z - p.z) - Math.hypot(b.x - p.x, b.z - p.z))[0];
   assert.ok(near, 'có quái trong tầm nhìn 18 m'); assert.equal(api.status().active, true);
-  const keep = { ...LGT.world.pos }; LGT.world.pos = { x: near.x - 12, z: near.z }; step(0.2); toasts.length = 0; const far0 = near.oan; LGT.farmView.mons = [near]; api.stone();   // chỉ còn con này trong tầm nhìn (quái dày hơn: có con khác đứng gần chỗ mới)
-  assert.ok(toasts.some((t) => /Lại gần/.test(t)), 'xa thì báo lại gần'); assert.equal(near.oan, far0, 'đứng xa: không trúng');
-  LGT.world.pos = { x: near.x + 0.5, z: near.z }; step(0.2); const before = near.oan; LGT.farmView.mons = [near]; api.stone();
+  const keep = { ...LGT.world.pos };
+  // (1) quá xa (16 m): chưa tới tầm lao → chỉ nhắc lại gần, không trúng, không lao
+  LGT.world.pos = { x: near.x - 16, z: near.z }; step(0.2); toasts.length = 0; const far0 = near.oan, d0 = LGT.world.dashes || 0; LGT.farmView.mons = [near]; api.stone();   // chỉ còn con này trong tầm nhìn (quái dày hơn: có con khác đứng gần chỗ mới)
+  assert.ok(toasts.some((t) => /Lại gần/.test(t)), 'quá xa thì báo lại gần'); assert.equal(near.oan, far0, 'quá xa: không trúng'); assert.equal(LGT.world.dashes || 0, d0, 'quá xa: không lao');
+  // (2) trong tầm lao (12 m): bấm = LAO tới quái, CHƯA ra đòn (Oán Khí không đổi); nếu đường lao bị cây/tường chặn thì nhắc lại gần
+  step(3); LGT.world.pos = { x: near.x - 12, z: near.z }; step(0.2); toasts.length = 0; LGT.farmView.mons = [near]; const mid0 = near.oan, d1 = LGT.world.dashes || 0; api.stone();
+  assert.ok((LGT.world.dashes || 0) === d1 + 1 || toasts.some((t) => /Lại gần/.test(t)), 'trong tầm lao: lao tới (hoặc báo lại gần nếu đường bị chặn)'); assert.equal(near.oan, mid0, 'bấm lao chưa ra đòn');
+  // (3) sát quái: trúng ngay; hồi chiêu chặn bấm liên tục
+  step(1); LGT.world.pos = { x: near.x + 0.5, z: near.z }; step(0.2); const before = near.oan; LGT.farmView.mons = [near]; api.stone();
   assert.ok(near.oan < before || near.oan === 0, 'trúng ngay'); assert.equal(LGT.farmView.stones.length, 0, 'không còn đá bay');
   const mid = near.oan; api.stone(); assert.equal(near.oan, mid, 'hồi chiêu'); step(0.7); LGT.world.pos = keep;
 });
