@@ -2,6 +2,7 @@
    Mỗi nút có MỘT ô cố định (js/world/dock.js SLOT_OF) nên không bao giờ dời chỗ khi hoàn cảnh đổi; ô không dùng thì để trống. Hàng 1 (dưới cùng, sát ngón cái) = hành động chính. */
 .dk{--dk-a:76px;--dk-m:58px;--dk-s:46px;--dk-gap:8px;position:absolute;right:max(12px,env(safe-area-inset-right));bottom:max(214px,calc(env(safe-area-inset-bottom) + 200px));z-index:3;pointer-events:none}
 .dk[hidden]{display:none!important}
+.dk{transform:scale(var(--btn-k,1));transform-origin:100% 100%}   /* Phiên 188: cỡ nút do người chơi chỉnh (js/ui/btnScale.js) */
 .dk-grid{display:grid;grid-template-columns:var(--dk-m) var(--dk-m) var(--dk-a);grid-template-rows:var(--dk-s) var(--dk-m) var(--dk-a);gap:var(--dk-gap);justify-items:center;align-items:center}
 .dk-b{position:relative;pointer-events:auto;touch-action:manipulation;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:0;border-radius:50%;border:1.5px solid rgba(217,178,95,.85);background:rgba(8,10,20,.78);color:#f3e4b8;font:600 11px/1.1 var(--sans,system-ui,sans-serif);cursor:pointer;-webkit-tap-highlight-color:transparent;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);box-shadow:0 4px 14px rgba(0,0,0,.4);overflow:visible}
 .dk-b.sz-mid{width:var(--dk-m);height:var(--dk-m)}

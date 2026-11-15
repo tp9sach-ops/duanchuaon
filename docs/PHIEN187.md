@@ -27,3 +27,12 @@ Môi trường AI không có WebGL/trình duyệt: hình SVG, cỡ, vị trí ch
 
 ## Việc kế
 Khi Gp nói "tiếp tục" → Mục 2 (cài đặt cỡ nút). Cập nhật `PROMPT.md` mục 7 / `HANDOFF.md` đầu file thêm dòng Phiên 187 trỏ tới file này (hai file rất lớn).
+
+---
+# PHIÊN 188 — Mục 2/4 xong: nút ⚙ Cỡ nút
+- `js/world/btnScale.js` (logic + `tests/btnscale.test.mjs`), `js/ui/btnScale.js` (nút ⚙ cạnh các nút zoom bên trái + hộp thanh trượt 70–160%, lưu `lgt.btnScale`, đặt `--btn-k` trên `:root`), `js/main.js` nạp, `css/dock.css` `.dk{transform:scale(var(--btn-k))}` (cụm phải-dưới), cụm chiêu đã dùng `--btn-k` từ Mục 1. `sw.js` = `dgt-v177`.
+- Chưa nhìn bằng mắt: vị trí ⚙ (left:184px, ngay trên joystick) có thể đè nút zoom khác ở vài máy → báo Gp.
+## HÀNG ĐỢI (Gp giao 2026-11-15 18:42, làm sau Mục 3, 4)
+5. **Đánh thường + combo:** bấm Đánh thường → LAO tới mục tiêu trong phạm vi ngắn; bấm tiếp → combo 3 đòn, 3 hoạt ảnh khác nhau; đòn 3 có sát thương LAN; quái dính lan thì ĐÁNH TRẢ.
+6. **Chiêu định hướng:** nhấn vào nút chiêu rồi LƯỚT ngón tay → chiêu bay theo hướng lướt (chiêu không định hướng thì tung như cũ).
+7. **Không có quái vẫn dùng được:** chiêu và đánh thường vẫn tung (hoạt ảnh/hiệu ứng) nhưng không gây sát thương ai. (Hiện `cast()` ở `heSkill.js` chặn bằng `LGT.farm.skillReady()`; nút Đánh thường ở `js/ui/farm.js`/`LGT.yq.stone`.)
