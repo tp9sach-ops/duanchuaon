@@ -6,10 +6,11 @@ import { ACCT, checkName, checkPassword, deriveKey, hash32, packSave, applySave,
 const fail = (error, extra = {}) => ({ ok: false, error, ...extra });
 
 /**
- * deps: { call(action, payload, opts), storage, subtle, getUserKey?(), uuid?(), iter? }
+ * deps: { call(action, payload, opts), storage, subtle, getUserKey?(), uuid?(), iter?, grant?(grants) }
  * `call` là callApi (js/api.js): trả đối tượng JSON của máy chủ, hoặc { ok:false, error:'network'|'timeout'|… }.
+ * `grant` (Phiên 170, tùy chọn): gọi với danh sách quà quản trị (máy chủ gắn `grants` vào phản hồi acctLoad/acctSave) để máy cộng quà chưa nhận.
  */
-export function createAccountClient({ call, storage, subtle, getUserKey = () => '', uuid = () => globalThis.crypto.randomUUID(), iter = ACCT.ITER }) {
+export function createAccountClient({ call, storage, subtle, getUserKey = () => '', uuid = () => globalThis.crypto.randomUUID(), iter = ACCT.ITER, grant = null }) {
   const state = { conflict: false, expired: false };   // conflict: máy khác đã lưu bản mới hơn mà máy này cũng có thay đổi chưa lưu
   const listeners = [];
   let pendingServer = null;                            // bản lưu mới hơn của máy khác, giữ lại chờ người chơi chọn
@@ -22,6 +23,8 @@ export function createAccountClient({ call, storage, subtle, getUserKey = () => 
   /** Bản lưu có thay đổi chưa lên máy chủ không. */
   const dirty = () => { const a = account(); return !!a && hash32(snapshot()) !== a.h; };
   const emit = (ev) => listeners.forEach((f) => { try { f(ev); } catch (_) { /* bỏ qua */ } });
+  /** Phiên 170: phản hồi có `grants` (quà quản trị tặng, độc lập với rev nên không bao giờ xung đột) → đưa cho `grant` cộng vào máy. Gọi SAU khi đã nhận bản lưu của máy chủ. */
+  const deliver = (r) => { if (grant && r && Array.isArray(r.grants) && r.grants.length) { try { grant(r.grants); } catch (_) { /* bỏ qua */ } } };
 
   async function key(name, password) {
     try { return { ok: true, key: await deriveKey(name, password, subtle, iter) }; } catch (e) { return fail(e && e.code === 'no_crypto' ? 'no_crypto' : 'server_error'); }
@@ -75,9 +78,10 @@ export function createAccountClient({ call, storage, subtle, getUserKey = () => 
       if (r && r.error === 'bad_token') { setAccount(null); state.expired = true; return fail('bad_token'); }
       return fail((r && r.error) || 'network');
     }
-    if (!r.changed) return { ok: true, changed: false };
-    if (dirty()) { pendingServer = r; state.conflict = true; emit('conflict'); return { ok: true, conflict: true }; }
+    if (!r.changed) { deliver(r); return { ok: true, changed: false }; }
+    if (dirty()) { pendingServer = r; state.conflict = true; emit('conflict'); deliver(r); return { ok: true, conflict: true }; }
     applyServer(r, a);
+    deliver(r);                                        // quà cộng SAU khi đã nhận bản lưu (nếu cộng trước thì applySave sẽ xóa mất)
     return { ok: true, changed: true };
   }
 
@@ -89,8 +93,8 @@ export function createAccountClient({ call, storage, subtle, getUserKey = () => 
     if (size > ACCT.SAVE_MAX) return fail('too_big');
     const r = await call('acctSave', { aid: a.aid, token: a.token, base: a.rev, sid: uuid(), force, save }, { keepalive: keepalive && size < 60000 });
     // Chỉ đánh dấu "đã lưu" đúng bản VỪA GỬI: nếu trong lúc chờ người chơi tiến triển thêm thì phần mới vẫn còn "chưa lưu" (dirty) cho lần sau.
-    if (r && r.ok) { const cur = account(); if (cur && cur.aid === a.aid) mark(cur, r.rev, sentHash); return { ok: true, rev: r.rev }; }
-    if (r && r.error === 'stale') return fail('stale', { serverRev: r.rev });
+    if (r && r.ok) { const cur = account(); if (cur && cur.aid === a.aid) mark(cur, r.rev, sentHash); deliver(r); return { ok: true, rev: r.rev }; }
+    if (r && r.error === 'stale') { deliver(r); return fail('stale', { serverRev: r.rev }); }
     if (r && r.error === 'bad_token') { setAccount(null); state.expired = true; return fail('bad_token'); }
     return fail((r && r.error) || 'network');
   }
