@@ -4,6 +4,7 @@
 // Phiên 181 (mục 1): nút Túi (id 'tui') KHÔNG còn vẽ ở cụm phải-dưới — đã dời lên cụm tròn phải-trên (TOP_ICONS trong js/ui/menuLogic.js, nút "Túi đồ"); logic dockButtons giữ nguyên (có test), ô T3 để trống cho nút chiêu.
 // Mục 1: nhãn nút cưỡi (id 'vantruot', ô T1) lấy từ LGT.board.status().label theo đồ đang cầm: Cưỡi thương / Cưỡi gậy / Lướt ván (và Xuống ...).
 // Mọi chữ qua textContent. Nút Nhảy/Ném đá/kỹ năng chiến đấu nhận pointerdown (nhanh, không trễ); bàn phím vẫn dùng được (click do Enter/Space).
+// Phiên 191 (Mục 1): ĐỒNG BỘ NÚT Ở MỌI KHU — ở khu luyện tập (LGT.luyenChieu.inside) cụm này cũng hiện đủ Đánh thường + Thương + Nhảy như ngoài bãi rừng / trong chùa; bấm Đánh thường/Thương ở đó gọi LGT.luyenChieu.basic (đánh vào mộc nhân, không sát thương thật) và vòng hồi chiêu lấy từ LGT.luyenChieu.status().
 import { mapAvailable } from '../world/minimap.js';   // Phiên 190: nút đánh chỉ ở bản đồ chính
 import { dockButtons, dockLayout, cooldownFrac, pickHint, loadSeen, SLOT_CODES } from '../world/dock.js';
 
@@ -24,12 +25,13 @@ export function initDock(hud, { toast = () => {} } = {}) {
   document.body.classList.add('has-dock');   // ẩn nút Nhảy / chip Khinh thân cũ (đã nằm trong cụm này)
   const items = new Map();   // id → { btn, key, slot }
   let sig = '', skipClick = false, layout = [], rowsSig = '', lastCtx = {};
+  const luyen = () => { const L = LGT.luyenChieu; return L && L.inside ? L : null; };   // Phiên 191: đang ở khu luyện tập?
 
   const ACT = {
     tap: () => LGT.fishing && LGT.fishing.tap(), cast: () => LGT.fishing && LGT.fishing.cast(), thu: () => LGT.fishing && LGT.fishing.keep(), phong: () => LGT.fishing && LGT.fishing.release(),
     khieng: () => LGT.carry && LGT.carry.pickup(), nem: () => LGT.carry && LGT.carry.throw(), ha: () => LGT.carry && LGT.carry.drop(),
     tudong: () => LGT.farm && LGT.farm.toggleAuto(),
-    da: () => LGT.yq && LGT.yq.stone(), chemkhi: () => LGT.conKhi && LGT.conKhi.cast(), thuong: () => LGT.yq && LGT.yq.spear(), nemyq: () => LGT.yq && LGT.yq.throwBoss(), khiengnguoi: () => LGT.throwP && LGT.throwP.grab(), nemnguoi: () => LGT.throwP && LGT.throwP.throw(), thanguoi: () => LGT.throwP && LGT.throwP.drop(), nemnpc: () => LGT.npcThrow && LGT.npcThrow.throw(), thietdau: () => LGT.thietDau && LGT.thietDau.dash(),
+    da: () => { const L = luyen(); return L ? L.basic('da') : LGT.yq && LGT.yq.stone(); }, chemkhi: () => LGT.conKhi && LGT.conKhi.cast(), thuong: () => { const L = luyen(); return L ? L.basic('thuong') : LGT.yq && LGT.yq.spear(); }, nemyq: () => LGT.yq && LGT.yq.throwBoss(), khiengnguoi: () => LGT.throwP && LGT.throwP.grab(), nemnguoi: () => LGT.throwP && LGT.throwP.throw(), thanguoi: () => LGT.throwP && LGT.throwP.drop(), nemnpc: () => LGT.npcThrow && LGT.npcThrow.throw(), thietdau: () => LGT.thietDau && LGT.thietDau.dash(),
     nhay: () => (LGT.skill && LGT.skill.level > 0 ? LGT.skill.jump() : toast('Khinh thân chưa mở. Gặp Thầy trụ trì và làm nhiệm vụ tưới cây bồ đề để mở bậc 1, rồi bạn sẽ nhảy được.', 5200)), kynang: () => LGT.skill && LGT.skill.open(),
     lan: () => LGT.swim && LGT.swim.toggleDive(), vantruot: () => LGT.board && LGT.board.toggle(),
     tui: () => (LGT.inHouse && LGT.furni ? LGT.furni.openBag() : LGT.bag ? LGT.bag.open() : toast('Túi đồ chưa sẵn sàng.', 2500)),
@@ -65,7 +67,8 @@ export function initDock(hud, { toast = () => {} } = {}) {
     const khs = LGT.conKhi ? LGT.conKhi.status() : null;
     const sws = LGT.swim ? LGT.swim.status() : null;
     const bds = LGT.board ? LGT.board.status() : null;
-    const c = { combat: !LGT.inHouse && mapAvailable(LGT.zones), swim: sws, board: bds, inHouse: !!LGT.inHouse, ply: ps ? { near: ps.near, holding: ps.holding, heldName: ps.heldName, left: ps.left } : null, npc: nps ? { near: nps.near } : null, head: hds, khi: khs ? { cd: khs.cd } : null, yq: ys ? { active: ys.active, ten: ys.ten, canThrow: ys.canThrow, stoneCd: ys.stoneCd, spearCd: ys.spearCd } : null, carry: cs ? { holding: cs.holding, heldName: cs.heldName, near: cs.near } : null, free: !!W && W.mode === 'free' && !LGT.panelOpen && !LGT.heldBy && !document.querySelector('.st-dlg:not([hidden])'), farm: fms ? { active: fms.active, ten: fms.ten, stoneCd: fms.stoneCd, spearCd: fms.spearCd, canAuto: fms.canAuto, auto: fms.auto, autoLeft: fms.autoLeft } : null, khinh: LGT.skill ? LGT.skill.level : 0, canTrain: !!(LGT.skill && LGT.skill.canTrain), water: !!fs.water && !LGT.inHouse, fish: fs };
+    const lc = luyen(), lcs = lc && lc.status ? lc.status() : null;   // Phiên 191: khu luyện tập — hồi chiêu Đánh thường/Thương của mộc nhân
+    const c = { combat: !LGT.inHouse && mapAvailable(LGT.zones) || !!lc, swim: sws, board: bds, inHouse: !!LGT.inHouse, ply: ps ? { near: ps.near, holding: ps.holding, heldName: ps.heldName, left: ps.left } : null, npc: nps ? { near: nps.near } : null, head: hds, khi: khs ? { cd: khs.cd } : null, yq: ys ? { active: ys.active, ten: ys.ten, canThrow: ys.canThrow, stoneCd: ys.stoneCd, spearCd: ys.spearCd } : null, carry: cs ? { holding: cs.holding, heldName: cs.heldName, near: cs.near } : null, free: !!W && W.mode === 'free' && !LGT.panelOpen && !LGT.heldBy && !document.querySelector('.st-dlg:not([hidden])'), farm: lcs ? { active: false, stoneCd: lcs.stoneCd, spearCd: lcs.spearCd } : fms ? { active: fms.active, ten: fms.ten, stoneCd: fms.stoneCd, spearCd: fms.spearCd, canAuto: fms.canAuto, auto: fms.auto, autoLeft: fms.autoLeft } : null, khinh: LGT.skill ? LGT.skill.level : 0, canTrain: !!(LGT.skill && LGT.skill.canTrain), water: !!fs.water && !LGT.inHouse, fish: fs };
     lastCtx = c;
     const list = dockButtons(c).filter((b) => b.id !== 'tui' && b.id !== 'kynang'); for (const b of list) if (b.id === 'vantruot' && bds && bds.label) b.label = bds.label;   // Mục 1: nhãn nút cưỡi theo đồ đang cầm (Cưỡi thương / Cưỡi gậy / Lướt ván)
     const next = list.map((b) => b.id).join(',');
