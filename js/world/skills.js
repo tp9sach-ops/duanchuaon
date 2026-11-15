@@ -25,31 +25,41 @@ export function canJump({ level = 0, mode = 'free', panelOpen = false, dialogOpe
   return level > 0 && mode === 'free' && !panelOpen && !dialogOpen;
 }
 
-/** Bộ mô phỏng một cú nhảy theo phương thẳng đứng: { y (m, ≥ 0 so với mặt đất), air, start(cao), step(dt) }. */
+/**
+ * Bộ mô phỏng một cú nhảy theo phương thẳng đứng: { y (m, ≥ 0 so với mặt đất), air, standing, start(cao), step(dt, floor) }.
+ * Phiên 202: step(dt, floor) nhận MẶT ĐỨNG tương đối so với mặt đất (m, ≥ 0; mái nhà, đá, tán cây, tượng... xem standOn.floorRel). Rơi xuống chạm `floor` thì ĐÁP lại đó và đứng yên
+ * (standing = true, y = floor); mặt đứng biến mất (bước ra mép) thì tự rơi. Không truyền floor (mặc định 0) = hành vi cũ: chỉ đáp xuống mặt đất.
+ */
 export function createJump() {
-  let y = 0, vy = 0, air = false, gliding = false, fall = 0, apex = 0;
+  let y = 0, vy = 0, air = false, gliding = false, fall = 0, apex = 0, top = false;   // top (Phiên 202): đang ĐỨNG trên mặt cao (y = độ cao mặt đứng), không phải trên không
   return {
     get y() { return y; }, get air() { return air; }, get vy() { return vy; }, get gliding() { return gliding; }, get fall() { return fall; }, get apex() { return apex; },   // apex (Phiên 197): độ cao đỉnh của cú nhảy đang/vừa thực hiện — bay lướt tính tốc độ rơi theo đó
-    /** Bắt đầu nhảy cao `cao` m. Đang ở trên không hoặc cao ≤ 0 → false (không nhảy chồng). */
-    start(cao) { if (air || !(cao > 0)) return false; vy = Math.sqrt(2 * GRAVITY * cao); air = true; gliding = false; apex = +cao; return true; },
+    get standing() { return top; },
+    /** Bắt đầu nhảy cao `cao` m (từ mặt đất hoặc từ mặt đứng đang đứng). Đang ở trên không hoặc cao ≤ 0 → false (không nhảy chồng). */
+    start(cao) { if (air || !(cao > 0)) return false; vy = Math.sqrt(2 * GRAVITY * cao); air = true; gliding = false; top = false; apex = y + +cao; return true; },
     /** Phiên 196: chuyển sang BAY LƯỚT (đang trên không, chưa bay): rơi chậm tối đa `fallV` m/s, hạ cánh có đoạn đệm. Không đủ điều kiện → false. */
     glide(fallV) {
       if (!air || gliding || !(+fallV > 0)) return false;
       gliding = true; fall = +fallV; return true;   // đang lên thì cứ lên nốt tới đỉnh (trọng lực nhẹ hơn 20%) rồi mới hạ chậm → bậc cao bay lâu hơn
     },
-    /** Tiến `dt` giây, trả độ cao mới. Chạm đất thì dừng hẳn (y = 0). */
-    step(dt) {
-      if (!air) return 0;
+    /** Tiến `dt` giây (floor = mặt đứng tương đối, m), trả độ cao mới. Chạm mặt đứng thì dừng hẳn (y = floor); floor = 0 thì y = 0. */
+    step(dt, floor = 0) {
+      const fl = Number.isFinite(+floor) && +floor > 0 ? +floor : 0;
+      if (!air) {
+        if (!top) return 0;
+        if (fl < y - 0.02) { air = true; vy = 0; top = false; apex = y; }   // mặt đứng biến mất (bước ra mép) → rơi
+        else { y = fl; return y; }                                          // đang đứng: theo mặt đứng (bước lên bậc thấp cũng được)
+      }
       let left = Math.max(0, Math.min(Number.isFinite(+dt) ? +dt : 0, 0.25));
       while (left > 0 && air) {
         const h = Math.min(left, MAX_STEP);
-        vy = gliding ? flyVy(vy, y, fall, h, GRAVITY) : vy - GRAVITY * h;
+        vy = gliding ? flyVy(vy, y - fl, fall, h, GRAVITY) : vy - GRAVITY * h;   // đệm hạ cánh tính theo độ cao so với mặt đứng (floor = 0: như cũ)
         y += vy * h; left -= h;
-        if (y <= 0) { y = 0; vy = 0; air = false; gliding = false; }
+        if (vy <= 0 && y <= fl) { y = fl; vy = 0; air = false; gliding = false; top = fl > 0; }   // chỉ đáp khi đang rơi: đang lên qua mặt thấp thì cứ lên tiếp
       }
       return y;
     },
-    reset() { y = 0; vy = 0; air = false; gliding = false; fall = 0; apex = 0; },
+    reset() { y = 0; vy = 0; air = false; gliding = false; fall = 0; apex = 0; top = false; },
   };
 }
 
