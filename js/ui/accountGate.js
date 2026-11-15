@@ -5,6 +5,7 @@ import { MODE_UI, entryMode, signupMode, validateEntry, errMsg, isNetworkError }
 import { askConfirm } from './dialog.js';
 
 const AUTO_KEY = 'lgt.autoEnter';   // sessionStorage: vừa đăng nhập xong và trang tải lại → tự vào chùa, khỏi bấm thêm
+const FALLBACK_SHOW_MS = 2500;      // Phiên 170: thời gian hiện lời giải thích trước khi tự vào chùa ở chế độ chơi tạm
 
 /**
  * deps: { form, nameIn, client (null = chưa có máy chủ), hasLegacy(): đã có nhân vật cũ trên máy này, getDraft(): {color,hair}, onEnter(name): vào chùa }
@@ -67,7 +68,18 @@ export function initAccountGate({ form, nameIn, client, hasLegacy, getDraft, onE
   async function doCreate(f, name) {
     const d = getDraft();
     const r = await client.create({ name, password: f.password, overrides: { 'lgt.name': name, 'lgt.color': d.color, 'lgt.hair': d.hair } });
-    if (!r.ok) { showErr(r.error, { name, field: 'pw', detail: r.detail }); if (isNetworkError(r.error)) temp.hidden = false; return; }
+    if (!r.ok) {
+      showErr(r.error, { name, field: 'pw', detail: r.detail });
+      if (!isNetworkError(r.error)) return;   // lỗi người chơi tự sửa được (trùng tên, mật khẩu ngắn…) → ở lại màn này
+      // Phiên 170: SỰ CỐ MÁY CHỦ (Apps Script bị chặn/chưa deploy/mất mạng) không được chặn người chơi: tự vào chùa ở chế độ chơi tạm.
+      // Tên/màu áo/kiểu đầu vẫn lưu trên máy này (enterWorld) → lần mở sau màn vào cửa ở chế độ "Đặt mật khẩu cho nhân vật" để lưu lên máy chủ khi máy chủ đã sẵn sàng.
+      temp.hidden = true;
+      err.textContent = 'Máy chủ lưu tài khoản chưa sẵn sàng nên chưa đặt được mật khẩu. Đang vào chùa ở chế độ chơi tạm: nhân vật “' + name + '” vẫn được giữ trên máy này, lần sau bạn sẽ được hỏi đặt mật khẩu để lưu lên máy chủ. (mã: ' + r.error + (r.detail ? ' · ' + r.detail : '') + ')';
+      err.hidden = false;
+      await new Promise((ok) => setTimeout(ok, FALLBACK_SHOW_MS));
+      onEnter(name);
+      return;
+    }
     onEnter(name);
   }
   async function submit() {
