@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import { lapKeHoach } from '../world/chieuFxPlan.js';
 import { FX_LOAI, HAT_TOI_DA } from '../data/chieuFx.js';
 import { lapLop, doSangLop, chiaHat, CO_HAT } from '../world/chieuLop.js';
+import { taoLua } from './fxLua.js';   // Phiên 177 (mục 1): lửa thật cho chiêu Hệ hỏa — lưỡi lửa nhiều lớp, khói, tàn lửa, vũng sáng nền
 import * as TX from './fxTex.js';   // Phiên 176: kết cấu tròn mềm/quầng/khói/vệt/sóng/tia sao (hết ô vuông)
 import { lapAm } from '../world/chieuAm.js';   // Phiên 173: gồng/phát/trúng/dư âm theo Hệ + chất liệu kẻ địch   // Phiên 172: sáu lớp (lõi, thân, quầng+vệt, hạt 3 cỡ, decal nền, tàn dư), màu từ bảng màu
 
@@ -45,6 +46,8 @@ export function createChieuFx(scene, { getTier = () => 'vua', onShake = () => {}
       const core = new THREE.Mesh(new THREE.SphereGeometry(lp.loi.co, 12, 8), new THREE.MeshBasicMaterial({ color: lp.loi.mau, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false })); core.position.set(0, 1.1, 0); core.frustumCulled = false; root.add(core);
       const spr = (tex, mau, ty) => { const m = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, color: mau, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, depthTest: true })); m.frustumCulled = false; m.position.set(0, 1.1, 0); root.add(m); return m; };
       const halo1 = spr(TX.glow(), lp.loi.mau), halo2 = spr(TX.glow(), lp.quang.mau), flare = spr(TX.flare(), lp.loi.mau);   // quầng trắng ngà + quầng màu Hệ (bloom giả) + tia sao lúc bùng nổ
+      // lớp 2: thân năng lượng — Hệ hỏa vẽ LỬA THẬT (Phiên 177); Hệ khác chưa có bộ riêng thì bỏ qua
+      let lua = null; if (p.he === 'hoa' && lp.than.bat) { try { lua = taoLua({ tier: p.tier, mode: p.mode, co: lp.loi.co, reach, R2, zD }); root.add(lua.group); } catch (_) { lua = null; } }
       // lớp 4: hạt chia 3 cỡ cùng lúc (lớn chậm, vừa, nhỏ nhanh); vị trí là hàm của (hạt, u) nên không cộng dồn
       const cap = HAT_TOI_DA[p.tier] * 2 - total(), n = Math.max(0, Math.min(p.n, cap)), split = chiaHat(n), groups = [], lo = FX_LOAI[p.loai], mixC = new THREE.Color();
       for (const [k, cnt] of [['lon', split.lon], ['vua', split.vua], ['nho', split.nho]]) {
@@ -104,6 +107,7 @@ export function createChieuFx(scene, { getTier = () => 'vua', onShake = () => {}
         halo1.position.set(0, 1.1, pz); halo2.position.set(0, 1.1, pz); flare.position.set(0, 1.1, pz);
         halo1.material.opacity = Math.min(1, bl * 0.9); halo1.scale.setScalar(lp.loi.co * 7 * br * (0.6 + 0.8 * bl)); halo2.material.opacity = Math.min(1, bl * 0.55); halo2.scale.setScalar(lp.loi.co * 15 * br * (0.5 + 0.7 * bl));
         { const fk = Math.max(0, Math.min(1, after / 0.28)); flare.material.opacity = after < 0 ? 0 : 0.95 * (1 - fk) * (1 - fk); flare.scale.setScalar(lp.loi.co * (6 + 22 * fk)); flare.material.rotation = fk * 0.8; }   // tia sao bùng lúc phát
+        if (lua) lua.update(t, after, doSangLop(L, 'than', after), bl, pz);
         if (glow) glow.material.opacity = p.sang * 0.5 * doSangLop(L, 'quang', after);
         if (vet) { vet.material.opacity = 0.5 * doSangLop(L, 'quang', after); vet.scale.x = 1 - 0.6 * Math.max(0, Math.min(1, after / 0.5)); }
         const bh = doSangLop(L, 'hat', after);
