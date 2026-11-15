@@ -24,7 +24,15 @@ export function initAccountGate({ form, nameIn, client, hasLegacy, getDraft, onE
     if (code === 'exists' || code === 'bad_login') { pwIn.value = ''; pw2In.value = ''; }
     try { (code === 'exists' ? alt : f).focus({ preventScroll: true }); } catch (_) { /* bỏ qua */ }
   }
-  function setBusy(b) { busy = b; go.disabled = b; alt.disabled = b; out.disabled = b; go.textContent = b ? 'Đang xử lý…' : MODE_UI[mode].go; }
+  let slowT1 = null, slowT2 = null;   // Phiên 169: máy chủ Apps Script chậm → báo cho người chơi biết đang chờ, và sau 12 giây cho "Chơi tạm" ngay thay vì bắt chờ hết giờ
+  function setBusy(b) {
+    busy = b; go.disabled = b; alt.disabled = b; out.disabled = b; go.textContent = b ? 'Đang xử lý…' : MODE_UI[mode].go;
+    clearTimeout(slowT1); clearTimeout(slowT2); slowT1 = slowT2 = null;
+    if (b) {
+      slowT1 = setTimeout(() => { if (busy) go.textContent = 'Đang chờ máy chủ phản hồi…'; }, 5000);
+      slowT2 = setTimeout(() => { if (busy) { go.textContent = 'Máy chủ chậm — vẫn đang chờ…'; temp.hidden = false; } }, 12000);
+    }
+  }
 
   function paint() {
     const ui = MODE_UI[mode], name = nameIn.value.trim();

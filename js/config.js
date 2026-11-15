@@ -4,6 +4,8 @@ export const CONFIG = {
   apiUrl: 'https://script.google.com/macros/s/AKfycbzCemlxz2X7Kcd6LuCWnWe732lcfUCZn-kn2XUBlY7iHJemGrwc4WFij0bAhHcZLnTFcQ/exec',
   apiTimeoutMs: 15000,
   apiRetries: 1,
+  // Phiên 169: cầu nối Firebase ↔ Apps Script báo vị trí lên Apps Script mỗi chừng này ms (trước là 4000). Mỗi người chơi gọi Apps Script liên tục nên làm máy chủ tài khoản chậm / hết hạn mức. 10000 vẫn nằm trong hạn 12 giây của phòng nên không ai bị chớp tắt. Đặt 0 để tắt hẳn cầu nối.
+  gasBridgeMs: 10000,
   // Đa người: thử lần lượt từ trên xuống; không vào được / đầy người / mất kết nối thì chuyển sang nơi kế. Dòng 'gas' là phương án cuối.
   // Thêm Firebase khác: chép thêm một khối { type: 'firebase', name: '...', firebaseConfig: {...} } lên trên dòng 'gas'.
   // (Khóa Firebase phía web là thông tin công khai; an toàn do luật trong firebase/database.rules.json.)

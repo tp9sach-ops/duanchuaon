@@ -5,8 +5,8 @@
 //   blocked      = tới được Google nhưng KHÔNG đọc được phản hồi (Apps Script chưa Authorize / chưa deploy "Anyone" / URL sai)
 //   bad_response = máy chủ trả về thứ không phải JSON (thường là trang lỗi HTML của Apps Script)
 //   timeout, http_NNN, hoặc mã lỗi JSON do máy chủ trả (ok:false, error:'…')
-// Phiên 55: đường DỰ PHÒNG khi fetch bị chặn đọc ('blocked'): gửi bằng <form> ẩn + <iframe> ẩn, máy chủ (Code.gs → frame_) trả trang
-//   nhỏ gọi postMessage về trang game. Cách này KHÔNG chịu CORS nên đi được cả khi game nằm trong khung nhúng của trang khác.
+// Phiên 55: đường DỰ PHÒNG khi fetch bị chặn đọc ('blocked'): gửi bằng <form> ẩn + <iframe> ẩn, máy chủ (Code.gs → frame_) trả trang nhỏ
+//   gọi postMessage về trang game. Cách này KHÔNG chịu CORS nên đi được cả khi game nằm trong khung nhúng của trang khác.
 import { CONFIG } from './config.js';
 
 export const apiEnabled = () => !!CONFIG.apiUrl;
@@ -14,6 +14,8 @@ export const apiEnabled = () => !!CONFIG.apiUrl;
 // Các lệnh tài khoản ghi Google Sheet + khóa → chậm hơn lệnh thường, cho thời gian chờ dài hơn (lần đầu Apps Script "khởi động nguội" mất vài giây).
 const SLOW_ACTIONS = /^acct(Create|Login|Save|Load)$/;
 const timeoutFor = (action) => (SLOW_ACTIONS.test(action) ? Math.max(CONFIG.apiTimeoutMs, 30000) : CONFIG.apiTimeoutMs);
+// Phiên 169: khi fetch đã bị chặn đọc (blocked) mà phải thử đường khung dự phòng, chỉ chờ tối đa chừng này (trước đây chờ cả 30 giây nữa → màn tạo nhân vật treo quá lâu rồi mới báo lỗi).
+const FRAME_FALLBACK_MS = 12000;
 
 /** Chỉ nhận thư từ máy chủ Google (trang HtmlService chạy ở *.googleusercontent.com hoặc script.google.com). */
 const googleOrigin = (o) => { try { const h = new URL(o).hostname; return h === 'script.google.com' || h === 'googleusercontent.com' || h.endsWith('.googleusercontent.com'); } catch (_) { return false; } };
@@ -70,7 +72,7 @@ export async function callApi(action, payload = {}, opts = {}) {
   if (!apiEnabled()) return { ok: false, error: 'api_disabled' };
   let lastErr = 'unknown', lastDetail = '';
   const frameEnv = opts.frameEnv || {};
-  const viaFrame = async (b) => (opts.keepalive ? null : callViaFrame(b, { timeoutMs: timeoutFor(action), ...frameEnv }));   // lúc đóng trang (keepalive) khung không kịp chạy
+  const viaFrame = async (b, cap) => (opts.keepalive ? null : callViaFrame(b, { timeoutMs: cap ? Math.min(cap, timeoutFor(action)) : timeoutFor(action), ...frameEnv }));   // lúc đóng trang (keepalive) khung không kịp chạy
   if (useFrame && !opts.keepalive) {                                          // phiên này fetch từng bị chặn nhưng đường khung chạy được → đi thẳng đường khung
     const fr = await viaFrame(JSON.stringify({ action, ...payload }));
     if (fr) return fr;
@@ -91,7 +93,7 @@ export async function callApi(action, payload = {}, opts = {}) {
       lastErr = await classifyFetchFailure();
       try { lastDetail = [action, Math.round(body.length / 1024) + 'KB', location.origin, window.top === window.self ? 'top' : 'khung', e && e.message].join(' | '); } catch (_) { lastDetail = String(e && e.message); }   // chi tiết để chẩn đoán
       if (lastErr === 'blocked') {                      // thử lại bằng fetch là vô ích; thử đường khung (không cần CORS)
-        const fr = await viaFrame(body);                // cùng `body` (cùng aid/sid) nên máy chủ nhận ra nếu yêu cầu đầu thực ra đã chạy xong
+        const fr = await viaFrame(body, FRAME_FALLBACK_MS);                // cùng `body` (cùng aid/sid) nên máy chủ nhận ra nếu yêu cầu đầu thực ra đã chạy xong
         if (fr) { useFrame = true; return fr; }
         lastDetail += ' | khung: không phản hồi';
         break;
