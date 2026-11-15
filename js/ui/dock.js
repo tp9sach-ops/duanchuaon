@@ -1,6 +1,7 @@
 // Cụm nút thao tác góc PHẢI-DƯỚI (Phiên 62, bố cục lại ở Phiên 109): nhảy, kỹ năng chiến đấu, thả cầu, bấm!, thu cá, phóng sinh, khiêng/ném, túi đồ — cho người chơi điện thoại chỉ cần dùng ngón cái.
 // Logic ở js/world/dock.js (có test): dockButtons (nút nào hiện) + dockLayout (mỗi nút MỘT Ô CỐ ĐỊNH trong lưới 3×3) + cooldownFrac (vòng hồi chiêu).
 // Phiên 109: nút KHÔNG dời chỗ khi hoàn cảnh đổi; hồi chiêu hiện thành vòng quay trên nút; lời chỉ chỗ + dòng trạng thái gộp thành MỘT bong bóng phía trên cụm; máy tính có phím 1–5 (xem SLOT_KEY).
+// Phiên 181 (mục 1): nút Túi (id 'tui') KHÔNG còn vẽ ở cụm phải-dưới — đã dời lên cụm tròn phải-trên (TOP_ICONS trong js/ui/menuLogic.js, nút "Túi đồ"); logic dockButtons giữ nguyên (có test), ô T3 để trống cho nút chiêu.
 // Mục 1: nhãn nút cưỡi (id 'vantruot', ô T1) lấy từ LGT.board.status().label theo đồ đang cầm: Cưỡi thương / Cưỡi gậy / Lướt ván (và Xuống ...).
 // Mọi chữ qua textContent. Nút Nhảy/Ném đá/kỹ năng chiến đấu nhận pointerdown (nhanh, không trễ); bàn phím vẫn dùng được (click do Enter/Space).
 import { dockButtons, dockLayout, cooldownFrac, pickHint, loadSeen, SLOT_CODES } from '../world/dock.js';
@@ -65,7 +66,7 @@ export function initDock(hud, { toast = () => {} } = {}) {
     const bds = LGT.board ? LGT.board.status() : null;
     const c = { swim: sws, board: bds, inHouse: !!LGT.inHouse, ply: ps ? { near: ps.near, holding: ps.holding, heldName: ps.heldName, left: ps.left } : null, npc: nps ? { near: nps.near } : null, head: hds, khi: khs ? { cd: khs.cd } : null, yq: ys ? { active: ys.active, ten: ys.ten, canThrow: ys.canThrow, stoneCd: ys.stoneCd, spearCd: ys.spearCd } : null, carry: cs ? { holding: cs.holding, heldName: cs.heldName, near: cs.near } : null, free: !!W && W.mode === 'free' && !LGT.panelOpen && !LGT.heldBy && !document.querySelector('.st-dlg:not([hidden])'), farm: fms ? { active: fms.active, ten: fms.ten, stoneCd: fms.stoneCd, spearCd: fms.spearCd, canAuto: fms.canAuto, auto: fms.auto, autoLeft: fms.autoLeft } : null, khinh: LGT.skill ? LGT.skill.level : 0, canTrain: !!(LGT.skill && LGT.skill.canTrain), water: !!fs.water && !LGT.inHouse, fish: fs };
     lastCtx = c;
-    const list = dockButtons(c); for (const b of list) if (b.id === 'vantruot' && bds && bds.label) b.label = bds.label;   // Mục 1: nhãn nút cưỡi theo đồ đang cầm (Cưỡi thương / Cưỡi gậy / Lướt ván)
+    const list = dockButtons(c).filter((b) => b.id !== 'tui'); for (const b of list) if (b.id === 'vantruot' && bds && bds.label) b.label = bds.label;   // Mục 1: nhãn nút cưỡi theo đồ đang cầm (Cưỡi thương / Cưỡi gậy / Lướt ván)
     const next = list.map((b) => b.id).join(',');
     root.hidden = !list.length;
     if (next !== sig) {   // bộ nút đổi → tính lại ô, dựng nút còn thiếu, bỏ nút thừa (nút còn lại GIỮ NGUYÊN ô của nó)
@@ -95,6 +96,7 @@ export function initDock(hud, { toast = () => {} } = {}) {
   addEventListener('keydown', (e) => {
     if (e.repeat || isEditable(e.target) || e.ctrlKey || e.metaKey || e.altKey || root.hidden || LGT.panelOpen) return;
     if (document.querySelector('.st-dlg:not([hidden])') || document.body.classList.contains('edit-mode')) return;
+    if (e.code === 'KeyB') { e.preventDefault(); try { ACT.tui(); } catch (_) { /* bỏ qua */ } return; }   // Phiên 181: phím B mở Túi đồ (nút đã dời lên góc phải-trên)
     const slot = Object.keys(SLOT_CODES).find((s) => SLOT_CODES[s].includes(e.code)); if (!slot) return;
     const L = layout.find((l) => l.slot === slot); if (!L || !items.has(L.id)) return;
     e.preventDefault(); press(L.id);

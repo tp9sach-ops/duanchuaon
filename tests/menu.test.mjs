@@ -69,3 +69,14 @@ test('chữ nhãn nút tròn phải-trên (Phiên 69): có chữ, ngắn, không
   assert.equal(captionOf(null), '');
   assert.ok(LONG_PRESS_MS >= 300 && LONG_PRESS_MS <= 700);
 });
+
+test('Phiên 181 (mục 1): Túi đồ nằm ở cụm tròn phải-trên, KHÔNG còn vẽ trong cụm nút phải-dưới', async () => {
+  const it = TOP_ICONS.find((a) => a.id === 'tui');
+  assert.ok(it && it.label === 'Túi đồ' && it.action === 'bag', 'có nút Túi đồ ở cụm phải-trên');
+  assert.equal(TOP_ICONS[0].id, 'tui', 'đứng đầu cụm (gần góc nhất)');
+  assert.deepEqual(pressResult(it), { kind: 'bag' });
+  const { readFileSync } = await import('node:fs');
+  const d = readFileSync(new URL('../js/ui/dock.js', import.meta.url), 'utf8');
+  assert.match(d, /dockButtons\(c\)\.filter\(\(b\) => b\.id !== 'tui'\)/, 'dock không vẽ nút tui');
+  assert.match(d, /e\.code === 'KeyB'/, 'phím B vẫn mở túi');
+});
