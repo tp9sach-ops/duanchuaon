@@ -144,15 +144,18 @@ export function initHeSkill(hud, { toast = () => {} } = {}) {
   function cast(slot) {
     sync(); if (!rt) return false;
     if (inLuyen()) return luyenCast(slot);
-    if (!LGT.farm) return false;
+    // Phiên 190: không có farm thì vẫn tung (không sát thương)
     const sk = skillFor(he, slot, pm);
     if (!sk && slot === 4) { if (eff() < SKILL_CAP[4]) { toast(`Chiêu này mở ở cấp ${SKILL_CAP[4]} (bạn cấp ${eff()}).`, 2400); nope(4); } else openPm(); return false; }
     if (!sk) return false;
     if (eff() < SKILL_CAP[slot]) { toast(`Chiêu này mở ở cấp ${SKILL_CAP[slot]} (bạn cấp ${eff()}).`, 2400); nope(slot); return false; }
     if (!(sk.heSo > 0)) return castSupport(slot, sk);
-    const pre = LGT.farm.skillReady(); if (!pre.ok) { toast(WHY[pre.reason] || 'Chưa dùng được.', 2200); nope(slot); return false; }
+    const pre = LGT.farm ? LGT.farm.skillReady() : { ok: false, reason: 'khong-quai' };
     const r = rt.tryCast(slot, nowSec());
     if (!r.ok) { toast(failText(sk, r), 2200); nope(slot); return false; }
+    if (!pre.ok) {   // Phiên 190: KHÔNG có quái (hoặc quái còn xa) vẫn tung được chiêu: hoạt ảnh + hiệu ứng 3D, hồi chiêu như thật, nhưng KHÔNG gây sát thương, không tích Tâm Ấn
+      pose(sk, targetNow()); toast(`${sk.ten}! ${pre.reason === 'xa' ? 'Quái còn xa nên chưa trúng.' : 'Chưa có quái — không gây sát thương ai.'}`, 2200); if (LGT.sfx) LGT.sfx.play('tu-dong-bat'); return true;
+    }
     const tg = targetNow();   // Phiên 185: vị trí quái bị nhắm, đọc trước skillHit
     const h = LGT.farm.skillHit(r.heSo);
     pose(sk, tg);

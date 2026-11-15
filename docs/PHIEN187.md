@@ -45,3 +45,11 @@ Khi Gp nói "tiếp tục" → Mục 2 (cài đặt cỡ nút). Cập nhật `PR
 - **Bỏ chữ phím Q/W/E/T/Y** trên nút chiêu và nhãn phím ở cụm dock (phím tắt vẫn chạy).
 - `sw.js` = `dgt-v178`. `npm test` 1257/1257. CHƯA nhìn bằng mắt.
 - Việc kế: Mục 4 (rà điều khiển tổng thể) → rồi hàng đợi 5–7 ở trên.
+
+---
+# PHIÊN 190 — Mục 4 (làm phần gây khó điều khiển nhất) = hàng đợi #7: KHÔNG có quái vẫn dùng được chiêu + đánh thường
+- `js/world/dock.js`: cờ `c.combat` → hiện Đánh thường + Thương cả khi không có quái (trước đây nút đánh chỉ hiện khi có quái gần → "không có nút để bấm"). `js/ui/dock.js` đặt `combat: !inHouse && mapAvailable(zones)` (chỉ bản đồ chính).
+- `js/ui/farm.js`: `stone()/spear()` khi KHÔNG có quái → `airSwing`: đặt hồi chiêu + tiếng, `combatPose.js` tự vung côn khi hồi chiêu tăng; KHÔNG gây sát thương; toast 1 lần/12 s. Có quái nhưng xa: giữ như cũ (báo "Lại gần quái hơn") — sẽ thay bằng LAO tới ở hàng đợi #5.
+- `js/ui/heSkill.js`: chiêu phái tung được khi không có quái / quái xa: hoạt ảnh + hiệu ứng 3D + hồi chiêu như thật, KHÔNG sát thương, không tích Tâm Ấn.
+- `sw.js` = `dgt-v179`; `npm test` đạt toàn bộ (thêm test dock Phiên 190).
+- CÒN LẠI: #5 Đánh thường lao tới + combo 3 đòn (đòn 3 lan, quái dính đánh trả); #6 lướt ngón tay chọn hướng chiêu; Mục 4 phần rà điều khiển khác (joystick/camera) — chờ Gp chỉ điểm cụ thể.

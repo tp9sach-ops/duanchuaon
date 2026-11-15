@@ -200,3 +200,15 @@ test('nối dây Phiên 109: dock dùng ô cố định + phím tắt + vòng h�
   assert.match(css, /\.dk-grid\{display:grid/); assert.match(css, /conic-gradient/); assert.match(css, /\.dk-tips\{/); assert.match(css, /\.dk\.kb \.dk-key/);
   for (const id of ['thuong', 'chemkhi', 'thietdau']) assert.match(d, new RegExp("'" + id + "'"), id + ' phải nằm trong FAST (bấm xuống là chạy)');
 });
+
+test('Phiên 190: không có quái vẫn có Đánh thường + Thương (c.combat); có quái/boss thì không nhân đôi; mặc định không có c.combat như cũ', () => {
+  const ids = (c) => dockButtons({ free: true, khinh: 1, ...c }).map((x) => x.id);
+  assert.deepEqual(ids({}), ['nhay', 'kynang', 'tui']);
+  assert.deepEqual(ids({ combat: true }), ['da', 'thuong', 'nhay', 'kynang', 'tui']);
+  assert.deepEqual(ids({ combat: true, farm: { active: true } }), ['da', 'thuong', 'nhay', 'kynang', 'tui']);
+  assert.deepEqual(ids({ combat: true, yq: { active: true } }), ['da', 'thuong', 'nhay']);
+  assert.equal(dockButtons({ free: true, combat: true, farm: { stoneCd: 0.5 } }).find((b) => b.id === 'da').wait, true);
+  const dk = read('js/ui/dock.js'); assert.match(dk, /combat: !LGT\.inHouse && mapAvailable/);
+  const fm = read('js/ui/farm.js'); assert.match(fm, /airSwing\('stone'\)/); assert.match(fm, /airSwing\('spear'\)/);
+  assert.match(read('js/ui/heSkill.js'), /KHÔNG có quái \(hoặc quái còn xa\) vẫn tung được chiêu/);
+});

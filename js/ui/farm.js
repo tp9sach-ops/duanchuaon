@@ -103,12 +103,19 @@ export function initFarm(hud, { toast = () => {} } = {}) {
     if (needNear && gap(t, pos()) - bodyOf(t) > SPEAR.range) { toast('Lại gần quái hơn mới đánh được.', 1800); return null; }
     return t;
   }
+  // Phiên 190: KHÔNG có quái vẫn ĐÁNH THƯỜNG / THƯƠNG được — chỉ vung vào không khí (hoạt ảnh + tiếng, combatPose.js tự vung khi hồi chiêu tăng), KHÔNG gây sát thương ai.
+  let airToast = -1e9;
+  function airSwing(cdKind) {
+    if (cdKind === 'stone') cdStone = STONE.cd; else cdSpear = SPEAR.cd;
+    if (LGT.sfx) LGT.sfx.play(cdKind === 'stone' ? 'nem-da' : 'thuong');
+    const now = performance.now(); if (now - airToast > 12000) { airToast = now; toast('Chưa có quái nào gần — đánh vào không khí, không gây sát thương ai.', 2600); }
+  }
   function stone() {
-    if (!here() || bossOn() || cdStone > 0) return; const t = aim(true); if (!t) return;
+    if (!here() || bossOn() || cdStone > 0) return; const t0 = target(); if (!t0) { airSwing('stone'); return; } const t = aim(true); if (!t) return;
     cdStone = STONE.cd; if (LGT.sfx) LGT.sfx.play('nem-da'); hit(t.uid, Math.max(1, Math.round(stoneDamage(str()) * buffMul())));   // Phiên 127: Đánh thường = đòn cận chiến trúng ngay (không còn ném đá)
   }
   function spear() {
-    if (!here() || bossOn() || cdSpear > 0) return; const t = aim(true); if (!t) return;
+    if (!here() || bossOn() || cdSpear > 0) return; const t0 = target(); if (!t0) { airSwing('spear'); return; } const t = aim(true); if (!t) return;
     cdSpear = SPEAR.cd; if (LGT.sfx) LGT.sfx.play('thuong'); hit(t.uid, Math.max(1, Math.round(spearDamage(str()) * buffMul())));
   }
 

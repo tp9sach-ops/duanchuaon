@@ -4,6 +4,7 @@
 // Phiên 181 (mục 1): nút Túi (id 'tui') KHÔNG còn vẽ ở cụm phải-dưới — đã dời lên cụm tròn phải-trên (TOP_ICONS trong js/ui/menuLogic.js, nút "Túi đồ"); logic dockButtons giữ nguyên (có test), ô T3 để trống cho nút chiêu.
 // Mục 1: nhãn nút cưỡi (id 'vantruot', ô T1) lấy từ LGT.board.status().label theo đồ đang cầm: Cưỡi thương / Cưỡi gậy / Lướt ván (và Xuống ...).
 // Mọi chữ qua textContent. Nút Nhảy/Ném đá/kỹ năng chiến đấu nhận pointerdown (nhanh, không trễ); bàn phím vẫn dùng được (click do Enter/Space).
+import { mapAvailable } from '../world/minimap.js';   // Phiên 190: nút đánh chỉ ở bản đồ chính
 import { dockButtons, dockLayout, cooldownFrac, pickHint, loadSeen, SLOT_CODES } from '../world/dock.js';
 
 const KEY = 'lgt.dockhint';
@@ -64,7 +65,7 @@ export function initDock(hud, { toast = () => {} } = {}) {
     const khs = LGT.conKhi ? LGT.conKhi.status() : null;
     const sws = LGT.swim ? LGT.swim.status() : null;
     const bds = LGT.board ? LGT.board.status() : null;
-    const c = { swim: sws, board: bds, inHouse: !!LGT.inHouse, ply: ps ? { near: ps.near, holding: ps.holding, heldName: ps.heldName, left: ps.left } : null, npc: nps ? { near: nps.near } : null, head: hds, khi: khs ? { cd: khs.cd } : null, yq: ys ? { active: ys.active, ten: ys.ten, canThrow: ys.canThrow, stoneCd: ys.stoneCd, spearCd: ys.spearCd } : null, carry: cs ? { holding: cs.holding, heldName: cs.heldName, near: cs.near } : null, free: !!W && W.mode === 'free' && !LGT.panelOpen && !LGT.heldBy && !document.querySelector('.st-dlg:not([hidden])'), farm: fms ? { active: fms.active, ten: fms.ten, stoneCd: fms.stoneCd, spearCd: fms.spearCd, canAuto: fms.canAuto, auto: fms.auto, autoLeft: fms.autoLeft } : null, khinh: LGT.skill ? LGT.skill.level : 0, canTrain: !!(LGT.skill && LGT.skill.canTrain), water: !!fs.water && !LGT.inHouse, fish: fs };
+    const c = { combat: !LGT.inHouse && mapAvailable(LGT.zones), swim: sws, board: bds, inHouse: !!LGT.inHouse, ply: ps ? { near: ps.near, holding: ps.holding, heldName: ps.heldName, left: ps.left } : null, npc: nps ? { near: nps.near } : null, head: hds, khi: khs ? { cd: khs.cd } : null, yq: ys ? { active: ys.active, ten: ys.ten, canThrow: ys.canThrow, stoneCd: ys.stoneCd, spearCd: ys.spearCd } : null, carry: cs ? { holding: cs.holding, heldName: cs.heldName, near: cs.near } : null, free: !!W && W.mode === 'free' && !LGT.panelOpen && !LGT.heldBy && !document.querySelector('.st-dlg:not([hidden])'), farm: fms ? { active: fms.active, ten: fms.ten, stoneCd: fms.stoneCd, spearCd: fms.spearCd, canAuto: fms.canAuto, auto: fms.auto, autoLeft: fms.autoLeft } : null, khinh: LGT.skill ? LGT.skill.level : 0, canTrain: !!(LGT.skill && LGT.skill.canTrain), water: !!fs.water && !LGT.inHouse, fish: fs };
     lastCtx = c;
     const list = dockButtons(c).filter((b) => b.id !== 'tui' && b.id !== 'kynang'); for (const b of list) if (b.id === 'vantruot' && bds && bds.label) b.label = bds.label;   // Mục 1: nhãn nút cưỡi theo đồ đang cầm (Cưỡi thương / Cưỡi gậy / Lướt ván)
     const next = list.map((b) => b.id).join(',');
