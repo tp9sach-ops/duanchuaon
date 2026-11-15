@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import { lapKeHoach } from '../world/chieuFxPlan.js';
 import { FX_LOAI, HAT_TOI_DA } from '../data/chieuFx.js';
 import { lapLop, doSangLop, chiaHat, CO_HAT } from '../world/chieuLop.js';
+import * as TX from './fxTex.js';   // Phiên 176: kết cấu tròn mềm/quầng/khói/vệt/sóng/tia sao (hết ô vuông)
 import { lapAm } from '../world/chieuAm.js';   // Phiên 173: gồng/phát/trúng/dư âm theo Hệ + chất liệu kẻ địch   // Phiên 172: sáu lớp (lõi, thân, quầng+vệt, hạt 3 cỡ, decal nền, tàn dư), màu từ bảng màu
 
 const LIFE = 0.9, FADE = 0.3;   // giây: hạt sống sau lúc phát; vùng cảnh báo mờ dần sau lúc phát
@@ -39,9 +40,11 @@ export function createChieuFx(scene, { getTier = () => 'vua', onShake = () => {}
       const L = lapLop(id, getTier()), lp = L.lop, h = vz.hinh, reach = h.dai || h.r || 4, W = h.rong ? h.rong / 2 : (h.dai || h.r) * 0.3;
       const R2 = h.r || Math.min(3, W * 1.2 + 0.8), zD = h.r || h.taiMucTieu ? 0 : reach * 0.7;   // chỗ in decal / tàn dư (tâm vùng tròn hoặc điểm trúng của vùng dài)
       // lớp 3a: quầng sáng lúc phát (cộng sáng, không đèn động)
-      let glow = null; if (lp.quang.bat) { const rr = h.r || Math.min(4, (h.dai || 4) * 0.5); glow = new THREE.Mesh(new THREE.CircleGeometry(rr, 28), new THREE.MeshBasicMaterial({ color: lp.quang.mau, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false })); glow.rotation.x = -Math.PI / 2; root.add(glow); }
+      let glow = null; if (lp.quang.bat) { const rr = h.r || Math.min(4, (h.dai || 4) * 0.5); glow = new THREE.Mesh(new THREE.CircleGeometry(rr, 28), new THREE.MeshBasicMaterial({ color: lp.quang.mau, map: TX.glow(), transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false })); glow.rotation.x = -Math.PI / 2; root.add(glow); }
       // lớp 1: lõi sáng (gần trắng, nhỏ, đỉnh sáng nhất, "thở" 3–8%); bắt đầu từ lúc gồng (hút ánh sáng vào người)
       const core = new THREE.Mesh(new THREE.SphereGeometry(lp.loi.co, 12, 8), new THREE.MeshBasicMaterial({ color: lp.loi.mau, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false })); core.position.set(0, 1.1, 0); core.frustumCulled = false; root.add(core);
+      const spr = (tex, mau, ty) => { const m = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, color: mau, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, depthTest: true })); m.frustumCulled = false; m.position.set(0, 1.1, 0); root.add(m); return m; };
+      const halo1 = spr(TX.glow(), lp.loi.mau), halo2 = spr(TX.glow(), lp.quang.mau), flare = spr(TX.flare(), lp.loi.mau);   // quầng trắng ngà + quầng màu Hệ (bloom giả) + tia sao lúc bùng nổ
       // lớp 4: hạt chia 3 cỡ cùng lúc (lớn chậm, vừa, nhỏ nhanh); vị trí là hàm của (hạt, u) nên không cộng dồn
       const cap = HAT_TOI_DA[p.tier] * 2 - total(), n = Math.max(0, Math.min(p.n, cap)), split = chiaHat(n), groups = [], lo = FX_LOAI[p.loai], mixC = new THREE.Color();
       for (const [k, cnt] of [['lon', split.lon], ['vua', split.vua], ['nho', split.nho]]) {
@@ -49,11 +52,11 @@ export function createChieuFx(scene, { getTier = () => 'vua', onShake = () => {}
         const pos = new Float32Array(cnt * 3), col = new Float32Array(cnt * 3), seed = [];
         for (let i = 0; i < cnt; i++) { seed.push({ a: R(0, 6.283), r: Math.sqrt(Math.random()), s: R(0.6, 1), h: Math.random() }); const bs = Math.random() < lp.hat.tiLeBuSung ? lp.hat.buSung : lp.hat.mau[i % 3]; mixC.setHex(bs).multiplyScalar(lo.sang); col.set([mixC.r, mixC.g, mixC.b], i * 3); }
         const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(pos, 3)); geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
-        const pt = new THREE.Points(geo, new THREE.PointsMaterial({ size: lo.co * CO_HAT[k].co, vertexColors: true, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true })); pt.frustumCulled = false; root.add(pt);
+        const pt = new THREE.Points(geo, new THREE.PointsMaterial({ size: lo.co * CO_HAT[k].co * 2.4, vertexColors: true, map: TX.softDot(), alphaTest: 0.004, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true })); pt.frustumCulled = false; root.add(pt);
         groups.push({ pt, seed, cnt, toc: CO_HAT[k].toc });
       }
       // lớp 3b: vệt thon dần (ribbon): rộng ở gốc, nhọn ở đầu, hẹp dần + nhạt dần
-      let vet = null; if (p.vet && h.dai) { const w = Math.max(0.3, W) / 2, g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute([-w, 0.05, 0, w, 0.05, 0, 0.04, 0.05, h.dai, -0.04, 0.05, h.dai], 3)); g.setIndex([0, 1, 2, 0, 2, 3]); vet = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ color: lp.quang.mau, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide })); root.add(vet); }
+      let vet = null; if (p.vet && h.dai) { const w = Math.max(0.3, W) / 2, g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute([-w, 0.05, 0, w, 0.05, 0, 0.04, 0.05, h.dai, -0.04, 0.05, h.dai], 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute([0, 0, 1, 0, 0.55, 1, 0.45, 1], 2)); g.setIndex([0, 1, 2, 0, 2, 3]); vet = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ color: lp.quang.mau, map: TX.streak(), transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide })); root.add(vet); }
       // lớp 5: tác động môi trường — decal nền (vết cháy/nứt/băng… tan 3–5 s) + sóng chấn (máy mạnh, chiêu mạnh)
       let decal = null, wave = null;
       if (lp.moiTruong.bat) {
@@ -61,14 +64,14 @@ export function createChieuFx(scene, { getTier = () => 'vua', onShake = () => {}
         const dk = new THREE.Mesh(new THREE.CircleGeometry(R2, 24), new THREE.MeshBasicMaterial({ color: lp.moiTruong.mau, transparent: true, opacity: 0, depthWrite: false })); dk.rotation.x = -Math.PI / 2;
         const dl = segs(vz.van.map((q) => [q[0] * 0.9, q[1] * 0.9, q[2] * 0.9, q[3] * 0.9]), lp.moiTruong.vienMau); dl.material.opacity = 0; if (zD) dl.position.z = -zD;
         decal.add(dk, dl); root.add(decal);
-        if (lp.moiTruong.songChan) { wave = new THREE.Mesh(new THREE.RingGeometry(0.85, 1, 32), new THREE.MeshBasicMaterial({ color: lp.quang.mau, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide })); wave.rotation.x = -Math.PI / 2; wave.position.set(0, -0.06, zD); root.add(wave); }
+        if (lp.moiTruong.songChan) { wave = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 2.2), new THREE.MeshBasicMaterial({ color: lp.quang.mau, map: TX.ring(), transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide })); wave.rotation.x = -Math.PI / 2; wave.position.set(0, -0.06, zD); root.add(wave); }
       }
       // lớp 6: tàn dư — khói/tro/sương/tinh thể bay lên chậm và tan dần 1–2 s sau khi hết hiệu lực
       let tan = null; const tn = Math.max(0, Math.min(lp.tanDu.n, HAT_TOI_DA[p.tier] * 2 - total() - n)), tseed = [];
       if (lp.tanDu.bat && tn > 0) {
         const pos = new Float32Array(tn * 3), geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
         for (let i = 0; i < tn; i++) tseed.push({ a: R(0, 6.283), r: Math.sqrt(Math.random()), v: R(0.3, 0.9) });
-        tan = new THREE.Points(geo, new THREE.PointsMaterial({ color: lp.tanDu.mau, size: FX_LOAI[lp.tanDu.loai].co * 1.6, transparent: true, opacity: 0, depthWrite: false, sizeAttenuation: true })); tan.frustumCulled = false; root.add(tan);
+        tan = new THREE.Points(geo, new THREE.PointsMaterial({ color: lp.tanDu.mau, map: TX.smoke(), size: FX_LOAI[lp.tanDu.loai].co * 5, transparent: true, opacity: 0, depthWrite: false, sizeAttenuation: true })); tan.frustumCulled = false; root.add(tan);
       }
       const place = (i, u, sd) => {   // u 0..1 từ lúc phát; trả [x,y,z] CỤC BỘ (z = hướng chiêu với vùng dài, tâm với vùng tròn)
         const s = sd[i], e = 1 - (1 - u) * (1 - u);
@@ -97,6 +100,10 @@ export function createChieuFx(scene, { getTier = () => 'vua', onShake = () => {}
         // lớp 1: lõi — hút sáng lúc gồng (to dần tại người), bay theo đầu chiêu khi phát
         const bl = doSangLop(L, 'loi', after); core.material.opacity = (after < 0 && vz.taiMucTieu) ? 0 : bl;
         const ce = 1 - (1 - Math.min(1, Math.max(0, after) / 0.35)) ** 2; core.scale.setScalar(0.6 + 0.9 * bl); core.position.set(0, 1.1, p.mode === 'tia' && after > 0 ? Math.min(reach, ce * reach) : 0);
+        const pz = p.mode === 'tia' && after > 0 ? Math.min(reach, ce * reach) : 0, br = 1 + 0.06 * Math.sin(t * 17);   // quầng "thở"
+        halo1.position.set(0, 1.1, pz); halo2.position.set(0, 1.1, pz); flare.position.set(0, 1.1, pz);
+        halo1.material.opacity = Math.min(1, bl * 0.9); halo1.scale.setScalar(lp.loi.co * 7 * br * (0.6 + 0.8 * bl)); halo2.material.opacity = Math.min(1, bl * 0.55); halo2.scale.setScalar(lp.loi.co * 15 * br * (0.5 + 0.7 * bl));
+        { const fk = Math.max(0, Math.min(1, after / 0.28)); flare.material.opacity = after < 0 ? 0 : 0.95 * (1 - fk) * (1 - fk); flare.scale.setScalar(lp.loi.co * (6 + 22 * fk)); flare.material.rotation = fk * 0.8; }   // tia sao bùng lúc phát
         if (glow) glow.material.opacity = p.sang * 0.5 * doSangLop(L, 'quang', after);
         if (vet) { vet.material.opacity = 0.5 * doSangLop(L, 'quang', after); vet.scale.x = 1 - 0.6 * Math.max(0, Math.min(1, after / 0.5)); }
         const bh = doSangLop(L, 'hat', after);
@@ -106,7 +113,7 @@ export function createChieuFx(scene, { getTier = () => 'vua', onShake = () => {}
         }
         if (after > LIFE) job.n = 0;   // hạt đã tan: không tính vào trần số hạt của các chiêu sau
         if (decal) { const d = doSangLop(L, 'moiTruong', after); decal.children[0].material.opacity = 0.5 * d; decal.children[1].material.opacity = 0.8 * d; }
-        if (wave) { const k = Math.max(0, Math.min(1, after / 0.45)); wave.scale.setScalar(Math.max(0.01, R2 * 1.3 * (1 - (1 - k) * (1 - k)))); wave.material.opacity = after < 0 ? 0 : 0.7 * (1 - k); }
+        if (wave) { const k = Math.max(0, Math.min(1, after / 0.45)); wave.scale.setScalar(Math.max(0.01, R2 * 1.2 * (1 - (1 - k) * (1 - k)))); wave.material.opacity = after < 0 ? 0 : 0.7 * (1 - k); }
         if (tan) {
           const tt = after - lp.tanDu.t0, bt = doSangLop(L, 'tanDu', after); tan.material.opacity = 0.6 * bt;
           if (tt >= 0 && bt > 0) { const a = tan.geometry.attributes.position.array; for (let i = 0; i < tn; i++) { const s = tseed[i], rr = R2 * s.r; a[i * 3] = Math.sin(s.a + tt * 0.3) * rr; a[i * 3 + 1] = 0.2 + tt * s.v; a[i * 3 + 2] = Math.cos(s.a + tt * 0.3) * rr + zD; } tan.geometry.attributes.position.needsUpdate = true; }
