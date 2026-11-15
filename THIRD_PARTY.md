@@ -70,3 +70,6 @@ SOFTWARE.
 - Mô hình "Japanese hat (Jingasa)" của Red Xamuraigame (https://sketchfab.com/redxamurai), https://sketchfab.com/3d-models/japanese-hat-jingasa-4984465d3b0946d3be1ff14fb2bfd556 . Metadata ghi giấy phép **SKETCHFAB Standard** (không phải Creative Commons) nên KHÔNG mặc định được đăng công khai trong kho mã mở. ptg cần tự đọc điều khoản (hoặc thay nón khác: `blockHat()` trong `js/ui/hatMesh.js` là nón khối dự phòng).
 - Đã sửa: bỏ dây cằm, gộp đỉnh, giảm tam giác, bỏ pháp tuyến (tính lại khi nạp), nén toạ độ; từ 13 MB còn khoảng 8 KB.
 
+
+## Kho âm thanh chiêu thức (`assets/sfx/chieu/*.m4a`, 18 file) — TỰ TẠO, không bên thứ ba
+- Tổng hợp thuần mã bằng `tools/make-chieu-am.py` (numpy + ffmpeg), không dùng mẫu thu sẵn của ai. Bảng tên/độ dài/nguồn từng tiếng: `docs/CHIEU_AM_THANH.md`. Chưa có giọng hô nhân vật (cần thu âm, xem tài liệu đó).

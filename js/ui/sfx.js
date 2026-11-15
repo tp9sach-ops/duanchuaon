@@ -7,6 +7,7 @@ import { audioCtx, tone } from './sound.js';
 import { loadSettings } from './soundLogic.js';
 import { sfxGain } from '../world/celebrate.js';
 import { SFX_IDS, sfxUrl, planCue, fallbackOf, gapOf } from '../world/sfx.js';
+import { KHO_AM } from '../data/chieuAmKho.js';   // Phiên 173: kho âm thanh chiêu thức (assets/sfx/chieu/*.m4a)
 
 const MAX_VOICES = 8, RETRY_MS = 30000;
 
@@ -27,7 +28,7 @@ export function initSfx() {
     if (bufs.has(id)) return Promise.resolve(bufs.get(id));
     const c = ctxOf(); if (!c) return Promise.resolve(null);
     const t = tries.get(id); if (t && t.p) return t.p; if (t && Date.now() - t.at < RETRY_MS) return Promise.resolve(null);
-    const p = fetch(sfxUrl(id)).then((r) => { if (!r.ok) throw new Error('http ' + r.status); return r.arrayBuffer(); })
+    const p = fetch(KHO_AM[id] ? KHO_AM[id].file : sfxUrl(id)).then((r) => { if (!r.ok) throw new Error('http ' + r.status); return r.arrayBuffer(); })
       .then((ab) => new Promise((ok, no) => { const pr = c.decodeAudioData(ab, ok, no); if (pr && pr.catch) pr.catch(no); }))   // dạng callback cho Safari cũ
       .then((b) => { bufs.set(id, b); tries.delete(id); return b; })
       .catch(() => { tries.set(id, { at: Date.now(), p: null }); return null; });
@@ -62,6 +63,24 @@ export function initSfx() {
   const first = () => { removeEventListener('pointerdown', first, true); removeEventListener('keydown', first, true); try { ctxOf(); preload(); } catch (_) { /* bỏ qua */ } };
   addEventListener('pointerdown', first, true); addEventListener('keydown', first, true);
 
-  LGT.sfx = { play, preload, get loaded() { return bufs.size; } };
+  /** Phiên 173: phát MỘT file trong kho chiêu thức (id ở js/data/chieuAmKho.js) với độ lớn gain 0..1 và trễ delay giây. Chưa tải thì tải rồi phát ngay khi xong; không bao giờ làm sập game. */
+  function playFile(id, { gain = 1, delay = 0 } = {}) {
+    try {
+      const gv = volume(); if (!gv || !KHO_AM[id]) return false;
+      const c = ctxOf(); if (!c) return false;
+      const go = (b) => {
+        if (!b || voices >= MAX_VOICES) return;
+        const src = c.createBufferSource(), g = c.createGain(); src.buffer = b; g.gain.value = Math.min(1, Math.max(0, gain * gv));
+        src.connect(g); g.connect(busOf(c) || c.destination); voices++; src.onended = () => { voices = Math.max(0, voices - 1); try { g.disconnect(); } catch (_) { /* đã ngắt */ } };
+        src.start(c.currentTime + Math.max(0, delay));
+      };
+      const b = bufs.get(id); if (b) go(b); else load(id).then(go);
+      return true;
+    } catch (_) { return false; }
+  }
+  /** Tải trước các file chiêu thức (gọi lúc bắt đầu gồng để tiếng phát/trúng/dư âm kịp có). */
+  function preloadFiles(ids) { try { (ids || []).forEach((id) => { if (KHO_AM[id]) load(id); }); } catch (_) { /* bỏ qua */ } }
+
+  LGT.sfx = { play, playFile, preloadFiles, preload, get loaded() { return bufs.size; } };
   return LGT.sfx;
 }

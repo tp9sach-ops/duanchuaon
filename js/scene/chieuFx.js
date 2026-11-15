@@ -4,7 +4,8 @@
 import * as THREE from 'three';
 import { lapKeHoach } from '../world/chieuFxPlan.js';
 import { FX_LOAI, HAT_TOI_DA } from '../data/chieuFx.js';
-import { lapLop, doSangLop, chiaHat, CO_HAT } from '../world/chieuLop.js';   // Phiên 172: sáu lớp (lõi, thân, quầng+vệt, hạt 3 cỡ, decal nền, tàn dư), màu từ bảng màu
+import { lapLop, doSangLop, chiaHat, CO_HAT } from '../world/chieuLop.js';
+import { lapAm } from '../world/chieuAm.js';   // Phiên 173: gồng/phát/trúng/dư âm theo Hệ + chất liệu kẻ địch   // Phiên 172: sáu lớp (lõi, thân, quầng+vệt, hạt 3 cỡ, decal nền, tàn dư), màu từ bảng màu
 
 const LIFE = 0.9, FADE = 0.3;   // giây: hạt sống sau lúc phát; vùng cảnh báo mờ dần sau lúc phát
 
@@ -28,7 +29,7 @@ export function createChieuFx(scene, { getTier = () => 'vua', onShake = () => {}
   const segs = (sg, color) => { const a = []; for (const q of sg) a.push(q[0], 0, q[1], q[2], 0, q[3]); const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(a, 3)); return new THREE.LineSegments(g, new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.55, depthWrite: false })); };
 
   /** Dựng hiệu ứng chiêu `id` tại người dùng (x,z) hướng ry; (tx,tz) = mục tiêu (vùng "tại mục tiêu"). Trả kế hoạch đã dùng, hoặc null nếu chiêu lạ / lỗi. */
-  function cast(id, { x = 0, z = 0, ry = 0, tx = null, tz = null } = {}) {
+  function cast(id, { x = 0, z = 0, ry = 0, tx = null, tz = null, chatLieu = 'dathit', khoangCach = 0 } = {}) {
     try {
       const p = lapKeHoach(id, getTier()); if (!p) return null;
       const vz = p.vung, ox = vz.taiMucTieu && tx != null ? tx : x, oz = vz.taiMucTieu && tz != null ? tz : z, g0 = p.gong;
@@ -79,8 +80,12 @@ export function createChieuFx(scene, { getTier = () => 'vua', onShake = () => {}
           default: { const a = s.a, rr = reach * s.r * e; return [Math.sin(a) * rr, 0.2 + s.h * 1.4 * (1 - u * 0.5), Math.cos(a) * rr]; }   // 'no'
         }
       };
-      const evts = [{ t: 0, fn: () => say(p.am.gong) }, { t: g0, fn: () => { say(p.am.phat); if (p.rung > 0) onShake(p.rung); } }];
-      if (p.am.trung) evts.push({ t: g0 + 0.12, fn: () => { say(p.am.trung); if (p.dung > 0) onHitStop(p.dung); } });
+      // Âm thanh: kho chiêu thức (gồng → phát → trúng → dư âm); chưa có LGT.sfx.playFile (hoặc có hàm play tự truyền vào) thì dùng cue cũ
+      const am = lapAm(id, { chatLieu, coTrung: !!p.am.trung, khoangCach }), sf = () => { try { return window.LGT && window.LGT.sfx; } catch (_) { return null; } };
+      const nghe = (k, cueCu) => { const s2 = sf(), it = am && am[k]; if (!play && s2 && s2.playFile && it) s2.playFile(it.file, { gain: it.gain }); else say(cueCu); };
+      try { const s2 = sf(); if (!play && s2 && s2.preloadFiles && am) s2.preloadFiles([am.gong, am.phat, am.trung, am.duAm].filter(Boolean).map((q) => q.file)); } catch (_) { /* bỏ qua */ }
+      const evts = [{ t: 0, fn: () => nghe('gong', p.am.gong) }, { t: g0, fn: () => { nghe('phat', p.am.phat); if (p.rung > 0) onShake(p.rung); } }, { t: g0 + (am ? am.duAm.tre : 0.12), fn: () => { if (am && am.duAm) nghe('duAm', null); } }];
+      if (p.am.trung) evts.push({ t: g0 + 0.12, fn: () => { nghe('trung', p.am.trung); if (p.dung > 0) onHitStop(p.dung); } });
       evts.sort((a, b) => a.t - b.t);
       const job = { objs, t: 0, life: g0 + Math.max(LIFE + 0.05, lp.moiTruong.bat ? lp.moiTruong.t1 : 0, lp.tanDu.bat ? lp.tanDu.t1 : 0) + 0.05, n, evts, upd: null };
       job.upd = (t) => {
