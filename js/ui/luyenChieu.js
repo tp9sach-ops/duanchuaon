@@ -16,8 +16,8 @@ export async function initLuyenChieu({ toast = () => {} } = {}) {
   try {
     const sc = await import('../scene/luyen.js'), vd = await import('../scene/voDai.js');
     hooks = sc.luyenHooks(LGT.scene); fx = vd.createFx(LGT.scene);
-    try { cfx = (await import('../scene/chieuFx.js')).createChieuFx(LGT.scene, { getTier: () => tierOf(LGT.perfLevel) }); } catch (_) { cfx = null; }   // lỗi thì dùng hiệu ứng cũ
-    try { ctfx = (await import('../scene/chieuTrungFx.js')).createChieuTrungFx(LGT.scene, { getTier: () => tierOf(LGT.perfLevel) }); } catch (_) { ctfx = null; }   // Phiên 174: mộc nhân giật/ngã, số sát thương, trạng thái; lỗi thì dùng nháy cũ
+    try { cfx = (await import('../scene/chieuFx.js')).createChieuFx(LGT.scene, { getTier: () => tierOf(LGT.perfLevel), onShake: (c) => { try { LGT.camFeel && LGT.camFeel.rung(c); } catch (_) {} }, onHitStop: (g) => { try { LGT.camFeel && LGT.camFeel.khung(g); } catch (_) {} } }); } catch (_) { cfx = null; }   // lỗi thì dùng hiệu ứng cũ
+    try { ctfx = (await import('../scene/chieuTrungFx.js')).createChieuTrungFx(LGT.scene, { getTier: () => tierOf(LGT.perfLevel), onShake: (c) => { try { LGT.camFeel && LGT.camFeel.rung(c); } catch (_) {} }, onHitStop: (g) => { try { LGT.camFeel && LGT.camFeel.khung(g); } catch (_) {} } }); } catch (_) { ctfx = null; }   // Phiên 174: mộc nhân giật/ngã, số sát thương, trạng thái; lỗi thì dùng nháy cũ
     const def = Z.get(LUYEN_ID); def.load = hooks.load; def.dispose = () => { try { fx.clear(); if (cfx) cfx.clear(); if (ctfx) ctfx.clear(); } catch (_) { /* bỏ qua */ } hooks.dispose(); };
   } catch (e) { console.warn('[Diệu Giang Tự] Cảnh luyện chiêu lỗi:', e && e.message); return null; }
 
