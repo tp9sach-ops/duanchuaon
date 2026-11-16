@@ -1,0 +1,16 @@
+<!-- Phiên 211: trang dựng 1 chiêu bằng createChieuFx thật để CHỤP ẢNH (tools/fx-shot.cjs). Không phải trang người chơi. -->
+<!doctype html><meta charset="utf-8"><style>html,body{margin:0;background:#000}canvas{display:block}</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/"}}</script>
+<canvas id="c"></canvas><script type="module">
+import * as THREE from 'three';
+import { createChieuFx } from '../js/scene/chieuFx.js';
+const r = new THREE.WebGLRenderer({ canvas: document.getElementById('c'), antialias: false }); r.setSize(640, 400, false); r.setClearColor(0x10141c);
+const sc = new THREE.Scene(); const cam = new THREE.PerspectiveCamera(50, 1.6, 0.1, 100); cam.position.set(5.5, 3.6, 9); cam.lookAt(0, 1.0, 2.8);
+const gr = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), new THREE.MeshBasicMaterial({ color: 0x2a3322 })); gr.rotation.x = -Math.PI / 2; sc.add(gr);
+const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.35, 1.0, 4, 8), new THREE.MeshBasicMaterial({ color: 0x6a7090 })); body.position.y = 0.9; sc.add(body);
+const mon = new THREE.Mesh(new THREE.BoxGeometry(1, 1.4, 1), new THREE.MeshBasicMaterial({ color: 0x805050 })); mon.position.set(0, 0.7, 6); sc.add(mon);
+const cfx = createChieuFx(sc, { getTier: () => 'cao' });
+window.run = (id) => new Promise((res) => { const p = cfx.cast(id, { x: 0, z: 0, ry: 0, tx: 0, tz: 6 }); const g0 = p ? p.gong : 0.5; let go = true; (function f() { r.render(sc, cam); if (go) requestAnimationFrame(f); })(); window.__stop = () => { go = false; }; res(g0); });
+window.stop = () => { cfx.clear(); };
+window.ready = true;
+</script>

@@ -83,4 +83,7 @@ test('Phiên 181 + 186: nút Túi hồ lô ở cụm tròn phải-trên, nằm n
   const h = readFileSync(new URL('../js/ui/hudMenu.js', import.meta.url), 'utf8');
   assert.match(h, /hm-bagrow/, 'hudMenu đặt nút túi vào hàng riêng dưới cụm');
   assert.match(h, /gourd:/, 'có biểu tượng hồ lô');
+  const css = readFileSync(new URL('../css/hudmenu.css', import.meta.url), 'utf8');   // Phiên 211: nút phải ĐỎ (trước đây thiếu luật màu)
+  assert.match(css, /\.hm-ic\.hm-bag\{[^}]*#d8352a/, 'css tô đỏ nút Túi hồ lô');
+  assert.match(css, /\.hm-bagrow\{display:flex;justify-content:flex-end\}/, 'css có hàng riêng cho nút Túi hồ lô');
 });

@@ -20,6 +20,11 @@
 .hm-icons{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;max-width:260px}
 .hm-ic{display:grid;place-items:center;width:34px;height:34px;padding:0;border-radius:50%;border:1px solid rgba(217,178,95,.5);background:rgba(10,8,6,.62);color:var(--gold-soft,#f1dba0);cursor:pointer;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
 .hm-ic svg{width:17px;height:17px}
+/* Phiên 211: TÚI HỒ LÔ — nút ĐỎ nằm ngay dưới dấu ? (Phiên 186 đã đặt chỗ + đổi tên + vẽ hồ lô nhưng CHƯA có luật màu nên nút vẫn vàng như các nút khác) */
+.hm-bagrow{display:flex;justify-content:flex-end}
+.hm-ic.hm-bag{border:2px solid #ff8a76;background:radial-gradient(circle at 35% 30%,#d8352a,#8f130c 78%);color:#ffd9d1;box-shadow:0 0 10px rgba(255,64,40,.55),0 2px 6px rgba(0,0,0,.5)}
+.hm-ic.hm-bag svg{width:23px;height:23px;color:#ffe3dc;filter:drop-shadow(0 1px 2px rgba(60,0,0,.8))}.hm-ic.hm-bag svg path:first-child{fill-opacity:.92}
+.hm-ic.hm-bag:hover,.hm-ic.hm-bag:focus-visible{background:radial-gradient(circle at 35% 30%,#ff5a48,#c01f14 78%);color:#fff;outline:none}
 /* Phiên 69: chữ nhãn dưới nút tròn — chỉ máy tính/tablet rộng; điện thoại giữ gọn (nhấn giữ để xem tên) */
 .hm-ic{position:relative}
 .hm-skillrow{display:flex;justify-content:flex-end}.hm-skill[hidden]{display:none}.hm-skill.hm-hot{border-color:#fff;animation:hmhot .6s ease-in-out infinite alternate}@keyframes hmhot{to{transform:scale(1.15);box-shadow:0 0 12px rgba(241,219,160,.9)}}@media (prefers-reduced-motion:reduce){.hm-skill.hm-hot{animation:none}}   /* Phiên 189 */
@@ -28,6 +33,7 @@
   .hm-icons{column-gap:14px;row-gap:18px;max-width:300px;padding-bottom:12px}
   .hm-ic-tx{display:block;position:absolute;left:50%;top:calc(100% + 3px);transform:translateX(-50%);white-space:nowrap;pointer-events:none;font:500 9.5px/1 var(--sans,inherit);letter-spacing:.01em;color:var(--gold-soft,#f1dba0);text-shadow:0 1px 3px rgba(0,0,0,.85),0 0 6px rgba(0,0,0,.6)}
   .hm-ic.soon .hm-ic-tx{opacity:.7}
+  .hm-bagrow{padding-bottom:12px}.hm-bag .hm-ic-tx{color:#ffb9ad}   /* Phiên 211: chừa chỗ cho chữ "Túi hồ lô" dưới nút, không đè nút Kỹ năng bên dưới */
 }
 
 /* nút dùng chung: nhấn/di chuột = vàng đặc; chưa có tính năng = mờ */
