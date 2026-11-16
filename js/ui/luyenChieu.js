@@ -3,6 +3,7 @@
 // Logic thuần: js/world/zoneLuyen.js, js/world/luyenChieu.js (có test). Cảnh + hiệu ứng: js/scene/luyen.js, js/scene/voDai.js (createFx). CHƯA nhìn bằng mắt. Mọi chữ qua textContent.
 // Phiên 163 (Bản 2 mục 5, 4/4): bấm chiêu → nhân vật quay về mộc nhân gần nhất và làm tư thế gồng → phát → thu (avatar.cast, js/world/chieuPose.js); luồng khí và nháy mộc nhân chờ đúng lúc khung "phát".
 // Phiên 191 (Mục 1): ĐỒNG BỘ NÚT — ở khu luyện tập dùng CHUNG cụm nút với ngoài bãi rừng / trong chùa (thanh chiêu js/ui/heSkill.js + cụm Đánh thường/Thương/Nhảy js/ui/dock.js). Hàng nút riêng #lc-pad nay luôn ẩn (chỉ còn thanh "Về bồ đoàn"). Thêm basic(kind) = Đánh thường / Thương vào mộc nhân (không sát thương thật) và status() cho vòng hồi chiêu.
+// Phiên 206 (mục 2): Đánh thường ở khu luyện tập cũng LAO TỚI mộc nhân (xa tầm đâm nhưng trong tầm lao) rồi nối chuỗi 3 đòn (đòn 3 xoay 360° nháy thêm mọi mộc nhân quanh người) — luật ở js/world/luyenBasic.js (có test), dùng chung chuỗi với LGT.farm.chainStep. Mộc nhân vẫn KHÔNG có sát thương thật.
 import { LUYEN_ID, LUYEN_DUMMIES, returnSpawnName } from '../world/zoneLuyen.js';
 import { listForHe, describeSkill, createDemoRuntime } from '../world/luyenChieu.js';
 import { castTimeline } from '../world/chieuPose.js';
@@ -12,6 +13,8 @@ import { tierOf } from '../world/chieuFxPlan.js';
 import { trangThaiTuChieu } from '../world/chieuTrung.js';
 import { glyphOf } from '../world/chieuInfo.js';
 import { STONE, SPEAR } from '../world/yeuquai.js';   // Phiên 191: thời gian hồi của Đánh thường / Thương (cùng số với ngoài bãi rừng)
+import { planBasic, hitsFor } from '../world/luyenBasic.js';   // Phiên 206: lao tới + chuỗi 3 đòn ở khu luyện tập
+import { BASIC } from '../world/basicCombo.js';
 import { drawGlyphIcon } from './skillIcon.js';   // Phiên 189: hình chiêu dùng chung với nút chiêu ngoài bãi rừng   // Phiên 174: trạng thái hiển thị từ hiệu ứng của chiêu
 
 export async function initLuyenChieu({ toast = () => {} } = {}) {
@@ -86,19 +89,26 @@ export async function initLuyenChieu({ toast = () => {} } = {}) {
   }
 
   // Phiên 191 (Mục 1): ĐÁNH THƯỜNG / THƯƠNG ở khu luyện tập — cùng nút (js/ui/dock.js) với ngoài bãi rừng. Quay về mộc nhân gần nhất, múa côn (LGT.combatPose.strike), mộc nhân nháy nếu đứng đủ gần. KHÔNG sát thương thật, không đụng chỉ số.
-  const bCd = { da: 0, thuong: 0 }, B_RANGE = 4.5;
+  // Phiên 206 (mục 2): Đánh thường LAO TỚI mộc nhân khi còn xa tầm đâm nhưng trong tầm lao (bấm tiếp mới ra đòn), rồi nối chuỗi 3 đòn chung với quái bãi rừng (LGT.farm.chainStep); đòn 3 nháy thêm mọi mộc nhân quanh người. Quá xa / không có mộc nhân: vẫn vung không khí, không chạm gì.
+  const bCd = { da: 0, thuong: 0 }; let dashLock = 0;   // dashLock: performance.now() (ms) — vừa lao xong thì chưa ra đòn ngay (chống bấm dồn)
   function basic(kind) {
     const k = kind === 'thuong' ? 'thuong' : 'da', p = player(); if (!p || busy || Z.current !== LUYEN_ID) return false;
+    const W = LGT.world, nowMs = performance.now(); if (k === 'da' && ((W && W.dashing) || nowMs < dashLock)) return false;
     const t = nowSec(); if (bCd[k] > t) return false;
+    const pl = planBasic({ p, dummies: LUYEN_DUMMIES, kind: k });
+    if (pl.plan === 'dash') {   // xa tầm đâm nhưng trong tầm lao: lao tới sát mộc nhân, chưa ra đòn
+      let ok = false; try { ok = !!(W && W.dash && W.dash(pl.dash, Math.max(0.25, Math.min(1.4, pl.dash.dist / 9)), { tilt: false })); } catch (_) { /* bỏ qua */ }
+      if (ok) { dashLock = nowMs + BASIC.dashCd * 1000; if (LGT.sfx) LGT.sfx.play('thiet-dau'); return true; }
+    }
     bCd[k] = t + (k === 'thuong' ? SPEAR.cd : STONE.cd);
-    const tg = nearestDummy(p), ry = Math.atan2(tg.d.x - p.x, tg.d.z - p.z);
+    const near = pl.near, ry = near ? Math.atan2(near.d.x - p.x, near.d.z - p.z) : (p.ry || 0);
+    const step = LGT.farm && LGT.farm.chainStep ? LGT.farm.chainStep() : 1;   // đòn thứ mấy trong chuỗi (cùng chuỗi với hoạt ảnh nhân vật)
     try {
-      const W = LGT.world;
       if (LGT.combatPose && LGT.combatPose.strike) LGT.combatPose.strike(ry);
       else { if (W && W.face) W.face(ry); if (W && W.avatar && W.avatar.swing) W.avatar.swing(); }
     } catch (_) { /* không có tư thế thì thôi */ }
     if (LGT.sfx) LGT.sfx.play(k === 'thuong' ? 'thuong' : 'nem-da');
-    if (hooks && tg.dist <= B_RANGE) { try { hooks.hit(tg.i); } catch (_) { /* bỏ qua */ } }
+    if (pl.plan === 'hit' && hooks) { const h = hitsFor({ p, dummies: LUYEN_DUMMIES, near, kind: k, step }); for (const i of h.idx) { try { hooks.hit(i); } catch (_) { /* bỏ qua */ } } }
     return true;
   }
   const status = () => { const t = nowSec(); return { stoneCd: Math.max(0, bCd.da - t), spearCd: Math.max(0, bCd.thuong - t) }; };
