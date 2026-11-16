@@ -5,6 +5,7 @@
 // Mục 1: nhãn nút cưỡi (id 'vantruot', ô T1) lấy từ LGT.board.status().label theo đồ đang cầm: Cưỡi thương / Cưỡi gậy / Lướt ván (và Xuống ...).
 // Mọi chữ qua textContent. Nút Nhảy/Ném đá/kỹ năng chiến đấu nhận pointerdown (nhanh, không trễ); bàn phím vẫn dùng được (click do Enter/Space).
 // Phiên 191 (Mục 1): ĐỒNG BỘ NÚT Ở MỌI KHU — ở khu luyện tập (LGT.luyenChieu.inside) cụm này cũng hiện đủ Đánh thường + Thương + Nhảy như ngoài bãi rừng / trong chùa; bấm Đánh thường/Thương ở đó gọi LGT.luyenChieu.basic (đánh vào mộc nhân, không sát thương thật) và vòng hồi chiêu lấy từ LGT.luyenChieu.status().
+// Phiên 208: VÕ ĐÀI dùng chung cụm này — luyen() trả LGT.duel khi đang trong trận: Đánh thường (lao tới + chuỗi 3 đòn) / Thương gọi LGT.duel.basic, vòng hồi chiêu từ LGT.duel.status().
 import { mapAvailable } from '../world/minimap.js';   // Phiên 190: nút đánh chỉ ở bản đồ chính
 import { dockButtons, dockLayout, cooldownFrac, pickHint, loadSeen, SLOT_CODES } from '../world/dock.js';
 
@@ -25,7 +26,7 @@ export function initDock(hud, { toast = () => {} } = {}) {
   document.body.classList.add('has-dock');   // ẩn nút Nhảy / chip Khinh thân cũ (đã nằm trong cụm này)
   const items = new Map();   // id → { btn, key, slot }
   let sig = '', skipClick = false, layout = [], rowsSig = '', lastCtx = {};
-  const luyen = () => { const L = LGT.luyenChieu; return L && L.inside ? L : null; };   // Phiên 191: đang ở khu luyện tập?
+  const luyen = () => { const L = LGT.luyenChieu; if (L && L.inside) return L; const D = LGT.duel; return D && D.mode === 'arena' ? D : null; };   // Phiên 191: đang ở khu luyện tập? Phiên 208: hoặc trong trận Võ đài — LGT.duel cũng có basic(kind) + status() cùng dạng nên dùng chung cụm nút
 
   const ACT = {
     tap: () => LGT.fishing && LGT.fishing.tap(), cast: () => LGT.fishing && LGT.fishing.cast(), thu: () => LGT.fishing && LGT.fishing.keep(), phong: () => LGT.fishing && LGT.fishing.release(),
@@ -81,7 +82,7 @@ export function initDock(hud, { toast = () => {} } = {}) {
     const khs = LGT.conKhi ? LGT.conKhi.status() : null;
     const sws = LGT.swim ? LGT.swim.status() : null;
     const bds = LGT.board ? LGT.board.status() : null;
-    const lc = luyen(), lcs = lc && lc.status ? lc.status() : null;   // Phiên 191: khu luyện tập — hồi chiêu Đánh thường/Thương của mộc nhân
+    const lc = luyen(), lcs = lc && lc.status ? lc.status() : null;   // Phiên 191: khu luyện tập — hồi chiêu Đánh thường/Thương của mộc nhân (Phiên 208: hoặc Võ đài)
     const c = { combat: !LGT.inHouse && mapAvailable(LGT.zones) || !!lc, swim: sws, board: bds, inHouse: !!LGT.inHouse, ply: ps ? { near: ps.near, holding: ps.holding, heldName: ps.heldName, left: ps.left } : null, npc: nps ? { near: nps.near } : null, head: hds, khi: khs ? { cd: khs.cd } : null, yq: ys ? { active: ys.active, ten: ys.ten, canThrow: ys.canThrow, stoneCd: ys.stoneCd, spearCd: ys.spearCd } : null, carry: cs ? { holding: cs.holding, heldName: cs.heldName, near: cs.near } : null, free: !!W && W.mode === 'free' && !LGT.panelOpen && !LGT.heldBy && !document.querySelector('.st-dlg:not([hidden])'), farm: lcs ? { active: false, stoneCd: lcs.stoneCd, spearCd: lcs.spearCd } : fms ? { active: fms.active, ten: fms.ten, stoneCd: fms.stoneCd, spearCd: fms.spearCd, canAuto: fms.canAuto, auto: fms.auto, autoLeft: fms.autoLeft } : null, khinh: LGT.skill ? LGT.skill.level : 0, canTrain: !!(LGT.skill && LGT.skill.canTrain), water: !!fs.water && !LGT.inHouse, fish: fs };
     lastCtx = c;
     const list = dockButtons(c).filter((b) => b.id !== 'tui' && b.id !== 'kynang'); for (const b of list) if (b.id === 'vantruot' && bds && bds.label) b.label = bds.label;   // Mục 1: nhãn nút cưỡi theo đồ đang cầm (Cưỡi thương / Cưỡi gậy / Lướt ván)
@@ -134,4 +135,3 @@ export function initDock(hud, { toast = () => {} } = {}) {
   LGT.dock = { refresh, get ids() { return sig; }, get layout() { return layout.map((l) => ({ id: l.id, slot: l.slot })); } };
   return LGT.dock;
 }
-
