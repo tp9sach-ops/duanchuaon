@@ -1,14 +1,18 @@
 // Giao diện GIAO LƯU VÕ THUẬT (Phiên 137, mục 1 lộ trình): nút "Giao lưu" → danh sách người gần → Mời → họ Chấp nhận → cả hai vào Võ đài → đếm 3 giây → đánh → bảng kết quả.
 // Luật + gói tin: js/world/duel.js (có test). Zone: js/world/zoneVoDai.js. Cảnh 3D + hiệu ứng: js/scene/voDai.js. Kênh gói tin: LGT.room.signal / LGT.room.onSignal / LGT.room.selfId (js/net/room.js).
+// Phiên 208: Võ đài dùng CHUNG thanh chiêu phái (heSkill.js, ô 1/2/3 = Q/W/E, có lướt tay + vùng tung chiêu) và cụm nút dock (Đánh thường lao tới + chuỗi 3 đòn / Thương / Nhảy); hàng nút riêng chỉ còn Chém khí, Thiết đầu công, Hộ thân.
 // CHƯA nhìn bằng mắt (môi trường AI không có WebGL) — cần thử bằng hai máy thật. Thắng/thua không ảnh hưởng gì.
-import { MOVES, DUEL, KEY_CODES, createDuel, tagOf, decode, packObj, pack } from '../world/duel.js';
+import { MOVES, DUEL, KEY_CODES, SLOT_MOVE, hinhOfMove, createDuel, tagOf, decode, packObj, pack, inArena } from '../world/duel.js';
+import { planTap, BASIC } from '../world/basicCombo.js';
+import { rushTarget } from '../world/autoHunt.js';
 import { skillFor } from '../world/skillCatalog.js';
 import { VODAI_ID, VODAI_HUB_GATE } from '../world/zoneVoDai.js';
 import { landing } from '../world/strength.js';
 
 const WHY = { hp: 'có người hết sinh lực', time: 'hết giờ, so sinh lực', left: 'đối thủ đã rời trận', noshow: 'không ai vào trận' };
 const REASON = { 'chua-danh': 'Chưa vào trận.', 'dang-ra-don': 'Đang ra đòn…', 'khong-co': 'Chiêu này không có.' };
-const ORDER = ['q', 'w', 'e', 'a', 't', 'b', 'c', 'g'];   // Phiên 164: cùng phím với đánh quái — Q/W/E chiêu phái, 1 Đánh thường, 2/R Thương, 3 Chém khí, 4 Thiết đầu công, 6 Hộ thân
+const ORDER = ['q', 'w', 'e', 'a', 't', 'b', 'c', 'g'];   // Phiên 208: Đánh thường (a), Thương (t) và Q/W/E dùng CHUNG cụm nút dock + thanh chiêu phái (js/ui/dock.js, js/ui/heSkill.js); hàng nút riêng chỉ còn b c g (+ q w e khi chưa có Hệ)
+const ONLY_HERE = ['b', 'c', 'g'], PHAI_KEYS = ['q', 'w', 'e'];   // Phiên 164: cùng phím với đánh quái — Q/W/E chiêu phái, 1 Đánh thường, 2/R Thương, 3 Chém khí, 4 Thiết đầu công, 6 Hộ thân
 const PHAI = { q: 1, w: 2, e: 3 };   // ô chiêu phái (js/ui/heSkill.js) — chỉ để lấy TÊN theo hệ của mình
 
 export function initDuel({ toast = () => {} } = {}) {
@@ -16,7 +20,7 @@ export function initDuel({ toast = () => {} } = {}) {
   if (!Z || !LGT.room || !LGT.room.signal) return null;
   const R = () => LGT.room, W = () => LGT.world;
   let mode = 'idle';   // idle | inviting | invited | going | arena | result
-  let oppId = '', oppName = '', eng = null, raf = 0, last = 0, fx = null, inviteTimer = 0, msgTimer = 0;
+  let oppId = '', oppName = '', eng = null, raf = 0, last = 0, fx = null, inviteTimer = 0, msgTimer = 0, dashLock = 0;
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   const myTag = () => tagOf(R().selfId()), oppTag = () => tagOf(oppId);
   const send = (text) => R().signal(text);
@@ -32,7 +36,7 @@ export function initDuel({ toast = () => {} } = {}) {
     + '.dl-hud{position:fixed;z-index:60;left:50%;transform:translateX(-50%);top:max(64px,calc(env(safe-area-inset-top) + 56px));width:min(440px,94vw);color:#fff;font:600 13px/1.3 system-ui,sans-serif;text-align:center;pointer-events:none;text-shadow:0 1px 3px #000}'
     + '.dl-bars{display:flex;gap:8px;align-items:center}.dl-hp{flex:1;height:12px;border-radius:6px;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.4);overflow:hidden}.dl-hp i{display:block;height:100%;width:100%;background:#6ccf7a}.dl-hp.o{transform:scaleX(-1)}.dl-hp.o i{background:#e0605a}'
     + '.dl-mid{min-width:44px;font-size:15px}.dl-msg{margin-top:6px;min-height:18px;font-size:15px;color:#ffe9a8}'
-    + '.dl-bar{position:fixed;z-index:62;left:50%;transform:translateX(-50%);bottom:max(14px,calc(env(safe-area-inset-bottom) + 8px));display:flex;flex-wrap:wrap;justify-content:center;gap:8px;max-width:min(300px,96vw)}body.dl-arena #hs-bar{display:none!important}'
+    + '.dl-bar{position:fixed;z-index:62;left:max(12px,env(safe-area-inset-left));top:38%;display:flex;flex-direction:column;gap:8px}'
     + '.dl-btn{width:56px;height:56px;border-radius:50%;border:1px solid rgba(217,178,95,.8);background:rgba(6,7,13,.6);font-size:11px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:0}.dl-btn.dl-cd{opacity:.45}.dl-btn span{max-width:50px;text-align:center;font-size:10px;line-height:1.1}.dl-btn small{font-size:10px;color:#f1dba0}'
     + '#dl-fade{position:fixed;inset:0;z-index:80;background:#06070d;opacity:0;pointer-events:none;transition:opacity .3s}';
   document.head.appendChild(st);
@@ -49,6 +53,7 @@ export function initDuel({ toast = () => {} } = {}) {
   const keyTxt = (k) => (MOVES[k].alt ? MOVES[k].key + '/' + MOVES[k].alt : MOVES[k].key);
   const nameOf = (k) => { const sl = PHAI[k]; if (!sl) return MOVES[k].ten; let sk = null; try { sk = skillFor(LGT.he, sl, null); } catch (_) { /* không có hệ */ } return sk ? sk.ten : MOVES[k].ten; };
   for (const k of ORDER) { const b = el('button', 'dl-btn'); b.type = 'button'; const n = el('span', '', MOVES[k].ten), cd = el('small', '', keyTxt(k)); b.append(n, cd); b._cd = cd; b._n = n; btns[k] = b; bar.appendChild(b); b.addEventListener('pointerdown', (e) => { e.preventDefault(); cast(k); }); }
+  const hasHe = () => !!(LGT.heSkill && LGT.heSkill.ready);   // có Hệ = có thanh chiêu phái chung
   const fade = el('div'); fade.id = 'dl-fade';
   document.body.append(chip, listBox, inv, res, hud, bar, fade);
   [chip, listBox, inv, res, bar].forEach((n) => ['pointerdown', 'touchend', 'wheel', 'keydown'].forEach((ev) => n.addEventListener(ev, (e) => e.stopPropagation(), { passive: true })));
@@ -138,7 +143,8 @@ export function initDuel({ toast = () => {} } = {}) {
     if (!eng) return; const m = eng.hpMax || DUEL.hp;
     hpMeI.style.width = Math.max(0, eng.hp / m * 100) + '%'; hpOpI.style.width = Math.max(0, eng.oppHp / m * 100) + '%';
     mid.textContent = eng.phase === 'count' ? String(Math.ceil(eng.countLeft)) : eng.phase === 'fight' ? String(Math.ceil(eng.timeLeft)) : '';
-    for (const k of ORDER) { const cd = eng.cdLeft(k), b = btns[k], nm = nameOf(k); b.classList.toggle('dl-cd', cd > 0 || eng.phase !== 'fight'); const tx = cd > 0 ? cd.toFixed(1) : keyTxt(k); if (b._cd.textContent !== tx) b._cd.textContent = tx; if (b._n.textContent !== nm) b._n.textContent = nm; }
+    const showQwe = !hasHe();
+    for (const k of ORDER) { const cd = eng.cdLeft(k), b = btns[k], nm = nameOf(k); b.hidden = !(ONLY_HERE.includes(k) || (showQwe && PHAI_KEYS.includes(k))); b.classList.toggle('dl-cd', cd > 0 || eng.phase !== 'fight'); const tx = cd > 0 ? cd.toFixed(1) : keyTxt(k); if (b._cd.textContent !== tx) b._cd.textContent = tx; if (b._n.textContent !== nm) b._n.textContent = nm; }
   }
   function finish(r) {
     send(pack.bye(oppTag())); mode = 'result'; bar.hidden = true;
@@ -158,30 +164,57 @@ export function initDuel({ toast = () => {} } = {}) {
   }
 
   // ---------------------------------------------------------------- dùng chiêu
-  function cast(kind) {
-    if (mode !== 'arena' || !eng || eng.phase !== 'fight') return;
-    const w = W(); if (!w || w.dashing || w.held) return;
+  // Phiên 208: aim = hướng (rad) do LƯỚT TAY chọn (tùy chọn): có thì chiêu bay đúng hướng đó (như ngoài bãi rừng); không có thì tự ngắm về đối thủ (người chơi điện thoại không phải xoay tay). Trả { ok, ry }.
+  function cast(kind, aim) {
+    const no = { ok: false, ry: 0 };
+    if (mode !== 'arena' || !eng || eng.phase !== 'fight') return no;
+    const w = W(); if (!w || w.dashing || w.held) return no;
     const p = w.pos, o = oppPos(); let ry = w.facing;
-    if (o && kind !== 'g') ry = Math.atan2(o.x - p.x, o.z - p.z);   // tự ngắm về phía đối thủ (người chơi điện thoại không phải xoay tay)
+    if (kind !== 'g') { if (Number.isFinite(+aim) && aim !== null) ry = +aim; else if (o) ry = Math.atan2(o.x - p.x, o.z - p.z); }
     const r = eng.cast(kind, { x: p.x, z: p.z, ry });
-    if (!r.ok) { if (r.reason !== 'hoi-chieu') setMsg(REASON[r.reason] || 'Chưa dùng được.', 800); return; }
+    if (!r.ok) { if (r.reason !== 'hoi-chieu') setMsg(REASON[r.reason] || 'Chưa dùng được.', 800); return no; }
     const m = MOVES[kind]; if (kind !== 'g') w.face(ry);
     const av = w.avatar, cp = LGT.combatPose, tryDo = (f) => { try { f(); } catch (_) { /* hoạt ảnh lỗi không làm hỏng trận */ } };
-    if (kind === 'g') { if (fx) fx.ring(p.x, p.z, 1.6, m.dur, 0x8fd6bf); setMsg('Hộ thân! Canh đúng lúc đòn tới để phản.', 1000); return; }
+    if (kind === 'g') { if (fx) fx.ring(p.x, p.z, 1.6, m.dur, 0x8fd6bf); setMsg('Hộ thân! Canh đúng lúc đòn tới để phản.', 1000); return { ok: true, ry }; }
     // Hoạt ảnh: Đánh thường + Thương = chuỗi múa côn như ngoài rừng (combatPose.strike); Chiêu 1/2/3 = tư thế chiêu phái (avatar.cast); Chém khí = bổ xuống
-    if (kind === 'a' || kind === 't') tryDo(() => { if (cp && cp.strike) cp.strike(ry); else if (av && av.swing) av.swing(0.4); });
+    let swingKind = null;   // Phiên 208: đòn 1 chém ngang, đòn 2 chém ngược, đòn 3 XOAY 360° (cùng chuỗi 3 đòn với ngoài bãi rừng — avatar.swing nối chuỗi)
+    if (kind === 'a' || kind === 't') tryDo(() => { if (cp && cp.strike) swingKind = cp.strike(ry); else if (av && av.swing) av.swing(0.4); });
     else if (PHAI[kind]) tryDo(() => { const sk = skillFor(LGT.he, PHAI[kind], null); if (sk && av && av.cast) av.cast(sk.id); else if (av && av.swing) av.swing(0.5); });
     else if (av && av.swing) tryDo(() => av.swing(0.5));
-    if (m.shape === 'melee') { if (fx) fx.ring(p.x + Math.sin(ry) * 1.3, p.z + Math.cos(ry) * 1.3, Math.max(1.4, m.range * 0.55), m.wind, 0xf1db9f); }
+    if (m.shape === 'melee') { if (fx) { fx.ring(p.x + Math.sin(ry) * 1.3, p.z + Math.cos(ry) * 1.3, Math.max(1.4, m.range * 0.55), m.wind, 0xf1db9f); if (kind === 'a' && /xoay/.test(String(swingKind || ''))) fx.ring(p.x, p.z, 3.2, m.wind + 0.15, 0xf1db9f); } }   // đòn 3 xoay: thêm vòng quanh người (chỉ hình — sát thương Võ đài giữ nguyên, chỉ có một đối thủ)
     else if (m.shape === 'wave') { if (fx) fx.wave(p.x, p.z, ry, m.range, m.speed, m.wind); }
-    else { const path = landing(p.x, p.z, ry, m.dash); if (fx) fx.line(p.x, p.z, ry, m.dash, m.wind + m.dashS); setTimeout(() => { if (mode === 'arena' && path.dist > 0.5) w.dash(path.to, m.dashS, { tilt: false }); }, m.wind * 1000); }
+    else { const path = landing(p.x, p.z, ry, m.dash); if (fx) fx.line(p.x, p.z, ry, m.dash, m.wind + m.dashS); setTimeout(() => { if (mode === 'arena' && path.dist > 0.5) w.dash({ x: path.x, z: path.z }, m.dashS, { tilt: false }); }, m.wind * 1000); }   // Phiên 208: sửa lỗi cũ — landing() trả { x, z, dist } (không có .to) nên Thiết đầu công / Chiêu 3 chưa từng lao thật
+    return { ok: true, ry };
   }
+  // Phiên 208: Ô chiêu phái trên thanh chiêu chung (heSkill.js) → chiêu Võ đài. aimRy = hướng lướt tay (hoặc null). Trả { ok, ry }.
+  function castSlot(slot, aimRy) {
+    const k = SLOT_MOVE[slot]; if (!k) { setMsg('Chiêu này chưa dùng ở Võ đài.', 900); return { ok: false, ry: 0 }; }
+    return cast(k, aimRy);
+  }
+  // Phiên 208: Đánh thường / Thương từ cụm nút dock (dùng chung). Đánh thường: đối thủ còn xa tầm đánh nhưng trong tầm lao → LAO TỚI sát (chưa ra đòn), bấm tiếp mới ra đòn, rồi nối chuỗi 3 đòn khác nhau (luật chung js/world/basicCombo.js).
+  function basic(kind) {
+    const k = kind === 'thuong' ? 't' : 'a', w = W(); if (mode !== 'arena' || !eng || !w) return false;
+    if (k === 'a' && eng.phase === 'fight' && eng.cdLeft('a') <= 0) {
+      const nowMs = performance.now(); if (w.dashing || nowMs < dashLock) return false;
+      const o = oppPos(), p = w.pos;
+      if (o && w.dash) {
+        const gap = Math.hypot(o.x - p.x, o.z - p.z);
+        if (planTap({ has: true, gap, body: 0.5, melee: MOVES.a.range }) === 'dash') {
+          const to = rushTarget(p, o, { body: 0.5, stand: 2.0, isBlocked: (x, z) => !inArena(x, z) });
+          if (to && w.dash({ x: to.x, z: to.z }, Math.max(0.25, Math.min(1.4, to.dist / 9)), { tilt: false })) { dashLock = nowMs + BASIC.dashCd * 1000; if (LGT.sfx) LGT.sfx.play('thiet-dau'); return true; }
+        }
+      }
+    }
+    return cast(k, null).ok;
+  }
+  const status = () => (eng ? { stoneCd: eng.cdLeft('a'), spearCd: eng.cdLeft('t') } : { stoneCd: 0, spearCd: 0 });
+  const cdOfSlot = (slot) => { const k = SLOT_MOVE[slot]; return k && eng ? { left: eng.cdLeft(k), total: MOVES[k].cd } : null; };
   // Phím chung với đánh quái (KEY_CODES). Nghe ở pha CAPTURE và chặn tiếp: trong Võ đài không còn quái nên heSkill.js (Q/W/E) và farm.js (R) sẽ chỉ báo "chưa có quái".
   addEventListener('keydown', (e) => {
     if (mode !== 'arena' || !eng || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
     const k = KEY_CODES[e.code]; if (!k) return;
     if (/^(INPUT|TEXTAREA|SELECT)$/.test((e.target && e.target.tagName) || '') || (e.target && e.target.isContentEditable)) return;
-    e.preventDefault(); e.stopImmediatePropagation(); cast(k);
+    e.preventDefault(); e.stopImmediatePropagation(); if (k === 'a') basic('da'); else cast(k);
   }, true);
 
   // ---------------------------------------------------------------- chip + cảnh 3D
@@ -191,6 +224,6 @@ export function initDuel({ toast = () => {} } = {}) {
     const def = Z.get(VODAI_ID), h = sc.arenaHooks(LGT.scene); if (def) { def.load = h.load; def.dispose = h.dispose; }
     sc.buildGate(LGT.scene, VODAI_HUB_GATE); fx = sc.createFx(LGT.scene);
   }).catch((e) => console.warn('[Diệu Giang Tự] Cảnh Võ đài lỗi:', e && e.message));
-  LGT.duel = { get mode() { return mode; }, get engine() { return eng; }, invite };
+  LGT.duel = { get mode() { return mode; }, get engine() { return eng; }, get inArena() { return mode === 'arena'; }, invite, castSlot, basic, status, cdOfSlot, hinhOf: (slot) => hinhOfMove(SLOT_MOVE[slot]) };   // Phiên 208: thanh chiêu chung + dock dùng các hàm này
   return LGT.duel;
 }
