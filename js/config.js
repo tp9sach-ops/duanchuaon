@@ -10,6 +10,8 @@ export const CONFIG = {
   // Thêm Firebase khác: chép thêm một khối { type: 'firebase', name: '...', firebaseConfig: {...} } lên trên dòng 'gas'.
   // (Khóa Firebase phía web là thông tin công khai; an toàn do luật trong firebase/database.rules.json.)
   firebaseSdkVersion: '11.0.2',
+  // Phiên 210: cờ tính năng mới (mặc định TẮT = game y như trước). gear = hệ trang bị mới (js/gear/). Bật từng cờ sau khi test đạt.
+  features: { gear: false },
   rooms: [
     {
       type: 'firebase', name: 'Chùa 1',
