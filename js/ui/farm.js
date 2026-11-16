@@ -169,9 +169,11 @@ export function initFarm(hud, { toast = () => {} } = {}) {
   }
   // Phiên 127: Tự động LAO vào quái (trong autoRange) — đạp đất chạy nhanh tới sát tầm đâm, không xuyên cây/tường; tới nơi thì autoStep tự Thương/Đánh thường.
   // Phiên 198: trả true nếu đã lao (nút Đánh thường dùng chung hàm này khi quái xa tầm đâm nhưng trong tầm lao).
-  function rush(m) {
+  function rush(m) { return rushPoint(m, bodyOf(m)); }
+  /** Phiên 205: lao tới sát một điểm {x, z} có thân bán kính `body` (quái bãi rừng hoặc yêu quái hằng tháng — js/ui/yeuquai.js dùng chung). */
+  function rushPoint(m, body) {
     const W = LGT.world; if (!W || !W.dash || W.dashing) return false;
-    const to = rushTarget(pos(), m, { body: bodyOf(m), stand: 2.2, isBlocked: blocked }); if (!to) return false;
+    const to = rushTarget(pos(), m, { body, stand: 2.2, isBlocked: blocked }); if (!to) return false;
     const ok = W.dash(to, Math.max(0.25, Math.min(1.4, to.dist / 9)), { tilt: false }); if (ok && LGT.sfx) LGT.sfx.play('thiet-dau');
     return !!ok;
   }
@@ -226,8 +228,10 @@ export function initFarm(hud, { toast = () => {} } = {}) {
   LGT.farm = {
     skillReady, skillHit, skillHitDir, pickAt, unlock, stopAttack, get attacking() { return attackOn; }, get locked() { return lockUid; }, get tuviInfo() { return tuViOf(farm); },
     stone, spear, toggleAuto, grantBoss, addAutoMinutes,
+    rushPoint, chainStep: () => advanceChain(performance.now()).step,   // Phiên 205: yêu quái hằng tháng dùng chung lao tới + chuỗi 3 đòn
     get tuvi() { return tuViOf(farm).tuvi; }, get state() { return farm; },
     status() { const t = target(); return { active: !!t || running, ten: t ? t.ten : '', stoneCd: cdStone, spearCd: cdSpear, canAuto: true, auto: running, autoLeft: Math.floor(autoLeft(auto, Date.now()) / 60) }; },
   };
   return LGT.farm;
 }
+

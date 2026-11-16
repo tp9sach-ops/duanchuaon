@@ -2,6 +2,7 @@
 // Đặt LGT.yq = { active, boss, hp, stat, bonus, stone(), spear(), throwBoss(), status() } và LGT.yqView (cảnh 3D js/scene/yeuquai.js đọc). Thử ngay không cần chờ lịch: thêm ?yq=da (hoặc nuoc / lua) vào địa chỉ trang.
 // Đánh CHUNG (Phiên 71): khi có apiUrl và đang ở khung giờ thật, máu yêu quái + túi lá bồ đề dùng chung qua Apps Script (gas/Yq.gs, action 'yq'; logic js/world/yqCoop.js). Chuyển động/vùng đỏ vẫn mỗi máy tự mô phỏng. Không có apiUrl hoặc chế độ thử ?yq= → đánh một mình như cũ.
 import { YQ, DIFF, windupOf, eventAt, eventPhase, nextEvent, createBoss, stepBoss, hitBoss, shareOf, rewardFor, hitDamage, newPlayer, hurt, tickPlayer, RESPAWN, STONE, SPEAR, stoneDamage, spearDamage, throwBossDamage, lootDrops, pickLoot, tickLoot, loadYq, rngSeed, MIN_SHARE } from '../world/yeuquai.js';
+import { planTap, stepMul, BASIC } from '../world/basicCombo.js';   // Phiên 205: lao tới + chuỗi 3 đòn cũng áp cho yêu quái hằng tháng
 import { canGrab } from '../world/strength.js';
 import { callApi, apiEnabled } from '../api.js';
 import { COOP_POLL_MS, coopKeyOk, buildReq, applyServer, lootFromServer, leavesGranted } from '../world/yqCoop.js';
@@ -53,10 +54,17 @@ export function initYeuQuai(hud, { toast = () => {} } = {}) {
     save(); toast(rw.xp ? `Bạn đã thu phục ${t.ten}! +${rw.xp} điểm, +${rw.strength} sức mạnh. Nhặt nhanh những túi lá bồ đề rơi quanh đó!` : `${t.ten} đã bị thu phục. Bạn đánh chưa đủ ${Math.round(MIN_SHARE * 100)}% nên chưa có thưởng — nhưng vẫn nhặt được lá rơi!`, 7000);
   }
 
+  let dashLock = 0;   // performance.now() (ms): vừa lao xong thì chưa ra đòn ngay (chống bấm dồn)
   function stone() {
     if (!boss || boss.dead) { if (LGT.farm) LGT.farm.stone(); return; }   // Phiên 107: không có yêu quái hằng tháng → ném vào quái bãi rừng
-    if (!here() || cdStone > 0) return; const d = distBoss(); if (d > STONE.range + YQ[boss.type].body) { toast('Yêu quái còn xa quá, lại gần hơn để đánh.', 1800); return; }
-    cdStone = STONE.cd; if (LGT.sfx) LGT.sfx.play('nem-da'); hit(stoneDamage(str()));   // Phiên 127: Đánh thường = đòn cận chiến trúng ngay (không còn ném đá)
+    if (!here() || cdStone > 0) return;
+    // Phiên 205: ĐÁNH THƯỜNG vào yêu quái hằng tháng cũng LAO TỚI (xa tầm đâm nhưng trong tầm lao) rồi nối chuỗi 3 đòn như quái bãi rừng (đòn 3 mạnh hơn: stepMul). Chuỗi dùng chung với js/ui/farm.js.
+    const W = LGT.world, now = performance.now(), F = LGT.farm; if ((W && W.dashing) || now < dashLock) return;
+    const bd = YQ[boss.type].body, plan = planTap({ has: true, gap: distBoss(), body: bd, melee: STONE.range });
+    if (plan === 'far') { toast('Yêu quái còn xa quá, lại gần hơn để đánh.', 1800); return; }
+    if (plan === 'dash') { if (F && F.rushPoint && F.rushPoint(boss, bd)) dashLock = now + BASIC.dashCd * 1000; else toast('Yêu quái còn xa quá, lại gần hơn để đánh.', 1800); return; }
+    const step = F && F.chainStep ? F.chainStep() : 1;
+    cdStone = STONE.cd; if (LGT.sfx) LGT.sfx.play('nem-da'); hit(Math.max(1, Math.round(stoneDamage(str()) * stepMul(step))));   // Phiên 127: Đánh thường = đòn cận chiến trúng ngay (không còn ném đá)
   }
   function spear() {
     if (!boss || boss.dead) { if (LGT.farm) LGT.farm.spear(); return; }   // Phiên 107
@@ -131,3 +139,4 @@ export function initYeuQuai(hud, { toast = () => {} } = {}) {
   };
   return LGT.yq;
 }
+
