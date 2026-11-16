@@ -9,6 +9,7 @@
 // Phiên 191 (Mục 1): (a) SỬA LỖI paint(): biến `locked` bị dùng trước khi khai báo (const → ReferenceError mỗi 150 ms, nút chiêu không vẽ được tên/hình/hồi chiêu); (b) thanh chiêu HIỆN CẢ Ở KHU LUYỆN TẬP — cùng một cụm nút với ngoài bãi rừng / trong chùa (trước đây bị ẩn và thay bằng hàng nút riêng).
 // Phiên 198 (mục 2, đợt D): LƯỚT TAY ĐỂ TUNG CHIÊU. Bấm giữ nút chiêu rồi LƯỚT ngón tay ≥ SWIPE_PX (js/world/aimSwipe.js) → hiện mũi tên hướng, thả tay thì tung chiêu. Chiêu ĐỊNH HƯỚNG (vùng báo dạng đường/nón) bay theo HƯỚNG LƯỚT (hướng trên màn hình đổi sang hướng thế giới theo góc camera) và chỉ đánh quái nằm trong vùng báo theo hướng đó (LGT.farm.skillHitDir);
 //   không có quái trong hướng lướt thì chiêu vẫn tung (hoạt ảnh + hiệu ứng 3D bay theo hướng lướt) nhưng KHÔNG gây sát thương. Chiêu vòng tròn / hỗ trợ không cần hướng: lướt hay chạm đều tung như cũ. Lướt rồi kéo ngược về chỗ bấm = hủy. Chạm nhanh (không lướt) = như cũ (đánh quái gần nhất); giữ yên ≥ 380 ms = xem thông tin.
+// Phiên 207: (a) VÙNG TUNG CHIÊU HIỆN TRÊN MẶT ĐẤT khi lướt chiêu định hướng (như Liên Quân / Liên Minh): hình đường / nón tô màu Hệ, gốc ở chân nhân vật, xoay theo hướng kéo và cập nhật mỗi 60 ms (đi hay xoay camera khi đang ngắm vẫn đúng), nhả tay mới tung (js/scene/aimPreview.js, hình học js/world/aimPreview.js); (b) KHU LUYỆN TẬP nhận hướng lướt: luyenCast(slot, swipe) truyền { ry } cho LGT.luyenChieu.castById (trước đây bỏ qua lướt, chiêu luôn bay về mộc nhân gần nhất).
 import { createSkillRuntime, skillLevelCap } from '../world/skillEngine.js';
 import { skillFor, phapMonOfHe } from '../world/skillCatalog.js';
 import { SKILL_CAP } from '../data/combatSkills.js';
@@ -76,7 +77,22 @@ export function initHeSkill(hud, { toast = () => {} } = {}) {
   // Phiên 198: mũi tên hướng lướt (hiện từ tâm nút chiêu khi đang lướt, xoay theo hướng ngón tay trên màn hình).
   const aimEl = document.createElement('div'), aimI = document.createElement('i'); aimEl.id = 'hs-aim'; aimEl.hidden = true; aimEl.setAttribute('aria-hidden', 'true'); aimEl.appendChild(aimI); hud.appendChild(aimEl);
   const showAim = (b, dx, dy) => { const r = b.getBoundingClientRect(); aimEl.style.left = (r.left + r.width / 2) + 'px'; aimEl.style.top = (r.top + r.height / 2) + 'px'; aimI.style.transform = `rotate(${Math.atan2(dx, -dy) * 180 / Math.PI}deg)`; aimEl.hidden = false; };
-  const hideAim = () => { aimEl.hidden = true; };
+  // Phiên 207: VÙNG TUNG CHIÊU TRÊN MẶT ĐẤT (js/scene/aimPreview.js). Nạp lười một lần khi LGT.scene sẵn sàng (paint() gọi aimReady); lỗi nạp thì chỉ còn mũi tên 2D như cũ. aimS/aimV = ô chiêu + vết lướt đang ngắm — hẹn giờ 60 ms vẽ lại để đi/xoay camera khi đang ngắm vẫn đúng.
+  let aimS = null, aimV = null, gPrev = null, gTried = false;
+  function aimReady() {
+    if (gPrev || gTried || !LGT.scene) return; gTried = true;
+    import('../scene/aimPreview.js').then((m) => { gPrev = m.createAimPreview(LGT.scene); }).catch((e) => { gPrev = null; console.warn('[Diệu Giang Tự] Vùng tung chiêu 3D lỗi:', e && e.message); });
+  }
+  function showGround(slot, v) {   // chiêu định hướng + đang lướt: tô vùng chiêu theo hướng lướt, gốc ở chân nhân vật
+    try {
+      const sk = skillShown(slot), W = LGT.world, p = W && W.pos; if (!gPrev || !sk || !p || !v || !isDirectional(sk.id)) return;
+      const sd = swipeDir(v.dx, v.dy, W.camera ? W.camera.yaw : 0); if (!sd) return;
+      const ic = iconSpec(sk.id); gPrev.show({ x: p.x, z: p.z, ry: sd.ry, hinh: hinhOf(sk.id), mau: ic ? ic.mau : '' });
+    } catch (_) { /* vẽ hỏng thì thôi, chiêu vẫn tung */ }
+  }
+  function hideGround() { try { if (gPrev) gPrev.hide(); } catch (_) { /* bỏ qua */ } }
+  const hideAim = () => { aimEl.hidden = true; aimV = null; hideGround(); };
+  setInterval(() => { if (aimV) showGround(aimS, aimV); }, 60);
   // Chọn Pháp Môn (ô 4): hiện khi chạm ô 4 đã mở mà chưa chọn. Lưu ở localStorage (lgt.phapmon).
   const pmBox = document.createElement('div'); pmBox.id = 'hs-pm'; pmBox.hidden = true; pmBox.setAttribute('role', 'dialog'); hud.appendChild(pmBox);
   function openPm() {
@@ -107,9 +123,9 @@ export function initHeSkill(hud, { toast = () => {} } = {}) {
     b.append(t, k, lvEl, cdn, lk); let timer = 0, held = false, icoId = '', down = false, sx = 0, sy = 0, sw = null;   // Phiên 198: sx/sy = chỗ bắt đầu bấm; sw = vết lướt { dx, dy } (≥ SWIPE_PX) — thả tay thì tung chiêu theo hướng lướt
     const stop = () => { clearTimeout(timer); timer = 0; if (held) hideTip(); hideAim(); };
     b.addEventListener('pointerdown', (e) => { if (e.pointerType === 'mouse' && e.button !== 0) return; e.preventDefault(); try { b.setPointerCapture(e.pointerId); } catch (_) { /* bỏ qua */ } held = false; down = true; sx = e.clientX; sy = e.clientY; sw = null; clearTimeout(timer); timer = setTimeout(() => { timer = 0; held = showTip(s); }, HOLD_MS); });   // Phiên 178: giữ con trỏ trên nút → ngón hơi trượt (đang vừa chạy vừa bấm) cũng không bị hủy cú bấm
-    b.addEventListener('pointermove', (e) => {   // Phiên 198: lướt ≥ SWIPE_PX → hủy "giữ để xem thông tin", hiện mũi tên hướng; kéo ngược về gần chỗ bấm = hủy lướt
+    b.addEventListener('pointermove', (e) => {   // Phiên 198: lướt ≥ SWIPE_PX → hủy "giữ để xem thông tin", hiện mũi tên hướng; kéo ngược về gần chỗ bấm = hủy lướt. Phiên 207: thêm vùng tung chiêu trên mặt đất
       if (!down || held) return; const dx = e.clientX - sx, dy = e.clientY - sy;
-      if (Math.hypot(dx, dy) >= SWIPE_PX) { if (timer) { clearTimeout(timer); timer = 0; } sw = { dx, dy }; showAim(b, dx, dy); } else if (sw) { sw = null; hideAim(); }
+      if (Math.hypot(dx, dy) >= SWIPE_PX) { if (timer) { clearTimeout(timer); timer = 0; } sw = { dx, dy }; showAim(b, dx, dy); aimS = s; aimV = sw; showGround(s, sw); } else if (sw) { sw = null; hideAim(); }
     });
     b.addEventListener('pointerup', () => { const was = held, pend = !!timer, swp = sw; down = false; sw = null; stop(); if (!was && (pend || swp)) cast(s, swp); held = false; });
     b.addEventListener('pointercancel', () => { down = false; sw = null; stop(); held = false; });   // Phiên 178: bỏ pointerleave (đã giữ con trỏ bằng setPointerCapture nên nhả tay ở đâu cũng về nút này)
@@ -168,13 +184,14 @@ export function initHeSkill(hud, { toast = () => {} } = {}) {
     if (zh) { const own = currentPm(zh); let sk = skillFor(zh, slot, own); if (!sk && slot === 4) { const f = phapMonOfHe(zh)[0]; sk = f ? skillFor(zh, 4, f.id) : null; } return sk; }
     return skillFor(he, slot, pm);
   };
-  function luyenCast(slot) {
+  function luyenCast(slot, swipe) {   // Phiên 207: swipe = { dx, dy } vết lướt tay — chiêu định hướng bay theo hướng lướt (giống ngoài bãi rừng), thay vì luôn về mộc nhân gần nhất
     const sk = skillShown(slot), L = LGT.luyenChieu; if (!sk || !L || !L.castById) return false;
-    const r = L.castById(sk.id); if (!r) nope(slot); return !!r;
+    const sd = swipe && isDirectional(sk.id) ? swipeDir(swipe.dx, swipe.dy, LGT.world && LGT.world.camera ? LGT.world.camera.yaw : 0) : null;
+    const r = L.castById(sk.id, sd ? { ry: sd.ry } : null); if (!r) nope(slot); return !!r;
   }
   /** Tung chiêu ở ô `slot`. swipe (tùy chọn) = { dx, dy } vết lướt tay (px, dx sang phải, dy xuống dưới): chiêu định hướng bay theo hướng lướt (Phiên 198). */
   function cast(slot, swipe) {
-    sync(); if (inLuyen()) return luyenCast(slot);
+    sync(); if (inLuyen()) return luyenCast(slot, swipe);
     if (!rt) return false;
     // Phiên 190: không có farm thì vẫn tung (không sát thương)
     const sk = skillFor(he, slot, pm);
@@ -197,7 +214,7 @@ export function initHeSkill(hud, { toast = () => {} } = {}) {
   }
 
   function paint() {
-    sync(); fxReady();
+    sync(); fxReady(); aimReady();
     const showBar = (!!rt || inLuyen()) && !!LGT.world && !LGT.inHouse && !LGT.panelOpen && (LGT.world.mode === 'free'); bar.hidden = !showBar; if (!showBar) { const dk = document.getElementById('dock'); if (dk && dk._hsh) { dk._hsh = 0; dk.style.setProperty('--hs-h', '0px'); } return; }   // Phiên 191: hiện cả ở khu luyện tập (trước đây có thêm điều kiện !inLuyen())
     const dock = document.getElementById('dock');
     if (dock) { const hh = bar.hidden ? 0 : Math.ceil(bar.getBoundingClientRect().height); if (dock._hsh !== hh) { dock._hsh = hh; dock.style.setProperty('--hs-h', hh + 'px'); } }   // Phiên 184
