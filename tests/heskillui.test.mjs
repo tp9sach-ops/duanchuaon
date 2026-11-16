@@ -46,6 +46,6 @@ test('Phiên 192: btnScale.js nạp bố cục cung tròn', () => {
 test('Phiên 195 (mục 2): khu luyện tập — nút chiêu theo HỆ ĐANG TẬP, không cần Hệ người chơi', () => {
   const hs = readFileSync(new URL('../js/ui/heSkill.js', import.meta.url), 'utf8');
   assert.match(hs, /const zoneHe = \(\) => \(inLuyen\(\) \? \(LGT\.luyenChieu\.he \|\| null\) : null\)/);
-  assert.match(hs, /sync\(\); if \(inLuyen\(\)\) return luyenCast\(slot\);\s*\n\s*if \(!rt\) return false;/);   // luyện tập không đòi runtime chiêu của người chơi
+  assert.match(hs, /sync\(\); if \(inLuyen\(\)\) return luyenCast\(slot(?:, swipe)?\);\s*\n(?:\s*if \(inArena\(\)\)[^\n]*\n)?\s*if \(!rt\) return false;/);   // luyện tập không đòi runtime chiêu của người chơi
   assert.match(hs, /showBar = \(!!rt \|\| inLuyen\(\)\)/);
 });
