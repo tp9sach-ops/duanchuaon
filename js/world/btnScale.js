@@ -7,3 +7,5 @@ export function clampScale(v) {
   return +(Math.round(Math.min(SCALE_MAX, Math.max(SCALE_MIN, n)) / SCALE_STEP) * SCALE_STEP).toFixed(2);
 }
 export const scaleLabel = (k) => Math.round(clampScale(k) * 100) + '%';
+/** Phiên 204: máy cảm ứng hoặc màn hẹp (≤ 899px, trùng mốc CSS điện thoại) → nút ⚙ "Cỡ nút bấm" nằm DƯỚI bản đồ nhỏ (cột trái-trên), không nằm trên cần đi nữa. */
+export const isPhoneLayout = ({ coarse = false, w = 1280 } = {}) => !!coarse || (Number.isFinite(+w) && +w <= 899);
