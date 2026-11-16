@@ -103,12 +103,14 @@ test('tư thế "glide": số hữu hạn, hai tay giang ra hai bên (khác đi/
   assert.match(readFileSync(new URL('../js/net/room.js', import.meta.url), 'utf8'), /av\.state === 'glide' \? 'idle' : av\.state/);
   for (const t of [0, 0.5, 3.3, 100]) for (const v of Object.values(poseFor('glide', t, 5))) assert.ok(Number.isFinite(v));
   const g = armTarget('glide', poseFor('glide', 0).armL), w = armTarget('walk', 0);
-  assert.ok(g.out > 0.9 && g.out > w.out * 4 && g.flex < 0.3, 'tay giang ngang, khữu gần thẳng');
+  const gr = armTarget('glide', poseFor('glide', 0).armR);
+  assert.ok(g.fwd > 1.2 && gr.fwd < 0.2 && g.flex < 0.3 && gr.flex < 0.3, 'Phiên 204: tay trái chỉ tới trước, tay phải vuốt ra sau, khuỷu gần thẳng');
+  const P = poseFor('glide', 0); assert.ok(P.kneeL > 1.2 && P.legL > 0.5 && P.legR < -0.4 && P.kneeR < 0.3, 'chân trái co gối, chân phải duỗi ra sau');
 });
 
 test('nối dây (đọc mã): Nhảy lần 2 trên không → startFlight; world.fly + camera followYaw + mở góc nhìn; hết bay khi chạm đất; không tự lướt né thêm', () => {
   const rd = (f) => readFileSync(new URL('../' + f, import.meta.url), 'utf8'), sk = rd('js/ui/skill.js'), wd = rd('js/world/world.js');
-  assert.match(sk, /if \(jump\.air\) return startFlight\(lv, indoor\)/); assert.match(sk, /W\.fly\(\(dt, inp\) =>/); assert.match(sk, /if \(!jump\.air\) \{ flight = null; return null; \}/);
+  assert.match(sk, /if \(jump\.air\) return startFlight\(lv, indoor\)/); assert.match(sk, /W\.fly\(\(dt, inp\) =>/); assert.match(sk, /if \(!jump\.air\) \{ flight = null; endWind\(\); return null; \}/);
   assert.match(sk, /glideQ = false; glideCd = GLIDE_CFG\.cd/); assert.match(sk, /!W\.dashing && !W\.flying/);
   assert.match(wd, /function fly\(fn\)/); assert.match(wd, /yaw = followYaw\(yaw, flyRy, dt\)/); assert.match(wd, /camDragAt/); assert.match(wd, /get flying\(\)/); assert.match(wd, /\+ flyFov\)/);
   assert.match(wd, /walkStep\(P, \{ x: \+f\.dx, z: \+f\.dz, mag: 1 \}/, 'bay qua walkStep → trượt dọc tường, không xuyên vật cản');

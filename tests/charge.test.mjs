@@ -45,7 +45,8 @@ test('leapPlan có tỉ lệ gồng: nhảy thấp bật tới ngắn + ngắn t
 
 test('đạp gió (bấm Nhảy thêm khi đang bay): xung mới = boostK × xung đầu rồi yếu dần về mức lướt; chưa đạp thì không ảnh hưởng', () => {
   const p = flyPlan(4);
-  assert.ok(Math.abs(boostSpeed(p, 0) - (p.cruise + (p.v0 * FLY_CFG.boostK - p.cruise))) < 1e-9);
+  assert.ok(Number.isFinite(p.vb) && p.vb > p.v0, 'Phiên 204: xung đạp gió theo cấp (vb) mạnh hơn xung đầu');
+  assert.ok(Math.abs(boostSpeed(p, 0) - p.vb) < 1e-9);
   assert.ok(Math.abs(boostSpeed(p, Infinity) - p.cruise) < 1e-9 && Math.abs(boostSpeed(p, NaN) - p.cruise) < 1e-9);
   let prev = Infinity; for (let t = 0; t < 4; t += 0.05) { const v = boostSpeed(p, t); assert.ok(v <= prev + 1e-12 && v >= p.cruise - 1e-9); prev = v; }
   assert.ok(boostSpeed(p, 0) > flySpeed(p, 1.5), 'đạp gió giữa chuyến bay đẩy nhanh hơn mức đang lướt');

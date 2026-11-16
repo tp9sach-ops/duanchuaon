@@ -102,7 +102,7 @@ export const STATES = ['idle', 'walk', 'sit', 'mo', 'beads', 'bow'];   // đứn
  * `speed` (m/s) chỉ dùng khi đi: nhịp chân nhanh theo tốc độ, biên độ tối đa ở ~2,2 m/s.
  */
 export function poseFor(state, t, speed = 0) {
-  const P = { legL: 0, legR: 0, armL: 0, armR: 0, lean: 0, sit: 0, dy: 0, head: 0 };
+  const P = { legL: 0, legR: 0, armL: 0, armR: 0, lean: 0, sit: 0, dy: 0, head: 0, kneeL: 0, kneeR: 0 };   // kneeL/R (Phiên 204): gập gối thêm (rad) — chỉ tư thế bay lướt dùng
   switch (state) {
     case 'walk': {
       const k = clamp(speed / 2.2, 0.25, 1.15), run = runK(speed), ph = t * gaitRate(speed), a = 0.62 * k * (1 + 0.4 * run);   // Phiên 120: chạy → nhịp nhanh, sải dài, nảy hông cao hơn
@@ -122,8 +122,10 @@ export function poseFor(state, t, speed = 0) {
       const u = (Math.sin(t * 2.1 - Math.PI / 2) + 1) / 2;
       P.lean = u * 1.05; P.armL = P.armR = -0.4 - u * 0.7; P.dy = -u * 0.25; P.head = u * 0.3; break;
     }
-    case 'glide': {   // Phiên 196: bay lướt — hai tay giang ra hai bên như cánh, chân duỗi theo gió, thân hơi nâng (độ chúi do world.fly đặt ở group.rotation.x)
-      P.armL = P.armR = 0.5 + Math.sin(t * 3.2) * 0.06; P.legL = 0.28; P.legR = -0.16; P.dy = 0.03 + Math.sin(t * 2.4) * 0.01; P.head = -0.12; break;
+    case 'glide': {   // Phiên 204 (thay tư thế dang tay Phiên 196): LAO NGƯỜI TỚI TRƯỚC — chân TRÁI co (đùi đưa trước, gối gập sâu), chân PHẢI duỗi ra sau (đạp gió), tay trái chỉ tới trước, tay phải vuốt ra sau, đầu ngẩng nhìn hướng bay.
+      // Độ chúi cả thân do world.fly đặt ở group.rotation.x (quay quanh hông, thứ tự Euler 'YXZ' nên luôn ngã VỀ PHÍA TRƯỚC theo hướng mặt). Dao động nhẹ cho khỏi cứng đơ.
+      const w = Math.sin(t * 2.6);
+      P.armL = 1 + w * 0.05; P.armR = -1 - w * 0.05; P.legL = 0.85; P.legR = -0.75; P.kneeL = 1.65; P.kneeR = 0.12; P.lean = 0.2; P.dy = 0.02 + w * 0.008; P.head = -0.22; break;
     }
     default: { P.armL = Math.sin(t * 1.2) * 0.03; P.armR = -P.armL; P.dy = Math.sin(t * 1.6) * 0.004; }   // idle: thở nhẹ
   }

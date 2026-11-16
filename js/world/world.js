@@ -15,7 +15,7 @@ import {
   WALK_SPEED, RUN_SPEED, CLICK_SPEED, CAM_DIST, CAM_PITCH, moveVector, joyVector, joyRun, moveKeyOf, walkStep, createNavigator, camPose, clipCamDist, dragCamera, zoomCamera, facingOf,
 } from './worldLogic.js';
 import { shotPose, blendShot } from './fishShot.js';   // Phiên 120: góc camera câu cá / cầm cá
-import { FLY_CFG, followYaw } from './glide.js';   // Phiên 196: bay lướt (camera đi theo hướng bay)
+import { FLY_CFG, followYaw, pivotShift } from './glide.js';   // Phiên 196: bay lướt (camera đi theo hướng bay)
 import { createCamFeel, fovNhay, kBamDoc } from './camFeel.js';   // Phiên 175: rung màn, khựng hình, đẩy gần, bám nhảy mượt (mục 11)
 
 const isEditable = (el) => !!el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName));
@@ -302,6 +302,7 @@ export function createWorld({ scene, camera, canvas, coarse = false, LGT = windo
         const busy = !!(avatar.casting || avatar.swinging);   // Phiên 202: đang tung chiêu / đánh thường giữa không trung → giữ hướng mặt về quái, không chúi người, vẫn bay tiếp
         P.x = r.x; P.z = r.z; P.y = damp(P.y, r.y, 14, dt); speedNow = 0; flyRy = facingOf(+f.dx, +f.dz); if (!busy) avatar.setFacing(flyRy);
         avatar.setState(f.state || 'idle', 0); avatar.group.position.set(P.x, P.y, P.z); avatar.update(dt * camTocDo); avatar.group.rotation.x = !busy && Number.isFinite(+f.tilt) ? +f.tilt : 0;
+        { const tl = avatar.group.rotation.x; if (tl) { const sh = pivotShift(tl, avatar.group.rotation.y); const gp = avatar.group.position; gp.x += sh.x; gp.y += sh.y; gp.z += sh.z; } }   // Phiên 204: chúi quanh HÔNG (không phải gót chân): chân kéo ra sau/lên, không cắm xuống đất
         camStep(dt); return;
       }
       flyFn = null; avatar.group.rotation.x = 0;              // hạ cánh xong → quay lại điều khiển thường ngay khung này

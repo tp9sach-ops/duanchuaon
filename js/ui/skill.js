@@ -4,10 +4,11 @@
 // Phiên 202 (mục 1): ĐỨNG TRÊN VẬT — mỗi khung tính mặt đứng dưới chân (standOn.floorRel: mái nhà, đá, tán cây, tượng, tháp...) → jump.step(dt, floor) đáp lên đó và đứng yên; ghi LGT.feetH (độ cao chân tuyệt đối)
 //   cho js/world/world.js truyền vào walkStep → chân đủ cao thì đi/bay qua PHÍA TRÊN vật, thấp hơn thì vẫn bị chặn (không xuyên). Lao/lướt/bật tới dùng landingAt(…, feetH).
 import { khinhBac, loadKhinh, jumpHeightAt, canJump, createJump, trainPlan, leapPlan, glidePlan, flyPlan, nextAction, LEAP_CFG, GLIDE_CFG, KHINH_YEU_CAU, KHINH_TEN, MAX_BAC } from '../world/skills.js';
-import { flySpeed, flyBrake, steerDir, cushionH, boostSpeed, camAirTarget, FLY_CFG } from '../world/glide.js';   // Phiên 196: bay lướt; Phiên 197: đạp gió
+import { flySpeed, flyBrake, steerDir, cushionH, boostSpeed, camAirTarget, windLevel, FLY_CFG } from '../world/glide.js';   // Phiên 196: bay lướt; Phiên 197: đạp gió
 import { CHARGE_CFG, chargeLevel, chargeFrac, ringScale, isFull, crouchPose } from '../world/charge.js';   // Phiên 197: gồng lực nhảy
 import { landingAt, floorRel } from '../world/standOn.js';   // Phiên 202: đứng trên vật + lao/lướt qua phía trên vật thấp
 import { groundY } from '../world/layout.js';
+import { createWindFx } from '../scene/windFx.js';   // Phiên 204: vệt gió trắng khi bay lướt / đạp gió
 import { levelOf } from '../world/quests.js';
 
 const isEditable = (el) => !!el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName));
@@ -41,6 +42,12 @@ export function initSkill(hud, { toast = () => {}, getSen = () => 0, spendSen = 
    * Độ cao do `jump` (createJump.glide) lo; hướng + tốc độ ngang + chúi thân do world.fly gọi hàm bên dưới mỗi khung hình. Hết bay khi chạm đất (Phiên 202: hoặc đáp lên mặt đứng — mái nhà, đá, tán cây...).
    */
   let flight = null;   // Phiên 197: chuyến bay đang diễn ra { boost() } — bấm Nhảy thêm giữa không trung = đạp gió theo hướng đang bay, lặp đến khi chạm đất
+  let windFx = null, windOn = false, windLv = 0, windSpd = 0;   // Phiên 204: hiệu ứng gió (tạo lười lần bay đầu), cờ đang bay, mức gió/tốc độ khung gần nhất
+  const fxOf = () => { if (!windFx && LGT.scene) { try { windFx = createWindFx(LGT.scene); } catch (_) { windFx = null; } } return windFx; };
+  function endWind() { windOn = false; try { if (LGT.sfx && LGT.sfx.windStop) LGT.sfx.windStop(); } catch (_) { /* bỏ qua */ } }
+  function kickFx() {   // Phiên 204: cú đạp gió = chân phải đạp (hoạt ảnh) + vòng sóng/vệt trắng + tiếng xì thịch
+    try { const av = LGT.world && LGT.world.avatar, g = av && av.group; if (av && av.act) av.act('dapgio'); const f = fxOf(); if (f && g) f.kick(g.position.x, g.position.y, g.position.z, g.rotation.y); if (LGT.sfx && LGT.sfx.gust) LGT.sfx.gust('dap'); } catch (_) { /* bỏ qua */ }
+  }
   let curFloor = 0;    // Phiên 202: mặt đứng (m, so với mặt đất) dưới chân ở khung hình vừa rồi — đệm hạ cánh tính theo độ cao so với mặt này
   function startFlight(lv, indoor) {
     const W = LGT.world, plan = flyPlan(lv, indoor, jump.apex);   // apex = độ cao thật của cú nhảy (đã gồng) → hạ chậm đúng theo độ cao
@@ -48,13 +55,15 @@ export function initSkill(hud, { toast = () => {}, getSen = () => 0, spendSen = 
     const ry0 = Number.isFinite(W.facing) ? W.facing : 0; let dir = { x: Math.sin(ry0), z: Math.cos(ry0) }, t = 0, tb = Infinity, tilt = 0;   // tb = giây kể từ lần đạp gió gần nhất (Infinity = chưa đạp)
     if (!jump.glide(plan.fall)) return false;
     const ok = W.fly((dt, inp) => {
-      if (!jump.air) { flight = null; return null; }   // chạm đất / đáp lên mặt đứng → hết bay
+      if (!jump.air) { flight = null; endWind(); return null; }   // chạm đất / đáp lên mặt đứng → hết bay
       t += dt; tb += dt; dir = steerDir(dir, inp, plan.turn, dt);
       const hc = cushionH(plan.fall), up = Math.max(0, jump.y - curFloor);   // up = độ cao chân so với mặt đứng dưới chân (mặt đất hoặc mái nhà...)
       tilt += ((up < hc ? 0 : plan.tilt) - tilt) * Math.min(1, (up < hc ? 16 : 7) * dt);   // sát đất: đứng thẳng lại nhanh hơn (đệm), không giật khi chạm
-      return { dx: dir.x, dz: dir.z, speed: Math.max(flySpeed(plan, t), boostSpeed(plan, tb)) * flyBrake(up, plan.fall), tilt, state: 'glide' };
+      const spd = Math.max(flySpeed(plan, t), boostSpeed(plan, tb)) * flyBrake(up, plan.fall);
+      windSpd = spd; windLv = windLevel(spd, jump.vy, up < hc); try { if (LGT.sfx && LGT.sfx.windSet) LGT.sfx.windSet(windLv); } catch (_) { /* bỏ qua */ }
+      return { dx: dir.x, dz: dir.z, speed: spd, tilt, state: 'glide' };
     });
-    if (ok) flight = { boost() { if (tb < FLY_CFG.boostGap) return true; tb = 0; if (LGT.sfx) LGT.sfx.play('nhay'); return true; } };   // bấm dồn dưới 0,35 s: nuốt lần bấm, không đạp
+    if (ok) { flight = { boost() { if (tb < FLY_CFG.boostGap) return true; tb = 0; kickFx(); return true; } }; windOn = true; fxOf(); try { if (LGT.sfx) { if (LGT.sfx.gust) LGT.sfx.gust('bay'); if (LGT.sfx.windStart) LGT.sfx.windStart(); } } catch (_) { /* bỏ qua */ } }   // bấm dồn dưới 0,35 s: nuốt lần bấm, không đạp
     if (!ok) return false;   // hiếm: world từ chối (đang bị khiêng...) → chỉ rơi chậm tại chỗ, không bay ngang
     glideQ = false; glideCd = GLIDE_CFG.cd;   // không tự lướt né thêm khi chạm đất
     try { const v = LGT.farmCombat && LGT.farmCombat.vitals; if (v && v.guard) v.guard(plan.guard); } catch (_) { /* bỏ qua */ }
@@ -136,7 +145,8 @@ export function initSkill(hud, { toast = () => {}, getSen = () => 0, spendSen = 
       LGT.feetH = g + y;   // độ cao chân TUYỆT ĐỐI: world.js truyền vào walkStep ở khung kế → đủ cao thì bay/đi qua phía trên vật có `top`, thấp hơn vẫn bị chặn
       glideCd = Math.max(0, glideCd - Math.max(0, Math.min(0.25, dt)));
       if (W && W.setAirY) W.setAirY(camAirTarget(y, jump.air ? jump.vy : 0));   // Phiên 199: cộng phần dẫn vy/k khi đang lên → camera không tụt sau, nhân vật không trồi khỏi khung   // Phiên 197: camera cộng độ cao nhảy → bay cao vẫn nằm giữa khung hình
-      if (flight && W && !W.flying) flight = null;
+      if (flight && W && !W.flying) { flight = null; endWind(); }
+      if (windOn || windFx) { const f = windOn ? fxOf() : windFx, g = av.group; if (f && g) { try { f.update(dtc, { on: windOn, x: g.position.x, y: g.position.y, z: g.position.z, ry: g.rotation.y, speed: windSpd, level: windLv, camera: LGT.view && LGT.view.camera }); } catch (_) { /* bỏ qua */ } } }
       if (chargeT >= 0 && av.group) {   // đang gồng: nhún thấp người, đứng yên sau 0,15 s, vòng tròn nở
         const d = Math.max(0, Math.min(0.25, dt)); chargeT += d;
         if (chargeT > CHARGE_CFG.maxHold || !canJump({ level: level(), mode: W ? W.mode : 'free', panelOpen: !!LGT.panelOpen, dialogOpen: dialogOpen() }) || jump.air) cancelCharge();

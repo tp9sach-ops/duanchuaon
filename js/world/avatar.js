@@ -78,6 +78,7 @@ export function createAvatar(opts = {}) {
 }
 function createProcAvatar({ name = 'Khách', color = DEFAULT_COLOR, hair: hairId = 'troc', beard: beardId = '', mine = false } = {}) {
   const col = colorById(color), group = new THREE.Group(), rig = new THREE.Group();
+  group.rotation.order = 'YXZ';   // Phiên 204: chúi/ngả theo thân (xem avatarChibi.js)
   group.add(rig);
   const geos = [], mats = [];
   const geo = (g) => (geos.push(g), g);

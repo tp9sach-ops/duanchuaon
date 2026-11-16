@@ -91,7 +91,7 @@ export function kneeAngle(flex, yaw = 0) { return { x: clamp(flex, 0, KNEE_MAX),
 export function armTarget(state, own, hold = false) {
   if (hold) return { fwd: 2.6, out: 0.28, flex: 0.5, adduct: 0.1 };
   if (state === 'walk' || state === 'idle') return { fwd: 0.12 + own * 0.95, out: 0.14, flex: 0.2 + 0.9 * Math.max(0, own), adduct: 0 };   // buông hai bên, đánh nhịp ngược chân; tay đưa ra trước thì khuỷu gập thêm (như người đi thật)
-  if (state === 'glide') return { fwd: 0.1 - own * 0.3, out: 1.15, flex: 0.12, adduct: 0 };   // Phiên 196: bay lướt — hai tay giang ngang như cánh, khuỷu gần thẳng
+  if (state === 'glide') return { fwd: 0.6 + own * 0.9, out: 0.45, flex: 0.15, adduct: 0 };   // Phiên 204: bay lướt — own = +1 (tay trái) chỉ tới trước/lên, own = −1 (tay phải) vuốt ra sau; khuỷu gần thẳng (thay kiểu giang ngang Phiên 196)
   if (state === 'bow') { const u = clamp((-own - 0.4) / 0.7, 0, 1); return { fwd: 0.6 + 0.7 * u, out: -0.35, flex: 1.1 - 0.65 * u, adduct: 0.35 - 0.15 * u }; }   // lạy: chắp tay trước ngực rồi duỗi dần về phía trước khi cúi
   if (state === 'beads') return { fwd: 0.52 - own * 0.6, out: -0.35, flex: 1.05, adduct: 0.2 };                                                     // lần hạt: hai tay trước ngực, hơi tách để vướng chuỗi
   if (state === 'mo') return { fwd: 0.52 - own * 0.6, out: -0.35, flex: 1.05 - (own + 0.55) * 0.6, adduct: 0.3 };                                    // gõ mõ: tay giơ lên thì khuỷu gập, vung xuống thì duỗi bớt
@@ -165,7 +165,7 @@ export function chibiPose(p, state, clock, speed = 0, opt = {}) {
   // Đùi: bước tới/lui + xếp bằng khi ngồi (đùi đưa ra trước ~83°, gối dạng ra ngoài). Cẳng chân: gập gối khi vung chân tới + gập sâu và thu bàn chân vào giữa khi ngồi xếp bằng (đã dò bằng legPoints: bàn chân cách mặt sàn ~1 cm, hai cổ chân cách nhau ~13 cm).
   const swingL = pos15(Math.cos(ph)), swingR = pos15(-Math.cos(ph));   // chân trái vung tới khi cos(ph) > 0 (legL = sin(ph)·a), chân phải ngược lại
   const stepK = walk * 0.95 * Math.min(1, kk) * (1 + 0.85 * run);   // chạy: gối nâng cao gần gấp đôi
-  const kneeL = 0.06 + stepK * swingL + 2.2 * sit, kneeR = 0.06 + stepK * swingR + 2.2 * sit;
+  const kneeL = 0.06 + stepK * swingL + 2.2 * sit + (p.kneeL || 0), kneeR = 0.06 + stepK * swingR + 2.2 * sit + (p.kneeR || 0);   // kneeL/R (Phiên 204): gập gối thêm khi bay lướt
   const legL = { x: -p.legL * 1.15 - 1.45 * sit, y: 0, z: 0.5 * sit }, legR = { x: -p.legR * 1.15 - 1.45 * sit, y: 0, z: -0.5 * sit };
   const shinL = kneeAngle(kneeL, -1.0 * sit), shinR = kneeAngle(kneeR, 1.0 * sit);
   // Cổ chân: giữ bàn chân phẳng với mặt đất khi đứng/đi (bù góc đùi + cẳng chân); gót nhấc lên nhẹ khi chân ở phía sau; ngồi thì thả lỏng.

@@ -7,6 +7,7 @@ import { audioCtx, tone } from './sound.js';
 import { loadSettings } from './soundLogic.js';
 import { sfxGain } from '../world/celebrate.js';
 import { SFX_IDS, sfxUrl, planCue, fallbackOf, gapOf } from '../world/sfx.js';
+import { WIND_SND, windFilterHz, windGainOf } from '../world/windFxMath.js';   // Phiên 204: tiếng gió / vút / đạp gió tổng hợp (không cần file)
 import { KHO_AM } from '../data/chieuAmKho.js';   // Phiên 173: kho âm thanh chiêu thức (assets/sfx/chieu/*.m4a)
 
 const MAX_VOICES = 8, RETRY_MS = 30000;
@@ -81,6 +82,37 @@ export function initSfx() {
   /** Tải trước các file chiêu thức (gọi lúc bắt đầu gồng để tiếng phát/trúng/dư âm kịp có). */
   function preloadFiles(ids) { try { (ids || []).forEach((id) => { if (KHO_AM[id]) load(id); }); } catch (_) { /* bỏ qua */ } }
 
-  LGT.sfx = { play, playFile, preloadFiles, preload, get loaded() { return bufs.size; } };
+  // ── Phiên 204: tiếng gió bay lướt, tổng hợp bằng nhiễu lọc (WebAudio) — luôn có tiếng, không phụ thuộc file ──
+  let noiseBuf = null, windN = null;
+  const noiseOf = (c) => { if (noiseBuf && noiseBuf.sampleRate === c.sampleRate) return noiseBuf; const n = Math.floor(c.sampleRate * 2), b = c.createBuffer(1, n, c.sampleRate), d = b.getChannelData(0); for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1; noiseBuf = b; return b; };
+  /** 'bay' = tiếng vút khi bắt đầu lướt; 'dap' = cú đạp gió (xì ngắn + thịch trầm). */
+  function gust(kind) {
+    try {
+      const gv = volume(); if (!gv) return false; const sp = WIND_SND[kind]; if (!sp) return false;
+      const c = ctxOf(); if (!c) return false; const t = c.currentTime, out = busOf(c) || c.destination;
+      const src = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain(); src.buffer = noiseOf(c); src.loop = true;
+      f.type = kind === 'dap' ? 'bandpass' : 'bandpass'; f.Q.value = sp.q; f.frequency.setValueAtTime(sp.f0, t); f.frequency.exponentialRampToValueAtTime(Math.max(40, sp.f1), t + sp.dur);
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(sp.gain * gv, t + sp.dur * 0.25); g.gain.exponentialRampToValueAtTime(0.0001, t + sp.dur);
+      src.connect(f); f.connect(g); g.connect(out); src.start(t); src.stop(t + sp.dur + 0.05); src.onended = () => { try { g.disconnect(); } catch (_) { /* đã ngắt */ } };
+      if (sp.thump) { const o = c.createOscillator(), og = c.createGain(), th = sp.thump; o.type = 'sine'; o.frequency.setValueAtTime(th.f0, t); o.frequency.exponentialRampToValueAtTime(th.f1, t + th.dur); og.gain.setValueAtTime(th.gain * gv, t); og.gain.exponentialRampToValueAtTime(0.0001, t + th.dur); o.connect(og); og.connect(out); o.start(t); o.stop(t + th.dur + 0.05); }
+      return true;
+    } catch (_) { return false; }
+  }
+  /** Vòng lặp tiếng gió khi đang bay: windStart() → windSet(mức 0..1) mỗi khung → windStop(). */
+  function windStart() {
+    try {
+      if (windN) return true; const gv = volume(); if (!gv) return false; const c = ctxOf(); if (!c) return false;
+      const src = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain(); src.buffer = noiseOf(c); src.loop = true; f.type = 'bandpass'; f.Q.value = WIND_SND.q; f.frequency.value = windFilterHz(0.3); g.gain.value = 0.0001;
+      src.connect(f); f.connect(g); g.connect(busOf(c) || c.destination); src.start(); windN = { src, f, g, c }; return true;
+    } catch (_) { return false; }
+  }
+  function windSet(lv) {
+    try { if (!windN) return; const { f, g, c } = windN, t = c.currentTime, gv = volume(); f.frequency.setTargetAtTime(windFilterHz(lv), t, 0.08); g.gain.setTargetAtTime(Math.max(0.0001, windGainOf(lv) * gv), t, WIND_SND.attack * 0.5); } catch (_) { /* bỏ qua */ }
+  }
+  function windStop() {
+    try { if (!windN) return; const { src, g, c } = windN; windN = null; const t = c.currentTime; g.gain.cancelScheduledValues(t); g.gain.setTargetAtTime(0.0001, t, WIND_SND.release * 0.3); src.stop(t + WIND_SND.release + 0.2); src.onended = () => { try { g.disconnect(); } catch (_) { /* đã ngắt */ } }; } catch (_) { windN = null; }
+  }
+
+  LGT.sfx = { play, playFile, preloadFiles, preload, gust, windStart, windSet, windStop, get loaded() { return bufs.size; } };
   return LGT.sfx;
 }

@@ -13,11 +13,14 @@ export const FLY_CFG = Object.freeze({
   cushionT: 0.075, cushionKeep: 0.3,   // vùng đệm cuối: vận tốc rơi giảm còn 30% khi chạm đất; tổng thời gian đệm ≈ 0,13 s (100–150 ms)
   brakeKeep: 0.45,                     // trong vùng đệm tốc độ ngang giảm còn 45%
   turn: 2.4,                           // rad/s: tốc độ bẻ hướng bay theo cần/phím
-  tilt: 0.38,                          // rad: thân chúi về trước khi bay
+  tilt: 0.62,                          // rad: thân chúi về trước khi bay (Phiên 204: 0,38 → 0,62 = ngã người lao tới trước rõ hơn; xoay quanh HÔNG, xem pivotShift)
+  pivotH: 0.72,                        // m: độ cao tâm xoay (hông/trọng tâm) khi chúi người — chân bị kéo ra sau chứ không cắm xuống đất
   camK: 2.4, camHold: 0.9,             // camera xoay ra sau lưng (hằng số bám /s); sau khi người chơi tự kéo camera thì nhường camHold giây
   fov: 0.035,                          // mở góc nhìn thêm 3,5% khi đang bay (cảm giác nhanh)
   camUpK: 20,                          // Phiên 199: hằng số bám của camera khi nhân vật BAY LÊN (phải trùng damp(airSm, …, 20) trong world.js camStep)
   boostK: 1.0, boostGap: 0.22,         // Phiên 197: bấm Nhảy thêm khi đang bay → đạp gió; Phiên 202: MỖI lần bấm = một lần lướt tới trước một đoạn (xung = 100% xung đầu, theo hướng đang di chuyển), cách nhau tối thiểu 0,22 s, lặp tới khi chạm đất
+  boostDistBase: 4.0, boostDistPerBac: 1.0, boostTau: 0.42,   // Phiên 204: MỖI cú đạp gió lướt thêm ≈ base + perBậc × bậc (m): bậc 1 ≈ 5 m, bậc 8 ≈ 12 m (xung vb = cruise + quãng/τ rồi yếu dần)
+  kickDur: 0.42,                       // s: thời gian một cú đạp chân phải (hoạt ảnh 'dapgio' + vệt gió)
 });
 
 const num = (v, d = 0) => (Number.isFinite(+v) ? +v : d);
@@ -48,10 +51,35 @@ export function flySpeed(plan, t) {
   return num(p.cruise) + (num(p.v0) - num(p.cruise)) * Math.exp(-Math.max(0, num(t)) / tau);
 }
 
-/** Phiên 197: tốc độ ngang (m/s) sau `tb` giây kể từ lần ĐẠP GIÓ (bấm Nhảy thêm khi đang bay): xung boostK×v0 yếu dần về mức lướt duy trì. Chưa đạp lần nào → tb = Infinity → trả cruise. */
+/**
+ * Phiên 197: tốc độ ngang (m/s) sau `tb` giây kể từ lần ĐẠP GIÓ (bấm Nhảy thêm khi đang bay), yếu dần về mức lướt duy trì. Chưa đạp lần nào → tb = Infinity → trả cruise.
+ * Phiên 204: plan.vb (xung đạp theo cấp, xem boostPlan) nếu có → hằng số thời gian boostTau (cú lướt ngắn, gắt); không có plan.vb → như cũ (boostK × v0, τ của plan).
+ */
 export function boostSpeed(plan, tb) {
-  const p = plan || {}, tau = Math.max(0.05, num(p.tau, FLY_CFG.tau)), t = Number.isFinite(+tb) ? Math.max(0, +tb) : Infinity;
-  return num(p.cruise) + (num(p.v0) * FLY_CFG.boostK - num(p.cruise)) * Math.exp(-t / tau);
+  const p = plan || {}, hasVb = Number.isFinite(+p.vb), tau = Math.max(0.05, hasVb ? FLY_CFG.boostTau : num(p.tau, FLY_CFG.tau)), t = Number.isFinite(+tb) ? Math.max(0, +tb) : Infinity;
+  const top = hasVb ? +p.vb : num(p.v0) * FLY_CFG.boostK;
+  return num(p.cruise) + (top - num(p.cruise)) * Math.exp(-t / tau);
+}
+
+/** Phiên 204: quãng lướt THÊM (m) của MỘT cú đạp gió ở bậc khinh thân `lv` — bậc càng cao lướt càng xa. Bậc 0 → 0. */
+export const boostDist = (lv) => { const b = Math.max(0, Math.min(8, Math.floor(num(lv)))); return b > 0 ? FLY_CFG.boostDistBase + FLY_CFG.boostDistPerBac * b : 0; };
+/** Phiên 204: vận tốc xung đạp gió vb (m/s) để mỗi cú lướt thêm ≈ boostDist(lv): vb = cruise + quãng/boostTau. */
+export const boostVb = (lv, cruise) => num(cruise) + boostDist(lv) / FLY_CFG.boostTau;
+
+/**
+ * Phiên 204: người chúi `tilt` rad quanh trục NGANG của thân (theo hướng mặt `ry`, 0 = +z) mà chân vẫn không cắm xuống đất: tâm xoay ở độ cao `h` (hông) chứ không phải gót chân.
+ * Trả độ dời {x,y,z} (m) cộng vào vị trí gốc nhân vật (gốc = dưới bàn chân). Cần group.rotation.order = 'YXZ' (xoay trục ngang theo thân, rồi mới quay hướng).
+ */
+export function pivotShift(tilt, ry, h = FLY_CFG.pivotH) {
+  const t = num(tilt), a = num(ry), hh = num(h, FLY_CFG.pivotH), s = Math.sin(t);
+  return { x: -hh * s * Math.sin(a), y: hh * (1 - Math.cos(t)), z: -hh * s * Math.cos(a) };
+}
+
+/** Phiên 204: mức to của TIẾNG GIÓ (0..1) khi bay: theo tốc độ ngang (m/s) và độ cao rơi; sát đất dịu đi. Dùng cho vòng lặp tiếng gió + vệt gió. */
+export function windLevel(speed, vy = 0, nearGround = false) {
+  const sp = Math.max(0, num(speed)), v = Math.max(0, -num(vy));
+  const l = Math.min(1, sp / 12 * 0.8 + v / 5 * 0.3);
+  return nearGround ? l * 0.5 : l;
 }
 
 /** Hệ số phanh tốc độ ngang khi đang ở vùng đệm cuối (1 = không phanh; còn brakeKeep sát đất). */

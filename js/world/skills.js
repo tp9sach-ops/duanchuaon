@@ -1,7 +1,7 @@
 // Kỹ năng người chơi (Phiên 4 master prompt, bước đầu): KHINH THÂN = nhảy cao. LOGIC THUẦN (không DOM, không three.js), có test: tests/skills.test.mjs.
 // Bậc của kỹ năng lấy từ cốt truyện: js/world/story.js đặt story.skills.khinhthan = 1 khi xong chuỗi tưới cây. Trước file này KHÔNG có chỗ nào đọc con số đó nên mở khóa xong không thấy gì.
 // Mọi con số (chiều cao, trọng lực) là QUY ƯỚC TẠM của dự án, chờ ptg duyệt. Mới có bậc 1 được chốt từ cốt truyện; bậc 2–8 để sẵn bảng cho các phiên sau.
-import { FLY_CFG, flyVy, fallSpeed } from './glide.js';   // Phiên 196: bay lướt trên không (đệm hạ cánh, rơi chậm)
+import { FLY_CFG, flyVy, fallSpeed, boostVb } from './glide.js';   // Phiên 196: bay lướt trên không (đệm hạ cánh, rơi chậm)
 
 /** Chiều cao nhảy (m) theo bậc 0..8. Bậc 0 = chưa mở, không nhảy được. */
 export const KHINH_THAN_CAO = [0, 2.0, 3.2, 4.6, 6.2, 8.0, 10.0, 12.3, 15.0];   // Phiên 197: nâng cao (trước 1,1…6,8 m). Đây là độ cao TỐI ĐA của bậc — phải ấn giữ nút Nhảy đủ lâu (gồng lực, js/world/charge.js) mới lên tới; bấm nhẹ chỉ ~35%
@@ -121,8 +121,8 @@ export function glidePlan(lv, indoor = false) {
  */
 export function flyPlan(lv, indoor = false, apex) {   // Phiên 197: apex = độ cao đỉnh THẬT của cú nhảy (đã gồng); bỏ trống → độ cao tối đa của bậc
   const b = bacClamp(lv); if (b <= 0 || indoor) return null;
-  const r = (v) => Math.round(v * 100) / 100;
-  return { v0: r(FLY_CFG.v0Base + FLY_CFG.v0PerBac * b), cruise: r(FLY_CFG.cruiseBase + FLY_CFG.cruisePerBac * b), tau: FLY_CFG.tau, fall: r(fallSpeed(Number.isFinite(+apex) && +apex > 0 ? +apex : jumpHeight(b))), turn: FLY_CFG.turn, tilt: FLY_CFG.tilt, guard: GLIDE_CFG.guard };
+  const r = (v) => Math.round(v * 100) / 100, cruise = r(FLY_CFG.cruiseBase + FLY_CFG.cruisePerBac * b);
+  return { v0: r(FLY_CFG.v0Base + FLY_CFG.v0PerBac * b), cruise, vb: r(boostVb(b, cruise)), tau: FLY_CFG.tau, fall: r(fallSpeed(Number.isFinite(+apex) && +apex > 0 ? +apex : jumpHeight(b))), turn: FLY_CFG.turn, tilt: FLY_CFG.tilt, guard: GLIDE_CFG.guard };
 }
 /**
  * Bấm Nhảy lúc này làm gì? 'jump' (nhảy tại chỗ) | 'leap' (đang đi: bật tới trước) | 'glide' (lướt né) | 'none'.

@@ -13,16 +13,18 @@ import { comboPose, comboEnd, nextKind, applyStance, weaponVisible, KINDS } from
 import { chibiPose, CHIBI_H, LM } from './chibiRig.js';
 import { castTimeline, applyCast, hasCast } from './chieuPose.js';   // Phiên 159: tư thế 30 chiêu Ngũ Hành
 import { castSample4 } from './chieuPose4.js';   // Phiên 171: bốn khung gồng → phát → TRÚNG (giữ đỉnh) → HỒI (thở ra)
+import { kickPose, KICK_S } from './flyPose.js';   // Phiên 204: cú đạp gió khi bay lướt
 import { showPose, SHOW_S } from './fishPose.js';   // Phiên 128: giơ cá bằng hai tay
 import { buildChibi, applyChibiPose } from '../scene/chibiBody.js';
 import { logoTexture, casaTexture, makeSprite, nameTexture, bubbleTexture } from './avatar.js';
 
 const SKIN = 0xe8934c, HAIR = 0x1f1511, OUTLINE = 0x3a2314;
-const ACT_S = { throw: 0.55, grab: 0.8, show: SHOW_S };   // giây của từng động tác một lần
+const ACT_S = { throw: 0.55, grab: 0.8, show: SHOW_S, dapgio: KICK_S };   // giây của từng động tác một lần
 const SMOOTH_ARM = ['armL', 'armR', 'foreL', 'foreR', 'handL', 'handR'];
 
 export function createChibiAvatar({ name = 'Khách', color = DEFAULT_COLOR, hair: hairId = 'troc', beard: beardId = '', mine = false, gourd: wantGourd = true } = {}) {
   const col = colorById(color), group = new THREE.Group(), rig = new THREE.Group(); group.add(rig);
+  group.rotation.order = 'YXZ';   // Phiên 204: quay hướng (y) rồi mới chúi/ngả (x) THEO THÂN — trước đây thứ tự 'XYZ' làm chúi quanh trục thế giới: lúc ngã trước lúc ngã sau tùy hướng mặt
   const geos = [], mats = [], polo = !!col.polo, casa = !!col.casa;
   const geo = (g) => (geos.push(g), g);
   const std = (c, r = 0.62) => { const m = new THREE.MeshStandardMaterial({ color: c, roughness: r }); mats.push(m); return m; };
@@ -182,7 +184,7 @@ export function createChibiAvatar({ name = 'Khách', color = DEFAULT_COLOR, hair
     staff.rotation.y = swing && swing.spin ? swing.spin : 0;           // Phiên 126: múa côn quanh bàn tay
     if (hasBack) { backG.visible = !staff.visible && !backHide; if (backG.visible) { const a = 0.5 + 0.5 * Math.sin(clock * 5), b = 0.5 + 0.5 * Math.sin(clock * 5 + Math.PI); backGlow[0].material.opacity = 0.25 + 0.6 * a; backGlow[1].material.opacity = 0.25 + 0.6 * b; backGlow[2].material.opacity = 0.35; } }   // Phiên 152: côn thu gọn sau lưng, hai đầu chớp lệch pha; 14/11: ẩn khi đang cưỡi thương/gậy
     if (gourdPulse > 0) { gourdPulse = Math.max(0, gourdPulse - dt * 3); gourd.scale.setScalar(1 + 0.45 * Math.sin(gourdPulse * Math.PI)); }
-    const q = showPose(applyCast(applyStance(chibiPose(p, st.state, clock - st.t0, st.speed, { hold: st.hold, swing, act, walk: st.walk }), castF ? 0 : st.stance, { walk: st.walk, sit: p.sit, hold: st.hold, busy: !!(swing || act || castF) }), castF), act), ka = Math.min(1, 24 * dt);
+    const q = showPose(kickPose(applyCast(applyStance(chibiPose(p, st.state, clock - st.t0, st.speed, { hold: st.hold, swing, act, walk: st.walk }), castF ? 0 : st.stance, { walk: st.walk, sit: p.sit, hold: st.hold, busy: !!(swing || act || castF) }), castF), act), act), ka = Math.min(1, 24 * dt);
     for (const k of SMOOTH_ARM) { const c = st.arms[k] || (st.arms[k] = { ...q[k] }); for (const ax of ['x', 'y', 'z']) c[ax] += (q[k][ax] - c[ax]) * ka; q[k] = c; }   // vai/khuỷu/cổ tay: làm mượt khi đổi tư thế (đứng ↔ chắp tay) để khuỷu không "bật" cái rụp; vẫn đủ nhanh cho gõ mõ, vung côn, ném
     applyChibiPose(B, q);
     rig.position.y = p.dy + (castF ? castF.lift * castF.w : 0);   // Phiên 159: chiêu nhảy (Long Tức Trảm trên không) nhấc người
