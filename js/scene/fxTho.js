@@ -1,15 +1,17 @@
 // VẼ THỔ 3D (Phiên 211, MỤC 6 của docs/KE_HOACH_HIEU_UNG_3D_V2.md): 6 chiêu Thổ có VẬT THỂ riêng (trước đây Thổ chỉ có hạt đá + vầng sáng).
-// Số liệu/chuyển động thuần: js/world/thoFxMath.js (có test). CHƯA nhìn bằng mắt (môi trường AI không có WebGL): mở fx-tho.html để xem; mọi số cỡ/màu là số TẠM.
-//   tho_1 gai_da: hàng gai đá trồi dọc đường chiêu như sóng + vệt nứt sáng + vụn đá + sóng chấn
+// Số liệu/chuyển động thuần: js/world/thoFxMath.js + js/world/thoNut.js (có test tests/thofx.test.mjs). CHƯA nhìn bằng mắt trong game: mở fx-tho.html để xem; mọi số cỡ/màu là số TẠM.
+// Phiên 211 (2/2): thêm NỀN NỨT TỎA TIA (đất nứt từ điểm chạm, tối + viền sáng cam) theo kiểu gói hiệu ứng tham khảo, và NỐI vào cảnh chiêu (js/scene/chieuFx.js).
+//   tho_1 gai_da: hàng gai đá trồi dọc đường chiêu như sóng + vệt nứt sáng + nền nứt + vụn đá + sóng chấn
 //   tho_2 khien_nham: bảy tấm đá xoay quanh người rồi vỡ văng ra
 //   tho_3 ho_trong_luc: hai vòng ấn vàng quay ngược chiều + đá xoáy hút vào tâm
 //   tho_daidia_4 thach_giap: mảnh giáp đá bám quanh người, bật ra khi hết
-//   tho_hukhong_4 mach_dat: mạch nứt sáng tỏa từ tâm, tinh thể trồi lên, đá lơ lửng bị kéo vào tâm
-//   tho_tuyet nui_roi: NÚI ĐÁ rơi từ trên cao (chạm đất đúng lúc "trúng"), bẹp rồi bật, sóng chấn, vòng gai, đá văng, bụi mù, rồi núi chìm xuống
+//   tho_hukhong_4 mach_dat: mạch nứt sáng + nền nứt tỏa từ tâm, tinh thể trồi lên, đá lơ lửng bị kéo vào tâm
+//   tho_tuyet nui_roi: NÚI ĐÁ rơi từ trên cao (chạm đất đúng lúc "trúng"), bẹp rồi bật, sóng chấn, nền nứt lớn, vòng gai, đá văng, bụi mù, rồi núi chìm xuống
 // Cùng giao diện với taoKim/taoHoa: trả { group, update(t, after, than, gong, pz), n }; trả null nếu id lạ. Không đèn động (vật liệu có tự phát sáng nhẹ để thấy được ban đêm). Hủy: chieuFx.free duyệt mọi con và dispose.
 import * as THREE from 'three';
 import { smoke, ring, streak } from './fxTex.js';
 import { kieuTho, demTho, tamDich, gaiDa, manhDa, gongDa, nuiRoi, bui, nutHinh, nutDiem, nutTienDo, songDia, runeQuay, NUI } from '../world/thoFxMath.js';
+import { nutNen, nenCo, nhanhNut, coNen } from '../world/thoNut.js';
 
 let runeTex;   // kết cấu vòng ấn: vẽ canvas 1 lần, dùng chung
 function runeTexture() {
@@ -27,6 +29,26 @@ function runeTexture() {
     }
   } catch (_) { runeTex = null; }
   return runeTex;
+}
+let nutTex;   // kết cấu nền nứt tỏa tia (trắng trên nền trong suốt, mờ dần ra mép, hốc nhỏ ở giữa): vẽ canvas 1 lần, dùng chung
+function nutTexture() {
+  if (nutTex !== undefined) return nutTex;
+  nutTex = null;
+  try {
+    if (typeof document !== 'undefined') {
+      const c = document.createElement('canvas'); c.width = c.height = 512; const g = c.getContext('2d');
+      if (g) {
+        g.translate(256, 256); g.lineCap = 'round'; g.lineJoin = 'round';
+        for (const br of nhanhNut(3, 11)) {
+          g.beginPath(); br.pts.forEach((p, j) => { if (j) g.lineTo(p[0] * 250, -p[1] * 250); else g.moveTo(p[0] * 250, -p[1] * 250); });
+          g.strokeStyle = 'rgba(255,255,255,0.3)'; g.lineWidth = br.w * 15; g.stroke(); g.strokeStyle = 'rgba(255,255,255,0.95)'; g.lineWidth = br.w * 5; g.stroke();
+        }
+        g.globalCompositeOperation = 'destination-in'; const m = g.createRadialGradient(0, 0, 0, 0, 0, 256); m.addColorStop(0, 'rgba(0,0,0,1)'); m.addColorStop(0.7, 'rgba(0,0,0,1)'); m.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = m; g.fillRect(-256, -256, 512, 512);
+        nutTex = new THREE.CanvasTexture(c); nutTex.colorSpace = THREE.SRGBColorSpace;
+      }
+    }
+  } catch (_) { nutTex = null; }
+  return nutTex;
 }
 
 export function taoTho(o = {}) {
@@ -76,6 +98,14 @@ export function taoTho(o = {}) {
     const m = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ color: 0xffbf5e, map: streak(), transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide })); m.frustumCulled = false; m.visible = false; tam.add(m);
     nut.push({ m, tre: h.tre });
   }
+  // ---- nền nứt tỏa tia (Phiên 211 2/2): lớp TỐI (thấy được cả ban ngày) + lớp SÁNG cam (nứt đang nóng); bỏ ở máy yếu hoặc khi không vẽ được kết cấu ----
+  let nenT = null, nenS = null; const nenC = coNen(kieu) ? nenCo(kieu, ctx) : null;
+  if (!yeu && nenC && nutTexture()) {
+    const mk = (mat, y) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), mat); m.rotation.x = -Math.PI / 2; m.position.set(0, y, nenC.z); m.frustumCulled = false; m.visible = false; m.renderOrder = 1; tam.add(m); return m; };
+    nenT = mk(new THREE.MeshBasicMaterial({ color: 0x1c1208, map: nutTexture(), transparent: true, opacity: 0, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }), 0.035);
+    nenS = mk(new THREE.MeshBasicMaterial({ color: 0xff9a3c, map: nutTexture(), transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 }), 0.045);
+    nenT.rotation.z = nenS.rotation.z = (kieu === 'gai_da' ? 0 : 1.7);
+  }
   // ---- bụi (sprite khói nâu) ----
   const buiS = []; for (let i = 0; i < P.bui; i++) { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: smoke(), color: 0xb59a6c, transparent: true, opacity: 0, depthWrite: false })); s.frustumCulled = false; s.visible = false; s.material.rotation = i * 1.7; tam.add(s); buiS.push(s); }
   // ---- sóng chấn nền (bỏ ở máy yếu) ----
@@ -93,11 +123,12 @@ export function taoTho(o = {}) {
   function update(t, after, than, gong, pz) {
     const dangGong = after < 0;
     if (gongM) { const any = dangGong && (gong || 0) > 0.02; for (let i = 0; i < 4; i++) put(gongM, i, any ? gongDa(i, t, gong) : { hien: false }); gongM.visible = any; gongM.instanceMatrix.needsUpdate = true; }
-    const on = after >= NUI.start - 0.01 && after < 1.75; tam.visible = on; if (!on) return;
+    const on = after >= NUI.start - 0.01 && after < 2.3; tam.visible = on; if (!on) return;   // 2,3 s: nền nứt còn nguội dần tới ~2 s sau lúc phát
     if (nui) { const v = nuiRoi(after, S); nui.visible = v.hien; if (v.hien) { nui.position.y = v.y; nui.scale.set(S * v.sx, S * v.sy, S * v.sx); } }
     dong(gai, P.gai, (i) => { const v = gaiDa(kieu, i, P.gai, after, ctx); return v.hien ? { hien: true, x: v.x, y: 0, z: v.z, rx: v.ngh * 0.6, rz: v.ngh, sx: v.rong, sy: v.cao, sz: v.rong } : { hien: false }; });
     dong(manh, P.manh, (i) => manhDa(kieu, i, P.manh, after, ctx));
     for (const c of nut) { const v = nutTienDo(c.tre, after), vis = v.op > 0.01 && v.k > 0.01; c.m.visible = vis; if (vis) { c.m.geometry.setDrawRange(0, Math.max(1, Math.floor(v.k * (K - 1))) * 6); c.m.material.opacity = 0.95 * v.op; } }
+    if (nenT) { const v = nutNen(kieu, after); nenT.visible = nenS.visible = v.hien; if (v.hien) { const d = nenC.r * 2 * (0.45 + 0.55 * v.k); nenT.scale.set(d, d, 1); nenS.scale.set(d, d, 1); nenT.material.opacity = 0.7 * v.op; nenS.material.opacity = 0.95 * v.op * Math.max(0, 1 - Math.max(0, (after - 0.5) / 1.2)) + 0.05 * v.op; } }
     for (let i = 0; i < buiS.length; i++) { const s = buiS[i], v = bui(kieu, i, P.bui, after, ctx); s.visible = v.hien; if (v.hien) { s.position.set(v.x, v.y, v.z); s.scale.setScalar(v.co); s.material.opacity = v.op; } }
     if (song) { const v = songDia(kieu, after); song.visible = v.hien; if (v.hien) { song.scale.setScalar(Math.max(0.05, (kieu === 'gai_da' ? W * 2.4 : R2 * 1.7) * v.k)); song.material.opacity = 0.7 * v.op; } }
     for (let j = 0; j < an.length; j++) { const a = an[j], op = after < 0 ? 0 : 0.85 * Math.min(1, after / 0.1) * (1 - Math.min(1, Math.max(0, (after - 1.0) / 0.5))); a.piv.visible = op > 0.01; if (a.piv.visible) { a.piv.rotation.y = runeQuay(j, t); a.m.scale.setScalar(a.co * (0.92 + 0.08 * Math.sin(t * 6 + j))); a.m.material.opacity = op; } }
