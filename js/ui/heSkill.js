@@ -3,7 +3,7 @@
 // Bộ máy hồi chiêu / cấp chiêu: js/world/skillEngine.js; dữ liệu: js/data/combatSkills.js (TẠM). Phím tắt máy tính: Q, W, E. Mọi chữ qua textContent.
 // Phiên 163: TU VỄ LÀ ĐỂ TĂNG CẤP CHIÊU — cấp mỗi chiêu tự theo Tu Vị (js/ui/farm.js): cấp = Tu Vị ÷ 10 (tối thiểu 1, tối đa 10, skillLevelCap ở skillEngine.js); mỗi cấp +6% hệ số sát thương. Trước đây không chỗ nào nâng cấp nên chiêu luôn ở cấp 1. Nút chiêu hiện "Lv N"; giữ nhấn xem bảng thông tin cũng theo cấp này.
 // Phiên 184: CHIÊU HỖ TRỢ TUNG ĐƯỢC THẬT (trước chỉ báo "sắp có"): bấm là hồi chiêu + tư thế/hiệu ứng 3D theo id chiêu + "hiệu lực" có giờ hiện trên nút (js/world/skillBuff.js); không cần quái ở gần. Tăng sát thương thật cho Cuồng Long Phẫn Nộ (LGT.buffMul, nhân vào đòn ở js/ui/farm.js). Nút rung khi chưa dùng được; thanh chiêu báo chiều cao qua --hs-h để bong bóng chỉ chỗ của cụm nút không bị đè.
-// Phiên 182 (mục 2): NÚT CHIÊU BẤM ĐƯỢC — .hud có pointer-events:none (css/hud.css) và thuộc tính này KẾ THỪA xuống con, trước đây #hs-bar không tự bật lại nên mọi cú chạm xuyên qua. Thêm pointer-events:auto cho #hs-bar, .hs-b, #hs-pm. Nút to hơn (biến --hs-s, mặc định 60px — mục 3 sẽ cho người chơi chỉnh), biểu tượng có nền đặc + màu Hệ + họa tiết trắng + chữ lớn, tên chiêu nằm ở đáy nút.
+// Phiên 182 (mục 2): NÚT CHIÊU BẤM ĐƯỢC — .hud có pointer-events:none (css/hud.css) và thuộc tính này KẾ THẪA xuống con, trước đây #hs-bar không tự bật lại nên mọi cú chạm xuyên qua. Thêm pointer-events:auto cho #hs-bar, .hs-b, #hs-pm. Nút to hơn (biến --hs-s, mặc định 60px — mục 3 sẽ cho người chơi chỉnh), biểu tượng có nền đặc + màu Hệ + họa tiết trắng + chữ lớn, tên chiêu nằm ở đáy nút.
 // Phiên 185 (kế hoạch hiệu ứng 3D, bước 1): HIỆU ỨNG 3D KHI ĐÁNH QUÁI THẬT. Trước đây createChieuFx (js/scene/chieuFx.js: vùng cảnh báo, lõi sáng, lửa/băng/kim, hạt, vệt, quầng, decal, tiếng) chỉ được nối trong Võ đường luyện chiêu (js/ui/luyenChieu.js); ngoài bãi rừng bấm chiêu chỉ có tư thế + chữ nên "không thấy hiệu ứng gì". Giờ pose() quay mặt về quái đang nhắm, làm tư thế, rồi gọi cfx.cast với vị trí người chơi + vị trí quái (đọc từ LGT.farmView). Bộ hiệu ứng nạp lười (một lần, sau khi LGT.scene sẵn sàng); nạp/dựng lỗi thì chiêu vẫn đánh được như cũ. CHƯA nhìn bằng mắt (môi trường AI không có WebGL).
 // Phiên 195 (mục 2): KHU LUYỆN TẬP — nút chiêu theo HỆ ĐANG TẬP (LGT.luyenChieu.he) thay vì Hệ người chơi (lệch Hệ thì bấm không ra chiêu); không cần runtime chiêu của người chơi; xem thông tin giữ-nhấn cũng theo Hệ đang tập.
 // Phiên 191 (Mục 1): (a) SỬA LỖI paint(): biến `locked` bị dùng trước khi khai báo (const → ReferenceError mỗi 150 ms, nút chiêu không vẽ được tên/hình/hồi chiêu); (b) thanh chiêu HIỆN CẢ Ở KHU LUYỆN TẬP — cùng một cụm nút với ngoài bãi rừng / trong chùa (trước đây bị ẩn và thay bằng hàng nút riêng).
@@ -22,6 +22,7 @@ import { infoOf, infoRows, iconSpec, glyphOf, HE_COLOR } from '../world/chieuInf
 import { tierOf } from '../world/chieuFxPlan.js';
 import { drawGlyphIcon } from './skillIcon.js';   // Phiên 189: hình chiêu dùng chung với khu luyện tập   // Phiên 185: bậc máy (cao / vừa / yếu) cho hiệu ứng 3D
 import { swipeDir, isDirectional, hinhOf, SWIPE_PX } from '../world/aimSwipe.js';   // Phiên 198: lướt tay định hướng chiêu
+// Phiên 208: VÕ ĐÀI dùng CHUNG thanh chiêu này (không còn hàng nút riêng cho Q/W/E): ô 1/2/3 → chiêu Võ đài (LGT.duel.castSlot), có lướt tay + vùng tung chiêu trên đất theo ĐÚNG hình vùng trúng của Võ đài (LGT.duel.hinhOf); ô 4 / Tuyệt Học ẩn ở Võ đài; hồi chiêu đọc từ LGT.duel.cdOfSlot.
 
 // Phiên 180: đủ 5 ô — 1, 2, 3 (Q, W, E) + ô 4 = Pháp Môn (T, mở cấp 30, chọn 1 trong 2 Pháp Môn của Hệ) + Tuyệt Học (Y, mở cấp 60, tiêu 5 Tâm Ấn).
 const SLOTS = [1, 2, 3, 4, 'tuyet'], KEYS = { 1: 'KeyQ', 2: 'KeyW', 3: 'KeyE', 4: 'KeyT', tuyet: 'KeyY' }, KEYTXT = { 1: 'Q', 2: 'W', 3: 'E', 4: 'T', tuyet: 'Y' }, PM_KEY = 'lgt.phapmon';   // lgt.* tự đồng bộ theo tài khoản   // Phiên 159c: chiêu phái = Q, W, E (R = Thương ở farm.js; 1–5 = ô nút trong dock)
@@ -32,6 +33,7 @@ const isEditable = (t) => !!t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELEC
 export function initHeSkill(hud, { toast = () => {} } = {}) {
   const LGT = window.LGT || (window.LGT = {});
   const nowSec = () => performance.now() / 1000;
+  const inArena = () => !!(LGT.duel && LGT.duel.mode === 'arena');   // Phiên 208: đang trong trận Võ đài (giao lưu võ thuật)
   const capCH = () => levelOf(LGT.quests && LGT.quests.prog ? LGT.quests.prog.xp : 0).lv;
   const eff = () => effLevel(LGT.farm ? LGT.farm.tuvi : 0, capCH());
   LGT.capHieuDung = eff;   // cấp hiệu dụng = max(Tu Vị, Cấp công hạnh) — dùng cho Lễ Khai Ngộ, nhiệm vụ gia nhập phái, ô chiêu
@@ -85,9 +87,10 @@ export function initHeSkill(hud, { toast = () => {} } = {}) {
   }
   function showGround(slot, v) {   // chiêu định hướng + đang lướt: tô vùng chiêu theo hướng lướt, gốc ở chân nhân vật
     try {
-      const sk = skillShown(slot), W = LGT.world, p = W && W.pos; if (!gPrev || !sk || !p || !v || !isDirectional(sk.id)) return;
+      const sk = skillShown(slot), W = LGT.world, p = W && W.pos, hinh = inArena() ? (LGT.duel.hinhOf ? LGT.duel.hinhOf(slot) : null) : (sk && isDirectional(sk.id) ? hinhOf(sk.id) : null);   // Phiên 208: ở Võ đài vẽ đúng vùng trúng của Võ đài
+      if (!gPrev || !sk || !p || !v || !hinh) return;
       const sd = swipeDir(v.dx, v.dy, W.camera ? W.camera.yaw : 0); if (!sd) return;
-      const ic = iconSpec(sk.id); gPrev.show({ x: p.x, z: p.z, ry: sd.ry, hinh: hinhOf(sk.id), mau: ic ? ic.mau : '' });
+      const ic = iconSpec(sk.id); gPrev.show({ x: p.x, z: p.z, ry: sd.ry, hinh, mau: ic ? ic.mau : '' });
     } catch (_) { /* vẽ hỏng thì thôi, chiêu vẫn tung */ }
   }
   function hideGround() { try { if (gPrev) gPrev.hide(); } catch (_) { /* bỏ qua */ } }
@@ -189,9 +192,17 @@ export function initHeSkill(hud, { toast = () => {} } = {}) {
     const sd = swipe && isDirectional(sk.id) ? swipeDir(swipe.dx, swipe.dy, LGT.world && LGT.world.camera ? LGT.world.camera.yaw : 0) : null;
     const r = L.castById(sk.id, sd ? { ry: sd.ry } : null); if (!r) nope(slot); return !!r;
   }
+  function arenaCast(slot, swipe) {   // Phiên 208: Võ đài — ô 1/2/3 = chiêu Võ đài; hướng lướt (nếu có) = hướng chiêu; hiệu ứng 3D theo chiêu thật của Hệ mình (đối thủ chỉ thấy vùng báo)
+    const D = LGT.duel; if (!D || !D.castSlot) return false;
+    const sd = swipe ? swipeDir(swipe.dx, swipe.dy, LGT.world && LGT.world.camera ? LGT.world.camera.yaw : 0) : null;
+    const r = D.castSlot(slot, sd ? sd.ry : null); if (!r.ok) { nope(slot); return false; }
+    try { const sk = skillShown(slot), p = LGT.world && LGT.world.pos; if (sk && p) fxCast(sk, { x: p.x + Math.sin(r.ry) * 8, z: p.z + Math.cos(r.ry) * 8 }); } catch (_) { /* hiệu ứng hỏng thì thôi */ }
+    return true;
+  }
   /** Tung chiêu ở ô `slot`. swipe (tùy chọn) = { dx, dy } vết lướt tay (px, dx sang phải, dy xuống dưới): chiêu định hướng bay theo hướng lướt (Phiên 198). */
   function cast(slot, swipe) {
     sync(); if (inLuyen()) return luyenCast(slot, swipe);
+    if (inArena()) return arenaCast(slot, swipe);   // Phiên 208
     if (!rt) return false;
     // Phiên 190: không có farm thì vẫn tung (không sát thương)
     const sk = skillFor(he, slot, pm);
@@ -220,8 +231,10 @@ export function initHeSkill(hud, { toast = () => {} } = {}) {
     if (dock) { const hh = bar.hidden ? 0 : Math.ceil(bar.getBoundingClientRect().height); if (dock._hsh !== hh) { dock._hsh = hh; dock.style.setProperty('--hs-h', hh + 'px'); } }   // Phiên 184
     if (dock && !dock.hidden) { const r = dock.getBoundingClientRect(); if (r.width) { bar.style.right = Math.max(8, Math.round(innerWidth - r.right)) + 'px'; bar.style.bottom = Math.round(innerHeight - r.top + 8) + 'px'; } }
     const hz = zoneHe() || he;   // Hệ hiển thị trên nút
+    const arena = inArena();
     for (const s of SLOTS) {
-      const sk = skillShown(s), bs = btns[s], { b, t, lv, cdn, lk: lkEl } = bs, zone = inLuyen();
+      if (arena && (s === 4 || s === 'tuyet')) { btns[s].b.hidden = true; continue; }   // Phiên 208: Võ đài chỉ có chiêu 1/2/3
+      const sk = skillShown(s), bs = btns[s], { b, t, lv, cdn, lk: lkEl } = bs, zone = inLuyen() || arena;
       if (!sk) {   // ô 4 chưa chọn Pháp Môn: vẫn hiện nút (khóa tới cấp 30, rồi bấm để chọn)
         if (s !== 4) { b.hidden = true; continue; }
         b.hidden = false; if (bs.ico !== 'chon') { const old = b.querySelector('svg'); if (old) old.remove(); b.insertBefore(drawGlyphIcon(HE_COLOR[hz] || '#f1db9f', 'chon', false, eff() < SKILL_CAP[4]), b.firstChild); bs.ico = 'chon'; } cdn.textContent = ''; lkEl.hidden = true;
@@ -230,9 +243,9 @@ export function initHeSkill(hud, { toast = () => {} } = {}) {
       }
       b.hidden = false;
       // Phiên 191: khai báo `locked` TRƯỚC khi dùng (trước đây dùng ở icoKey rồi mới khai báo → ReferenceError mỗi lần vẽ)
-      const locked = !zone && eff() < SKILL_CAP[s], zc = zone && LGT.luyenChieu.cdOf ? LGT.luyenChieu.cdOf(sk.id) : null, left = zone ? (zc ? zc.left : 0) : (rt ? rt.cooldownLeft(sk.id, nowSec()) : 0), cdTot = zone ? (zc ? zc.total : 0) : sk.cd, lvNow = rt ? rt.effectiveLevel(sk.id) : 1, on = buffs.left(sk.id, nowSec());
+      const locked = !zone && eff() < SKILL_CAP[s], zc = arena ? (LGT.duel.cdOfSlot ? LGT.duel.cdOfSlot(s) : null) : zone && LGT.luyenChieu.cdOf ? LGT.luyenChieu.cdOf(sk.id) : null, left = zone ? (zc ? zc.left : 0) : (rt ? rt.cooldownLeft(sk.id, nowSec()) : 0), cdTot = zone ? (zc ? zc.total : 0) : sk.cd, lvNow = rt ? rt.effectiveLevel(sk.id) : 1, on = buffs.left(sk.id, nowSec());
       const icoKey = sk.id + (locked ? ':l' : ''); if (bs.ico !== icoKey) { const old = b.querySelector('svg'); if (old) old.remove(); b.insertBefore(drawIcon(sk.id, locked), b.firstChild); bs.ico = icoKey; }
-      lkEl.hidden = !locked; cdn.textContent = left > 0 ? String(Math.ceil(left)) : ''; t.textContent = locked ? `Cấp ${SKILL_CAP[s]}` : sk.ten; lv.textContent = locked ? '' : zone ? 'Tập' : on > 0 ? `${Math.ceil(on)}s` : (s === 'tuyet' ? `${rt.tamAn}/5` : `Lv${lvNow}`);
+      lkEl.hidden = !locked; cdn.textContent = left > 0 ? String(Math.ceil(left)) : ''; t.textContent = locked ? `Cấp ${SKILL_CAP[s]}` : sk.ten; lv.textContent = locked ? '' : zone ? (arena ? '' : 'Tập') : on > 0 ? `${Math.ceil(on)}s` : (s === 'tuyet' ? `${rt.tamAn}/5` : `Lv${lvNow}`);
       b.className = `hs-b he-${hz}${locked ? ' lock' : ''}${on > 0 ? ' hs-on' : ''}${left > 0 ? ' hs-cd' : ''}${b.classList.contains('hs-no') ? ' hs-no' : ''}`;   // giữ lớp rung (paint chạy mỗi 150 ms sẽ xóa mất nếu không)
       b.style.setProperty('--cd', cdTot > 0 ? Math.min(1, left / cdTot).toFixed(3) : '0');
       b.setAttribute('aria-label', `${sk.ten}${locked ? '' : ` cấp ${lvNow}`}${locked ? ` (mở ở cấp ${SKILL_CAP[s]})` : on > 0 ? ` (đang có hiệu lực ${Math.ceil(on)} giây)` : left > 0 ? ' (đang hồi chiêu)' : ''}`);
