@@ -1,0 +1,29 @@
+/* Phiên 213: nút toàn màn hình + chặn kéo-để-tải-lại của Chrome Android khi chơi game. */
+html, body { overscroll-behavior: none; }
+
+#dgt-fs {
+  position: fixed; z-index: 70;
+  top: calc(env(safe-area-inset-top, 0px) + 8px);
+  right: calc(env(safe-area-inset-right, 0px) + 8px);
+  display: flex; gap: 6px; opacity: .55; transition: opacity .2s;
+}
+#dgt-fs:hover, #dgt-fs:focus-within, #dgt-fs:active { opacity: 1; }
+#dgt-fs.is-fs { opacity: .35; }
+#dgt-fs button {
+  width: 40px; height: 40px; padding: 0; border-radius: 12px;
+  border: 1px solid rgba(241, 219, 160, .45);
+  background: rgba(8, 10, 20, .6); color: #f6e7c1;
+  font: 600 20px/1 system-ui, sans-serif; cursor: pointer;
+  -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+}
+#dgt-fs button[hidden] { display: none; }
+#dgt-fs button.on { background: rgba(217, 178, 95, .85); color: #1a1405; }
+
+#dgt-fs-tip {
+  position: fixed; z-index: 80; left: 50%; transform: translateX(-50%) translateY(8px);
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 20px); max-width: min(92vw, 420px);
+  padding: 10px 14px; border-radius: 12px; text-align: center;
+  background: rgba(8, 10, 20, .88); color: #f6e7c1; border: 1px solid rgba(241, 219, 160, .4);
+  font: 500 14px/1.4 system-ui, sans-serif; opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s;
+}
+#dgt-fs-tip.on { opacity: 1; transform: translateX(-50%) translateY(0); }

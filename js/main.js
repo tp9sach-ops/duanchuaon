@@ -21,6 +21,7 @@ import { isNpcSpot } from './world/spots.js';
 import { isDonateSpot } from './world/donate.js';
 import { initWind } from './scene/wind.js';
 import { initViewport } from './ui/viewport.js';
+import { initFullscreen } from './ui/fullscreen.js';
 import { initAccount } from './net/account.js';
 import { bgTick } from './bgTick.js';
 
@@ -29,6 +30,7 @@ const setProgress = (v) => { const p = Math.round(v * 100); pct.textContent = p;
 const hidePre = () => { pre.classList.add('done'); document.body.classList.remove('is-locked'); };
 document.body.classList.add('is-locked');
 try { initViewport(); } catch (e) { console.warn('[Diệu Giang Tự] Khung nhìn lỗi:', e && e.message); }   // Phiên 31: đo khung nhìn thật cho điện thoại/Z Fold/thanh công cụ dưới
+try { initFullscreen(); } catch (e) { console.warn('[Diệu Giang Tự] Toàn màn hình lỗi:', e && e.message); }   // Phiên 213: nút ⛶, tự vào toàn màn hình khi bấm Vào chùa, màu thanh Chrome theo cảnh
 // Âm thanh: thử phát nhạc nền NGAY từ lúc trang khởi động (trước cả khi cảnh 3D nạp xong). Bị chặn thì hiện lời mời bật âm thanh, phát ở lần chạm đầu tiên.
 try { initSound(); } catch (e) { console.warn('[Diệu Giang Tự] Âm thanh lỗi:', e && e.message); }
 
