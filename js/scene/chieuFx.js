@@ -10,6 +10,7 @@ import { taoKim } from './fxKim.js';   // Phiên 183: nối KIM LOẠI + SÉT th
 import { taoLua } from './fxLua.js';   // Phiên 177 (mục 1): lửa thật cho chiêu Hệ hỏa — lưỡi lửa nhiều lớp, khói, tàn lửa, vũng sáng nền (Sprite phẳng; Phiên 202 dùng làm bản dự phòng)
 import { taoHoa } from './fxHoa.js';   // Phiên 202 (mục 2 hiệu ứng 3D V2): lửa KHỐI shader, 6 chữ ký riêng cho 6 chiêu Hỏa
 import { taoTho } from './fxTho.js';   // Phiên 211 (mục 6 hiệu ứng 3D V2): ĐẤT ĐÁ KHỐI 3D — gai đá, tấm đá, núi rơi, nền nứt tỏa tia; 6 chữ ký riêng cho 6 chiêu Thổ
+import { taoKimThan } from './fxKimThan.js';   // Phiên 212 (mục 4 hiệu ứng 3D V2): KIM LOẠI KHỐI 3D — lưỡi liềm dày, khiên lục giác, kỵ binh vàng (chạy cùng bộ cũ taoKim)
 import * as TX from './fxTex.js';   // Phiên 176: kết cấu tròn mềm/quầng/khói/vệt/sóng/tia sao (hết ô vuông)
 import { lapAm } from '../world/chieuAm.js';   // Phiên 173: gồng/phát/trúng/dư âm theo Hệ + chất liệu kẻ địch   // Phiên 172: sáu lớp (lõi, thân, quầng+vệt, hạt 3 cỡ, decal nền, tàn dư), màu từ bảng màu
 
@@ -51,6 +52,7 @@ export function createChieuFx(scene, { getTier = () => 'vua', onShake = () => {}
       const spr = (tex, mau, ty) => { const m = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, color: mau, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, depthTest: true })); m.frustumCulled = false; m.position.set(0, 1.1, 0); root.add(m); return m; };
       const halo1 = spr(TX.glow(), lp.loi.mau), halo2 = spr(TX.glow(), lp.quang.mau), flare = spr(TX.flare(), lp.loi.mau);   // quầng trắng ngà + quầng màu Hệ (bloom giả) + tia sao lúc bùng nổ
       // lớp 2: thân năng lượng — Hệ hỏa vẽ LỬA THẬT (Phiên 177; Phiên 202: khối shader 6 chữ ký); Hệ khác chưa có bộ riêng thì bỏ qua
+      let kim3 = null;   // Phiên 212: khối kim loại 3D của Hệ kim (cạnh bộ cũ `lua` = sét/mảnh/vệt); id chưa làm → null
       let lua = null;   // tên giữ nguyên cho gọn: là bộ vật thể "thân" của Hệ (lửa / băng·nước / kim·sét / đất đá); Hệ mộc chưa có thì null
       if (lp.than.bat) {
         const o2 = { tier: p.tier, mode: p.mode, co: lp.loi.co, reach, R2, zD };
@@ -60,6 +62,7 @@ export function createChieuFx(scene, { getTier = () => 'vua', onShake = () => {}
           else if (p.he === 'kim' && p.loai === 'kim') lua = taoKim(o2);
           else if (p.he === 'tho') lua = taoTho({ ...o2, id });   // Phiên 211: Thổ 3D; id lạ → null (bỏ lớp thân), dựng lỗi → bắt ở catch dưới
           if (lua) root.add(lua.group);
+          if (p.he === 'kim') { try { kim3 = taoKimThan({ ...o2, id }); if (kim3) root.add(kim3.group); } catch (_) { kim3 = null; } }   // Phiên 212: dựng lỗi → chỉ bỏ khối 3D, bộ cũ vẫn chạy
         } catch (_) { lua = null; }   // vẽ hỏng thì bỏ lớp thân, game vẫn chạy
       }
       // lớp 4: hạt chia 3 cỡ cùng lúc (lớn chậm, vừa, nhỏ nhanh); vị trí là hàm của (hạt, u) nên không cộng dồn
@@ -122,6 +125,7 @@ export function createChieuFx(scene, { getTier = () => 'vua', onShake = () => {}
         halo1.material.opacity = Math.min(1, bl * 0.9); halo1.scale.setScalar(lp.loi.co * 7 * br * (0.6 + 0.8 * bl)); halo2.material.opacity = Math.min(1, bl * 0.55); halo2.scale.setScalar(lp.loi.co * 15 * br * (0.5 + 0.7 * bl));
         { const fk = Math.max(0, Math.min(1, after / 0.28)); flare.material.opacity = after < 0 ? 0 : 0.95 * (1 - fk) * (1 - fk); flare.scale.setScalar(lp.loi.co * (6 + 22 * fk)); flare.material.rotation = fk * 0.8; }   // tia sao bùng lúc phát
         if (lua) lua.update(t, after, doSangLop(L, 'than', after), bl, pz);
+        if (kim3) kim3.update(t, after, doSangLop(L, 'than', after), bl, pz);
         if (glow) glow.material.opacity = p.sang * 0.5 * doSangLop(L, 'quang', after);
         if (vet) { vet.material.opacity = 0.5 * doSangLop(L, 'quang', after); vet.scale.x = 1 - 0.6 * Math.max(0, Math.min(1, after / 0.5)); }
         const bh = doSangLop(L, 'hat', after);
