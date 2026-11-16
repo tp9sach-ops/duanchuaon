@@ -171,7 +171,8 @@ export function initItems({ toast = () => {} } = {}) {
   function wrapAvatar() {
     const av = LGT.world && LGT.world.avatar; if (!av || av.__items || !av.group || typeof av.update !== 'function') return;
     av.__items = true;
-    let host = null; av.group.traverse((o) => { if (!host && o.isGroup && o.rotation.order === 'YXZ' && o.children.length >= 4) host = o; });   // nhóm cây côn của nhân vật chibi
+    let host = null; av.group.traverse((o) => { if (!host && o.isBone && o.name === 'handR') host = o.children.find((c) => c.isGroup && c.rotation.order === 'YXZ') || null; });   // nhóm cây côn nằm TRONG bàn tay phải (Phiên 204: group nhân vật cũng 'YXZ' nên không được dò theo order một mình)
+    if (!host) av.group.traverse((o) => { if (!host && o !== av.group && o.isGroup && o.rotation.order === 'YXZ' && o.children.length >= 4) host = o; });   // dự phòng cho thân không có bone handR
     if (host) skin = { host, orig: host.children.slice(), mesh: null };
     const bh = av.backHost; if (bh) skinB = { host: bh, orig: bh.children.slice(), mesh: null };   // Phiên 152: Gậy như ý cũng thu gọn sau lưng khi không đánh
     if (av.headHost) skinH = { host: av.headHost, mesh: null, av };   // Phiên 154: nón Jingasa trên đầu (chỉ chibi có headHost)
