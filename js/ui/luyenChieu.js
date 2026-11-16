@@ -4,6 +4,7 @@
 // Phiên 163 (Bản 2 mục 5, 4/4): bấm chiêu → nhân vật quay về mộc nhân gần nhất và làm tư thế gồng → phát → thu (avatar.cast, js/world/chieuPose.js); luồng khí và nháy mộc nhân chờ đúng lúc khung "phát".
 // Phiên 191 (Mục 1): ĐỒNG BỘ NÚT — ở khu luyện tập dùng CHUNG cụm nút với ngoài bãi rừng / trong chùa (thanh chiêu js/ui/heSkill.js + cụm Đánh thường/Thương/Nhảy js/ui/dock.js). Hàng nút riêng #lc-pad nay luôn ẩn (chỉ còn thanh "Về bồ đoàn"). Thêm basic(kind) = Đánh thường / Thương vào mộc nhân (không sát thương thật) và status() cho vòng hồi chiêu.
 // Phiên 206 (mục 2): Đánh thường ở khu luyện tập cũng LAO TỚI mộc nhân (xa tầm đâm nhưng trong tầm lao) rồi nối chuỗi 3 đòn (đòn 3 xoay 360° nháy thêm mọi mộc nhân quanh người) — luật ở js/world/luyenBasic.js (có test), dùng chung chuỗi với LGT.farm.chainStep. Mộc nhân vẫn KHÔNG có sát thương thật.
+// Phiên 207: LƯỚT TAY TUNG CHIÊU ĐỊNH HƯỚNG ở khu luyện tập giống ngoài bãi rừng — heSkill.js truyền hướng lướt { ry } xuống cast(i, aim): nhân vật quay + hiệu ứng 3D bay theo hướng lướt, chỉ mộc nhân GẦN NHẤT nằm trong vùng báo theo hướng đó (pickInDir, js/world/aimSwipe.js) mới nháy; lướt vào chỗ trống vẫn tung nhưng không mộc nhân nào nháy.
 import { LUYEN_ID, LUYEN_DUMMIES, returnSpawnName } from '../world/zoneLuyen.js';
 import { listForHe, describeSkill, createDemoRuntime } from '../world/luyenChieu.js';
 import { castTimeline } from '../world/chieuPose.js';
@@ -13,8 +14,9 @@ import { tierOf } from '../world/chieuFxPlan.js';
 import { trangThaiTuChieu } from '../world/chieuTrung.js';
 import { glyphOf } from '../world/chieuInfo.js';
 import { STONE, SPEAR } from '../world/yeuquai.js';   // Phiên 191: thời gian hồi của Đánh thường / Thương (cùng số với ngoài bãi rừng)
-import { planBasic, hitsFor } from '../world/luyenBasic.js';   // Phiên 206: lao tới + chuỗi 3 đòn ở khu luyện tập
+import { planBasic, hitsFor, DUMMY_BODY } from '../world/luyenBasic.js';   // Phiên 206: lao tới + chuỗi 3 đòn ở khu luyện tập
 import { BASIC } from '../world/basicCombo.js';
+import { hinhOf, pickInDir } from '../world/aimSwipe.js';   // Phiên 207: chiêu định hướng theo hướng lướt
 import { drawGlyphIcon } from './skillIcon.js';   // Phiên 189: hình chiêu dùng chung với nút chiêu ngoài bãi rừng   // Phiên 174: trạng thái hiển thị từ hiệu ứng của chiêu
 
 export async function initLuyenChieu({ toast = () => {} } = {}) {
@@ -63,28 +65,33 @@ export async function initLuyenChieu({ toast = () => {} } = {}) {
 
   const player = () => { const W = LGT.world; return W ? { ...W.pos, ry: W.facing || 0 } : null; };
   function nearestDummy(p) { let bi = 0, bd = Infinity; LUYEN_DUMMIES.forEach((d, i) => { const k = Math.hypot(d.x - p.x, d.z - p.z); if (k < bd) { bd = k; bi = i; } }); return { i: bi, d: LUYEN_DUMMIES[bi], dist: bd }; }
-  function cast(i) {
+  /** Tung chiêu thứ `i`. aim (tùy chọn, Phiên 207) = { ry } hướng lướt tay: chiêu định hướng bay theo hướng đó, chỉ mộc nhân gần nhất trong vùng báo nháy; không có aim thì ngắm mộc nhân gần nhất như cũ. */
+  function cast(i, aim) {
     const it = items[i], p = player(); if (!it || !p || !fx) return;
     const r = rt.cast(it, nowSec());
     if (!r.ok) { toast(`${it.skill.ten} đang hồi, còn ${Math.ceil(r.left || 0)} giây.`, 1400); return; }
     const color = HE_COLOR[he] || 0xd9b25f, f = it.skill.fx || {};
     // Phiên 163: tư thế nhân vật. Chiêu đánh quay về mộc nhân gần nhất; chiêu hỗ trợ giữ hướng hiện tại. `lead` = giây từ lúc bấm tới giữa khung "phát" (lúc đòn bay ra / trúng).
     const tg = nearestDummy(p), L = castTimeline(it.skill.id), lead = L ? L.gong + L.phat * 0.5 : 0;
-    try { const W = LGT.world, av = W && W.avatar; if (!it.support && W && W.face) W.face(Math.atan2(tg.d.x - p.x, tg.d.z - p.z)); if (av && av.cast) av.cast(it.skill.id); } catch (_) { /* bỏ qua: không có tư thế thì vẫn ra hiệu ứng như cũ */ }
-    const plan = cfx ? cfx.cast(it.skill.id, { x: p.x, z: p.z, ry: Math.atan2(tg.d.x - p.x, tg.d.z - p.z), tx: tg.d.x, tz: tg.d.z }) : null;   // Phiên 165: vùng cảnh báo + hạt + tiếng; có thì bỏ vòng/luồng khí cũ
+    // Phiên 207: có hướng lướt thì mục tiêu là điểm cuối vùng báo theo hướng đó; mộc nhân trúng = gần nhất nằm trong vùng báo (pickInDir)
+    const hinh = aim ? hinhOf(it.skill.id) : null, reach = hinh && +hinh.dai > 0 ? +hinh.dai : 8;
+    const hitD = aim ? pickInDir(p, aim.ry, LUYEN_DUMMIES.map((d, k) => ({ uid: k, x: d.x, z: d.z })), hinh, () => DUMMY_BODY) : null;
+    const dir = aim ? aim.ry : Math.atan2(tg.d.x - p.x, tg.d.z - p.z), tx = aim ? p.x + Math.sin(aim.ry) * reach : tg.d.x, tz = aim ? p.z + Math.cos(aim.ry) * reach : tg.d.z;
+    try { const W = LGT.world, av = W && W.avatar; if (!it.support && W && W.face) W.face(dir); if (av && av.cast) av.cast(it.skill.id); } catch (_) { /* bỏ qua: không có tư thế thì vẫn ra hiệu ứng như cũ */ }
+    const plan = cfx ? cfx.cast(it.skill.id, { x: p.x, z: p.z, ry: dir, tx, tz }) : null;   // Phiên 165: vùng cảnh báo + hạt + tiếng; có thì bỏ vòng/luồng khí cũ
     if (it.support) {   // chiêu hỗ trợ: vòng sáng quanh người
       if (!plan) fx.ring(p.x, p.z, f.r || 2.6, 1.0, color);
       toast(`${it.skill.ten}: ${describeSkill(it.skill)}`, 2400);
     } else {
-      const n = tg, ry = Math.atan2(n.d.x - p.x, n.d.z - p.z), speed = 18, delay = n.dist / speed;
+      const n = aim ? { i: hitD ? hitD.uid : -1, d: { x: tx, z: tz }, dist: hitD ? Math.hypot(hitD.x - p.x, hitD.z - p.z) : reach } : tg, ry = dir, speed = 18, delay = n.dist / speed;
       if (!plan) fx.wave(p.x, p.z, ry, n.dist, speed, lead, color);
       setTimeout(() => {
         if (!hooks) return; const area = f.dienRong || f.noLan || f.mua || f.song || f.docLan || f.suongDoc;
         const trung = (k) => { const t = ctfx && hooks.target ? hooks.target(k) : null; if (!t) { hooks.hit(k); return; } ctfx.hit(t, { ax: p.x, az: p.z, id: it.skill.id, damage: r.dmg }); for (const x of trangThaiTuChieu(it.skill.fx)) ctfx.status(t, x.loai, x.giay); };   // Phiên 174: phản ứng trúng đòn mục 7; chưa có thì nháy cũ
-        if (area) { if (!plan) fx.ring(n.d.x, n.d.z, (area && area.r) || 4, 1.0, color); LUYEN_DUMMIES.forEach((_, k) => trung(k)); } else trung(n.i);
+        if (area && !aim) { if (!plan) fx.ring(n.d.x, n.d.z, (area && area.r) || 4, 1.0, color); LUYEN_DUMMIES.forEach((_, k) => trung(k)); } else if (n.i >= 0) trung(n.i);
         if (!plan) fx.ring(n.d.x, n.d.z, 1.6, 0.6, color);
       }, Math.round((lead + delay) * 1000));
-      toast(`${it.skill.ten}! −${r.dmg} (số mẫu) · ${describeSkill(it.skill)}`, 2400);
+      toast(aim && !hitD ? `${it.skill.ten}! Không có mộc nhân trong hướng lướt — không trúng ai.` : `${it.skill.ten}! −${r.dmg} (số mẫu) · ${describeSkill(it.skill)}`, 2400);
     }
   }
 
@@ -147,8 +154,8 @@ export async function initLuyenChieu({ toast = () => {} } = {}) {
     const inside = Z.current === LUYEN_ID; top.hidden = !inside; pad.hidden = true; if (!inside) return;   // Phiên 191: hàng nút riêng luôn ẩn — dùng chung cụm nút của dock + thanh chiêu phái
     const t = nowSec(); items.forEach((it, i) => { const b = btns[i]; if (!b) return; const left = rt.left(it, t); b.classList.toggle('lc-cd', left > 0); b.style.setProperty('--cd', it.demoCd > 0 ? Math.min(1, left / it.demoCd).toFixed(3) : '0'); cdn[i].textContent = left > 0 ? String(Math.ceil(left)) : ''; });
   }, 150);
-  // Phiên 187: nút chiêu của phái (js/ui/heSkill.js) dùng được ngay trong khu luyện tập: tung chiêu theo id, và hỏi hồi chiêu để vẽ số giây trên nút.
-  const castById = (id) => { const i = items.findIndex((x) => x.skill.id === id); if (i < 0 || busy) return false; const it = items[i]; if (rt.left(it, nowSec()) > 0) { cast(i); return false; } cast(i); return true; };
+  // Phiên 187: nút chiêu của phái (js/ui/heSkill.js) dùng được ngay trong khu luyện tập: tung chiêu theo id, và hỏi hồi chiêu để vẽ số giây trên nút. Phiên 207: aim = { ry } hướng lướt tay (tùy chọn).
+  const castById = (id, aim) => { const i = items.findIndex((x) => x.skill.id === id); if (i < 0 || busy) return false; const it = items[i]; if (rt.left(it, nowSec()) > 0) { cast(i, aim); return false; } cast(i, aim); return true; };
   const cdOf = (id) => { const it = items.find((x) => x.skill.id === id); return it ? { left: rt.left(it, nowSec()), total: it.demoCd } : null; };
   LGT.luyenChieu = { enter, leave, castById, cdOf, basic, status, get inside() { return Z.current === LUYEN_ID; }, get he() { return he; } };
   return LGT.luyenChieu;
