@@ -22,7 +22,8 @@ function disposeTree(o) {   // chỉ giải phóng hình khối + chất liệu 
 
 /** Tìm nhóm cây côn của nhân vật chibi (giống js/ui/items.js wrapAvatar). */
 function findHandHost(av) {
-  let host = null; av.group.traverse((o) => { if (!host && o.isGroup && o.rotation.order === 'YXZ' && o.children.length >= 4) host = o; });
+  let host = null; av.group.traverse((o) => { if (!host && o.isBone && o.name === 'handR') host = o.children.find((c) => c.isGroup && c.rotation.order === 'YXZ') || null; });   // Phiên 204: group nhân vật cũng 'YXZ' → tìm trong bàn tay phải
+  if (!host) av.group.traverse((o) => { if (!host && o !== av.group && o.isGroup && o.rotation.order === 'YXZ' && o.children.length >= 4) host = o; });
   return host;
 }
 
