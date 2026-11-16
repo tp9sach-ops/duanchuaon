@@ -34,6 +34,18 @@ export const MOVES = {
   g: { id: 'giap', key: '6', ten: 'Hộ thân', cd: 5.5, dur: 1.2, perfect: 0.45, block: 0.7, counter: 30 },
 };
 export const ATTACKS = ['a', 't', 'b', 'c', 'q', 'w', 'e'];
+/** Phiên 208: ô chiêu phái trên thanh chiêu chung (js/ui/heSkill.js, ô 1/2/3 = Q/W/E) → chiêu của Võ đài. Ô 4 (Pháp Môn) và Tuyệt Học KHÔNG dùng ở Võ đài. */
+export const SLOT_MOVE = Object.freeze({ 1: 'q', 2: 'w', 3: 'e' });
+/**
+ * Phiên 208: HÌNH VÙNG TUNG CHIÊU của một chiêu võ đài, cùng định dạng với vùng báo của chiêu thường ({ kieu: 'duong' | 'non', ... }) để vẽ trên đất khi lướt tay (js/world/aimPreview.js).
+ * Số đo khớp ĐÚNG phép tính trúng của createDuel: cận chiến = quạt nửa góc 1,15 rad (≈ 132° cả quạt) tầm range + 0,4; khí = dải dài range, rộng (halfW + 0,3) × 2; lao = dải dài dash. Chiêu lạ / Hộ thân → null.
+ */
+export function hinhOfMove(kind) {
+  const m = MOVES[kind]; if (!m || !m.shape) return null;
+  if (m.shape === 'melee') return { kieu: 'non', dai: m.range + 0.4, goc: Math.round(2.3 * 180 / Math.PI * 10) / 10 };
+  if (m.shape === 'wave') return { kieu: 'duong', dai: m.range, rong: (m.halfW + 0.3) * 2 };
+  return { kieu: 'duong', dai: m.dash, rong: (m.halfW + 0.3) * 2 };
+}
 /** Mã phím (KeyboardEvent.code) → chiêu. Cùng phím với js/ui/dock.js (1–4, R) và js/ui/heSkill.js (Q, W, E). */
 export const KEY_CODES = { Digit1: 'a', Numpad1: 'a', Digit2: 't', Numpad2: 't', KeyR: 't', Digit3: 'b', Numpad3: 'b', Digit4: 'c', Numpad4: 'c', KeyQ: 'q', KeyW: 'w', KeyE: 'e', Digit6: 'g', Numpad6: 'g' };
 
