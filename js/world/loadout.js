@@ -1,19 +1,20 @@
-// Đồ đang cầm / cưỡi (Phiên 144, mục 1): Thương (mặc định) · Gậy như ý (đã mua) · Ván trượt (đã mua). LOGIC THUẦN (không DOM/three.js), có test: tests/loadout.test.mjs.
+// Đồ đang cầm / cưỡi (Phiên 144, mục 1): Thương (mặc định) · Gậy như ý (đã mua) · Gậy tre (đã mua, Phiên 224) · Ván trượt (đã mua). LOGIC THUẦN (không DOM/three.js), có test: tests/loadout.test.mjs.
 // - Thương và Gậy như ý là VŨ KHÍ (đánh quái) và cũng là thứ để CƯỠI bay. Ván trượt KHÔNG phải vũ khí: chỉ để lướt; vào trận thì người chơi đánh bằng vũ khí cầm gần nhất (weaponFor).
 // - Tốc độ cưỡi: ván ×1,5 (hơn bình thường 0,5 lần, theo yêu cầu). Thương/Gậy ×1,25 — số TẠM tôi đặt, chờ ptg chốt (đổi ở MOUNT_MUL).
 export const HOLDS = [
   { id: 'thuong', ten: 'Thương', weapon: true, mo: 'Vũ khí mặc định, ai cũng có. Cầm để đánh quái, hoặc cưỡi thương bay đi.' },
   { id: 'nhuy', ten: 'Gậy như ý', weapon: true, mo: 'Gậy đỏ hai đầu đồng phát sáng chớp chớp; đánh có sóng sáng lan ra, +1% sát thương. Cầm để đánh, hoặc cưỡi gậy bay.' },
+  { id: 'tre', ten: 'Gậy tre', weapon: true, mo: 'Gậy tre vàng hai đầu chớp sáng vàng; đánh nghe tiếng gỗ, +1% sát thương, đòn thường thứ 3 mạnh gấp 3 và có sói khí vàng vồ ra. Cầm để đánh, hoặc cưỡi gậy bay (thu về tay xoay 3 vòng).' },
   { id: 'van', ten: 'Ván trượt', weapon: false, mo: 'Không phải vũ khí, không đánh được; chỉ để lướt đi nhanh gấp 1,5 lần. Vào trận thì bạn đánh bằng vũ khí đã cầm trước đó.' },
 ];
 export const DEFAULT_HOLD = 'thuong';
-export const MOUNT_MUL = { thuong: 1.25, nhuy: 1.25, van: 1.5 };
+export const MOUNT_MUL = { thuong: 1.25, nhuy: 1.25, tre: 1.25, van: 1.5 };
 export const holdById = (id) => HOLDS.find((h) => h.id === id) || null;
 export const isWeapon = (id) => { const h = holdById(id); return !!h && h.weapon; };
 
 const isObj = (o) => !!o && typeof o === 'object' && !Array.isArray(o);
-/** Đồ đã có. Thương luôn có. owned = { staff: bool, board: bool }. */
-export const ownedMap = (o = {}) => ({ thuong: true, nhuy: !!(isObj(o) && (o.nhuy ?? o.staff)), van: !!(isObj(o) && (o.van ?? o.board)) });   // nhận cả { staff, board } lẫn bản đã chuyển { nhuy, van } (gọi lại không đổi nghĩa)
+/** Đồ đã có. Thương luôn có. owned = { staff: bool, tre: bool, board: bool }. */
+export const ownedMap = (o = {}) => ({ thuong: true, nhuy: !!(isObj(o) && (o.nhuy ?? o.staff)), tre: !!(isObj(o) && o.tre), van: !!(isObj(o) && (o.van ?? o.board)) });   // nhận cả { staff, board } lẫn bản đã chuyển { nhuy, van } (gọi lại không đổi nghĩa)
 
 /** Đọc trạng thái đã lưu (chuỗi JSON hoặc đối tượng). Đồ chưa có / lạ → về Thương. Trả { hold, last } (last = vũ khí cầm gần nhất, luôn là vũ khí). */
 export function loadLoadout(raw, owned = ownedMap()) {
@@ -39,4 +40,4 @@ export const mountOf = (state, owned = ownedMap()) => loadLoadout(state, owned).
 /** Hệ số tốc độ khi đang cưỡi. */
 export const mountMul = (id) => MOUNT_MUL[id] || 1;
 /** Nhãn nút cưỡi ở dock. */
-export const rideLabel = (id, on) => (on ? (id === 'van' ? 'Xuống ván' : 'Xuống') : id === 'van' ? 'Lướt ván' : id === 'nhuy' ? 'Cưỡi gậy' : 'Cưỡi thương');
+export const rideLabel = (id, on) => (on ? (id === 'van' ? 'Xuống ván' : 'Xuống') : id === 'van' ? 'Lướt ván' : id === 'nhuy' || id === 'tre' ? 'Cưỡi gậy' : 'Cưỡi thương');
