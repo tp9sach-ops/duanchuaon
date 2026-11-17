@@ -54,7 +54,7 @@ LGT.panelOpen = false;
 export function createScene(canvas, { onProgress, onPick, onArrive } = {}) {
   const coarse = isCoarse() || innerWidth < 760;
   const reduce = prefersReduced();
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: !coarse, powerPreference: 'high-performance' });
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });   // Phiên 218: điện thoại cũng bật khử răng cưa (trước: !coarse → viền gấp khúc rất xấu); khi có bloom thì khử răng cưa làm ở render target của composer (bên dưới)
   // Nếu không có WebGL, new WebGLRenderer ném lỗi → main.js bắt và bật fallback.
   renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;   // đổ bóng: mặt trời/trăng chiếu theo người chơi
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -138,7 +138,10 @@ export function createScene(canvas, { onProgress, onPick, onArrive } = {}) {
   scene.add(puddles);
 
   // --- hậu kỳ: bloom (tắt trên mobile yếu / khi PERF hạ cấp)
-  const composer = new EffectComposer(renderer);
+  // Phiên 218: render target đa mẫu (MSAA) cho composer → cảnh có bloom cũng được khử răng cưa. Chỉ bật khi máy hỗ trợ (WebGL2 + EXT_color_buffer_float); không thì giữ composer mặc định như cũ. samples = 0 để tắt nếu máy yếu bị giật.
+  const msaaOk = !!(renderer.capabilities.isWebGL2 && renderer.extensions.has('EXT_color_buffer_float'));
+  const composerRT = msaaOk ? new THREE.WebGLRenderTarget(innerWidth, innerHeight, { type: THREE.HalfFloatType, samples: coarse ? 2 : 4 }) : undefined;
+  const composer = new EffectComposer(renderer, composerRT);
   composer.addPass(new RenderPass(scene, camera));
   const bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), DAY ? 0.18 : 0.5, 0.6, DAY ? 1.05 : 0.9);
   composer.addPass(bloom); composer.addPass(new OutputPass());
