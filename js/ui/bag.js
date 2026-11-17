@@ -11,10 +11,11 @@ import { icon } from './bagIcons.js';
 import { createAvatar } from '../world/avatar.js';
 import { DEFAULT_COLOR } from '../world/avatarLogic.js';
 import { buildStaff, loadStaffGlb, pulseGlows, STAFF_SCALE } from './staffMesh.js';
+import { buildBamboo, loadBambooGlb, pulseBamboo, BAMBOO_SCALE } from './bambooMesh.js';   // Phiên 224: Gậy dạy chó
 
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
 const COLS = 3;   // số ô mỗi hàng (lưới tự lấp ô trống cho đủ hàng)
-const HOLD_ICON = { thuong: { k: 'power' }, nhuy: { k: 'lantern', c: '#d8272f' }, van: { k: 'board', c: '#f2a31b' } };
+const HOLD_ICON = { thuong: { k: 'power' }, nhuy: { k: 'lantern', c: '#d8272f' }, tre: { k: 'lantern', c: '#ffcf3a' }, van: { k: 'board', c: '#f2a31b' } };
 const TABS = [
   { id: 'all', ten: 'Tất cả', ts: null },
   { id: 'cam', ten: 'Đang cầm', ts: ['Đang cầm'] },
@@ -76,7 +77,7 @@ function makeBoard() {   // ván trượt: mặt ván cam hai đầu cong, trụ
   for (const z of [-0.3, 0.3]) { add(new THREE.BoxGeometry(0.2, 0.02, 0.035), metal, 0, 0.085, z); for (const x of [-0.1, 0.1]) { const w = add(new THREE.CylinderGeometry(0.04, 0.04, 0.035, 14), wheel, x, 0.04, z); w.rotation.z = Math.PI / 2; } }
   return g;
 }
-const BUILD = { thuong: makeCon, nhuy: () => buildStaff(), van: makeBoard };
+const BUILD = { thuong: makeCon, nhuy: () => buildStaff(), tre: () => buildBamboo(), van: makeBoard };
 const thumbCache = new Map();
 const disposeTree = (o) => o.traverse((n) => { if (n.geometry) n.geometry.dispose(); if (n.material) { for (const m of Array.isArray(n.material) ? n.material : [n.material]) m.dispose(); } });
 /** Chụp ảnh nhỏ từ mô hình 3D (một lần, nhớ lại). Trả { id: dataURL | '' }. '' = không chụp được (dùng hình SVG). */
@@ -133,13 +134,14 @@ export function initBag(hud) {
       if (!av) return; clearGear();
       if (av.setStance) av.setStance(hold !== 'van');   // cầm thương/gậy: vào thế sẵn sàng (côn hiện trên tay); đứng ván: đứng thẳng
       if (hold === 'nhuy' && st.host) { for (const c of st.orig) c.visible = false; st.staff = buildStaff(); st.staff.scale.setScalar(STAFF_SCALE); st.host.add(st.staff); loadStaffGlb(st.staff); }   // Phiên 149: gậy to hơn côn
+      if (hold === 'tre' && st.host) { for (const c of st.orig) c.visible = false; st.staff = buildBamboo(); st.staff.scale.setScalar(BAMBOO_SCALE); st.host.add(st.staff); loadBambooGlb(st.staff); }   // Phiên 224: Gậy dạy chó (ánh vàng)
       if (hold === 'van') { st.board = makeBoard(); st.board.position.y = -BOARD_TOP; av.group.add(st.board); av.group.position.y = BOARD_TOP; }
     }
     function frame(t) {
       raf = requestAnimationFrame(frame); if (!renderer || document.hidden) return;
       const dt = last ? Math.min(0.05, (t - last) / 1000) : 0.016; last = t;
       av.setFacing(0.45 + Math.sin(t / 1600) * 0.55); av.update(dt);
-      if (st.staff) pulseGlows(st.staff, t / 1000, false);
+      if (st.staff) (hold === 'tre' ? pulseBamboo : pulseGlows)(st.staff, t / 1000, false);
       renderer.render(scene, cam);
     }
     return {
@@ -194,7 +196,7 @@ export function initBag(hud) {
       const cell = makeCell({ ten: h.ten, ic: HOLD_ICON[h.id], img: img[h.id], n: h.own ? null : 'Chưa có', use: h.current, lock: !h.own });
       cell.setAttribute('aria-label', `${h.ten}${h.current ? ' (đang cầm)' : h.own ? '' : ' (chưa có)'}`);
       cell.addEventListener('click', () => {
-        if (!h.own) { show(cell, { ten: h.ten, mo: `Chưa có. ${h.id === 'nhuy' ? 'Mua ở Điện Máy Lam Sen, 400 lá bồ đề.' : 'Mua ở Điện Máy Lam Sen, 100 lá bồ đề.'}` }); lo.choose(h.id); return; }
+        if (!h.own) { show(cell, { ten: h.ten, mo: `Chưa có. ${h.id === 'nhuy' ? 'Mua ở Điện Máy Lam Sen, 400 lá bồ đề.' : h.id === 'tre' ? 'Mua ở Điện Máy Lam Sen, 150 lá bồ đề.' : 'Mua ở Điện Máy Lam Sen, 100 lá bồ đề.'}` }); lo.choose(h.id); return; }
         if (lo.choose(h.id)) draw();
       });
       grid.appendChild(cell);
