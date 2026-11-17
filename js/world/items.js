@@ -14,6 +14,9 @@ export const GEMS = [
 ];
 export const STAFF = { id: 'nhuy', ten: 'Gậy như ý', gia: 400, dmg: 1.01, mo: 'Gậy đỏ đầu đồng chạm rồng, có ánh sáng; mỗi đòn đánh lan ra một vòng sáng và tăng 1% sát thương. Đánh thường đủ 3 đòn liên tiếp sẽ có rồng hồng bay quanh người. Mua một lần dùng mãi.' };
 
+// Phiên 224 (mục 1, 17/11): GẬY TRE (Điện Máy Lam Sen, 150 lá bồ đề): +1% sát thương; ĐÒN ĐÁNH THƯỜNG THỨ 3 gây sát thương gấp 3 lần đòn thường (BAMBOO.hit3, thay hệ số 1,5 mặc định) và có SÓI KHÍ VÀNG vồ ra; hai đầu gậy chớp vàng đều; cưỡi gậy thì thu về tay xoay 3 vòng trên không; đánh nghe tiếng gỗ.
+export const BAMBOO = { id: 'tre', ten: 'Gậy tre', gia: 150, dmg: 1.01, hit3: 3, mo: 'Gậy tre vàng óng, hai đầu chớp ánh sáng vàng đều; đánh nghe tiếng gỗ, +1% sát thương. Đòn đánh thường thứ 3 mạnh gấp 3 lần và có sói khí đầu to, bờm vàng vồ ra. Cưỡi gậy bay, thu về tay gậy xoay 3 vòng trên không. Mua một lần dùng mãi.' };
+
 // Phiên 163: Trà sữa xoài hoàng kim (Tách Hoa, 39 lá bồ đề): +30 phút Tự động hàng yêu hôm nay mỗi ly (uống nhiều ly thì cộng dồn).
 export const TRASUA = { id: 'trasua', ten: 'Trà sữa xoài hoàng kim', gia: 39, phut: 30, mo: 'Ly trà sữa xoài hoàng kim của tiệm Tách Hoa: uống vào được cộng thêm 30 phút Tự động hàng yêu cho hôm nay (cộng dồn với 60 phút gốc). Sang ngày mới trở về 60 phút.' };
 
@@ -23,13 +26,14 @@ export const HAT = { id: 'non', ten: 'Nón Jingasa', gia: 400, giap: 0.03, mo: '
 const isObj = (o) => !!o && typeof o === 'object' && !Array.isArray(o);
 const int = (x, lo, hi) => (Number.isFinite(+x) ? Math.max(lo, Math.min(hi, Math.floor(+x))) : lo);
 export const gemById = (id) => GEMS.find((g) => g.id === id) || null;
-export const emptyItems = () => ({ v: 1, exp: { hoimau: 0, dichchuyen: 0 }, staff: false, hat: false, hatOn: false });
+export const emptyItems = () => ({ v: 1, exp: { hoimau: 0, dichchuyen: 0 }, staff: false, tre: false, hat: false, hatOn: false });
 
 /** Đọc trạng thái đã lưu (chuỗi JSON hoặc đối tượng); hỏng → trống. Mốc hết hạn vô lý (quá xa) bị kéo về trần. */
 export function loadItems(raw, now = Date.now()) {
   let o = raw; if (typeof raw === 'string') { try { o = JSON.parse(raw); } catch (_) { o = null; } }
   const s = emptyItems(); if (!isObj(o)) return s;
   s.staff = o.staff === true;
+  s.tre = o.tre === true;   // Phiên 224: Gậy tre (bản lưu cũ không có → chưa mua)
   s.hat = o.hat === true; s.hatOn = s.hat && o.hatOn !== false;   // bản lưu cũ không có hat → chưa mua; đã mua mà không ghi hatOn → đang đội
   const e = isObj(o.exp) ? o.exp : {};
   for (const g of GEMS) s.exp[g.id] = int(e[g.id], 0, now + g.giay * MAX_STACK * 1000);
@@ -63,12 +67,22 @@ export function buyStaff(state, la, now = Date.now()) {
   return { ok: true, reason: '', cost: STAFF.gia, state: { ...st, staff: true } };
 }
 
+/** Mua Gậy tre. Trả { ok, reason: ''|'owned'|'poor', cost, state }. */
+export function buyBamboo(state, la, now = Date.now()) {
+  const st = loadItems(state, now);
+  if (st.tre) return { ok: false, reason: 'owned', cost: BAMBOO.gia, state: st };
+  if (!(Number(la) >= BAMBOO.gia)) return { ok: false, reason: 'poor', cost: BAMBOO.gia, state: st };
+  return { ok: true, reason: '', cost: BAMBOO.gia, state: { ...st, tre: true } };
+}
+
 /** Hệ số hồi Sinh Lực: Bánh sầu riêng 3 vị còn hạn → ×5, không thì ×1. */
 export const regenMul = (st, now = Date.now()) => (isActive(st, 'hoimau', now) ? REGEN_MUL : 1);
 /** Có được hồi sinh tại chỗ không (Bánh sầu riêng pho mai than tre còn hạn). */
 export const canRevive = (st, now = Date.now()) => isActive(st, 'dichchuyen', now);
 /** Hệ số sát thương: có Gậy như ý → ×1,01. */
 export const dmgMul = (st) => (isObj(st) && st.staff === true ? STAFF.dmg : 1);
+/** Hệ số sát thương ĐÒN 3 của đánh thường khi đang cầm Gậy tre (đã mua): ×3; không thì 1 (giữ hệ số đòn 3 mặc định). */
+export const finisherMul = (st, holding = true) => (isObj(st) && st.tre === true && holding ? BAMBOO.hit3 : 1);
 /** 605 giây → "10:05". */
 export const fmtTime = (s) => { const n = Math.max(0, Math.floor(+s || 0)); return `${Math.floor(n / 60)}:${String(n % 60).padStart(2, '0')}`; };
 
