@@ -7,7 +7,7 @@
 //   đòn 3 (xoay 360°) mạnh hơn và có SÁT THƯƠNG LAN lên mọi quái quanh người chơi; quái nào dính đòn thì Oán Khí giảm → js/ui/farmCombat.js cho quái đó nổi giận đánh trả. Không có quái vẫn vung được (không sát thương ai).
 //   Chiêu ĐỊNH HƯỚNG lướt tay: LGT.farm.skillHitDir(heSo, ry, hinh) chỉ đánh quái nằm trong vùng báo theo hướng lướt (js/world/aimSwipe.js); lướt trúng chỗ trống thì không gây sát thương.
 import { MONSTERS, FARM_ZONES, FARM_CFG } from '../data/monsters.js';
-import { createSpawner, tickSpawner, hitMonster, nearestMonster, setNight, isNight, rectsOf, ZONE_IDS } from '../world/spawn.js';
+import { createSpawner, tickSpawner, rollDrops, hitMonster, nearestMonster, setNight, isNight, rectsOf, ZONE_IDS } from '../world/spawn.js';
 import { pickMonster, LOCK_RANGE } from '../world/mouseTarget.js';   // Phiên 159: chuột phải 2 lần vào quái = khóa mục tiêu
 import { loadFarm, settleKill, settleBoss, senLeft, tuViOf, killXp } from '../world/farm.js';
 import { STONE, SPEAR, stoneDamage, spearDamage, rngSeed } from '../world/yeuquai.js';
@@ -35,6 +35,7 @@ export function initFarm(hud, { toast = () => {} } = {}) {
   let farm = loadFarm(null, Date.now()); try { farm = loadFarm(localStorage.getItem(KEY), Date.now()); } catch (_) { /* riêng tư */ }
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(farm)); } catch (_) { /* bỏ qua */ } };
   const rng = rngSeed((Date.now() ^ 0x2545f491) >>> 0), view = LGT.farmView = LGT.farmView || { mons: [], target: '', stones: [] };
+  const allMons = () => (view.ghosts && view.ghosts.length ? view.mons.concat(view.ghosts) : view.mons);   // Phiên 222: quái thật + bóng quái của người khác (máu dùng chung)
   const spawners = {}, away = {};   // id vùng → bộ sinh quái / số giây người chơi đã rời xa (để quái hồi sinh bù khi quay lại)
   let auto = loadAuto(null, Date.now()); try { auto = loadAuto(localStorage.getItem(AKEY), Date.now()); } catch (_) { /* riêng tư */ }
   const saveAuto = () => { try { localStorage.setItem(AKEY, JSON.stringify(auto)); } catch (_) { /* bỏ qua */ } };
@@ -55,14 +56,14 @@ export function initFarm(hud, { toast = () => {} } = {}) {
   let lockUid = '';   // Phiên 159: quái người chơi đã khóa bằng chuột phải 2 lần (rỗng = tự chọn quái gần nhất như cũ)
   const target = () => {
     const p = pos(); if (!p || !here() || bossOn()) return null;
-    if (lockUid) { const L = view.mons.find((m) => m.uid === lockUid); if (L && gap(L, p) <= LOCK_RANGE) return L; lockUid = ''; }   // quái đã chết / biến mất / ở quá xa → bỏ khóa
-    let best = null, bd = SIGHT + 1; for (const m of view.mons) { const d = gap(m, p); if (d <= bd) { bd = d; best = m; } } return best;
+    if (lockUid) { const L = allMons().find((m) => m.uid === lockUid); if (L && gap(L, p) <= LOCK_RANGE) return L; lockUid = ''; }   // quái đã chết / biến mất / ở quá xa → bỏ khóa
+    let best = null, bd = SIGHT + 1; for (const m of allMons()) { const d = gap(m, p); if (d <= bd) { bd = d; best = m; } } return best;
   };
   /** Chọn (khóa) quái dưới tia chuột {origin, dir}. Trả { ok, ten, uid } | { ok:false, reason }. Mọi đòn (đánh thường, Thương, chiêu) nhắm vào quái đã khóa. */
   let attackOn = false;   // Phiên 159c: bấm chuột vào quái → khóa + TỰ ĐÁNH THƯỜNG (lao tới nếu xa) cho tới khi quái chết / Esc / người chơi tự đi
   function pickAt(origin, dir, attack = false, ground = null) {
     const p = pos(); if (!p || !here() || bossOn()) return { ok: false, reason: 'khong-quai' };
-    const near = view.mons.filter((x) => gap(x, p) <= LOCK_RANGE); let m = pickMonster(origin, dir, near);
+    const near = allMons().filter((x) => gap(x, p) <= LOCK_RANGE); let m = pickMonster(origin, dir, near);
     if (!m && ground && Number.isFinite(+ground.x) && Number.isFinite(+ground.z)) {   // Phiên 159e: tia trượt thân thì lấy điểm bấm trên ĐẤT — con nào nằm sát đó (trong thân + 1,3 m) cũng được
       let bd = Infinity; for (const x of near) { const d = Math.hypot(x.x - ground.x, x.z - ground.z); if (d <= bodyOf(x) + 1.3 && d < bd) { bd = d; m = x; } }
     }
@@ -72,7 +73,7 @@ export function initFarm(hud, { toast = () => {} } = {}) {
   const unlock = () => { const was = !!lockUid; lockUid = ''; attackOn = false; return was; };
   const stopAttack = () => { const was = attackOn; attackOn = false; return was; };
   function attackStep() {
-    if (!attackOn) return; const p = pos(), t = lockUid && view.mons.find((m) => m.uid === lockUid);
+    if (!attackOn) return; const p = pos(), t = lockUid && allMons().find((m) => m.uid === lockUid);
     if (!t || !p || !here() || bossOn() || LGT.panelOpen || LGT.heldBy || (LGT.world && LGT.world.mode && LGT.world.mode !== 'free')) { attackOn = false; return; }
     if (gap(t, p) - bodyOf(t) <= SPEAR.range) stone(); else rush(t);
   }
@@ -100,10 +101,31 @@ export function initFarm(hud, { toast = () => {} } = {}) {
   const buffMul = () => { try { const m = LGT.buffMul ? +LGT.buffMul() : 1; return m > 1 && m < 10 ? m : 1; } catch (_) { return 1; } };   // Phiên 184: hiệu lực chiêu hỗ trợ (Cuồng Long Phẫn Nộ +40%) — js/ui/heSkill.js
   /** o (Phiên 213, mục 1): { id (chiêu), i (thứ tự quái trong cùng lần chiêu), nho (đòn nhỏ: đánh thường) } — chỉ để tư thế/tiếng/hiệu ứng trúng đòn. */
   function hit(uid, dmg, o = {}) {
-    const m = view.mons.find((x) => x.uid === uid), sp = m && spOf(m); if (!m || !sp) return;
+    const m = allMons().find((x) => x.uid === uid); if (m && m.ghost) return hitGhost(m, dmg, o);   // Phiên 222: bóng quái của người khác → báo chủ quái trừ máu thật
+    const sp = m && spOf(m); if (!m || !sp) return;
     const r = hitMonster(sp, m.id, dmg, 'ban', rng); m.flash = 0.35; hudUntil = performance.now() + 2500;
     try { const p = pos(); LGT.hitReact && LGT.hitReact.onHit(m, { dmg, id: o.id, i: o.i, nho: o.nho, dead: !!r.dead, ax: p && p.x, az: p && p.z }); } catch (_) { /* hiệu ứng hỏng thì thôi, sát thương vẫn tính */ }
     if (r.dead) { view.mons = view.mons.filter((x) => x.uid !== uid); reward(r); }
+  }
+  /** Phiên 222: MÌNH đánh trúng bóng quái (quái người khác đang đánh) → hiệu ứng ngay tại máy mình + báo chủ quái trừ máu THẬT (combatLink.sendDamage). Phần thưởng chỉ khi mình là người đòn cuối (chủ quái báo 'k'). */
+  function hitGhost(g, dmg, o = {}) {
+    const d = Math.max(1, Math.floor(+dmg || 0)); g.flash = 0.35; hudUntil = performance.now() + 2500;
+    try { if (LGT.combatLink && LGT.combatLink.sendDamage) LGT.combatLink.sendDamage(g, d); } catch (_) { /* mạng hỏng thì thôi */ }
+    try { const p = pos(); LGT.hitReact && LGT.hitReact.onHit(g, { dmg: d, id: o.id, i: o.i, nho: o.nho, dead: false, ax: p && p.x, az: p && p.z }); } catch (_) { /* hiệu ứng hỏng thì thôi */ }
+  }
+  /** Phiên 222: chủ quái nhận đòn của người khác (by = mã 6 chữ) → trừ máu thật. Trả { dead, type } (dead: người đó đánh đòn cuối → họ nhận thưởng, mình KHÔNG). */
+  function remoteHit(uid, dmg, by, ax, az) {
+    const m = view.mons.find((x) => x.uid === uid), sp = m && spOf(m); if (!m || !sp) return null;
+    const d = Math.max(1, Math.min(Math.floor(+dmg || 0), Math.ceil(m.oan)));   // chặn sát thương gian lận / quá lớn
+    const type = m.type, r = hitMonster(sp, m.id, d, 'khac', rng); m.flash = 0.35;
+    try { LGT.hitReact && LGT.hitReact.onHit(m, { dmg: d, dead: !!r.dead, by, ax, az }); } catch (_) { /* bỏ qua */ }
+    if (r.dead) view.mons = view.mons.filter((x) => x.uid !== uid);
+    return { dead: !!r.dead, type };
+  }
+  /** Phiên 222: MÌNH là người đòn cuối trên quái của người khác → nhận thưởng như tự thu phục. */
+  function claimKill(type) {
+    const T = MONSTERS[type]; if (!T) return;
+    reward({ mon: { type, ten: T.ten, lv: T.lv, he: T.he, elite: !!T.elite, boss: !!T.boss }, drops: rollDrops(type, rng) });
   }
   function aim(needNear) {
     const t = target();
@@ -136,7 +158,7 @@ export function initFarm(hud, { toast = () => {} } = {}) {
     if (plan === 'dash') { if (rush(t)) dashLock = now + BASIC.dashCd * 1000; else tooFar(); return; }
     const ck = advanceChain(now); cdStone = STONE.cd; if (LGT.sfx) LGT.sfx.play('nem-da');
     const dmg = Math.max(1, Math.round(stoneDamage(str()) * buffMul() * stepMul(ck.step)));   // Phiên 127: Đánh thường = đòn cận chiến trúng ngay (không còn ném đá); Phiên 198: nhân theo đòn (đòn 3 ×1,5)
-    const around = ck.step === BASIC.steps ? splashTargets(p, view.mons, BASIC.splashR, t.uid, bodyOf) : [];   // đòn 3 xoay 360°: mọi quái quanh người (trừ mục tiêu chính) dính sát thương lan
+    const around = ck.step === BASIC.steps ? splashTargets(p, allMons(), BASIC.splashR, t.uid, bodyOf) : [];   // đòn 3 xoay 360°: mọi quái quanh người (trừ mục tiêu chính) dính sát thương lan
     hit(t.uid, dmg, { nho: ck.step < BASIC.steps });
     around.forEach((m, k) => hit(m.uid, Math.max(1, Math.round(dmg * BASIC.splashPct)), { i: k + 1 }));
   }
@@ -163,7 +185,7 @@ export function initFarm(hud, { toast = () => {} } = {}) {
     if (LGT.panelOpen || LGT.heldBy || (LGT.world && LGT.world.mode && LGT.world.mode !== 'free')) return stopAuto('Tự động hàng yêu đã dừng.');
     const r = addAutoTime(auto, dt, Date.now()); auto = r.state; if (performance.now() - autoSaved > 5000) { autoSaved = performance.now(); saveAuto(); }
     if (r.out) return stopAuto('Hết thời gian tự động hàng yêu hôm nay. Mai dùng tiếp, hoặc uống Trà sữa xoài hoàng kim ở Tách Hoa nhé!');
-    const p = pos(); let best = null, bd = Infinity; for (const m of view.mons) { const d = gap(m, p); if (d < bd) { bd = d; best = m; } }
+    const p = pos(); let best = null, bd = Infinity; for (const m of allMons()) { const d = gap(m, p); if (d < bd) { bd = d; best = m; } }
     if (!best) return;
     const act = nextAction({ gap: bd, body: bodyOf(best), stoneReady: cdStone <= 0, spearReady: cdSpear <= 0, spearRange: SPEAR.range });
     if (act === 'spear') spear(); else if (act === 'stone') stone();
@@ -224,21 +246,20 @@ export function initFarm(hud, { toast = () => {} } = {}) {
   }
   function skillHit(heSo, id) {   // Phiên 213: `id` = chiêu đang tung → trúng cả các quái khác nằm trong vùng của chiêu (tròn/đường/nón); thiếu id → chỉ quái đang nhắm như trước
     const t = target(); if (!t) return { ok: false, reason: 'khong-quai' };
-    return hitList(pickAllAround(pos(), t, view.mons, id ? hinhOf(id) : null, bodyOf), heSo, id);
+    return hitList(pickAllAround(pos(), t, allMons(), id ? hinhOf(id) : null, bodyOf), heSo, id);
   }
   // Phiên 198: chiêu ĐỊNH HƯỚNG tung bằng lướt tay. Phiên 213: trúng TẤT CẢ quái nằm trong vùng báo (trước đây chỉ con gần nhất); không có quái trong hướng đó → { ok:false } (chiêu vẫn tung, không sát thương).
   function skillHitDir(heSo, ry, hinh, id) {
     const p = pos(); if (!p || !here() || bossOn()) return { ok: false, reason: 'khong-quai' };
-    return hitList(pickAllInDir(p, ry, view.mons, hinh, bodyOf), heSo, id);
+    return hitList(pickAllInDir(p, ry, allMons(), hinh, bodyOf), heSo, id);
   }
 
   LGT.farm = {
     skillReady, skillHit, skillHitDir, pickAt, unlock, stopAttack, get attacking() { return attackOn; }, get locked() { return lockUid; }, get tuviInfo() { return tuViOf(farm); },
-    stone, spear, toggleAuto, grantBoss, addAutoMinutes,
+    stone, spear, toggleAuto, grantBoss, addAutoMinutes, remoteHit, claimKill,
     rushPoint, chainStep: () => advanceChain(performance.now()).step,   // Phiên 205: yêu quái hằng tháng dùng chung lao tới + chuỗi 3 đòn
     get tuvi() { return tuViOf(farm).tuvi; }, get state() { return farm; },
     status() { const t = target(); return { active: !!t || running, ten: t ? t.ten : '', stoneCd: cdStone, spearCd: cdSpear, canAuto: true, auto: running, autoLeft: Math.floor(autoLeft(auto, Date.now()) / 60) }; },
   };
   return LGT.farm;
 }
-
