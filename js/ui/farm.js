@@ -19,7 +19,7 @@ import { skillDamage } from '../world/heQuest.js';
 import { kHeOf } from '../world/elements.js';
 import { planTap, stepMul, splashTargets, BASIC } from '../world/basicCombo.js';   // Phiên 198: lao tới + combo 3 đòn + sát thương lan
 import { nextKind, CHAIN, comboEnd } from '../world/combo.js';   // Phiên 198: chuỗi động tác dùng chung với hoạt ảnh nhân vật
-import { pickInDir } from '../world/aimSwipe.js';   // Phiên 198: chiêu định hướng chỉ trúng quái trong vùng báo
+import { pickInDir, pickAllInDir, pickAllAround, hinhOf } from '../world/aimSwipe.js';   // Phiên 198: chiêu định hướng chỉ trúng quái trong vùng báo
 
 const KEY = 'lgt.farm', AKEY = 'lgt.farmauto';
 const HE_TEN = { kim: 'Kim', moc: 'Mộc', thuy: 'Thủy', hoa: 'Hỏa', tho: 'Thổ' };
@@ -98,9 +98,11 @@ export function initFarm(hud, { toast = () => {} } = {}) {
     return s;
   }
   const buffMul = () => { try { const m = LGT.buffMul ? +LGT.buffMul() : 1; return m > 1 && m < 10 ? m : 1; } catch (_) { return 1; } };   // Phiên 184: hiệu lực chiêu hỗ trợ (Cuồng Long Phẫn Nộ +40%) — js/ui/heSkill.js
-  function hit(uid, dmg) {
+  /** o (Phiên 213, mục 1): { id (chiêu), i (thứ tự quái trong cùng lần chiêu), nho (đòn nhỏ: đánh thường) } — chỉ để tư thế/tiếng/hiệu ứng trúng đòn. */
+  function hit(uid, dmg, o = {}) {
     const m = view.mons.find((x) => x.uid === uid), sp = m && spOf(m); if (!m || !sp) return;
     const r = hitMonster(sp, m.id, dmg, 'ban', rng); m.flash = 0.35; hudUntil = performance.now() + 2500;
+    try { const p = pos(); LGT.hitReact && LGT.hitReact.onHit(m, { dmg, id: o.id, i: o.i, nho: o.nho, dead: !!r.dead, ax: p && p.x, az: p && p.z }); } catch (_) { /* hiệu ứng hỏng thì thôi, sát thương vẫn tính */ }
     if (r.dead) { view.mons = view.mons.filter((x) => x.uid !== uid); reward(r); }
   }
   function aim(needNear) {
@@ -135,12 +137,12 @@ export function initFarm(hud, { toast = () => {} } = {}) {
     const ck = advanceChain(now); cdStone = STONE.cd; if (LGT.sfx) LGT.sfx.play('nem-da');
     const dmg = Math.max(1, Math.round(stoneDamage(str()) * buffMul() * stepMul(ck.step)));   // Phiên 127: Đánh thường = đòn cận chiến trúng ngay (không còn ném đá); Phiên 198: nhân theo đòn (đòn 3 ×1,5)
     const around = ck.step === BASIC.steps ? splashTargets(p, view.mons, BASIC.splashR, t.uid, bodyOf) : [];   // đòn 3 xoay 360°: mọi quái quanh người (trừ mục tiêu chính) dính sát thương lan
-    hit(t.uid, dmg);
-    for (const m of around) hit(m.uid, Math.max(1, Math.round(dmg * BASIC.splashPct)));
+    hit(t.uid, dmg, { nho: ck.step < BASIC.steps });
+    around.forEach((m, k) => hit(m.uid, Math.max(1, Math.round(dmg * BASIC.splashPct)), { i: k + 1 }));
   }
   function spear() {
     if (!here() || bossOn() || cdSpear > 0) return; const t0 = target(); if (!t0) { airSwing('spear'); return; } const t = aim(true); if (!t) return;
-    cdSpear = SPEAR.cd; advanceChain(performance.now()); if (LGT.sfx) LGT.sfx.play('thuong'); hit(t.uid, Math.max(1, Math.round(spearDamage(str()) * buffMul())));
+    cdSpear = SPEAR.cd; advanceChain(performance.now()); if (LGT.sfx) LGT.sfx.play('thuong'); hit(t.uid, Math.max(1, Math.round(spearDamage(str()) * buffMul())), { nho: true });
   }
 
   // Tự Động Hàng Yêu (Phiên 108; Phiên 127: tự LAO tới quái rồi Thương/Đánh thường, trong tầm autoRange). Dừng khi mở bảng, vào nhà, có yêu quái hằng tháng, hoặc hết thời gian hôm nay (60 phút + phần Trà sữa xoài hoàng kim đã uống).
@@ -212,17 +214,22 @@ export function initFarm(hud, { toast = () => {} } = {}) {
 
   // Phiên 143: chiêu của phái (js/ui/heSkill.js) đánh quái gần nhất. skillReady() → { ok } | { ok:false, reason:'khong-quai'|'xa' }; skillHit(heSo) → { ok, dmg, ten }.
   function skillReady() { const t = target(); if (!t) return { ok: false, reason: 'khong-quai' }; if (gap(t, pos()) - bodyOf(t) > SPEAR.range + 3) return { ok: false, reason: 'xa' }; return { ok: true, ten: t.ten }; }
-  function skillHit(heSo) {
-    const t = target(); if (!t) return { ok: false, reason: 'khong-quai' };
-    const dmg = Math.max(1, Math.round(skillDamage(spearDamage(str()), heSo) * kHeOf(LGT.he, t.he) * buffMul()));
-    hit(t.uid, dmg); return { ok: true, dmg, ten: t.ten };
+  const skillDmgOn = (m, heSo) => Math.max(1, Math.round(skillDamage(spearDamage(str()), heSo) * kHeOf(LGT.he, m.he) * buffMul()));
+  /** Đánh TẤT CẢ quái trong `list` (đã chọn theo vùng chiêu): mỗi quái tính sát thương theo Hệ của nó. Trả { ok, dmg (quái đầu), ten, n (số quái trúng), total }. */
+  function hitList(list, heSo, id) {
+    if (!list || !list.length) return { ok: false, reason: 'khong-quai' };
+    const first = list[0], out = { ok: true, dmg: skillDmgOn(first, heSo), ten: first.ten, n: list.length, total: 0 };
+    list.forEach((m, i) => { const d = i === 0 ? out.dmg : skillDmgOn(m, heSo); out.total += d; hit(m.uid, d, { id, i }); });
+    return out;
   }
-  // Phiên 198: chiêu ĐỊNH HƯỚNG tung bằng lướt tay — chỉ đánh quái GẦN NHẤT nằm trong vùng báo (đường/nón) theo hướng `ry` (rad, như facingOf); không có quái trong hướng đó → { ok:false } (chiêu vẫn tung, không sát thương).
-  function skillHitDir(heSo, ry, hinh) {
+  function skillHit(heSo, id) {   // Phiên 213: `id` = chiêu đang tung → trúng cả các quái khác nằm trong vùng của chiêu (tròn/đường/nón); thiếu id → chỉ quái đang nhắm như trước
+    const t = target(); if (!t) return { ok: false, reason: 'khong-quai' };
+    return hitList(pickAllAround(pos(), t, view.mons, id ? hinhOf(id) : null, bodyOf), heSo, id);
+  }
+  // Phiên 198: chiêu ĐỊNH HƯỚNG tung bằng lướt tay. Phiên 213: trúng TẤT CẢ quái nằm trong vùng báo (trước đây chỉ con gần nhất); không có quái trong hướng đó → { ok:false } (chiêu vẫn tung, không sát thương).
+  function skillHitDir(heSo, ry, hinh, id) {
     const p = pos(); if (!p || !here() || bossOn()) return { ok: false, reason: 'khong-quai' };
-    const t = pickInDir(p, ry, view.mons, hinh, bodyOf); if (!t) return { ok: false, reason: 'khong-quai' };
-    const dmg = Math.max(1, Math.round(skillDamage(spearDamage(str()), heSo) * kHeOf(LGT.he, t.he) * buffMul()));
-    hit(t.uid, dmg); return { ok: true, dmg, ten: t.ten };
+    return hitList(pickAllInDir(p, ry, view.mons, hinh, bodyOf), heSo, id);
   }
 
   LGT.farm = {
