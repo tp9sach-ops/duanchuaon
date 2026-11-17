@@ -28,12 +28,18 @@ test('levelPlan: bậc 0 đầy đủ, bậc 5 nhẹ nhất, chỉ ngày càng n
 });
 
 test('levelPlan: mốc từng bậc đúng như ghi ở đầu file', () => {
-  assert.equal(levelPlan(1, { dpr: 2 }).pixelRatio, 1);
+  assert.equal(levelPlan(1, { dpr: 2 }).pixelRatio, 1.5);   // Phiên 217: trước đây 1
   assert.equal(levelPlan(2).bloom, false); assert.equal(levelPlan(1).bloom, true);
   assert.equal(levelPlan(3, { shadowBase: 2048 }).shadowSize, 1024); assert.equal(levelPlan(3).forestShadow, false); assert.equal(levelPlan(3).shadows, true);
   assert.equal(levelPlan(4).shadows, false); assert.equal(levelPlan(4).forest, true);
   assert.equal(levelPlan(5).forest, true, 'không ẩn hẳn rừng'); assert.equal(levelPlan(5).forestDensity, 0.35); assert.equal(levelPlan(3).forestDensity, 0.7);
   for (let l = 1; l <= 5; l++) assert.ok(levelPlan(l).forestDensity <= levelPlan(l - 1).forestDensity, 'rừng chỉ thưa dần ở bậc ' + l);
+});
+
+test('levelPlan: điện thoại dpr 3 — 1,5 → 1,25 → 1,25 → 1 → 0,75; màn dpr thấp không bị kéo lên (Phiên 217)', () => {
+  assert.deepEqual([0, 1, 2, 3, 4, 5].map((l) => levelPlan(l, { dpr: 3 }).pixelRatio), [2, 1.5, 1.25, 1.25, 1, 0.75]);
+  assert.deepEqual([0, 1, 2, 3, 4, 5].map((l) => levelPlan(l, { dpr: 1 }).pixelRatio), [1, 1, 1, 1, 1, 0.75]);
+  assert.equal(levelPlan(1, { dpr: 1.25 }).pixelRatio, 1.25);
 });
 
 test('levelPlan: bản đồ bóng không nhỏ hơn 512; dpr thiếu/lạ không làm hỏng', () => {
@@ -107,6 +113,11 @@ test('lưu bậc: ghi rồi đọc lại; hết 7 ngày thì bỏ', () => {
   assert.equal(loadSaved(s, NOW + 1000), 3);
   assert.equal(loadSaved(s, NOW + 6 * 86400000), 3);
   assert.equal(loadSaved(s, NOW + 8 * 86400000), 0);
+});
+
+test('lưu bậc: khóa mới (lgt.perf2) — bậc cũ lưu dưới khóa lgt.perf bị bỏ qua (Phiên 217)', () => {
+  assert.equal(KEY, 'lgt.perf2');
+  assert.equal(loadSaved(mem([['lgt.perf', JSON.stringify({ lv: 5, t: NOW })]]), NOW), 0);
 });
 
 test('lưu bậc: dữ liệu hỏng, thiếu, giờ tương lai, lỗi lưu trữ → an toàn', () => {

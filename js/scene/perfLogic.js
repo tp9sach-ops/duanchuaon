@@ -2,26 +2,26 @@
    Cảnh gọi createGovernor().feed(dt) mỗi khung; khi nó báo đổi bậc thì cảnh gọi levelPlan(bậc) để biết bật/tắt gì.
 
    BẬC (0 = đầy đủ → 5 = nhẹ nhất; chỉ đi xuống, không tự lên lại trong một lần chạy):
-     0  đầy đủ
-     1  pixelRatio 1
-     2  tắt bloom
-     3  bản đồ bóng nhỏ một nửa (≥ 512) + rừng thôi đổ bóng
-     4  tắt đổ bóng
+     0  đầy đủ (pixelRatio tối đa 2)
+     1  pixelRatio tối đa 1,5            (Phiên 217: trước đây hạ thẳng xuống 1 nên điện thoại bị mờ/răng cưa; điện thoại bắt đầu ở bậc này)
+     2  tắt bloom + pixelRatio tối đa 1,25
+     3  bản đồ bóng nhỏ một nửa (≥ 512) + rừng thôi đổ bóng (pixelRatio vẫn tối đa 1,25)
+     4  tắt đổ bóng + pixelRatio tối đa 1
      5  pixelRatio 0,75 + ít hạt + rừng ngoài chùa thưa còn 35% (Phiên 64: trước đây ẨN HẾT nên máy yếu mất sạch cây)
    Ngưỡng và số liệu là QUY ƯỚC TẠM (chờ thử trên điện thoại thật). */
 
 export const MAX_LEVEL = 5;
-export const KEY = 'lgt.perf';
+export const KEY = 'lgt.perf2';   // Phiên 217: đổi tên (cũ: 'lgt.perf') để bỏ bậc thấp máy đã bị hạ dưới quy ước cũ, tránh kẹt đồ họa xấu 7 ngày
 export const SAVE_DAYS = 7;   // nhớ bậc đã hạ 7 ngày, để lần sau mở lên máy yếu không phải giật lại từ đầu
 
 export const clampLevel = (v) => { const n = Math.round(+v); return Number.isFinite(n) ? Math.min(MAX_LEVEL, Math.max(0, n)) : 0; };
 
 /* Việc cần làm ở từng bậc. dpr = devicePixelRatio của máy; shadowBase = cỡ bản đồ bóng gốc (1024 điện thoại / 2048 máy tính). */
 export function levelPlan(level, { dpr = 1, shadowBase = 2048 } = {}) {
-  const L = clampLevel(level);
+  const L = clampLevel(level), d = dpr || 1;
   return {
     level: L,
-    pixelRatio: L >= 5 ? 0.75 : L >= 1 ? 1 : Math.min(dpr || 1, 2),
+    pixelRatio: L >= 5 ? 0.75 : L >= 4 ? Math.min(d, 1) : L >= 2 ? Math.min(d, 1.25) : L === 1 ? Math.min(d, 1.5) : Math.min(d, 2),
     bloom: L < 2,
     shadows: L < 4,
     shadowSize: L >= 3 ? Math.max(512, shadowBase >> 1) : shadowBase,
