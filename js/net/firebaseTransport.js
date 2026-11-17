@@ -120,6 +120,7 @@ export function createFirebaseTransport({ config, name = 'Firebase', loadSdk, no
       if (cDiscEpoch !== cEpoch) { cDiscEpoch = cEpoch; try { sdk.onDisconnect(cRef).remove().catch(() => {}); } catch (_) { /* bỏ qua */ } }   // rớt mạng thì gói chiến đấu của mình tự xóa
       Promise.resolve(sdk.set(cRef, rec)).catch(() => {
         if (combatBlocked) return; combatBlocked = true;
+        try { const L = globalThis.LGT; if (L && typeof L.toast === 'function') L.toast('Firebase chưa nhận luật nhánh /combat: người khác KHÔNG thấy đòn, rồng hồng, thế đứng của bạn. Dán lại firebase/database.rules.json vào Firebase → Rules → Publish.', 12000); } catch (_) { /* bỏ qua */ }   // Phiên 223b: báo ngay trên màn hình (trước đây chỉ có dòng console nên không ai biết)
         try { console.warn('[Diệu Giang Tự] Firebase từ chối nhánh /combat: cần dán lại firebase/database.rules.json vào Rules rồi Publish. Tạm thời người khác chưa thấy đòn đánh/quái của bạn.'); } catch (_) { /* bỏ qua */ }
       });
     } catch (_) { return false; }
