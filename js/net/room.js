@@ -42,7 +42,7 @@ export function initRoom() {
     try {
       const it = LGT.items, s = it && it.state, lo = LGT.loadout, bd = LGT.board, b = bd && bd.status ? bd.status() : null;
       if (!s) return '';
-      return encodeGear({ staff: !!s.staff && (!lo || lo.weapon === 'nhuy'), hat: hatWorn(s), regen: isActive(s, 'hoimau'), revive: canRevive(s), ride: b && b.on ? b.hold : '' });
+      return encodeGear({ staff: !!s.staff && (!lo || lo.weapon === 'nhuy'), bamboo: !!s.tre && !!lo && lo.weapon === 'tre', hat: hatWorn(s), regen: isActive(s, 'hoimau'), revive: canRevive(s), ride: b && b.on ? b.hold : '' });
     } catch (_) { return ''; }
   };
   let client = null, roomName = ''; const sigListeners = new Set();   // Phiên 137: người nghe gói tin giao lưu võ thuật (js/ui/duel.js)
