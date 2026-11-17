@@ -46,6 +46,7 @@ export function packAction(a) {
   if (a.k === 'k') { if (!KEY_RE.test(String(a.key || '')) || !TYPE_RE.test(String(a.type || '')) || !MONSTERS[a.type] || !TAG_RE.test(String(a.killer || ''))) return ''; return [seq, 'k', a.key, a.type, a.killer].join(','); }
   if (a.k === 'f') { if (!POSE_MODES.includes(a.mode)) return ''; return [seq, 'f', a.mode, clamp(Math.round(num(a.tilt) * 100), -400, 400)].join(','); }
   if (a.k === 'r') return [seq, 'r', I(wrapRy(a.ry), 100)].join(',');   // Phiên 223: rồng hồng
+  if (a.k === 'w') return [seq, 'w', I(wrapRy(a.ry), 100), clamp(Math.round(num(a.rg) * 10), 0, 200)].join(',');   // Phiên 224: sói khí vàng của Gậy dạy chó (hướng vồ + tầm vồ, 0,1 m)
   if (a.k === 'p') return [seq, 'p', clamp(Math.floor(num(a.lv)), 0, 9)].join(',');   // Phiên 225: MÌNH bị quái đánh trúng (lv 0-9 = mức đau) → người khác thấy tư thế giật người + nghe tiếng
   return '';
 }
@@ -64,6 +65,7 @@ export function unpackAction(s) {
   if (f[1] === 'k' && f.length === 5) { if (!KEY_RE.test(f[2]) || !TYPE_RE.test(f[3]) || !MONSTERS[f[3]] || !TAG_RE.test(f[4])) return null; return { k: 'k', seq, key: f[2], type: f[3], killer: f[4] }; }
   if (f[1] === 'f' && f.length === 4) { if (!POSE_MODES.includes(f[2])) return null; return { k: 'f', seq, mode: f[2], tilt: clamp(num(f[3]), -400, 400) / 100 }; }
   if (f[1] === 'r' && f.length === 3) return { k: 'r', seq, ry: num(f[2]) / 100 };   // Phiên 223: rồng hồng
+  if (f[1] === 'w' && f.length === 4) return { k: 'w', seq, ry: num(f[2]) / 100, rg: clamp(num(f[3]), 0, 200) / 10 };   // Phiên 224: sói khí vàng
   if (f[1] === 'p' && f.length === 3) return { k: 'p', seq, lv: clamp(Math.floor(num(f[2])), 0, 9) };   // Phiên 225: bị đánh trúng
   return null;
 }
