@@ -3,7 +3,7 @@
 //
 // PHÁT (mình → mọi người): bọc avatar.cast / avatar.swing của nhân vật mình (mọi đường tung chiêu / vung đòn đi qua đó) + bọc LGT.hitReact.onHit (mọi lần đánh trúng quái bãi rừng đi qua đó)
 //   + mỗi 100 ms đọc các quái mình đang đánh (m.eng) trong LGT.farmView.mons. Gói đi qua transport.sendCombat (Firebase /combat/{uid}); đường truyền không có sendCombat (Apps Script, tab cục bộ) thì im lặng bỏ qua.
-// NHẬN (người khác → mình): mỗi 100 ms đọc transport.combat(); cùng phòng/zone thì: chiêu → av.cast(id) + hiệu ứng 3D chiêu (deps.castFx); đòn → av.swing(kind) + vệt chém (deps.makeSlash) + tiếng;
+// NHậN (người khác → mình): mỗi 100 ms đọc transport.combat(); cùng phòng/zone thì: chiêu → av.cast(id) + hiệu ứng 3D chiêu (deps.castFx); đòn → av.swing(kind) + vệt chém (deps.makeSlash) + tiếng;
 //   quái họ đang đánh → "bóng quái" (deps.ghostView vẽ: mô hình, thanh máu, vòng đỏ báo đòn); họ đánh trúng quái → tư thế/tiếng/hiệu ứng bị trúng trên bóng quái (LGT.hitReact.onHit).
 import { COMBAT, createOutbox, createInbox, createGhosts, unpackMons, unpackActions } from '../world/combatShare.js';
 import { tagOf } from '../world/duel.js';
@@ -59,7 +59,7 @@ export function createCombatLink(deps) {
     try { const v = LGT.farmView, p = pos(); if (!v || !p || !Array.isArray(v.mons)) return []; return v.mons.filter((m) => m && m.eng && m.oan > 0 && Math.hypot(m.x - p.x, m.z - p.z) <= NEAR_MON_M).sort((a, b) => Math.hypot(a.x - p.x, a.z - p.z) - Math.hypot(b.x - p.x, b.z - p.z)); } catch (_) { return []; }
   }
 
-  // ------------------------------------------------------------ NHẬN
+  // ------------------------------------------------------------ NHậN
   const sfx = (cue, gap = 140) => { try { const t = perf(); if (t - lastSfx < gap) return; lastSfx = t; if (LGT.sfx && LGT.sfx.play) LGT.sfx.play(cue); } catch (_) { /* bỏ qua */ } };
   function markStance(id, av) { try { if (av && av.setStance) { av.setStance(true); stance.set(id, now() + COMBAT.stanceMs); } } catch (_) { /* bỏ qua */ } }
   /** Chỗ vẽ hiệu ứng: ưu tiên chỗ nhân vật người đó ĐANG ĐỨNG trên màn hình mình (đã nội suy) nếu sát chỗ họ báo; không thì chỗ họ báo. */
@@ -67,11 +67,17 @@ export function createCombatLink(deps) {
   function slashOf(id) { let s = slashes.get(id); if (!s && makeSlash) { try { s = makeSlash(); } catch (_) { s = null; } if (s) slashes.set(id, s); } return s || null; }
   function dropSlash(id) { const s = slashes.get(id); if (s) { try { if (s.dispose) s.dispose(); } catch (_) { /* bỏ qua */ } slashes.delete(id); } }
 
+  const hurts = new Map();   // Phiên 225: người khác vừa bị quái đánh trúng (id → { t0, lv }) → giật người ngắn
   const lastAct = new Map(); const a_recent = (id, t) => t - (lastAct.get(id) || -1e9) < 1200;   // Phiên 223: vừa vung đòn / tung chiêu ≤ 1,2 s thì chưa hạ thế
   /** Phiên 223: rồng hồng của người khác — bay quanh CHÍNH nhân vật họ trên màn hình mình (bám vị trí sống của avatar). */
   function playDragon(id, a) {
     if (!dragonFx) return; const av = avatarOf ? avatarOf(id) : null, g = av && av.group && av.group.position; if (!g || dist(g.x, g.z) > COMBAT.seeM) return;
     try { dragonFx.spawn(g, a.ry, g); } catch (_) { /* bỏ qua */ }
+  }
+  /** Phiên 225: người khác bị đánh trúng — tiếng + giật người (poseOf trả độ ngả). */
+  function playHurt(id, a) {
+    const av = avatarOf ? avatarOf(id) : null, g = av && av.group && av.group.position; if (!g || dist(g.x, g.z) > COMBAT.seeM) return;
+    hurts.set(id, { t0: now(), lv: a.lv }); if (dist(g.x, g.z) <= 35) sfx('da-trung', 90);
   }
   function playCast(id, a) {
     lastAct.set(id, now());
@@ -113,8 +119,12 @@ export function createCombatLink(deps) {
   }
   /** Phiên 223: MÌNH vừa tung RỒNG HỒNG (Gậy như ý đủ 3 đòn) → báo cho mọi người cùng thấy. ry = hướng mặt. */
   API.sendDragon = (ry) => { try { return skipOut() ? 0 : emit({ k: 'r', ry: +ry || 0 }); } catch (_) { return 0; } };
+  /** Phiên 225: MÌNH bị quái đánh trúng (lv 0-9) → báo mọi người cùng thấy. */
+  API.sendHurt = (lv) => { try { return skipOut() ? 0 : emit({ k: 'p', lv: lv == null ? 3 : lv }); } catch (_) { return 0; } };
   /** Tư thế bay lướt / lao của người `id` (cho roomClient vẽ), hoặc null. 's' (thế chiến đấu) KHÔNG đổi trạng thái đi/đứng nên trả null (stance do tick lo). */
   API.poseOf = (id) => {
+    const h = hurts.get(id);
+    if (h) { const u = (now() - h.t0) / 450; if (u >= 1) hurts.delete(id); else if (!poses.has(id)) return { state: 'idle', speed: 0, tilt: -(0.25 + 0.03 * h.lv) * Math.sin(Math.PI * Math.min(1, u * 1.4)) }; }
     const o = poses.get(id); if (!o) return null; if (now() > o.until) { poses.delete(id); return null; }
     if (o.mode === 's') return null;
     return { state: o.mode === 'g' ? 'glide' : o.mode === 'r' ? 'walk' : 'idle', speed: o.mode === 'r' ? 6.5 : 0, tilt: o.tilt };
@@ -146,9 +156,9 @@ export function createCombatLink(deps) {
       }
       ghosts.ingest(p.id, unpackMons(p.m), t);
       for (const a of late) playHit(p.id, a);                                // quái mới xuất hiện cùng gói với đòn đầu tiên
-      for (const a of acts) { if (a.k === 'c') playCast(p.id, a); else if (a.k === 's') playSwing(p.id, a); else if (a.k === 'r') playDragon(p.id, a); }
+      for (const a of acts) { if (a.k === 'c') playCast(p.id, a); else if (a.k === 's') playSwing(p.id, a); else if (a.k === 'r') playDragon(p.id, a); else if (a.k === 'p') playHurt(p.id, a); }
     }
-    for (const id of [...lastT.keys()]) if (!seenIds.has(id)) { lastT.delete(id); ghosts.drop(id); inbox.forget(id); stance.delete(id); dropSlash(id); poses.delete(id); lastAct.delete(id); }   // người đã rời
+    for (const id of [...lastT.keys()]) if (!seenIds.has(id)) { lastT.delete(id); ghosts.drop(id); inbox.forget(id); stance.delete(id); dropSlash(id); poses.delete(id); lastAct.delete(id); hurts.delete(id); }   // người đã rời
   };
 
   /** Mỗi khung hình: bóng quái bước tiếp + vẽ + vệt chém bám theo người + hết thế chiến đấu của người khác. */
