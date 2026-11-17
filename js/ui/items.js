@@ -8,10 +8,14 @@
 //   Phiên 163: cầm Gậy như ý đánh thường đủ 3 đòn liên tiếp → RỒNG HỒNG bay quanh người (js/ui/dragonFx.js). Chiêu (Chém khí...) gọi swing(số) nên không tính là đánh thường.
 // Nhân vật dựng bằng khối (không phải chibi) thì không đổi hình gậy nhưng vẫn có +1% và vòng sáng. CHƯA nhìn bằng mắt trên máy thật.
 import * as THREE from 'three';
-import { GEMS, STAFF, HAT, TRASUA, afterArmor as aAfter, loadItems, buyGem, buyStaff, buyHat, buyTraSua, toggleHat, hatWorn, armorMul as aMul, remainSec, regenMul as rMul, canRevive, dmgMul as dMul, fmtTime } from '../world/items.js';
+import { GEMS, STAFF, BAMBOO, HAT, TRASUA, afterArmor as aAfter, loadItems, buyGem, buyStaff, buyBamboo, finisherMul as fMul, buyHat, buyTraSua, toggleHat, hatWorn, armorMul as aMul, remainSec, regenMul as rMul, canRevive, dmgMul as dMul, fmtTime } from '../world/items.js';
 import { BOARD } from '../world/board.js';
 import { askConfirm } from './dialog.js';
-import { buildStaff, loadStaffGlb, pulseGlows, STAFF_SCALE, STAFF_PINK } from './staffMesh.js';
+import { STAFF_SCALE, STAFF_PINK } from './staffMesh.js';
+import { kitOf } from './weaponKit.js';   // Phiên 224: bảng đồ nghề gậy phát sáng (nhuy / tre)
+import { createWolfFx } from './wolfFx.js';   // Phiên 224: sói khí vàng đòn 3 của Gậy dạy chó
+import { wolfRange, headingTo } from '../world/wolfMath.js';
+import { BASIC } from '../world/basicCombo.js';
 import { buildHat, HAT_POS } from './hatMesh.js';
 import { createDragonFx, countHit } from './dragonFx.js';
 import { ITEM_IMG } from '../data/itemImages.js';   // 14/11: ảnh món trong khung cửa hàng
@@ -44,7 +48,11 @@ export function initItems({ toast = () => {} } = {}) {
   const laNow = () => (LGT.merit && LGT.merit.leaf ? LGT.merit.leaf.la : 0);
   const spend = (n) => !!(LGT.merit && LGT.merit.spendLa && LGT.merit.spendLa(n));
   const hatOn = () => hatWorn(st);
-  const staffOn = () => st.staff && (!LGT.loadout || LGT.loadout.weapon === 'nhuy');   // đang cầm Gậy như ý (chưa có hệ chọn đồ thì coi như cầm nếu đã mua)
+  // Phiên 224: đang cầm gậy phát sáng nào? 'nhuy' = Gậy như ý (chưa có hệ chọn đồ thì coi như cầm nếu đã mua) · 'tre' = Gậy dạy chó (phải chọn ở Túi đồ) · null = Thương mặc định.
+  const heldKind = () => { const w = LGT.loadout ? LGT.loadout.weapon : null; if (st.staff && (!w || w === 'nhuy')) return 'nhuy'; if (st.tre && w === 'tre') return 'tre'; return null; };
+  const staffOn = () => heldKind() === 'nhuy';
+  const bambooOn = () => heldKind() === 'tre';
+  const holdDmg = () => { const k = heldKind(); return k === 'nhuy' ? dMul(st) : k === 'tre' ? BAMBOO.dmg : 1; };   // +1% sát thương cho cả hai gậy
 
   // ---------- Cửa hàng ----------
   const box = el('section', 'it-box'); box.hidden = true; box.setAttribute('role', 'dialog');
@@ -67,6 +75,14 @@ export function initItems({ toast = () => {} } = {}) {
     st = r.state; save();
     if (LGT.loadout) LGT.loadout.choose('nhuy', true);   // mua xong tự cầm gậy (đổi lại Thương ở Túi đồ)
     draw(); toast(`Đã mua ${STAFF.ten} (−${r.cost} lá bồ đề). Bạn đang cầm gậy — đổi vũ khí ở Túi đồ.`, 4200);
+  }
+  async function buyBambooUi() {   // Phiên 224: Gậy dạy chó 150 lá
+    const ok = await confirm(`${BAMBOO.ten} — ${BAMBOO.gia} lá bồ đề.\n${BAMBOO.mo}\nBạn đang có ${laNow()} lá bồ đề. Mua không?`); if (!ok) return;
+    const r = buyBamboo(st, laNow()); if (!r.ok) { toast(r.reason === 'owned' ? 'Bạn đã có Gậy dạy chó rồi.' : `Chưa đủ lá bồ đề (cần ${r.cost}, bạn có ${laNow()}).`, 3600); return; }
+    if (!spend(r.cost)) { toast('Chưa đủ lá bồ đề.', 2500); return; }
+    st = r.state; save();
+    if (LGT.loadout) LGT.loadout.choose('tre', true);   // mua xong tự cầm gậy
+    draw(); toast(`Đã mua ${BAMBOO.ten} (−${r.cost} lá bồ đề). Bạn đang cầm gậy — đổi vũ khí ở Túi đồ.`, 4200);
   }
   async function buyHatUi() {
     const ok = await confirm(`${HAT.ten} — ${HAT.gia} lá bồ đề.\n${HAT.mo}\nBạn đang có ${laNow()} lá bồ đề. Mua không?`); if (!ok) return;
@@ -106,6 +122,7 @@ export function initItems({ toast = () => {} } = {}) {
       const bd = LGT.board ? LGT.board.status() : { van: false };
       list.appendChild(row(BOARD.ten, `Ván trượt 3D: lướt đi nhanh gấp ${String(BOARD.mul).replace('.', ',')} lần. Ván KHÔNG phải vũ khí (không đánh được); đánh nhau thì tự xuống.`, `Giá ${BOARD.gia} lá${bd.van ? ' · Bạn đã có' : ''}`, bd.van ? 'Đã có' : 'Mua', !bd.van && la >= BOARD.gia, async () => { if (LGT.board) await LGT.board.buy(); draw(); }));
       list.appendChild(row(STAFF.ten, STAFF.mo, `Giá ${STAFF.gia} lá${st.staff ? ' · Bạn đã có' : ''}`, st.staff ? 'Đã có' : 'Mua', !st.staff && la >= STAFF.gia, buyStaffUi));
+      list.appendChild(row(BAMBOO.ten, BAMBOO.mo, `Giá ${BAMBOO.gia} lá${st.tre ? ' · Bạn đã có' : ''}`, st.tre ? 'Đã có' : 'Mua', !st.tre && la >= BAMBOO.gia, buyBambooUi));
       list.appendChild(row(HAT.ten, HAT.mo, `Giá ${HAT.gia} lá · +3% giáp${st.hat ? (hatOn() ? ' · Bạn đang đội' : ' · Bạn đã có, đang cất') : ''}`, st.hat ? (hatOn() ? 'Cất nón' : 'Đội nón') : 'Mua', st.hat || la >= HAT.gia, st.hat ? toggleHatUi : buyHatUi));
     }
   }
@@ -159,7 +176,7 @@ export function initItems({ toast = () => {} } = {}) {
   }
 
   // ---------- Rồng hồng (Phiên 163): cầm Gậy như ý, đánh thường đủ 3 đòn liên tiếp → rồng bay quanh người ----------
-  let dragon = null, hitSt = null;
+  let dragon = null, hitSt = null, wolf = null;
   function onNormalHit(av) {
     hitSt = countHit(hitSt, performance.now() / 1000); if (!hitSt.fire) return;
     const scene = av.group && av.group.parent; if (!scene) return;
@@ -173,18 +190,19 @@ export function initItems({ toast = () => {} } = {}) {
     av.__items = true;
     let host = null; av.group.traverse((o) => { if (!host && o.isBone && o.name === 'handR') host = o.children.find((c) => c.isGroup && c.rotation.order === 'YXZ') || null; });   // nhóm cây côn nằm TRONG bàn tay phải (Phiên 204: group nhân vật cũng 'YXZ' nên không được dò theo order một mình)
     if (!host) av.group.traverse((o) => { if (!host && o !== av.group && o.isGroup && o.rotation.order === 'YXZ' && o.children.length >= 4) host = o; });   // dự phòng cho thân không có bone handR
-    if (host) skin = { host, orig: host.children.slice(), mesh: null };
-    const bh = av.backHost; if (bh) skinB = { host: bh, orig: bh.children.slice(), mesh: null };   // Phiên 152: Gậy như ý cũng thu gọn sau lưng khi không đánh
+    if (host) skin = { host, orig: host.children.slice(), mesh: null, kind: '' };
+    const bh = av.backHost; if (bh) skinB = { host: bh, orig: bh.children.slice(), mesh: null, kind: '' };   // Phiên 152: Gậy như ý cũng thu gọn sau lưng khi không đánh
     if (av.headHost) skinH = { host: av.headHost, mesh: null, av };   // Phiên 154: nón Jingasa trên đầu (chỉ chibi có headHost)
     const upd = av.update.bind(av);
     av.update = (dt) => {
       upd(dt); clock += dt; stepRipples(dt);
       if (dragon) dragon.update(dt, av.group.position);   // Phiên 163: rồng hồng bay theo người chơi
-      if (skin) {
-        const want = staffOn();
-        if (want && !skin.mesh) { for (const c of skin.orig) c.visible = false; skin.mesh = buildStaff(); skin.mesh.scale.setScalar(STAFF_SCALE); skin.host.add(skin.mesh); loadStaffGlb(skin.mesh); }   // Phiên 149: gậy to hơn cây côn mặc định
-        else if (!want && skin.mesh) { skin.host.remove(skin.mesh); skin.mesh = null; for (const c of skin.orig) c.visible = true; }   // đổi về Thương: trả cây côn mặc định
-        if (skin.mesh) pulseGlows(skin.mesh, clock, !!av.swinging);
+      if (wolf) wolf.update(dt);                           // Phiên 224: sói khí vàng
+      if (skin) {   // Phiên 224: cây trên tay theo bảng KIT (nhuy / tre); đổi gậy → dựng lại
+        const kit = kitOf(heldKind());
+        if (skin.mesh && (!kit || skin.kind !== kit.id)) { skin.host.remove(skin.mesh); skin.mesh = null; skin.kind = ''; if (!kit) for (const c of skin.orig) c.visible = true; }   // đổi về Thương: trả cây côn mặc định
+        if (kit && !skin.mesh) { for (const c of skin.orig) c.visible = false; skin.mesh = kit.build(); skin.kind = kit.id; skin.mesh.scale.setScalar(kit.scale); skin.host.add(skin.mesh); kit.load(skin.mesh); }   // Phiên 149: gậy to hơn cây côn mặc định
+        if (skin.mesh) kitOf(skin.kind).pulse(skin.mesh, clock, !!av.swinging);
       }
       if (skinH) {   // Phiên 154: đội / cất nón theo trạng thái đã mua
         const wantH = hatOn();
@@ -192,18 +210,19 @@ export function initItems({ toast = () => {} } = {}) {
         else if (!wantH && skinH.mesh) { skinH.host.remove(skinH.mesh); skinH.mesh = null; if (skinH.av.setHat) skinH.av.setHat(false); }
       }
       if (skinB) {   // Phiên 152: trên lưng — chỉ thay hình, hiện/ẩn do avatar tự lo (backHost.visible)
-        const wantB = staffOn();
-        if (wantB && !skinB.mesh) { for (const c of skinB.orig) c.visible = false; skinB.mesh = buildStaff(); skinB.mesh.scale.setScalar(STAFF_SCALE * 0.7); skinB.host.add(skinB.mesh); loadStaffGlb(skinB.mesh); }
-        else if (!wantB && skinB.mesh) { skinB.host.remove(skinB.mesh); skinB.mesh = null; for (const c of skinB.orig) c.visible = true; }
-        if (skinB.mesh) pulseGlows(skinB.mesh, clock, false);
+        const kitB = kitOf(heldKind());
+        if (skinB.mesh && (!kitB || skinB.kind !== kitB.id)) { skinB.host.remove(skinB.mesh); skinB.mesh = null; skinB.kind = ''; if (!kitB) for (const c of skinB.orig) c.visible = true; }
+        if (kitB && !skinB.mesh) { for (const c of skinB.orig) c.visible = false; skinB.mesh = kitB.build(); skinB.kind = kitB.id; skinB.mesh.scale.setScalar(kitB.scale * 0.7); skinB.host.add(skinB.mesh); kitB.load(skinB.mesh); }
+        if (skinB.mesh) kitOf(skinB.kind).pulse(skinB.mesh, clock, false);
       }
     };
     const sw = av.swing;
     if (typeof sw === 'function') av.swing = (...a) => {
       const r = sw.apply(av, a);
-      if (staffOn()) {
-        spawnRipple(STAFF_PINK, 1.5 * STAFF_SCALE, 2);   // Phiên 149: vòng sáng hồng
-        if (typeof a[0] !== 'number') { try { onNormalHit(av); } catch (e) { /* hiệu ứng rồng lỗi không làm hỏng đòn đánh */ } }   // swing(số) = chiêu Chém khí, không tính là đánh thường
+      const hk = kitOf(heldKind());
+      if (hk) {
+        spawnRipple(hk.color, 1.5 * hk.scale, 2);   // Phiên 149: vòng sáng hồng (Gậy như ý) · Phiên 224: vàng (Gậy dạy chó)
+        if (hk.id === 'nhuy' && typeof a[0] !== 'number') { try { onNormalHit(av); } catch (e) { /* hiệu ứng rồng lỗi không làm hỏng đòn đánh */ } }   // swing(số) = chiêu Chém khí, không tính là đánh thường
       }
       return r;
     };
@@ -211,7 +230,7 @@ export function initItems({ toast = () => {} } = {}) {
 
   // ---------- +1% sát thương khi đang cầm Gậy như ý ----------
   function dmgTick() {
-    const mons = LGT.farmView && LGT.farmView.mons; if (!mons || !mons.length) return; const k = staffOn() ? dMul(st) - 1 : 0;
+    const mons = LGT.farmView && LGT.farmView.mons; if (!mons || !mons.length) return; const k = holdDmg() - 1;   // Phiên 224: cả Gậy như ý và Gậy dạy chó +1%
     for (const m of mons) {
       const prev = m.__oi;
       if (k > 0 && prev !== undefined && m.oan < prev) { const extra = (prev - m.oan) * k; if (m.oan - extra > 0.5) m.oan -= extra; }
@@ -220,6 +239,19 @@ export function initItems({ toast = () => {} } = {}) {
   }
   setInterval(() => { try { wrapAvatar(); dmgTick(); } catch (e) { /* không để hỏng game */ } }, 100);
 
+  // ---------- Gậy dạy chó (Phiên 224): mỗi đòn đánh thường nghe tiếng GỖ; đòn THỨ 3 thả SÓI KHÍ VÀNG vồ về phía quái ----------
+  // farm.js / yeuquai.js gọi LGT.items.onHit(step, target) mỗi đòn đánh thường (step 1..3; target = quái bị đánh hoặc null khi vung không khí) và nhân sát thương bằng LGT.items.finisherMul() ở đòn 3.
+  function onHit(step, target) {
+    if (!bambooOn()) return;
+    try { if (LGT.sfx && LGT.sfx.wood) LGT.sfx.wood(step); } catch (_) { /* tiếng lỗi không làm hỏng đòn đánh */ }
+    if (step < BASIC.steps) return;
+    const av = LGT.world && LGT.world.avatar, scene = av && av.group && av.group.parent; if (!scene) return;
+    if (!wolf || wolf.scene !== scene) { if (wolf) wolf.clear(); wolf = createWolfFx(scene, { onBite: () => { try { if (LGT.sfx && LGT.sfx.wood) LGT.sfx.wood(2); } catch (_) { /* bỏ qua */ } } }); }   // đổi cảnh (vào / ra nhà...) thì dựng bộ sói mới
+    const p = av.group.position, ry = av.group.rotation.y;
+    const gap = target && Number.isFinite(+target.x) && Number.isFinite(+target.z) ? Math.hypot(target.x - p.x, target.z - p.z) : 0;
+    if (wolf.spawn({ x: p.x, y: p.y, z: p.z }, target ? headingTo(p, target, ry) : ry, wolfRange(gap))) spawnRipple(kitOf('tre').color, 0, 3);
+  }
+
   function tryRevive() {
     if (!canRevive(st)) return false;
     spawnRipple(0x7fd0ff, 0, 3);
@@ -227,6 +259,6 @@ export function initItems({ toast = () => {} } = {}) {
     return true;
   }
 
-  LGT.items = { openShop, closeShop, regenMul: () => rMul(st), tryRevive, get pinned() { return pin; }, dmgMul: () => (staffOn() ? dMul(st) : 1), armorMul: () => aMul(st), afterArmor: (d) => aAfter(d, st), get state() { return st; }, get staff() { return st.staff; } };
+  LGT.items = { openShop, closeShop, regenMul: () => rMul(st), tryRevive, get pinned() { return pin; }, dmgMul: holdDmg, finisherMul: () => (bambooOn() ? fMul(st) : 1), onHit, get bambooOn() { return bambooOn(); }, get bamboo() { return st.tre; }, armorMul: () => aMul(st), afterArmor: (d) => aAfter(d, st), get state() { return st; }, get staff() { return st.staff; } };
   return LGT.items;
 }
