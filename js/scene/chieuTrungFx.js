@@ -37,7 +37,7 @@ export function createChieuTrungFx(scene, { getTier = () => 'vua', onShake = () 
       const plan = phanUngTrung({ muc, co: tg.co || 'thuong', luc: o.luc == null ? 0.5 : o.luc, ...hg });
       const M = plan, gx = M.giat[0], gz = M.giat[1], T = Math.max(0.08, M.giatMs / 1000), cao = tg.dai || 2.2;
       // 1) giật + lùi (+ nghiêng/ngã): ra nhanh, về chậm. Giật theo hướng thân bị đẩy (ngược hướng đòn).
-      add({ t: 0, life: T * 2.2 + (M.nga ? 0.5 : 0), upd(t) {
+      if (!tg.khongGiat) add({ t: 0, life: T * 2.2 + (M.nga ? 0.5 : 0), upd(t) {
         const out = ease(t / (T * 0.45)), back = t > T * 0.45 ? ease((t - T * 0.45) / (T * 1.75)) : 0, k = Math.max(0, out - back), pen = M.nga ? Math.max(0, 1 - Math.max(0, t - T * 2.2) / 0.5) : 0;
         g.position.set(p0.x + gx * M.lui * k, p0.y, p0.z + gz * M.lui * k);
         g.rotation.set(r0.x + (-gz) * 0.35 * k + (M.nga ? -gz * 1.1 * pen * k : 0), r0.y + M.xoay * k, r0.z + gx * 0.35 * k + (M.nga ? gx * 1.1 * pen * k : 0));
@@ -46,14 +46,14 @@ export function createChieuTrungFx(scene, { getTier = () => 'vua', onShake = () 
       const c = wpos(tg); c.y += cao * 0.55;
       const fl = new THREE.Mesh(new THREE.SphereGeometry(M.tia === 'lon' ? 0.55 : 0.3, 10, 8), new THREE.MeshBasicMaterial({ color: 0xfff1c9, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false })); fl.position.copy(c); scene.add(fl);
       add({ t: 0, life: 0.14, upd(t) { const k = t / 0.14; fl.scale.setScalar(0.6 + k * 1.2); fl.material.opacity = 0.9 * (1 - k); }, done() { dispose1(fl); } });
-      if (M.songChan && !nhe()) {
+      if (M.songChan && !nhe() && !o.gon) {
         const w = new THREE.Mesh(new THREE.RingGeometry(0.85, 1, 32), new THREE.MeshBasicMaterial({ color: 0xffd9a0, transparent: true, opacity: 0.7, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide })); w.rotation.x = -Math.PI / 2; w.position.set(p0.x, p0.y + 0.1, p0.z); scene.add(w);
         add({ t: 0, life: 0.45, upd(t) { const k = ease(t / 0.45); w.scale.setScalar(0.3 + 2.4 * k); w.material.opacity = 0.7 * (1 - k); }, done() { dispose1(w); } });
       }
       // 3) khựng hình + rung màn (chỉ báo cho nơi gọi; khựng chỉ nên áp cho hai nhân vật liên quan)
-      if (M.dungMs > 0) onHitStop(M.dungMs / 1000); if (M.rung > 0) onShake(M.rung);
+      if (!o.gon) { if (M.dungMs > 0) onHitStop(M.dungMs / 1000); if (M.rung > 0) onShake(M.rung); }
       // 4) số sát thương nảy lên
-      if (o.damage != null) {
+      if (o.damage != null && !o.gon) {
         const ks = kieuSo({ loai: o.loai || (o.ketLieu ? 'ketLieu' : o.chiMang ? 'chiMang' : 'thuong'), muc: M.muc }), sp = chuSprite(String(Math.round(o.damage)), ks.mau, ks.co);
         if (sp) { const lech = (Math.random() - 0.5) * 2, b = wpos(tg); sp.position.copy(b); scene.add(sp); add({ t: 0, life: SO.song, upd(t) { const s = soNay(t, { lech }); sp.position.set(b.x + s.x, b.y + s.y * (cao / 2.2), b.z); sp.scale.set(1.6 * s.scale, 0.6 * s.scale, 1); sp.material.opacity = s.alpha; }, done() { dispose1(sp); } }); }
       }
@@ -98,8 +98,20 @@ export function createChieuTrungFx(scene, { getTier = () => 'vua', onShake = () 
     } catch (_) { return null; }
   }
 
+  /**
+   * Phiên 213 (mục 1): trúng đòn tại một ĐIỂM thế giới — dành cho quái mà thân đã được cảnh tự vẽ (js/scene/farm.js tự giật/ngã theo m.rx), nên mục tiêu ở đây là điểm giả KHÔNG giật.
+   * pos = { x, y?, z }; info = { ry?, co?, dai? }; o như hit() (+ gon: true → chỉ báo nhẹ, bỏ tia/sóng/số/rung). Trả kế hoạch hoặc null.
+   */
+  function hitAt(pos, info = {}, o = {}) {
+    try {
+      if (!pos || !Number.isFinite(+pos.x) || !Number.isFinite(+pos.z)) return null;
+      const g = new THREE.Object3D(); g.position.set(+pos.x, Number.isFinite(+pos.y) ? +pos.y : 0, +pos.z); g.updateMatrixWorld(true);
+      return hit({ g, ry: info.ry || 0, co: info.co || 'thuong', dai: info.dai || 2.2, khongGiat: true }, o);
+    } catch (_) { return null; }
+  }
+
   return {
-    hit, phanUng, status,
+    hit, hitAt, phanUng, status,
     clear() { for (const f of fx.splice(0)) { try { f.done && f.done(); } catch (_) { /* bỏ qua */ } } for (const st of states.values()) { try { st.free(); } catch (_) { /* bỏ qua */ } } states.clear(); if (raf) { cancelAnimationFrame(raf); raf = 0; } },
     get active() { return fx.length + states.size; },
     dispose() { this.clear(); },
