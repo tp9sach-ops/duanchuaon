@@ -3,6 +3,7 @@
 // Cách chạy: bấm → nhân vật tự quay về phía yêu quái, nâng côn lên rồi chém xuống (avatar.swing) → sau RELEASE_S giây luồng khí rời côn (đẩy vào LGT.yqView.waves, js/scene/yeuquai.js vẽ theo đồng hồ riêng,
 // KHÔNG cần vòng lặp thời gian ở đây) → khí chạm yêu quái thì gây sát thương qua LGT.yq.ramHit. Không dùng setInterval: hồi chiêu tính bằng mốc thời gian, hiệu ứng dùng setTimeout một lần.
 import { COOLDOWN_S, SWING_S, RELEASE_S, RANGE, SPEED, khiDamage, aim, planWave, gapTo } from '../world/conKhi.js';
+import { manaPool, MANA } from '../world/mana.js';   // Phiên 215 (mục 2): Chém khí tốn Chân khí
 import { YQ } from '../world/yeuquai.js';
 import { tone } from './sound.js';
 import { loadSettings } from './soundLogic.js';
@@ -44,6 +45,7 @@ export function initConKhi({ toast = () => {} } = {}) {
     const w = W(), p = w.pos, body = bodyOf(b), g = gapTo(p, b, body);
     if (g > RANGE) { toast(`Yêu quái còn xa quá (khí bay được ${RANGE} m), lại gần hơn rồi chém.`, 2000); return false; }
     if (cdLeft() > 0) { toast(`Côn Khí Trảm đang hồi, đợi ${Math.ceil(cdLeft())} giây.`, 1400); return false; }
+    const pool = manaPool(LGT); if (!pool.spend(MANA.khi)) { toast(`Không đủ Chân khí cho Côn Khí Trảm: cần ${MANA.khi}, còn ${Math.floor(pool.value)}.`, 2200); return false; }
     cdUntil = now() + COOLDOWN_S * 1000;
     w.face(aim(p, w.facing, b, body).ry);                       // quay mặt về phía yêu quái ngay
     if (w.avatar && w.avatar.swing) w.avatar.swing(SWING_S);   // côn hiện ra, vung lên chém xuống
