@@ -36,6 +36,7 @@ export function initRoom() {
     return local ? { kind: 'local', name: 'Cục bộ', call: local, close: local.close } : null;
   };
   const gearView = createGearView();
+  const avById = new Map(); let curRid = '';   // Phiên 220: nhân vật 3D của người khác theo id mạng (roomClient.frame gọi xform(p) rồi applyGear(av) cùng một người trong mỗi vòng) — để phát lại đòn/chiêu của họ (js/net/combatLink.js)
   /** Phiên 166: đồ MÌNH đang dùng → chuỗi gửi qua mạng ('' = không có gì). Tính từ LGT.items.state (js/ui/items.js) + LGT.loadout + LGT.board.status(); lỗi / chưa nạp thì coi như không có. */
   const selfGear = () => {
     try {
@@ -55,8 +56,8 @@ export function initRoom() {
     call: manager.call, scene, pageId: newId(), roomOf: (base) => (LGT.zones ? LGT.zones.roomKey(base) : base), onOnline: setOnline,
     onChat: (c) => document.dispatchEvent(new CustomEvent('lgt:chat', { detail: { name: c.name, text: c.text, mine: false } })),
     makeAvatar: (p) => createAvatar({ name: p.name, color: p.color, hair: p.hair, mine: false }),
-    applyGear: (av, tok, dt) => gearView.apply(av, tok, dt), dropGear: (av) => gearView.drop(av),     // Phiên 166: đồ của người khác
-    xform: (p) => { if (!(LGT.zones && LGT.zones.current === ARENA.id) || !inNetBox(p.x, p.z)) return p; return fromNet(p.x, p.z); },   // võ đài: đổi vị trí đối thủ từ khung ±200 về tọa độ võ đài
+    applyGear: (av, tok, dt) => { if (curRid) avById.set(curRid, av); gearView.apply(av, tok, dt); }, dropGear: (av) => { for (const [k, v] of [...avById]) if (v === av) avById.delete(k); gearView.drop(av); },     // Phiên 166: đồ của người khác
+    xform: (p) => { curRid = p.id; if (!(LGT.zones && LGT.zones.current === ARENA.id) || !inNetBox(p.x, p.z)) return p; return fromNet(p.x, p.z); },   // võ đài: đổi vị trí đối thủ từ khung ±200 về tọa độ võ đài
     onSignal: (id, name, text) => { for (const f of [...sigListeners]) { try { f(id, name, text); } catch (e) { console.warn('[Diệu Giang Tự] Giao lưu lỗi:', e && e.message); } } },
     selfPose: () => { const p = W.pos; return { x: p.x, y: p.y, z: p.z, r: W.avatar.group.rotation.y }; },     // Phiên 91: vị trí vai của mình để đặt người đang khiêng
     getSelf() {
@@ -81,6 +82,17 @@ export function initRoom() {
   LGT.room.signal = (text) => client.signal(text);
   LGT.room.onSignal = (f) => { sigListeners.add(f); return () => sigListeners.delete(f); };
   LGT.room.selfId = () => { const tr = manager.transport; return (tr && tr.uid) || client.pageId; };
+  // Phiên 220 (mục 1): MỌI NGƯỜI THẤY CHIẾN ĐẤU CỦA NHAU — đòn đánh, chiêu, hiệu ứng, âm thanh, quái đang bị đánh + máu quái + động tác quái (js/net/combatLink.js, logic js/world/combatShare.js). Lỗi thì vẫn chơi như cũ.
+  Promise.all([import('./combatLink.js'), import('../scene/slashFx.js'), import('../scene/chieuFx.js'), import('../scene/farm.js'), import('../world/chieuFxPlan.js')]).then(([cl, sl, cf, fm, plan]) => {
+    const castFxer = cf.createChieuFx(scene, { getTier: () => plan.tierOf(LGT.perfLevel) });   // bộ hiệu ứng chiêu RIÊNG cho chiêu của người khác (không rung màn hình / không đứng hình của mình)
+    const ghostView = fm.buildFarm(); scene.add(ghostView.group);                               // bộ vẽ quái RIÊNG cho bóng quái của người khác
+    const link = cl.createCombatLink({
+      LGT, W, getTransport: () => manager.transport, avatarOf: (id) => avById.get(id) || null, roomOf: () => (LGT.zones ? LGT.zones.roomKey('main') : 'main'),
+      makeSlash: () => sl.createSlashFx(scene), castFx: (id, o) => castFxer.cast(id, o), ghostView, getCamera: () => (LGT.view && LGT.view.camera) || null,
+      skipOut: () => !!(LGT.zones && LGT.zones.current === ARENA.id),   // Võ đài có kênh gói riêng (js/ui/duel.js): không phát đòn Võ đài ra kênh chiến đấu bãi rừng
+    });
+    LGT.combatLink = link; link.start();
+  }).catch((e) => console.warn('[Diệu Giang Tự] Đồng bộ chiến đấu lỗi:', e && e.message));
   import('../ui/duel.js').then((m) => m.initDuel({ toast: (t, ms) => LGT.toast && LGT.toast(t, ms) })).catch((e) => console.warn('[Diệu Giang Tự] Giao lưu võ thuật lỗi:', e && e.message));
   return client;
 }

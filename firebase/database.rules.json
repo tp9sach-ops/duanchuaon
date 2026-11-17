@@ -20,6 +20,18 @@
         "$other": { ".validate": false }
       }
     },
+    "combat": {
+      ".read": "auth != null",
+      "$uid": {
+        ".write": "auth != null && auth.uid === $uid",
+        ".validate": "newData.hasChildren(['t'])",
+        "t": { ".validate": "newData.isNumber()" },
+        "r": { ".validate": "newData.isString() && newData.val().length <= 40 && newData.val().matches(/^[A-Za-z0-9_.:-]*$/)" },
+        "a": { ".validate": "newData.isString() && newData.val().length <= 600 && newData.val().matches(/^[A-Za-z0-9_.,;:-]*$/)" },
+        "m": { ".validate": "newData.isString() && newData.val().length <= 800 && newData.val().matches(/^[A-Za-z0-9_.,;:-]*$/)" },
+        "$other": { ".validate": false }
+      }
+    },
     "chat": {
       ".read": "auth != null",
       ".indexOn": ["t"],

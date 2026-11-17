@@ -2,6 +2,7 @@
 // Trả về đối tượng có call(req) GIỐNG callApi('sync'), nên roomClient dùng nguyên, không cần biết đang chạy trên đường nào.
 // KHÔNG import three.js/DOM: SDK Firebase được đưa vào qua loadSdk() nên kiểm thử được bằng Node với Firebase giả.
 import { ROOM_CFG, cleanPlayer, chatOk, validId } from '../engines/room.js';
+import { COMBAT, COMBAT_CHARSET } from '../world/combatShare.js';   // Phiên 220: kênh chiến đấu /combat/{uid} (đòn, chiêu, quái đang đánh), TÁCH khỏi /players: luật cũ chưa có nhánh này cũng KHÔNG làm người chơi biến mất
 
 export const FIREBASE_SDK_VERSION = '11.0.2';
 const STALE_MS = 15000;       // quá hạn này không nhận được tin gì từ một người thì coi như họ đã rời
@@ -22,11 +23,12 @@ export async function loadFirebaseSdk(version = FIREBASE_SDK_VERSION, imp = (u) 
 
 /**
  * opts: { config, name, loadSdk() → Promise<sdk>, now, maxPlayers }
- * Dữ liệu: /players/{uid} = {n,c,h,x,y,z,r,s,t} + `i` (vật phẩm đang dùng, Phiên 166; chỉ có khi có đồ) · /chat/{pushId} = {id,n,m,t}. Mỗi lần mở trang là một uid mới (đăng nhập ẩn danh, không lưu).
+ * Dữ liệu: /players/{uid} = {n,c,h,x,y,z,r,s,t} + `i` (vật phẩm đang dùng, Phiên 166; chỉ có khi có đồ) · /chat/{pushId} = {id,n,m,t} · /combat/{uid} = {t, r (phòng), a (hành động), m (quái đang đánh)} (Phiên 220; js/world/combatShare.js). Mỗi lần mở trang là một uid mới (đăng nhập ẩn danh, không lưu).
  */
 export function createFirebaseTransport({ config, name = 'Firebase', loadSdk, now = () => Date.now(), maxPlayers = ROOM_CFG.maxPlayers, appName }) {
   let sdk = null, app = null, db = null, uid = '', myRef = null, connected = false, closed = false;
-  const players = new Map(), chatSeen = new Set(), unsubs = [];
+  const players = new Map(), chatSeen = new Set(), unsubs = [], combatIn = new Map();   // combatIn (Phiên 220): gói chiến đấu mới nhất của từng người khác
+  let combatBlocked = false, cRef = null, cEpoch = 0, cDiscEpoch = -1;   // combatBlocked: luật Firebase chưa có nhánh /combat → thôi gửi (người chơi vẫn hiện bình thường)
   let chatLog = [], seq = 0, lastKey = '', lastSend = 0, lastChat = 0, lastSig = 0, gearBlocked = false;   // gearBlocked (Phiên 166): luật Firebase cũ từ chối trường `i` → thôi gửi `i`, người chơi vẫn hiện bình thường
   const API = { kind: 'firebase', name };
 
@@ -42,7 +44,7 @@ export function createFirebaseTransport({ config, name = 'Firebase', loadSdk, no
       await new Promise((resolve) => {                       // chờ WebSocket nối được; mỗi lần nối lại thì đăng ký lại "tự xóa khi rớt mạng"
         unsubs.push(sdk.onValue(sdk.ref(db, '.info/connected'), (s) => {
           connected = !!s.val();
-          if (connected) { try { sdk.onDisconnect(myRef).remove().catch(() => {}); } catch (_) { /* bỏ qua */ } resolve(); }
+          if (connected) { cEpoch++; try { sdk.onDisconnect(myRef).remove().catch(() => {}); } catch (_) { /* bỏ qua */ } resolve(); }
         }));
       });
       const playersRef = sdk.ref(db, 'players'), snap = await sdk.get(playersRef), val = (snap && snap.val()) || {};
@@ -53,6 +55,11 @@ export function createFirebaseTransport({ config, name = 'Firebase', loadSdk, no
         const p = cleanPlayer({ ...v, id: k }); if (p) players.set(k, { p, seen: now() });
       }
       if (others >= maxPlayers) throw new Error('room_full');
+      try {   // Phiên 220: nghe gói chiến đấu của người khác; lỗi (luật chưa có nhánh /combat, SDK lạ) thì bỏ qua — vẫn thấy nhau đi lại như cũ
+        const cq = sdk.ref(db, 'combat'), cErr = () => { /* không đọc được /combat: bỏ qua */ };
+        const cUp = (c) => { if (c.key === uid) return; const v = c.val(); if (v && typeof v === 'object') combatIn.set(c.key, { id: c.key, r: typeof v.r === 'string' ? v.r : '', a: typeof v.a === 'string' ? v.a : '', m: typeof v.m === 'string' ? v.m : '', t: Number(v.t) || 0, seen: now() }); };
+        unsubs.push(sdk.onChildAdded(cq, cUp, cErr), sdk.onChildChanged(cq, cUp, cErr), sdk.onChildRemoved(cq, (c) => { combatIn.delete(c.key); }, cErr));
+      } catch (_) { /* bỏ qua */ }
       const upsert = (s) => { if (s.key === uid) return; const p = cleanPlayer({ ...s.val(), id: s.key }); if (p) players.set(s.key, { p, seen: now() }); };
       unsubs.push(sdk.onChildAdded(playersRef, upsert), sdk.onChildChanged(playersRef, upsert), sdk.onChildRemoved(playersRef, (s) => { players.delete(s.key); }));
       const chatQ = sdk.query(sdk.ref(db, 'chat'), sdk.limitToLast(CHAT_KEEP)), cs = await sdk.get(chatQ);
@@ -96,13 +103,37 @@ export function createFirebaseTransport({ config, name = 'Firebase', loadSdk, no
     return { ok: true, players: list, chat: chatLog.filter((c) => c.seq > since).map((c) => ({ ...c })), seq, count: list.length + 1, pollMs: 250, minPollMs: 200, hiddenMs: 4000, follow: 5 };
   };
 
+  /**
+   * Phiên 220: gửi gói chiến đấu của MÌNH { r, a?, m? } (hộp gửi js/world/combatShare.js đã điều tiết nhịp). Trả true nếu đã đưa lên đường truyền.
+   * Luật Firebase từ chối (chưa dán lại firebase/database.rules.json) → combatBlocked: thôi gửi, in một dòng nhắc; KHÔNG ảnh hưởng vị trí/đồ/chat.
+   */
+  API.sendCombat = (pkt) => {
+    if (closed || !db || !connected || combatBlocked || !pkt || typeof pkt !== 'object') return false;
+    const rec = { t: now() };
+    if (typeof pkt.r === 'string') rec.r = pkt.r.slice(0, 40);
+    if (typeof pkt.a === 'string' && pkt.a && pkt.a.length <= COMBAT.maxA && COMBAT_CHARSET.test(pkt.a)) rec.a = pkt.a;
+    if (typeof pkt.m === 'string' && pkt.m && pkt.m.length <= COMBAT.maxM && COMBAT_CHARSET.test(pkt.m)) rec.m = pkt.m;
+    try {
+      if (!cRef) cRef = sdk.ref(db, 'combat/' + uid);
+      if (cDiscEpoch !== cEpoch) { cDiscEpoch = cEpoch; try { sdk.onDisconnect(cRef).remove().catch(() => {}); } catch (_) { /* bỏ qua */ } }   // rớt mạng thì gói chiến đấu của mình tự xóa
+      Promise.resolve(sdk.set(cRef, rec)).catch(() => {
+        if (combatBlocked) return; combatBlocked = true;
+        try { console.warn('[Diệu Giang Tự] Firebase từ chối nhánh /combat: cần dán lại firebase/database.rules.json vào Rules rồi Publish. Tạm thời người khác chưa thấy đòn đánh/quái của bạn.'); } catch (_) { /* bỏ qua */ }
+      });
+    } catch (_) { return false; }
+    return true;
+  };
+  /** Phiên 220: gói chiến đấu mới nhất của từng người khác: [{ id, r, a, m, t, seen }] (bản sao); người im quá STALE_MS×4 mà không còn trong danh sách người chơi bị bỏ. */
+  API.combat = () => { const t = now(); for (const [k, v] of combatIn) if (t - v.seen > STALE_MS * 4 && !players.has(k)) combatIn.delete(k); return [...combatIn.values()].map((v) => ({ ...v })); };
+
   API.close = () => {
     if (closed) return; closed = true;
     for (const off of unsubs.splice(0)) { try { off(); } catch (_) { /* bỏ qua */ } }
     try { if (sdk && myRef) Promise.resolve(sdk.remove(myRef)).catch(() => {}); } catch (_) { /* bỏ qua */ }
+    try { if (sdk && cRef) Promise.resolve(sdk.remove(cRef)).catch(() => {}); } catch (_) { /* bỏ qua */ }
     try { if (sdk && db && sdk.goOffline) sdk.goOffline(db); } catch (_) { /* bỏ qua */ }
     try { if (sdk && app && sdk.deleteApp) Promise.resolve(sdk.deleteApp(app)).catch(() => {}); } catch (_) { /* bỏ qua */ }
-    players.clear();
+    players.clear(); combatIn.clear();
   };
   Object.defineProperty(API, 'uid', { get: () => uid });
   return API;
