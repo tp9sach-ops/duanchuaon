@@ -24,7 +24,7 @@ const num = (x, d = 0) => (Number.isFinite(+x) && x !== null && x !== '' ? +x : 
 const clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
 const I = (v, k) => String(Math.round(num(v) * k));        // số thực → số nguyên chuỗi (k = hệ số nhân)
 const opt = (v, k) => (v == null || !Number.isFinite(+v) ? '' : I(v, k));
-const TAG_RE = /^[a-z]{6}$/, TYPE_RE = /^[a-z]{1,12}$/, POSE_MODES = ['g', 'd', 'r', 'n'], ID_RE = /^[A-Za-z0-9_]{1,40}$/, KEY_RE = /^[A-Za-z0-9]{1,20}:\d{1,6}$/, ROOM_RE = /^[A-Za-z0-9_.:-]{0,40}$/;
+const TAG_RE = /^[a-z]{6}$/, TYPE_RE = /^[a-z]{1,12}$/, POSE_MODES = ['g', 'd', 'r', 's', 'n'], ID_RE = /^[A-Za-z0-9_]{1,40}$/, KEY_RE = /^[A-Za-z0-9]{1,20}:\d{1,6}$/, ROOM_RE = /^[A-Za-z0-9_.:-]{0,40}$/;
 const wrapRy = (a) => { a = num(a); return Math.atan2(Math.sin(a), Math.cos(a)); };
 const FIELDS_OK = (s) => typeof s === 'string' && COMBAT_CHARSET.test(s);
 
@@ -41,10 +41,11 @@ export function packAction(a) {
     const by = a.by == null || a.by === '' ? '' : String(a.by); if (by && !TAG_RE.test(by)) return '';
     return [seq, 'h', a.key, clamp(Math.round(num(a.dmg)), 0, 99999), id, clamp(Math.floor(num(a.i)), 0, 9), a.dead ? 1 : 0, a.nho ? 1 : 0, opt(a.ax, 10), opt(a.az, 10), by].join(',');
   }
-  // Phiên 222: 'd' = MÌNH đánh trúng BÓNG quái của người `owner` (mã 6 chữ) → họ trừ máu quái THẬT (máu dùng chung); 'k' = quái bị hạ bởi `killer` (mã 6 chữ, người đánh đòn cuối) → người đó nhận thưởng; 'f' = tư thế bay lướt / lao (g = bay lướt, d = lao chúi đầu, r = lao chạy, n = hết), tilt = độ chúi (rad)
+  // Phiên 222: 'd' = MÌNH đánh trúng BÓNG quái của người `owner` (mã 6 chữ) → họ trừ máu quái THẬT (máu dùng chung); 'k' = quái bị hạ bởi `killer` (mã 6 chữ, người đánh đòn cuối) → người đó nhận thưởng; 'f' = tư thế bay lướt / lao (g = bay lướt, d = lao chúi đầu, r = lao chạy, s = THẾ SẴN SÀNG CHIẾN ĐẤU (Phiên 223: người khác thấy khom/chân trước-sau NGAY khi bạn vào giao chiến, không đợi tới lúc vung đòn), n = hết), tilt = độ chúi (rad); 'r' = RỒNG HỒNG của Gậy như ý (Phiên 223: mọi người thấy rồng bay quanh người dùng), ry = hướng mặt
   if (a.k === 'd') { if (!KEY_RE.test(String(a.key || '')) || !TAG_RE.test(String(a.owner || ''))) return ''; return [seq, 'd', a.key, a.owner, clamp(Math.round(num(a.dmg)), 1, 99999), opt(a.ax, 10), opt(a.az, 10)].join(','); }
   if (a.k === 'k') { if (!KEY_RE.test(String(a.key || '')) || !TYPE_RE.test(String(a.type || '')) || !MONSTERS[a.type] || !TAG_RE.test(String(a.killer || ''))) return ''; return [seq, 'k', a.key, a.type, a.killer].join(','); }
   if (a.k === 'f') { if (!POSE_MODES.includes(a.mode)) return ''; return [seq, 'f', a.mode, clamp(Math.round(num(a.tilt) * 100), -400, 400)].join(','); }
+  if (a.k === 'r') return [seq, 'r', I(wrapRy(a.ry), 100)].join(',');   // Phiên 223: rồng hồng
   return '';
 }
 const fx = (s) => (s === '' || s == null ? null : num(s) / 10);
@@ -61,6 +62,7 @@ export function unpackAction(s) {
   if (f[1] === 'd' && f.length === 7) { if (!KEY_RE.test(f[2]) || !TAG_RE.test(f[3])) return null; return { k: 'd', seq, key: f[2], owner: f[3], dmg: clamp(num(f[4]), 1, 99999), ax: fx(f[5]), az: fx(f[6]) }; }
   if (f[1] === 'k' && f.length === 5) { if (!KEY_RE.test(f[2]) || !TYPE_RE.test(f[3]) || !MONSTERS[f[3]] || !TAG_RE.test(f[4])) return null; return { k: 'k', seq, key: f[2], type: f[3], killer: f[4] }; }
   if (f[1] === 'f' && f.length === 4) { if (!POSE_MODES.includes(f[2])) return null; return { k: 'f', seq, mode: f[2], tilt: clamp(num(f[3]), -400, 400) / 100 }; }
+  if (f[1] === 'r' && f.length === 3) return { k: 'r', seq, ry: num(f[2]) / 100 };   // Phiên 223: rồng hồng
   return null;
 }
 /** Giải mã cả chuỗi hành động ('a;b;c'): bỏ hành động hỏng. */
@@ -106,7 +108,7 @@ export function createOutbox() {
     setMons(list) { const s = packMons(list); if (s !== mons) { mons = s; dirty = true; } },
     setRoom(r) { r = String(r == null ? '' : r); if (r !== room && ROOM_RE.test(r)) { room = r; if (mons || poseOn) dirty = true; } },   // đổi phòng chỉ đáng gửi khi đang có quái / đang bay (không thì người chơi im lặng KHÔNG ghi gì lên /combat)
     setPose(o) {
-      const mode = o && ['g', 'd', 'r'].includes(o.mode) ? o.mode : 'n', tilt = Math.round(num(o && o.tilt) * 20) / 20, s = packAction({ k: 'f', seq: 0, mode, tilt });
+      const mode = o && ['g', 'd', 'r', 's'].includes(o.mode) ? o.mode : 'n', tilt = Math.round(num(o && o.tilt) * 20) / 20, s = packAction({ k: 'f', seq: 0, mode, tilt });
       if (mode === 'n') { if (poseOn) { pose = s; poseOn = false; dirty = true; } return; }
       if (!poseOn || s !== pose) { pose = s; dirty = true; } poseOn = true;
     },
