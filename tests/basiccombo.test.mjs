@@ -49,7 +49,7 @@ test('nối dây js/ui/farm.js: Đánh thường dùng planTap (không quái / l
   const farm = readFileSync(new URL('../js/ui/farm.js', import.meta.url), 'utf8');
   assert.match(farm, /from '\.\.\/world\/basicCombo\.js'/); assert.match(farm, /from '\.\.\/world\/combo\.js'/);
   assert.match(farm, /planTap\(\{/); assert.match(farm, /if \(plan === 'air'\)/); assert.match(farm, /if \(plan === 'far'\)/); assert.match(farm, /if \(plan === 'dash'\)/);
-  assert.match(farm, /stepMul\(ck\.step\)/); assert.match(farm, /splashTargets\(p, view\.mons, BASIC\.splashR, t\.uid, bodyOf\)/); assert.match(farm, /around\.forEach\(\(m, k\) => hit\(m\.uid/);
+  assert.match(farm, /stepMul\(ck\.step\)/); assert.match(farm, /splashTargets\(p, (?:view\.mons|allMons\(\)), BASIC\.splashR, t\.uid, bodyOf\)/); assert.match(farm, /around\.forEach\(\(m, k\) => hit\(m\.uid/);
   assert.match(farm, /skillHitDir/);
   const fc = readFileSync(new URL('../js/ui/farmCombat.js', import.meta.url), 'utf8');
   assert.match(fc, /m\.oan < m\._o/, 'quái nào Oán Khí giảm thì nổi giận đánh trả');
