@@ -2,6 +2,7 @@
 // Trước đây chỉ máy người mua mới vẽ (js/ui/items.js + js/ui/board.js bọc avatar của CHÍNH MÌNH); nhân vật người khác (js/net/room.js → createAvatar) không có gì nên không ai thấy.
 // Dữ liệu đến từ gói tin mạng (trường `i`, js/world/gearSync.js). Dùng: const gv = createGearView(); roomClient deps: applyGear: (av, tok, dt) => gv.apply(av, tok, dt), dropGear: (av) => gv.drop(av).
 // apply() gọi MỖI KHUNG HÌNH SAU av.update(dt) (roomClient đặt lại vị trí mỗi khung nên cộng độ cao khi cưỡi không bị dồn lại).
+// Phiên 227: người khác cưỡi Gậy dạy chó thì CŨNG có bầy chó chạy theo (js/ui/dogPack.js) — dùng sẵn trường cưỡi `ride === 'tre'` trong gói tin, không thêm gói mạng; xuống gậy thì chó mờ dần rồi biến mất.
 // Chưa đồng bộ (làm sau): vòng sáng lan + rồng hồng khi đánh (cần gói tin "đang vung"), ván GLB 3D (người khác dùng ván khối), thương cưỡi hạ xuống mượt khi vào trận.
 // CHƯA nhìn bằng mắt trên máy thật (môi trường AI không có WebGL): vị trí/độ sáng dùng đúng số của đồ mình tự mang (STAFF_SCALE, HAT_POS, FLY_LIFT...).
 import * as THREE from 'three';
@@ -10,6 +11,7 @@ import { kitOf } from './weaponKit.js';   // Phiên 224: gậy phát sáng theo 
 import { buildBambooMount, pulseBamboo } from './bambooMesh.js';
 import { buildHat, HAT_POS } from './hatMesh.js';
 import { buildSpearMount, buildStaffMount, buildProcBoard, FLY_LIFT, FLY_BOB, VBOB, VBASE } from './board.js';
+import { createDogPack } from './dogPack.js';   // Phiên 227: bầy chó chạy theo người cưỡi Gậy dạy chó
 
 const AURA = { regen: { color: 0x7dffb0, r0: 0.55, r1: 0.78 }, revive: { color: 0x7fd0ff, r0: 0.86, r1: 1.04 } };   // Bánh 3 vị: vòng xanh lá nhỏ · Bánh pho mai than tre: vòng xanh trời lớn
 
@@ -35,7 +37,7 @@ export function createGearView() {
       clock: 0, lift: 0,
       hand: hand ? { host: hand, orig: hand.children.slice(), mesh: null } : null,     // cây gậy trên tay (chỉ hiện khi người đó vào thế đánh; hiện chưa đồng bộ nên thường ẩn)
       back: back ? { host: back, orig: back.children.slice(), mesh: null } : null,     // gậy thu gọn đeo sau lưng
-      hat: null, mounts: null, auras: {},
+      hat: null, mounts: null, auras: {}, dogs: null,
     };
     av.__rg = s; return s;
   }
@@ -115,6 +117,13 @@ export function createGearView() {
       av.group.position.y += s.lift;
     }
 
+    // Phiên 227: bầy chó chạy theo người cưỡi Gậy dạy chó; xuống gậy thì chó mờ dần rồi biến mất (gọi SAU khi đã cộng độ nâng để chó đứng đúng dưới đất)
+    if (g.ride === 'tre' || s.dogs) {
+      if (!s.dogs) s.dogs = createDogPack({ sound: false });
+      s.dogs.update(av, dt, g.ride === 'tre');
+      if (g.ride !== 'tre' && !s.dogs.alive) s.dogs = null;
+    }
+
     aura(av, s, 'regen', g.regen, dt);
     aura(av, s, 'revive', g.revive, dt);
   }
@@ -125,6 +134,7 @@ export function createGearView() {
     for (const slot of [s.hand, s.back]) if (slot && slot.mesh) { slot.host.remove(slot.mesh); if (slot.kind !== 'tre') disposeTree(slot.mesh); slot.mesh = null; slot.kind = ''; for (const c of slot.orig) c.visible = true; }
     if (s.hat && av.headHost) { av.headHost.remove(s.hat); s.hat = null; }
     if (s.mounts) { for (const m of Object.values(s.mounts)) { av.group.remove(m); disposeTree(m); } s.mounts = null; }
+    if (s.dogs) { s.dogs.dispose(); s.dogs = null; }   // Phiên 227: bầy chó của người đó
     for (const a of Object.values(s.auras)) { av.group.remove(a.m); a.m.geometry.dispose(); a.m.material.dispose(); }
     s.auras = {}; av.__rg = null;
   }

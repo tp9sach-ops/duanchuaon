@@ -1,5 +1,5 @@
-// SÓI KHÍ VÀNG (Phiên 224, mục 1): chuyển động con sói vồ ra khi đánh thường đòn THỨ 3 bằng Gậy tre. LOGIC THUẦN (không DOM / three.js), có test: tests/wolffx.test.mjs. Hình khối + vẽ: js/ui/wolfFx.js.
-// Sói sống WOLF.life giây: 0–14% hiện ra sát người → 14–64% PHÓNG tới trước (vồ, há mõm, vọt lên rồi hạ xuống) → 64–72% ngoạm (mõm đóng sập) → mờ dần tan thành khí.
+// SÓI KHÍ VÀNG (Phiên 224, mục 1; nâng cấp Phiên 227): chuyển động con sói vồ ra khi đánh thường đòn THỨ 3 bằng Gậy dạy chó (id nội bộ 'tre'). LOGIC THUẦN (không DOM / three.js), có test: tests/wolffx.test.mjs. Hình khối + vẽ: js/ui/wolfFx.js. Sát thương cú ngoạm: js/ui/wolfHit.js.
+// Sói sống WOLF.life giây: 0–14% hiện ra sát người → 14–64% PHÓNG tới trước (vồ, há mõm, vọt lên rồi hạ xuống) → 64–72% ngoạm (mõm đóng sập, GÂY SÁT THƯƠNG ở đây) → mờ dần tan thành khí.
 // Mọi con số là QUY ƯỚC TẠM (tam: true), chờ ptg chơi thử rồi chỉnh.
 export const WOLF = Object.freeze({
   tam: true,
@@ -8,11 +8,15 @@ export const WOLF = Object.freeze({
   rangeMax: 9,      // m: tầm vồ tối đa
   rangeAir: 6,      // m: tầm vồ khi KHÔNG có quái
   leap: 0.9,        // m: độ vọt lên giữa đường vồ
-  scale: 1.7,       // hệ số to của cả con sói (đầu còn to hơn: HEAD_BIG trong js/ui/wolfFx.js)
+  scale: 2.2,       // hệ số to của cả con sói (Phiên 227: to hơn, trước là 1,7; đầu còn to hơn: HEAD_BIG trong js/ui/wolfFx.js)
   windup: 0.14,     // tỉ lệ vòng đời: hiện ra
   lungeEnd: 0.64,   // tỉ lệ vòng đời: hết phóng, bắt đầu ngoạm
   biteEnd: 0.72,    // tỉ lệ vòng đời: ngoạm xong
   max: 2,           // số sói sống cùng lúc
+  dmgMul: 1.4,      // Phiên 227: sát thương cú ngoạm = dmgMul × sát thương đánh thường gốc (stoneDamage)
+  biteReach: 3.2,   // Phiên 227: m — tầm ăn của cú ngoạm, tính từ mép thân quái tới điểm ngoạm
+  biteMax: 3,       // Phiên 227: số quái tối đa dính một cú ngoạm
+  splashPct: 0.6,   // Phiên 227: quái dính phụ (ngoài con gần nhất) nhận bấy nhiêu phần sát thương
 });
 
 const clamp01 = (x) => (Number.isFinite(+x) ? Math.max(0, Math.min(1, +x)) : 0);
@@ -49,4 +53,29 @@ export function wolfPose(t, range = WOLF.rangeAir) {
   }
   if (k < b) { const a = (k - l) / (b - l); return { done: false, k, dist: R, up: 0, jaw: 1 - smooth(a), vis: 1, grow: 1, bite: true }; }
   return { done: false, k, dist: R, up: 0, jaw: 0, vis: 1 - smooth((k - b) / (1 - b)), grow: 1, bite: false };
+}
+
+/** Phiên 227: điểm ngoạm {x, z} = chỗ đứng `pos` + `range` m theo hướng `heading` (cùng chỗ sói phóng tới). */
+export function bitePoint(pos, heading, range) {
+  const h = Number.isFinite(+heading) ? +heading : 0, r = Number.isFinite(+range) && +range > 0 ? +range : WOLF.rangeAir;
+  const x = pos && Number.isFinite(+pos.x) ? +pos.x : 0, z = pos && Number.isFinite(+pos.z) ? +pos.z : 0;
+  return { x: x + Math.sin(h) * r, z: z + Math.cos(h) * r };
+}
+
+/** Phiên 227: các quái còn sống nằm trong tầm ăn của cú ngoạm (mép thân cách điểm ngoạm ≤ reach), gần nhất trước, tối đa `max` con. bodyOf(m) = bán kính thân. */
+export function biteTargets(pt, mons, bodyOf, reach = WOLF.biteReach, max = WOLF.biteMax) {
+  const out = [];
+  for (const m of mons || []) {
+    if (!m || m.ghost || !Number.isFinite(+m.x) || !Number.isFinite(+m.z) || !(m.oan > 0)) continue;
+    const d = Math.hypot(m.x - pt.x, m.z - pt.z) - (bodyOf ? bodyOf(m) : 0);
+    if (d <= reach) out.push({ m, d });
+  }
+  out.sort((a, b) => a.d - b.d);
+  return out.slice(0, Math.max(0, max)).map((o) => o.m);
+}
+
+/** Phiên 227: sát thương từng quái dính cú ngoạm: con gần nhất nhận đủ `base`, các con sau nhận splashPct × base (tối thiểu 1). */
+export function biteDamages(base, n) {
+  const b = Math.max(1, Math.round(+base || 1));
+  return Array.from({ length: Math.max(0, n | 0) }, (_, i) => (i === 0 ? b : Math.max(1, Math.round(b * WOLF.splashPct))));
 }
