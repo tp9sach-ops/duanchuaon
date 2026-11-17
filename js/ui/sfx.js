@@ -113,6 +113,23 @@ export function initSfx() {
     try { if (!windN) return; const { src, g, c } = windN; windN = null; const t = c.currentTime; g.gain.cancelScheduledValues(t); g.gain.setTargetAtTime(0.0001, t, WIND_SND.release * 0.3); src.stop(t + WIND_SND.release + 0.2); src.onended = () => { try { g.disconnect(); } catch (_) { /* đã ngắt */ } }; } catch (_) { windN = null; }
   }
 
-  LGT.sfx = { play, playFile, preloadFiles, preload, gust, windStart, windSet, windStop, get loaded() { return bufs.size; } };
+  // ── Phiên 224: tiếng GỖ khi đánh bằng Gậy dạy chó, tổng hợp (không cần file): "cộp" = nhiễu lọc ngắn (va chạm) + thân gỗ rỗng (sin tụt nhanh). step 1..3: đòn càng sau càng trầm, đòn 3 nặng + dư âm. ──
+  function wood(step = 1) {
+    try {
+      const gv = volume(); if (!gv) return false; const c = ctxOf(); if (!c) return false; const t = c.currentTime, out = busOf(c) || c.destination;
+      const k = Math.max(1, Math.min(3, Math.round(+step) || 1)), f0 = [460, 400, 300][k - 1], heavy = k === 3;
+      const src = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain(); src.buffer = noiseOf(c); f.type = 'bandpass'; f.Q.value = 2.4; f.frequency.setValueAtTime(f0 * 3.2, t);
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.55 * gv, t + 0.003); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.07);
+      src.connect(f); f.connect(g); g.connect(out); src.start(t); src.stop(t + 0.1); src.onended = () => { try { g.disconnect(); } catch (_) { /* đã ngắt */ } };
+      for (const [mul, gn, dur] of heavy ? [[1, 0.5, 0.26], [1.52, 0.22, 0.16], [0.5, 0.3, 0.34]] : [[1, 0.42, 0.14], [1.52, 0.16, 0.09]]) {
+        const o = c.createOscillator(), og = c.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(f0 * mul * 1.18, t); o.frequency.exponentialRampToValueAtTime(f0 * mul, t + 0.03);
+        og.gain.setValueAtTime(0.0001, t); og.gain.exponentialRampToValueAtTime(gn * gv, t + 0.004); og.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+        o.connect(og); og.connect(out); o.start(t); o.stop(t + dur + 0.05); o.onended = () => { try { og.disconnect(); } catch (_) { /* đã ngắt */ } };
+      }
+      return true;
+    } catch (_) { return false; }
+  }
+
+  LGT.sfx = { play, playFile, preloadFiles, preload, gust, wood, windStart, windSet, windStop, get loaded() { return bufs.size; } };
   return LGT.sfx;
 }
