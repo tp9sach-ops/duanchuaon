@@ -1,6 +1,7 @@
 // Cảnh 3D quái cố định ở bãi rừng (Phiên 107, G1.6a): thân khối đơn giản theo từng loại, thanh Oán Khí, vòng dưới chân quái tinh anh, vòng chọn mục tiêu, đá đang bay.
 // Chỉ VẼ; trạng thái do js/ui/farm.js cập nhật vào LGT.farmView = { mons: [{ id, type, x, z, ry, oan, max, he, elite, flash }], target (id hoặc 0), stones: [{ x0, z0, x1, z1, t, dur }] }.
 // Mô hình tạm (khối) — chờ bản GLB/hoạ sĩ. Dùng lại hình học/vật liệu giữa các con (clone nông) nên rẻ; tối đa POOL con cùng lúc (hai vùng × 12 là 24; chỉ vùng gần người chơi được đưa vào view).
+import { rxPose } from '../world/hitReact.js';
 import { ATTACK_CFG, BOSS_ATTACK_CFG } from '../data/monsterAI.js';
 import * as THREE from 'three';
 import { FARM_CFG } from '../data/monsters.js';
@@ -89,8 +90,11 @@ export function buildFarm() {
         if (s.type !== m.type) { s.body.clear(); (tpl[m.type] = tpl[m.type] || buildType(m.type)); s.body.add(tpl[m.type].clone()); s.type = m.type; }
         const flash = Math.max(0, m.flash || 0), sc = (m.boss ? 1.7 : m.elite ? 1.15 : 1) * (1 + 0.14 * flash), phase = (m.id || 0) * 1.7;
         s.root.visible = true; s.root.position.set(m.x, 0, m.z);
+        const po = m.rx ? rxPose(m.rx, performance.now() / 1000) : null;   // Phiên 213: tư thế bị trúng chiêu (giật/lùi/ngã theo hướng đòn) — tính ở js/world/hitReact.js
+        if (po && !po.done) { s.root.position.x += po.dx; s.root.position.z += po.dz; } else if (m.rx && po && po.done) m.rx = null;
         const sleep = !m.eng;   // Phiên 118: quái chưa bị đánh thì NGỦ trong bụi (nằm thấp, thở chậm); bị đánh mới nổi giận và đứng dậy
         s.body.position.y = sleep ? 0 : Math.abs(Math.sin(t * 2.2 + phase)) * 0.07; s.body.rotation.y = m.ry + (sleep ? 0 : Math.sin(t * 0.9 + phase) * 0.3); s.body.scale.setScalar(sc);
+        if (po && !po.done) { s.body.rotation.x = po.rx; s.body.rotation.z = po.rz; s.body.rotation.y += po.ry; } else { s.body.rotation.x = 0; s.body.rotation.z = 0; }
         if (sleep) s.body.scale.set(sc * 1.05, sc * (0.72 + 0.03 * Math.sin(t * 0.8 + phase)), sc * 1.05);
         const h = (HEIGHT[m.type] || 1.5) * sc + 0.5, hurt = m.oan < m.max, isT = view.target === m.uid;
         s.bar.visible = hurt || isT; s.bar.position.y = h; if (camera) s.bar.quaternion.copy(camera.quaternion);
