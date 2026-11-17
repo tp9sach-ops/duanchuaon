@@ -9,6 +9,7 @@ import { POND } from './layout.js';
 import { KOI } from './landscape.js';
 import { THAC } from './outside.js';
 import { SUOI } from './river.js';
+import { SEN_PHONG_SINH } from './senThuong.js';   // Phiên 221: hạt sen phóng sinh cố định
 
 /** Năm loại quả cầu. gia = giá (đơn vị theo `don`: 'la' = lá bồ đề — mặc định; 'sen' = hạt sen. Phiên 57: Cầu Gỗ bán bằng 50 HẠT SEN = 5 lá); ben = số lần quăng trước khi nứt; may = hệ số nhân cơ hội gặp loài hiếm; cua = giây hoa sen hiện (0,5 giây ở loại đầu). */
 export const ORBS = [
@@ -224,10 +225,10 @@ export function keepFish(st, fish) {
 /** Ghi nhận một con cá câu được mà phóng sinh ngay (không vào ao): chỉ tăng thống kê câu được. */
 export function noteCaught(st, fish) { const n = clone(st); n.stat.got = int(n.stat.got + 1, 0, 1e9); noteDex(n, fish); return n; }
 
-/** Hạt sen thưởng khi phóng sinh một con: 1, +1 nếu loài hiếm, +1 nếu cỡ lớn (1..3). Nơi gọi đưa vào LGT.merit.reward('phongsinh', n) (trần 10 lần/ngày). */
+/** Hạt sen thưởng khi phóng sinh một con: CỐ ĐỊNH SEN_PHONG_SINH (2) cho mọi loài/cỡ (Phiên 221; trước đó 1..3 theo hiếm/lớn). Loài lạ → 0. Nơi gọi đưa vào LGT.merit.reward('phongsinh', n) (trần 10 lần/ngày). */
 export function releaseSen(fish) {
   const sp = fish && speciesById(fish.sp); if (!sp) return 0;
-  return 1 + (sp.hiem ? 1 : 0) + (fish.lon === true ? 1 : 0);
+  return SEN_PHONG_SINH;
 }
 
 /** Phóng sinh một con trong ao riêng theo uid. Trả { ok, fish, sen, state }. Không có uid đó thì ok=false. Hết trần công đức ngày thì nơi gọi vẫn cho thả nhưng không cộng hạt sen. */
