@@ -4,9 +4,10 @@
 // Gói của một người = { r: phòng, a: chuỗi hành động, m: chuỗi quái, t }. Chuỗi chỉ gồm [A-Za-z0-9_.,;:-] (khớp luật Firebase). Hành động cách nhau ';', trường cách nhau ','. Mọi số làm tròn thành số nguyên.
 import { MONSTERS } from '../data/monsters.js';
 import { ATTACK_CFG, BOSS_ATTACK_CFG } from '../data/monsterAI.js';
+import { oanKhiMaxOf } from './spawn.js';   // Phiên 222: Oán Khí thật của loại quái (đoán trước sát thương trên bóng quái)
 
 export const COMBAT = {
-  sendMs: 120,        // có thay đổi: gửi tối đa ~8 lần/giây
+  sendMs: 80,         // có thay đổi: gửi tối đa ~12 lần/giây (Phiên 222: nhanh hơn cho thời gian thực)
   keepAliveMs: 3000,  // đang có quái đang đánh mà không đổi gì: 3 giây báo "còn đây" một lần (để bóng quái không hết hạn)
   actKeepMs: 1500,    // hành động nằm trong gói tối đa chừng này (người nhận bỏ trùng theo số thứ tự)
   keep: 6,            // mỗi gói mang tối đa 6 hành động gần nhất
@@ -23,7 +24,7 @@ const num = (x, d = 0) => (Number.isFinite(+x) && x !== null && x !== '' ? +x : 
 const clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
 const I = (v, k) => String(Math.round(num(v) * k));        // số thực → số nguyên chuỗi (k = hệ số nhân)
 const opt = (v, k) => (v == null || !Number.isFinite(+v) ? '' : I(v, k));
-const ID_RE = /^[A-Za-z0-9_]{1,40}$/, KEY_RE = /^[A-Za-z0-9]{1,20}:\d{1,6}$/, ROOM_RE = /^[A-Za-z0-9_.:-]{0,40}$/;
+const TAG_RE = /^[a-z]{6}$/, TYPE_RE = /^[a-z]{1,12}$/, POSE_MODES = ['g', 'd', 'r', 'n'], ID_RE = /^[A-Za-z0-9_]{1,40}$/, KEY_RE = /^[A-Za-z0-9]{1,20}:\d{1,6}$/, ROOM_RE = /^[A-Za-z0-9_.:-]{0,40}$/;
 const wrapRy = (a) => { a = num(a); return Math.atan2(Math.sin(a), Math.cos(a)); };
 const FIELDS_OK = (s) => typeof s === 'string' && COMBAT_CHARSET.test(s);
 
@@ -37,8 +38,13 @@ export function packAction(a) {
   if (a.k === 'h') {
     if (!KEY_RE.test(String(a.key || ''))) return '';
     const id = a.id == null || a.id === '' ? '' : String(a.id); if (id && !ID_RE.test(id)) return '';
-    return [seq, 'h', a.key, clamp(Math.round(num(a.dmg)), 0, 99999), id, clamp(Math.floor(num(a.i)), 0, 9), a.dead ? 1 : 0, a.nho ? 1 : 0, opt(a.ax, 10), opt(a.az, 10)].join(',');
+    const by = a.by == null || a.by === '' ? '' : String(a.by); if (by && !TAG_RE.test(by)) return '';
+    return [seq, 'h', a.key, clamp(Math.round(num(a.dmg)), 0, 99999), id, clamp(Math.floor(num(a.i)), 0, 9), a.dead ? 1 : 0, a.nho ? 1 : 0, opt(a.ax, 10), opt(a.az, 10), by].join(',');
   }
+  // Phiên 222: 'd' = MÌNH đánh trúng BÓNG quái của người `owner` (mã 6 chữ) → họ trừ máu quái THẬT (máu dùng chung); 'k' = quái bị hạ bởi `killer` (mã 6 chữ, người đánh đòn cuối) → người đó nhận thưởng; 'f' = tư thế bay lướt / lao (g = bay lướt, d = lao chúi đầu, r = lao chạy, n = hết), tilt = độ chúi (rad)
+  if (a.k === 'd') { if (!KEY_RE.test(String(a.key || '')) || !TAG_RE.test(String(a.owner || ''))) return ''; return [seq, 'd', a.key, a.owner, clamp(Math.round(num(a.dmg)), 1, 99999), opt(a.ax, 10), opt(a.az, 10)].join(','); }
+  if (a.k === 'k') { if (!KEY_RE.test(String(a.key || '')) || !TYPE_RE.test(String(a.type || '')) || !MONSTERS[a.type] || !TAG_RE.test(String(a.killer || ''))) return ''; return [seq, 'k', a.key, a.type, a.killer].join(','); }
+  if (a.k === 'f') { if (!POSE_MODES.includes(a.mode)) return ''; return [seq, 'f', a.mode, clamp(Math.round(num(a.tilt) * 100), -400, 400)].join(','); }
   return '';
 }
 const fx = (s) => (s === '' || s == null ? null : num(s) / 10);
@@ -48,10 +54,13 @@ export function unpackAction(s) {
   const f = s.split(','), seq = Math.floor(num(f[0], -1)); if (seq < 0 || f.length < 3) return null;
   if (f[1] === 'c' && f.length === 8) { if (!ID_RE.test(f[2])) return null; return { k: 'c', seq, id: f[2], x: num(f[3]) / 10, z: num(f[4]) / 10, ry: num(f[5]) / 100, tx: fx(f[6]), tz: fx(f[7]) }; }
   if (f[1] === 's' && f.length === 6) { if (!SWING_KINDS.includes(f[2])) return null; return { k: 's', seq, kind: f[2], x: num(f[3]) / 10, z: num(f[4]) / 10, ry: num(f[5]) / 100 }; }
-  if (f[1] === 'h' && f.length === 10) {
-    if (!KEY_RE.test(f[2]) || (f[4] && !ID_RE.test(f[4]))) return null;
-    return { k: 'h', seq, key: f[2], dmg: num(f[3]), id: f[4], i: clamp(Math.floor(num(f[5])), 0, 9), dead: f[6] === '1', nho: f[7] === '1', ax: fx(f[8]), az: fx(f[9]) };
+  if (f[1] === 'h' && f.length === 11) {
+    if (!KEY_RE.test(f[2]) || (f[4] && !ID_RE.test(f[4])) || (f[10] && !TAG_RE.test(f[10]))) return null;
+    return { k: 'h', seq, key: f[2], dmg: num(f[3]), id: f[4], i: clamp(Math.floor(num(f[5])), 0, 9), dead: f[6] === '1', nho: f[7] === '1', ax: fx(f[8]), az: fx(f[9]), by: f[10] };
   }
+  if (f[1] === 'd' && f.length === 7) { if (!KEY_RE.test(f[2]) || !TAG_RE.test(f[3])) return null; return { k: 'd', seq, key: f[2], owner: f[3], dmg: clamp(num(f[4]), 1, 99999), ax: fx(f[5]), az: fx(f[6]) }; }
+  if (f[1] === 'k' && f.length === 5) { if (!KEY_RE.test(f[2]) || !TYPE_RE.test(f[3]) || !MONSTERS[f[3]] || !TAG_RE.test(f[4])) return null; return { k: 'k', seq, key: f[2], type: f[3], killer: f[4] }; }
+  if (f[1] === 'f' && f.length === 4) { if (!POSE_MODES.includes(f[2])) return null; return { k: 'f', seq, mode: f[2], tilt: clamp(num(f[3]), -400, 400) / 100 }; }
   return null;
 }
 /** Giải mã cả chuỗi hành động ('a;b;c'): bỏ hành động hỏng. */
@@ -87,24 +96,28 @@ export function unpackMons(str) {
 
 // ---------------------------------------------------------------- hộp gửi
 /**
- * Hộp gửi của MÌNH. push(a, tMs) gán số thứ tự tăng dần; setMons(list); setRoom(name).
- * packet(tMs) → { r, a?, m?, t } nếu đến lúc gửi (có thay đổi và đã ≥ sendMs, hoặc đang có quái đang đánh và đã ≥ keepAliveMs), ngược lại null.
- * Quái hết đánh → gửi MỘT gói không có `m` để máy khác bỏ bóng quái, rồi im.
+ * Hộp gửi của MÌNH. push(a, tMs) gán số thứ tự tăng dần (hành động giữ ≤ actKeepMs rồi bỏ khỏi gói); setMons(list); setRoom(name); setPose({ mode, tilt }) (Phiên 222: bay lướt / lao, KHÔNG chiếm chỗ hành động).
+ * packet(tMs) → { r, a?, m?, t } nếu đến lúc gửi (có thay đổi và đã ≥ sendMs, hoặc đang có quái / đang bay mà không đổi gì và đã ≥ keepAliveMs), ngược lại null. Quái hết đánh / hết bay → gửi MỘT gói báo hết rồi im.
  */
 export function createOutbox() {
-  let seq = 0, acts = [], mons = '', room = '', lastAt = -1e9, dirty = false;
+  let seq = 0, acts = [], mons = '', room = '', lastAt = -1e9, dirty = false, pose = '', poseOn = false;
   return {
     push(a, tMs = 0) { const s = packAction({ ...a, seq: seq + 1 }); if (!s) return 0; seq++; acts.push({ s, t: tMs }); if (acts.length > COMBAT.keep) acts.shift(); dirty = true; return seq; },
     setMons(list) { const s = packMons(list); if (s !== mons) { mons = s; dirty = true; } },
-    setRoom(r) { r = String(r == null ? '' : r); if (r !== room && ROOM_RE.test(r)) { room = r; if (mons) dirty = true; } },   // đổi phòng chỉ đáng gửi khi đang có quái đang đánh (không thì người chơi im lặng KHÔNG ghi gì lên /combat)
+    setRoom(r) { r = String(r == null ? '' : r); if (r !== room && ROOM_RE.test(r)) { room = r; if (mons || poseOn) dirty = true; } },   // đổi phòng chỉ đáng gửi khi đang có quái / đang bay (không thì người chơi im lặng KHÔNG ghi gì lên /combat)
+    setPose(o) {
+      const mode = o && ['g', 'd', 'r'].includes(o.mode) ? o.mode : 'n', tilt = Math.round(num(o && o.tilt) * 20) / 20, s = packAction({ k: 'f', seq: 0, mode, tilt });
+      if (mode === 'n') { if (poseOn) { pose = s; poseOn = false; dirty = true; } return; }
+      if (!poseOn || s !== pose) { pose = s; dirty = true; } poseOn = true;
+    },
     get seq() { return seq; },
     packet(tMs) {
       acts = acts.filter((e) => tMs - e.t <= COMBAT.actKeepMs);
-      if (!dirty && !mons) return null;
+      if (!dirty && !mons && !poseOn) return null;
       if (tMs - lastAt < (dirty ? COMBAT.sendMs : COMBAT.keepAliveMs)) return null;
-      const list = acts.map((e) => e.s); let a = list.join(';'); while (a.length > COMBAT.maxA && list.length > 1) { list.shift(); a = list.join(';'); }
+      const list = acts.map((e) => e.s), join = () => (pose ? list.concat(pose) : list).join(';'); let a = join(); while (a.length > COMBAT.maxA && list.length > 1) { list.shift(); a = join(); }
       const p = { r: room }; if (a && a.length <= COMBAT.maxA) p.a = a; if (mons && mons.length <= COMBAT.maxM) p.m = mons;
-      dirty = false; lastAt = tMs; return { ...p, t: tMs };
+      dirty = false; lastAt = tMs; if (!poseOn) pose = ''; return { ...p, t: tMs };
     },
   };
 }
@@ -114,9 +127,9 @@ export function createOutbox() {
 export function createInbox() {
   const last = new Map();
   return {
-    take(owner, str) {
+    take(owner, str, isNew = false) {   // isNew = true: người MỚI xuất hiện sau khi mình đã vào (không phải bản ghi cũ) → nhận luôn các hành động đầu tiên của họ
       const acts = unpackActions(str).sort((a, b) => a.seq - b.seq);
-      if (!last.has(owner)) { last.set(owner, acts.length ? acts[acts.length - 1].seq : 0); return []; }
+      if (!last.has(owner)) { last.set(owner, acts.length ? acts[acts.length - 1].seq : 0); return isNew ? acts : []; }
       const prev = last.get(owner), fresh = acts.filter((a) => a.seq > prev);
       if (fresh.length) last.set(owner, fresh[fresh.length - 1].seq);
       return fresh;
@@ -139,12 +152,12 @@ export function createGhosts() {
       for (const q of Array.isArray(list) ? list : []) {
         const id = idOf(owner, q.key); if ((tomb.get(id) || 0) > tMs) continue;
         keep.add(id);
-        const T = MONSTERS[q.type], max = 100, wt = q.ph > 0 ? (1 - q.ph / 9) * windup({ slam: q.slam }) : 0;
+        const T = MONSTERS[q.type], max = 100, real = oanKhiMaxOf(q.type) || 100, wt = q.ph > 0 ? (1 - q.ph / 9) * windup({ slam: q.slam }) : 0;
         let g = map.get(id);
         if (!g) {
-          g = { id: ++n, uid: 'g|' + id, owner, key: q.key, type: q.type, ten: T.ten, lv: T.lv, he: T.he, elite: !!T.elite, boss: !!T.boss, x: q.x, z: q.z, ry: q.ry, tx: q.x, tz: q.z, tr: q.ry, oan: q.pct, max, eng: true, wind: wt, slam: q.slam, flash: 0, ghost: true, seen: tMs };
+          g = { id: ++n, uid: 'g|' + id, owner, key: q.key, type: q.type, ten: T.ten, lv: T.lv, he: T.he, elite: !!T.elite, boss: !!T.boss, x: q.x, z: q.z, ry: q.ry, tx: q.x, tz: q.z, tr: q.ry, oan: q.pct, max, real, predUntil: 0, eng: true, wind: wt, slam: q.slam, flash: 0, ghost: true, seen: tMs };
           map.set(id, g);
-        } else { g.tx = q.x; g.tz = q.z; g.tr = q.ry; g.oan = q.pct; g.wind = wt; g.slam = q.slam; g.seen = tMs; }
+        } else { g.tx = q.x; g.tz = q.z; g.tr = q.ry; g.oan = g.predUntil > tMs ? Math.min(g.oan, q.pct) : q.pct; g.wind = wt; g.slam = q.slam; g.seen = tMs; }
         if (g.wind > 0) g.flash = Math.max(g.flash, 0.55);
       }
       for (const [id, g] of [...map]) if (g.owner === owner && !keep.has(id)) map.delete(id);
