@@ -39,11 +39,13 @@ export function createRoomClient(deps) {
       alive.add(p.id); const { av } = viewFor(p);
       const q = deps.xform ? deps.xform(p) : p;           // Phiên 137: trong võ đài, vị trí đối thủ (mượn khung ±200) được đổi về tọa độ võ đài
       av.group.position.set(q.x, p.y, q.z); av.setFacing(p.ry);
-      av.setState(p.state === 'walk' && p.speed < 0.4 ? 'idle' : p.state, p.speed); av.update(dt);
+      const po = deps.poseOf ? deps.poseOf(p.id) : null;   // Phiên 222: tư thế bay lướt / lao của người khác (kênh /combat)
+      if (po) av.setState(po.state, po.speed); else av.setState(p.state === 'walk' && p.speed < 0.4 ? 'idle' : p.state, p.speed); av.update(dt);
       if (deps.applyGear) { try { deps.applyGear(av, p.i || '', dt); } catch (e) { /* vẽ đồ lỗi thì bỏ qua, người vẫn hiện */ } }   // Phiên 166: gậy / nón / ván / bánh của người khác (sau update, cộng độ cao khi cưỡi)
       const fl = flies.get(p.id), me = p.id === holdId && deps.selfPose ? deps.selfPose() : null, rot = av.group.rotation;   // (nhân vật giả trong test có thể không có rotation)
       if (fl) { fl.t += dt; const u = Math.min(1, fl.t / fl.dur); av.group.position.set(fl.x0 + (fl.x1 - fl.x0) * u, fl.y0 * (1 - u) + 4 * fl.peak * u * (1 - u), fl.z0 + (fl.z1 - fl.z0) * u); if (rot) rot.x = u >= 1 ? 0 : 1.3 * (1 - u); if (u >= 1) flies.delete(p.id); }
       else if (me) { av.group.position.set(me.x, (me.y || 0) + 2.05, me.z); av.setFacing(me.r, true); if (rot) rot.x = 1.3; }   // nằm vắt trên vai mình
+      else if (po && rot) rot.x = po.tilt;
       else if (rot && rot.x) rot.x = 0;
     }
     for (const [id, v] of views) if (!alive.has(id)) { killView(v); views.delete(id); flies.delete(id); if (holdId === id) holdId = null; }
