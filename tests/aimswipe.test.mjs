@@ -46,5 +46,5 @@ test('nối dây js/ui/heSkill.js + js/ui/farm.js: lướt nút chiêu → hư�
   assert.match(hs, /swipeDir\(swipe\.dx, swipe\.dy, LGT\.world && LGT\.world\.camera \? LGT\.world\.camera\.yaw : 0\)/); assert.match(hs, /isDirectional\(sk\.id\)\) return castDir\(slot, sk, sd\)/);
   assert.match(hs, /skillHitDir\(r\.heSo, sd\.ry, hinh(?:, sk\.id)?\)/); assert.match(hs, /Không có quái trong hướng lướt/);
   assert.match(hs, /sync\(\); if \(inLuyen\(\)\) return luyenCast\(slot(?:, swipe)?\);\s*\n(?:\s*if \(inArena\(\)\)[^\n]*\n)?\s*if \(!rt\) return false;/);
-  assert.match(farm, /pick(?:All)?InDir\(p, ry, view\.mons, hinh, bodyOf\)/); assert.match(farm, /skillReady, skillHit, skillHitDir/);
+  assert.match(farm, /pick(?:All)?InDir\(p, ry, (?:view\.mons|allMons\(\)), hinh, bodyOf\)/); assert.match(farm, /skillReady, skillHit, skillHitDir/);
 });
