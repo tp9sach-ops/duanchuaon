@@ -59,23 +59,26 @@ function place(d, center) {
 }
 
 /** Bộ quản lý rồng trong một cảnh. spawn(center, ry): thả một con rồng quanh `center` (Vector3 vị trí nhân vật), `ry` = hướng mặt nhân vật. update(dt, center): bay + dọn. */
-export function createDragonFx(scene) {
+export function createDragonFx(scene, max = DRAGON.max) {   // Phiên 223: max riêng (bộ rồng của người khác cho nhiều con cùng lúc)
   const live = []; let flip = false;
   const drop = (d) => { d.scene.remove(d.root); for (const m of Object.values(d.mats)) m.dispose(); };
   return {
     get count() { return live.length; },
     get scene() { return scene; },
-    spawn(center, ry = 0) {
-      if (!scene || !center || live.length >= DRAGON.max) return false;
-      flip = !flip; const d = makeDragon(scene, center, ry, flip); live.push(d); place(d, center); return true;
+    /** track (tùy chọn, Phiên 223): vị trí SỐNG của một người chơi khác (vd avatar.group.position) — rồng bám theo người đó, không cần truyền center vào update. */
+    spawn(center, ry = 0, track = null) {
+      if (!scene || !center || live.length >= max) return false;
+      flip = !flip; const d = makeDragon(scene, center, ry, flip); d.track = track || null; live.push(d); place(d, track || center);
+      if (!track) { try { const L = globalThis.LGT; if (L && L.combatLink && L.combatLink.sendDragon) L.combatLink.sendDragon(ry); } catch (_) { /* phát lỗi không làm hỏng hiệu ứng của mình */ } }   // Phiên 223: rồng của MÌNH (không có track) → báo mọi người cùng thấy; rồng người khác (có track) thì không phát lại
+      return true;
     },
     update(dt, center) {
-      if (!live.length || !center) return;
+      if (!live.length) return;
       const step = Math.max(0, Math.min(0.1, +dt || 0));
       for (let i = live.length - 1; i >= 0; i--) {
         const d = live[i]; d.t += step;
         if (d.t >= DRAGON.life) { drop(d); live.splice(i, 1); continue; }
-        place(d, center);
+        const c = d.track || center; if (c) place(d, c);
       }
     },
     clear() { while (live.length) drop(live.pop()); },

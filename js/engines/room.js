@@ -7,7 +7,7 @@ export const ROOM_CFG = {
   room: 'main',
   maxPlayers: 30,       // số người tối đa trong một phòng (máy chủ từ chối người thứ 31)
   ttlMs: 12000,         // quá hạn này không gửi gì thì coi như đã rời chùa
-  minPollMs: 1500, maxPollMs: 8000, perPlayerMs: 350,
+  minPollMs: 1500, maxPollMs: 8000, perPlayerMs: 350, airPollMs: 80,   // airPollMs (Phiên 223): chu kỳ tick khi mình đang nhảy / bay (chỉ đường truyền nhanh)
   chatMax: 80, chatGapMs: 2000,
   limit: 200,           // |x|, |z| tối đa
 };
@@ -76,7 +76,7 @@ export function createRemotes() {
         const ox = p.x, oz = p.z, dx = p.tx - p.x, dz = p.tz - p.z;
         if (Math.hypot(dx, dz) > 12) { p.x = p.tx; p.z = p.tz; }          // dịch chuyển xa: nhảy tới luôn, không trượt xuyên chùa
         else { let sx = dx * k, sz = dz * k; const sl = Math.hypot(sx, sz); if (sl > vmax) { sx *= vmax / sl; sz *= vmax / sl; } p.x += sx; p.z += sz; }
-        p.y += (p.ty - p.y) * (1 - Math.exp(-Math.max(0, dt) * 8));
+        p.y += (p.ty - p.y) * (1 - Math.exp(-Math.max(0, dt) * (Math.abs(p.ty - p.y) > 0.12 ? 22 : 8)));   // Phiên 223: nhảy / bay thấy được — lệch độ cao lớn thì bám nhanh (trước đây hệ số 8 làm cú nhảy ngắn bị bóp phẳng)
         p.r += angleDiff(p.r, p.tr) * (1 - Math.exp(-Math.max(0, dt) * 8));
         p.speed = dt > 0 ? Math.hypot(p.x - ox, p.z - oz) / dt : 0;
         out.push({ id: p.id, x: p.x, y: p.y, z: p.z, ry: p.r, speed: p.speed, state: p.s, n: p.n, c: p.c, h: p.h, i: p.i || '' });
