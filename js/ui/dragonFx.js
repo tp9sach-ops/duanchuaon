@@ -1,19 +1,22 @@
-// RỒNG HỒNG của Gậy như ý (Phiên 163; NÂNG CẤP Phiên 227): bay quanh người khi cầm Gậy như ý và đánh thường đủ 3 đòn liên tiếp.
-// Phiên 227: rồng TO hơn (30 đốt, thân dày), màu hồng ĐẬM có đổ bóng (vật liệu Standard + tự phát sáng nhẹ, bụng hồng nhạt), đầu dữ hơn (sừng chẻ nhánh vàng, nanh, râu dài, bờm cháy, ngọc sáng ở mõm, mắt rực), gai lưng vàng lớn,
-//   hào quang hồng quanh đầu, đuôi bốc lửa hồng, vòng bay mở rộng dần để quét tới quái quanh người; rồng bay TRÚNG quái thì quái mất máu thật (js/world/dragonMath.js + js/ui/dragonHit.js — chỉ rồng của MÌNH, rồng người khác chỉ để xem),
-//   mỗi lần trúng có tia sáng hồng bắn ra + tiếng trúng; lúc hiện ra có tiếng gầm (js/ui/dragonSfx.js).
-// Dựng bằng khối cầu / nón của three.js (không cần tệp mô hình). CHƯA nhìn bằng mắt trên máy thật (môi trường AI không có WebGL) — số liệu là TẠM, chỉnh trong DRAGON / DHIT.
+// RỒNG HỒNG của Gậy như ý (Phiên 163; nâng cấp Phiên 227; TẠO HÌNH LẠI Phiên 228): bay quanh người khi cầm Gậy như ý và đánh thường đủ 3 đòn liên tiếp.
+// Phiên 228 (yêu cầu ptg, theo ảnh rồng khớp 3D): rồng là KHÍ nên MỜ + NHÌN XUYÊN ĐƯỢC (mọi vật liệu trong suốt, không ghi độ sâu, không đổ bóng).
+//   Dáng theo ảnh mẫu: thân vảy xếp lớp màu chuyển dần HỒNG (đầu) → CAM HỒNG → CAM (đuôi), bụng XANH BẠC HÀ; hàng gai lưng xòe quạt (to nhất ở giữa thân); đầu mõm dài, SỪNG HỒNG CHẺ NHÁNH, hai sợi RÂU LƯỢN SÓNG (một hồng, một vàng) đung đưa;
+//   hai cặp chân nhỏ có vuốt; đuôi xòe như NGỌN LỬA HỒNG; thân uốn lượn như sóng khi bay; quầng sáng + sương khí hồng quanh đầu và dọc thân.
+// Rồng bay TRÚNG quái thì quái mất máu thật (js/world/dragonMath.js + js/ui/dragonHit.js — chỉ rồng của MÌNH, rồng người khác chỉ để xem); trúng thì có tia sáng hồng + tiếng trúng; lúc hiện ra có tiếng gầm (js/ui/dragonSfx.js).
+// Dựng bằng khối cầu / nón của three.js (không cần tệp mô hình). CHƯA nhìn bằng mắt trên máy thật (môi trường AI không có WebGL) — độ mờ (userData.base của từng vật liệu), màu, kích thước là số TẠM, chỉnh trong makeDragon / DRAGON / DHIT.
 import * as THREE from 'three';
 import { glowTexture } from './staffMesh.js';
 import { dragonSfx } from './dragonSfx.js';
 import { applyDragonHit } from './dragonHit.js';
 
 export const DRAGON = Object.freeze({ hits: 3, gap: 3.0, life: 2.8, segs: 30, spacing: 0.05, fadeIn: 0.35, fadeOut: 0.6, max: 2, speed: 3.4, radius: 2.4 });
-const C = { body: 0xff2f8f, belly: 0xffb0d6, head: 0xd81b6b, gold: 0xffd24a, eye: 0xffffff, mane: 0xff1f8e, fang: 0xfffbf0, fire: 0xff6fc0, aura: 0xff5fae, pearl: 0xffe6f4 };
-const BASE = { body: 1, belly: 1, head: 1, gold: 1, eye: 1, mane: 0.95, fang: 1, fire: 0.75, aura: 0.5, pearl: 0.9 };
+
+const BANDS = 6;   // thân chia 6 dải màu chuyển dần hồng → cam (dùng chung vật liệu theo dải để ít vật liệu)
+const cc = (h) => new THREE.Color(h);
+const bodyAt = (f) => (f < 0.5 ? cc(0xff4fa8).lerp(cc(0xff8a8a), f * 2) : cc(0xff8a8a).lerp(cc(0xffb060), (f - 0.5) * 2));   // hồng → hồng cam → cam
 
 let G = null;
-const geos = () => G || (G = { ball: new THREE.SphereGeometry(1, 14, 10), cone: new THREE.ConeGeometry(1, 2, 8) });
+const geos = () => G || (G = { ball: new THREE.SphereGeometry(1, 12, 8), cone: new THREE.ConeGeometry(1, 2, 7) });
 
 /** Điểm trên quỹ đạo (toạ độ so với tâm người chơi) tại giây t của con rồng k = { ph, dir, R }. t có thể âm (đốt đuôi). */
 export function pathAt(t, k) {
@@ -22,57 +25,90 @@ export function pathAt(t, k) {
   return [Math.cos(a) * R, 1.15 + 0.55 * Math.sin(t * 2.6 + k.ph * 0.5) + 0.12 * Math.max(0, t), Math.sin(a) * R];
 }
 const smooth = (x) => { const c = Math.max(0, Math.min(1, x)); return c * c * (3 - 2 * c); };
+const wave = (ti) => 0.12 * Math.sin(ti * 6.5);   // Phiên 228: sóng uốn lượn chạy dọc thân (theo thời gian của từng đốt)
 
 function makeDragon(scene, center, ry, flip) {
   const g = geos(), root = new THREE.Group(); root.renderOrder = 6;
-  const solid = (c, em) => new THREE.MeshStandardMaterial({ color: c, emissive: c, emissiveIntensity: em, roughness: 0.5, metalness: 0.1, transparent: true, opacity: 0 });
-  const add = (c, extra) => new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, ...(extra || {}) });
-  const spr = (c) => new THREE.SpriteMaterial({ map: glowTexture(), color: c, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, fog: false });
-  const mats = { body: solid(C.body, 0.45), belly: solid(C.belly, 0.5), head: solid(C.head, 0.4), gold: solid(C.gold, 0.7), eye: solid(C.eye, 0.8), mane: solid(C.mane, 0.9), fang: solid(C.fang, 0.6), fire: add(C.fire), aura: spr(C.aura), pearl: add(C.pearl) };
+  const mats = {};
+  // MỜ + XUYÊN: tất cả trong suốt, depthWrite tắt; userData.base = độ đặc tối đa (nhân với độ hiện vis trong place). Muốn mờ hơn nữa → giảm số base.
+  const mk = (key, color, base, add) => { const m = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0, depthWrite: false, blending: add ? THREE.AdditiveBlending : THREE.NormalBlending }); m.userData.base = base; mats[key] = m; return m; };
+  const sp = (key, color, base) => { const m = new THREE.SpriteMaterial({ map: glowTexture(), color, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }); m.userData.base = base; mats[key] = m; return m; };
+  mk('head', 0xff3f9f, 0.55); mk('snout', 0xffa0c8, 0.5); mk('jaw', 0x9ff0c8, 0.45);
+  mk('horn', 0xff7fc4, 0.6); mk('eye', 0xffffff, 0.9, true); mk('fang', 0xfff6e8, 0.7); mk('pearl', 0xfff0fa, 0.85, true);
+  mk('belly', 0x9ff0c8, 0.34); mk('finP', 0xff6fb8, 0.36); mk('finO', 0xffb070, 0.34);
+  mk('leg', 0x8ff0c0, 0.4); mk('claw', 0xffe27a, 0.6); mk('fire', 0xff7fc8, 0.5, true);
+  mk('whP', 0xff6fc0, 0.75, true); mk('whY', 0xffe45a, 0.75, true);
+  for (let b = 0; b < BANDS; b++) { const c = bodyAt((b + 0.5) / BANDS); mk('bk' + b, c, 0.4); mk('bl' + b, c.clone().lerp(cc(0xffffff), 0.3), 0.36); }   // bk = vảy lưng, bl = vảy sáng hơn xen kẽ
+  sp('aura', 0xff5fae, 0.3); sp('haze', 0xffb0d8, 0.18);
   const part = (geo, mat, sx, sy, sz, x, y, z) => { const m = new THREE.Mesh(geo, mat); m.scale.set(sx, sy, sz); m.position.set(x || 0, y || 0, z || 0); m.renderOrder = 6; return m; };
-  const segs = [], N = DRAGON.segs;
+  const segs = [], whisk = [], N = DRAGON.segs;
   for (let i = 0; i < N; i++) {
-    const sg = new THREE.Group(), f = i / (N - 1), r = i === 0 ? 0.34 : 0.27 * (1 - 0.7 * Math.pow(f, 1.5)) + 0.06;
-    if (i === 0) {   // đầu: sọ, mõm, hàm, nanh, ngọc, mắt, sừng chẻ nhánh, râu, bờm
-      sg.add(part(g.ball, mats.head, r * 1.25, r * 1.0, r * 1.4));
-      sg.add(part(g.ball, mats.body, r * 0.7, r * 0.55, r * 0.95, 0, -r * 0.1, r * 1.2));       // mõm
-      sg.add(part(g.ball, mats.belly, r * 0.62, r * 0.22, r * 0.95, 0, -r * 0.55, r * 1.05));  // hàm dưới
-      sg.add(part(g.ball, mats.pearl, r * 0.32, r * 0.32, r * 0.32, 0, -r * 0.05, r * 2.0));   // ngọc sáng ở mõm
-      sg.add(part(g.ball, mats.head, r * 0.95, r * 0.28, r * 0.5, 0, r * 0.52, r * 0.55));     // gờ mày dữ
+    const sg = new THREE.Group(), f = i / (N - 1), r = i === 0 ? 0.36 : 0.27 * (1 - 0.7 * Math.pow(f, 1.5)) + 0.06;
+    if (i === 0) {   // đầu: sọ, mõm dài, hàm, nanh, ngọc, mắt, sừng hồng chẻ nhánh, bờm, hai râu lượn sóng
+      sg.add(part(g.ball, mats.head, r * 1.2, r * 1.0, r * 1.45));
+      sg.add(part(g.ball, mats.snout, r * 0.7, r * 0.52, r * 1.15, 0, -r * 0.12, r * 1.35));       // mõm dài
+      sg.add(part(g.ball, mats.jaw, r * 0.6, r * 0.2, r * 1.0, 0, -r * 0.55, r * 1.2));            // hàm dưới xanh bạc hà
+      sg.add(part(g.ball, mats.pearl, r * 0.3, r * 0.3, r * 0.3, 0, -r * 0.05, r * 2.3));        // ngọc sáng ở mõm
+      sg.add(part(g.ball, mats.head, r * 0.95, r * 0.26, r * 0.5, 0, r * 0.5, r * 0.55));         // gờ mày
       for (const s of [-1, 1]) {
-        sg.add(part(g.ball, mats.eye, r * 0.24, r * 0.24, r * 0.24, s * r * 0.58, r * 0.3, r * 0.65));   // mắt
-        for (const [z, h] of [[r * 1.5, 0.55], [r * 1.05, 0.4]]) { const fang = part(g.cone, mats.fang, r * 0.09, r * h, r * 0.09, s * r * 0.36, -r * 0.4, z); fang.rotation.x = Math.PI; sg.add(fang); }   // nanh
-        const horn = part(g.cone, mats.gold, r * 0.24, r * 1.1, r * 0.24, s * r * 0.5, r * 1.1, -r * 0.4); horn.rotation.x = -0.95; horn.rotation.z = -s * 0.28; sg.add(horn);                            // sừng chính
-        const br = part(g.cone, mats.gold, r * 0.14, r * 0.6, r * 0.14, s * r * 0.82, r * 1.4, -r * 0.8); br.rotation.x = -1.2; br.rotation.z = -s * 0.7; sg.add(br);                                   // nhánh sừng
-        const whisk = part(g.cone, mats.gold, r * 0.06, r * 2.6, r * 0.06, s * r * 0.75, -r * 0.1, r * 1.1); whisk.rotation.z = s * 1.25; whisk.rotation.x = 0.6; sg.add(whisk);                        // râu dài
+        sg.add(part(g.ball, mats.eye, r * 0.22, r * 0.22, r * 0.22, s * r * 0.58, r * 0.3, r * 0.65));   // mắt
+        for (const [z, h] of [[r * 1.7, 0.5], [r * 1.25, 0.38]]) { const fang = part(g.cone, mats.fang, r * 0.08, r * h, r * 0.08, s * r * 0.34, -r * 0.4, z); fang.rotation.x = Math.PI; sg.add(fang); }   // nanh
+        const horn = part(g.cone, mats.horn, r * 0.2, r * 1.2, r * 0.2, s * r * 0.45, r * 1.2, -r * 0.45); horn.rotation.x = -0.8; horn.rotation.z = -s * 0.3; sg.add(horn);               // sừng chính (hồng)
+        const b1 = part(g.cone, mats.horn, r * 0.12, r * 0.65, r * 0.12, s * r * 0.7, r * 1.8, -r * 0.9); b1.rotation.x = -1.1; b1.rotation.z = -s * 0.8; sg.add(b1);                      // nhánh sừng 1
+        const b2 = part(g.cone, mats.horn, r * 0.1, r * 0.5, r * 0.1, s * r * 0.55, r * 2.2, -r * 1.4); b2.rotation.x = -1.3; b2.rotation.z = -s * 0.35; sg.add(b2);                      // nhánh sừng 2
       }
-      for (let j = 0; j < 5; j++) { const t = part(g.cone, mats.mane, r * 0.22, r * (0.9 + 0.12 * j), r * 0.22, (j - 2) * r * 0.34, r * 0.55 - Math.abs(j - 2) * r * 0.12, -r * 0.9); t.rotation.x = -Math.PI / 2 - 0.35; sg.add(t); }   // bờm cháy sau đầu
+      for (let j = 0; j < 5; j++) { const t = part(g.cone, mats.finP, r * 0.22, r * (0.9 + 0.12 * j), r * 0.22, (j - 2) * r * 0.34, r * 0.55 - Math.abs(j - 2) * r * 0.12, -r * 0.9); t.rotation.x = -Math.PI / 2 - 0.35; sg.add(t); }   // bờm sau đầu
+      const WL = 11;   // hai sợi râu lượn sóng: chuỗi hạt nhỏ, đung đưa trong place(); trái hồng, phải vàng như ảnh mẫu
+      for (const [s, key] of [[-1, 'whP'], [1, 'whY']]) for (let j = 0; j < WL; j++) {
+        const q = 1 - (j / WL) * 0.5, m = part(g.ball, mats[key], r * 0.055 * q, r * 0.055 * q, r * 0.16); sg.add(m);
+        whisk.push({ m, s, j, r, bx: s * (r * 0.55 + j * r * 0.13), by: -r * 0.05 - j * r * 0.03, bz: r * 2.0 + j * r * 0.3 });
+      }
       const au = new THREE.Sprite(mats.aura); au.scale.set(2.3, 2.3, 1); au.position.z = r * 0.4; sg.add(au);   // hào quang quanh đầu
     } else {
-      sg.add(part(g.ball, i % 2 ? mats.belly : mats.body, r, r, r * 1.25));
-      if (i % 2 === 0) sg.add(part(g.cone, mats.gold, r * 0.5, r * 1.05, r * 0.5, 0, r * 1.05, 0));    // gai lưng vàng lớn
-      if (i % 4 === 1 && i < N - 6) { const fn = part(g.cone, mats.mane, r * 0.3, r * 0.9, r * 0.3, 0, -r * 0.9, 0); fn.rotation.x = Math.PI; sg.add(fn); }   // vây bụng
-      if (i === N - 1) {   // đuôi bốc lửa hồng
-        for (const [y, z, k] of [[0.02, -0.15, 1], [0.1, -0.4, 0.8], [0.04, -0.6, 0.6]]) { const fl = part(g.cone, mats.fire, 0.2 * k, 0.55 * k, 0.2 * k, 0, y, z); fl.rotation.x = -Math.PI / 2; sg.add(fl); }
-        const ta = new THREE.Sprite(mats.aura); ta.scale.set(1.6, 1.6, 1); ta.position.z = -0.2; sg.add(ta);
+      const bi = Math.min(BANDS - 1, Math.floor(f * BANDS));
+      sg.add(part(g.ball, mats.belly, r * 0.95, r * 0.75, r * 1.3, 0, -r * 0.3, 0));                       // bụng xanh bạc hà
+      sg.add(part(g.ball, i % 2 ? mats['bl' + bi] : mats['bk' + bi], r, r * 0.9, r * 1.3, 0, r * 0.1, 0));   // lưng (hồng → cam)
+      const fh = r * (0.9 + 1.2 * Math.sin(Math.PI * Math.min(1, f * 1.25))), fin = f < 0.55 ? mats.finP : mats.finO;   // gai lưng to nhất ở giữa thân
+      if (i % 2 === 0) {
+        for (const s of [-1, 1]) sg.add(part(g.ball, mats['bl' + bi], r * 0.4, r * 0.5, r * 0.75, s * r * 0.78, 0, 0));   // vảy hai bên
+        const c0 = part(g.cone, fin, r * 0.34, fh, r * 0.34, 0, r * 0.95, 0); c0.rotation.x = -0.5; sg.add(c0);   // gai lưng xòe quạt: giữa + hai bên
+        for (const s of [-1, 1]) { const c1 = part(g.cone, fin, r * 0.24, fh * 0.7, r * 0.24, s * r * 0.5, r * 0.8, 0); c1.rotation.x = -0.45; c1.rotation.z = -s * 0.55; sg.add(c1); }
+      } else { const c2 = part(g.cone, fin, r * 0.22, fh * 0.55, r * 0.22, 0, r * 0.95, 0); c2.rotation.x = -0.5; sg.add(c2); }
+      if (i === 6 || i === 20) {   // hai cặp chân nhỏ có vuốt
+        for (const s of [-1, 1]) {
+          const leg = part(g.cone, mats.leg, r * 0.18, r * 1.1, r * 0.18, s * r * 0.9, -r * 0.9, 0); leg.rotation.z = Math.PI + s * 0.5; sg.add(leg);
+          sg.add(part(g.cone, mats.claw, r * 0.1, r * 0.35, r * 0.1, s * r * 1.4, -r * 1.9, 0));
+        }
+      }
+      if (i % 3 === 1) { const hz = new THREE.Sprite(mats.haze); hz.scale.set(1.1, 1.1, 1); sg.add(hz); }   // sương khí dọc thân
+      if (i === N - 1) {   // đuôi xòe như ngọn lửa hồng
+        for (let j = -2; j <= 2; j++) {
+          const gr = new THREE.Group(); gr.rotation.y = j * 0.38; const sy = 0.5 + 0.18 * (2 - Math.abs(j));
+          const fl = part(g.cone, mats.fire, 0.15, sy, 0.15, 0, 0, -sy); fl.rotation.x = -Math.PI / 2; gr.add(fl); sg.add(gr);
+        }
+        const ta = new THREE.Sprite(mats.aura); ta.scale.set(1.6, 1.6, 1); ta.position.z = -0.3; sg.add(ta);
       }
     }
     root.add(sg); segs.push(sg);
   }
   scene.add(root);
   const k = { ph: Math.PI / 2 - ry + (flip ? Math.PI : 0), dir: flip ? -1 : 1, R: DRAGON.radius };
-  return { scene, root, segs, mats, k, t: 0, head: { x: center.x, y: center.y, z: center.z }, rec: new Map() };
+  return { scene, root, segs, whisk, mats, k, t: 0, head: { x: center.x, y: center.y, z: center.z }, rec: new Map() };
 }
 
 const Q = new THREE.Vector3();
 function place(d, center) {
   const { t, k } = d, L = DRAGON.life, up = smooth(t / DRAGON.fadeIn), down = 1 - smooth((t - (L - DRAGON.fadeOut)) / DRAGON.fadeOut), vis = Math.min(up, down);
-  for (const [key, m] of Object.entries(d.mats)) m.opacity = (BASE[key] === undefined ? 1 : BASE[key]) * vis;
+  for (const m of Object.values(d.mats)) m.opacity = (m.userData.base === undefined ? 1 : m.userData.base) * vis;
   const grow = 0.4 + 0.6 * vis;
   for (let i = 0; i < d.segs.length; i++) {
     const ti = t - i * DRAGON.spacing, a = pathAt(ti, k), b = pathAt(ti + 0.04, k), s = d.segs[i];
-    s.position.set(center.x + a[0], center.y + a[1], center.z + a[2]); s.scale.setScalar(grow);
-    Q.set(center.x + b[0], center.y + b[1], center.z + b[2]); s.lookAt(Q);
+    s.position.set(center.x + a[0], center.y + a[1] + wave(ti) * grow, center.z + a[2]); s.scale.setScalar(grow);
+    Q.set(center.x + b[0], center.y + b[1] + wave(ti + 0.04) * grow, center.z + b[2]); s.lookAt(Q);
+  }
+  for (const w of d.whisk) {   // râu lượn sóng đung đưa
+    const amp = w.r * 0.22 * (0.25 + w.j / 11), ph = t * 8 + w.j * 0.85 + (w.s > 0 ? 1.7 : 0);
+    w.m.position.set(w.bx + Math.sin(ph) * amp, w.by + Math.cos(ph * 0.8) * amp * 0.7, w.bz);
   }
   const h = d.segs[0].position; d.head.x = h.x; d.head.y = h.y; d.head.z = h.z;
   return vis;
