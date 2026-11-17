@@ -57,6 +57,7 @@ export function initRoom() {
     onChat: (c) => document.dispatchEvent(new CustomEvent('lgt:chat', { detail: { name: c.name, text: c.text, mine: false } })),
     makeAvatar: (p) => createAvatar({ name: p.name, color: p.color, hair: p.hair, mine: false }),
     applyGear: (av, tok, dt) => { if (curRid) avById.set(curRid, av); gearView.apply(av, tok, dt); }, dropGear: (av) => { for (const [k, v] of [...avById]) if (v === av) avById.delete(k); gearView.drop(av); },     // Phiên 166: đồ của người khác
+    poseOf: (id) => (LGT.combatLink && LGT.combatLink.poseOf ? LGT.combatLink.poseOf(id) : null),   // Phiên 222: bay lướt / lao đầu của người khác
     xform: (p) => { curRid = p.id; if (!(LGT.zones && LGT.zones.current === ARENA.id) || !inNetBox(p.x, p.z)) return p; return fromNet(p.x, p.z); },   // võ đài: đổi vị trí đối thủ từ khung ±200 về tọa độ võ đài
     onSignal: (id, name, text) => { for (const f of [...sigListeners]) { try { f(id, name, text); } catch (e) { console.warn('[Diệu Giang Tự] Giao lưu lỗi:', e && e.message); } } },
     selfPose: () => { const p = W.pos; return { x: p.x, y: p.y, z: p.z, r: W.avatar.group.rotation.y }; },     // Phiên 91: vị trí vai của mình để đặt người đang khiêng
