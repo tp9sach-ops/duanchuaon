@@ -6,7 +6,8 @@
 // CHƯA nhìn bằng mắt trên máy thật (môi trường AI không có WebGL): vị trí/độ sáng dùng đúng số của đồ mình tự mang (STAFF_SCALE, HAT_POS, FLY_LIFT...).
 import * as THREE from 'three';
 import { decodeGear } from '../world/gearSync.js';
-import { buildStaff, loadStaffGlb, pulseGlows, STAFF_SCALE } from './staffMesh.js';
+import { kitOf } from './weaponKit.js';   // Phiên 224: gậy phát sáng theo bảng KIT (nhuy / tre)
+import { buildBambooMount, pulseBamboo } from './bambooMesh.js';
 import { buildHat, HAT_POS } from './hatMesh.js';
 import { buildSpearMount, buildStaffMount, buildProcBoard, FLY_LIFT, FLY_BOB, VBOB, VBASE } from './board.js';
 
@@ -39,22 +40,25 @@ export function createGearView() {
     av.__rg = s; return s;
   }
 
-  function swapStaff(slot, want, scale, clock) {
+  // Phiên 224: kind = 'nhuy' | 'tre' | '' (không cầm gậy phát sáng); đổi gậy thì dựng lại cây mới.
+  function swapStaff(slot, kind, scaleMul, clock) {
     if (!slot) return;
-    if (want && !slot.mesh) {
-      for (const c of slot.orig) c.visible = false;
-      slot.mesh = buildStaff(); slot.mesh.scale.setScalar(scale); slot.host.add(slot.mesh); loadStaffGlb(slot.mesh);
-    } else if (!want && slot.mesh) {
-      slot.host.remove(slot.mesh); disposeTree(slot.mesh); slot.mesh = null;
-      for (const c of slot.orig) c.visible = true;       // trả cây côn mặc định
+    const kit = kitOf(kind);
+    if (slot.mesh && (!kit || slot.kind !== kit.id)) {
+      slot.host.remove(slot.mesh); if (slot.kind !== 'tre') disposeTree(slot.mesh); slot.mesh = null; slot.kind = '';   // gậy dạy chó nhân bản chung hình khối → không hủy
+      if (!kit) for (const c of slot.orig) c.visible = true;       // trả cây côn mặc định
     }
-    if (slot.mesh) pulseGlows(slot.mesh, clock, false);
+    if (kit && !slot.mesh) {
+      for (const c of slot.orig) c.visible = false;
+      slot.mesh = kit.build(); slot.kind = kit.id; slot.mesh.scale.setScalar(kit.scale * scaleMul); slot.host.add(slot.mesh); kit.load(slot.mesh);
+    }
+    if (slot.mesh) kitOf(slot.kind).pulse(slot.mesh, clock, false);
   }
 
   function ensureMounts(av, s) {
     if (s.mounts) return s.mounts;
     const van = new THREE.Group(); van.name = 'cuoi-van'; const proc = buildProcBoard(); van.add(proc);
-    s.mounts = { thuong: buildSpearMount(), nhuy: buildStaffMount(), van };
+    s.mounts = { thuong: buildSpearMount(), nhuy: buildStaffMount(), tre: buildBambooMount(2.6), van };   // 2.6 = SLEN của js/ui/board.js
     for (const k of Object.keys(s.mounts)) { s.mounts[k].visible = false; av.group.add(s.mounts[k]); }
     return s.mounts;
   }
@@ -80,8 +84,9 @@ export function createGearView() {
     if (!s) { if (!tok) return; s = init(av); }                              // chưa từng có đồ và hiện không có đồ: khỏi tốn gì
     s.clock += dt;
 
-    swapStaff(s.hand, g.staff, STAFF_SCALE, s.clock);
-    swapStaff(s.back, g.staff, STAFF_SCALE * 0.7, s.clock);
+    const held = g.staff ? 'nhuy' : g.bamboo ? 'tre' : '';   // Phiên 224: cầm Gậy như ý hoặc Gậy dạy chó
+    swapStaff(s.hand, held, 1, s.clock);
+    swapStaff(s.back, held, 0.7, s.clock);
 
     const head = av.headHost;
     if (head) {
@@ -98,8 +103,12 @@ export function createGearView() {
       for (const k of Object.keys(M)) M[k].visible = false;
       const m = g.ride ? M[g.ride] : null;
       if (m) { m.visible = true; m.position.set(0, 0, 0); m.rotation.set(0, 0, 0); m.scale.setScalar(1); }
+      if (g.ride === 'tre' && m) {                                            // Phiên 224: gậy dạy chó cưỡi: chớp vàng đều + vệt vàng
+        pulseBamboo(m.userData.staff, s.clock, true);
+        m.userData.trail.forEach((sp, i) => { sp.material.opacity = Math.max(0, 0.55 - i * 0.055) * (0.7 + 0.3 * Math.sin(s.clock * 10 + i)); });
+      }
       if (g.ride === 'nhuy' && m) {                                           // gậy cưỡi: hai đầu chớp nhanh + vệt sáng phía sau
-        pulseGlows(m.userData.staff, s.clock, true);
+        kitOf('nhuy').pulse(m.userData.staff, s.clock, true);
         m.userData.trail.forEach((sp, i) => { sp.material.opacity = Math.max(0, 0.55 - i * 0.055) * (0.7 + 0.3 * Math.sin(s.clock * 10 + i)); });
       }
       if (av.setBackHidden) av.setBackHidden(!!(m && !isVan));              // cưỡi thương/gậy thì cây đeo lưng biến mất (ván thì giữ)
@@ -113,7 +122,7 @@ export function createGearView() {
   /** Dọn toàn bộ đồ đã gắn (người đó rời chùa / dựng lại nhân vật). */
   function drop(av) {
     const s = av && av.__rg; if (!s) return;
-    for (const slot of [s.hand, s.back]) if (slot && slot.mesh) { slot.host.remove(slot.mesh); disposeTree(slot.mesh); slot.mesh = null; for (const c of slot.orig) c.visible = true; }
+    for (const slot of [s.hand, s.back]) if (slot && slot.mesh) { slot.host.remove(slot.mesh); if (slot.kind !== 'tre') disposeTree(slot.mesh); slot.mesh = null; slot.kind = ''; for (const c of slot.orig) c.visible = true; }
     if (s.hat && av.headHost) { av.headHost.remove(s.hat); s.hat = null; }
     if (s.mounts) { for (const m of Object.values(s.mounts)) { av.group.remove(m); disposeTree(m); } s.mounts = null; }
     for (const a of Object.values(s.auras)) { av.group.remove(a.m); a.m.geometry.dispose(); a.m.material.dispose(); }
