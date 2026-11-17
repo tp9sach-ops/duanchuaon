@@ -59,15 +59,19 @@ function place(w) {
 /**
  * Bộ quản lý sói khí trong một cảnh. spawn(pos {x,y,z}, heading, range): thả một con tại `pos` (chân nhân vật), hướng `heading` (rad quanh y, 0 = +z), vồ xa `range` m.
  * update(dt): bay + dọn; `onBite()` gọi MỘT lần khi sói ngoạm (cho tiếng / rung). Trả false khi đang đủ WOLF.max con.
+ * remote = true (sói của NGƯỜI KHÁC, Phiên 224): không phát lại ra mạng. Sói của MÌNH (remote = false) tự phát qua LGT.combatLink.sendWolf để mọi người cùng thấy.
  */
 export function createWolfFx(scene, { onBite = null, max = WOLF.max } = {}) {
   const live = [];
   return {
     get count() { return live.length; },
     get scene() { return scene; },
-    spawn(pos, heading = 0, range = WOLF.rangeAir) {
+    spawn(pos, heading = 0, range = WOLF.rangeAir, remote = false) {
       if (!scene || !pos || live.length >= max) return false;
-      const w = makeWolf(scene, pos, Number.isFinite(+heading) ? +heading : 0, range); live.push(w); place(w); return true;
+      const h = Number.isFinite(+heading) ? +heading : 0, r = Number.isFinite(+range) && +range > 0 ? +range : WOLF.rangeAir;
+      const w = makeWolf(scene, pos, h, r); live.push(w); place(w);
+      if (!remote) { try { const L = globalThis.LGT; if (L && L.combatLink && L.combatLink.sendWolf) L.combatLink.sendWolf(h, r); } catch (_) { /* phát lỗi không làm hỏng hiệu ứng của mình */ } }   // Phiên 224: sói của MÌNH → báo mọi người cùng thấy
+      return true;
     },
     update(dt) {
       if (!live.length) return;
