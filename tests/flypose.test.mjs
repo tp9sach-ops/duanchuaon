@@ -59,6 +59,6 @@ test('tiếng gió: nhanh → to và the thé hơn; mức gió theo tốc độ,
   assert.ok(windLevel(10, -4) > windLevel(3, 0) && windLevel(10, -4, true) < windLevel(10, -4) && windLevel(99, -99) <= 1);
   assert.ok(WIND_SND.bay.f1 > WIND_SND.bay.f0 && WIND_SND.dap.f1 < WIND_SND.dap.f0);
   const sf = rd('js/ui/sfx.js'), sk = rd('js/ui/skill.js');
-  assert.match(sf, /gust, windStart, windSet, windStop/);
+  assert.match(sf, /gust, (?:wood, )?windStart, windSet, windStop/);   // Phiên 224: thêm wood (tiếng gỗ)
   assert.match(sk, /gust\('bay'\)/); assert.match(sk, /gust\('dap'\)/); assert.match(sk, /av\.act\('dapgio'\)/); assert.match(sk, /createWindFx/); assert.match(sk, /endWind\(\)/);
 });
