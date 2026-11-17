@@ -21,7 +21,7 @@ export function createRoomClient(deps) {
   const remotes = createRemotes(), views = new Map();       // id → { av, key }
   const sigQ = [];                                           // Phiên 137: gói tin giao lưu chờ gửi (mỗi lượt đồng bộ gửi một gói, ưu tiên hơn lời nhắn thường)
   let holdId = null; const flies = new Map();               // Phiên 91: người đang được MÌNH khiêng trên vai / đang bị MÌNH ném bay vòng cung (id → { x0,y0,z0,x1,z1,t,dur,peak })
-  let lastRoom = null, cursor = 0, first = true, pendingSay = '', timer = null, running = false, active = true, fails = 0, busy = false, lastCount = 1, hiddenMs = 9000;
+  let airPrev = false, lastRoom = null, cursor = 0, first = true, pendingSay = '', timer = null, running = false, active = true, fails = 0, busy = false, lastCount = 1, hiddenMs = 9000;
   const API = { pageId };
 
   const killView = (v) => { try { if (deps.dropGear) deps.dropGear(v.av); } catch (_) { /* dọn đồ lỗi không làm hỏng đồng bộ */ } scene.remove(v.av.group); v.av.dispose(); };
@@ -54,10 +54,11 @@ export function createRoomClient(deps) {
   /** Một lượt đồng bộ: gửi trạng thái của mình, nhận người khác + lời nhắn mới. */
   API.tick = async () => {
     if (busy) return; busy = true;
-    let wait = ROOM_CFG.minPollMs;
+    let wait = ROOM_CFG.minPollMs, airFlag = false;
     try {
       const me = getSelf();
       if (!me) { wait = 500; return; }                      // chưa vào chùa (đang ở màn nhập tên)
+      airFlag = (Number(me.y) || 0) > 0.05;   // Phiên 223: đang trên không (nhảy / bay lướt)
       const rn = deps.roomOf ? deps.roomOf(ROOM_CFG.room) : ROOM_CFG.room;     // tên phòng theo zone hiện tại (hub = 'main', như cũ)
       if (lastRoom !== null && rn !== lastRoom) API.reset();                  // sang zone khác: quên người + lời nhắn của zone cũ
       lastRoom = rn;
@@ -79,13 +80,14 @@ export function createRoomClient(deps) {
         const lo = Number(res.minPollMs) > 0 ? Number(res.minPollMs) : ROOM_CFG.minPollMs;
         hiddenMs = Number(res.hiddenMs) > 0 ? Number(res.hiddenMs) : 9000; remotes.follow = Number(res.follow) > 0 ? Number(res.follow) : 1.4;
         wait = Number(res.pollMs) > 0 ? Math.max(lo, Math.min(ROOM_CFG.maxPollMs, Number(res.pollMs))) : pollInterval(lastCount);
+        if (lo <= 250 && (airFlag || airPrev)) wait = Math.min(wait, ROOM_CFG.airPollMs);   // Phiên 223: mình đang nhảy / bay (hoặc vừa chạm đất) → tick dày để cú nhảy tới người khác nguyên vẹn; Apps Script (chậm) giữ nhịp cũ
       } else {
         if (say) { if (isSig) sigQ.unshift(say); else pendingSay = say; }   // chưa gửi được thì giữ lại gửi lần sau
         fails++; wait = Math.min(10000, ROOM_CFG.minPollMs * Math.pow(2, Math.min(fails, 3)));   // lỗi liên tiếp: thưa dần, tối đa 10 giây
         if (res && res.error === 'room_full') onOnline(null);
       }
     } catch (_) { fails++; wait = Math.min(10000, ROOM_CFG.minPollMs * Math.pow(2, Math.min(fails, 3))); }
-    finally { busy = false; if (running) timer = schedule(API.tick, active ? wait : Math.max(wait, hiddenMs)); }
+    finally { busy = false; airPrev = airFlag; if (running) timer = schedule(API.tick, active ? wait : Math.max(wait, hiddenMs)); }
   };
 
   /** Đổi sang đường truyền khác: quên mốc lời nhắn của nơi cũ, bỏ mọi người của nơi cũ (khung hình kế tiếp sẽ dọn nhân vật). */
