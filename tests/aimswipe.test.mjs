@@ -44,7 +44,7 @@ test('nối dây js/ui/heSkill.js + js/ui/farm.js: lướt nút chiêu → hư�
   const hs = readFileSync(new URL('../js/ui/heSkill.js', import.meta.url), 'utf8'), farm = readFileSync(new URL('../js/ui/farm.js', import.meta.url), 'utf8');
   assert.match(hs, /from '\.\.\/world\/aimSwipe\.js'/); assert.match(hs, /addEventListener\('pointermove'/); assert.match(hs, /cast\(s, swp\)/);
   assert.match(hs, /swipeDir\(swipe\.dx, swipe\.dy, LGT\.world && LGT\.world\.camera \? LGT\.world\.camera\.yaw : 0\)/); assert.match(hs, /isDirectional\(sk\.id\)\) return castDir\(slot, sk, sd\)/);
-  assert.match(hs, /skillHitDir\(r\.heSo, sd\.ry, hinh\)/); assert.match(hs, /Không có quái trong hướng lướt/);
+  assert.match(hs, /skillHitDir\(r\.heSo, sd\.ry, hinh(?:, sk\.id)?\)/); assert.match(hs, /Không có quái trong hướng lướt/);
   assert.match(hs, /sync\(\); if \(inLuyen\(\)\) return luyenCast\(slot(?:, swipe)?\);\s*\n(?:\s*if \(inArena\(\)\)[^\n]*\n)?\s*if \(!rt\) return false;/);
-  assert.match(farm, /pickInDir\(p, ry, view\.mons, hinh, bodyOf\)/); assert.match(farm, /skillReady, skillHit, skillHitDir/);
+  assert.match(farm, /pick(?:All)?InDir\(p, ry, view\.mons, hinh, bodyOf\)/); assert.match(farm, /skillReady, skillHit, skillHitDir/);
 });
