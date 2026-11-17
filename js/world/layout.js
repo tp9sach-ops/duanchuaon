@@ -138,27 +138,38 @@ export function solidAt(x, z, y = 1.6) {
   return hallSolid(x, z, y);
 }
 
-/** Phần chặn do ĐỊA HÌNH (ranh giới, ao, hồ, tường và nền chính điện), chưa tính vật cản tròn/chữ nhật. */
-function terrainBlocked(x, z) {
+/**
+ * BẦU TRỜI & ĐỊA HÌNH CÓ ĐỘ CAO (Phiên 225, mục 4). Trước đây ranh giới/núi, ao sen, hồ và tường chính điện chặn MỌI độ cao → bay cao vẫn không qua được, và không đứng lên được.
+ * Nay mỗi chỗ bị địa hình chặn có một MẶT ĐỨNG (m): chân ở đủ cao thì bay/đi QUA PHÍA TRÊN và đáp xuống đứng được; thấp hơn thì vẫn bị chặn. Trên mặt đứng không có gì cản nên bay đi đâu cũng được.
+ * Mọi con số là QUY ƯỚC TẠM — ptg thử rồi báo để chỉnh Ở ĐÂY (một nơi duy nhất): water = mặt lá sen trên ao/hồ không bơi được; ridge = đỉnh núi/vách ranh giới; wall = mái tường chính điện; limit = mép thế giới (ngoài đó chặn hết).
+ */
+export const SKY = Object.freeze({ water: 0.35, ridge: 7, wall: 10.5, limit: 400 });
+
+/** Mặt đứng (m) của địa hình chặn tại (x, z): 0 = không chặn; Infinity = chặn mọi độ cao (zone khác hub, ngoài mép thế giới). */
+function terrainTop(x, z) {
   const zd = zoneDef();
   if (zd) {   // zone khác hub: chỉ có bounds + địa hình riêng + hồ riêng (không có ranh giới/ao/cổng của chùa)
-    if (!inRect(x, z, zd.bounds)) return true;
-    if (zd.terrain && zd.terrain(x, z)) return true;
-    for (const w of WATERS) if (Math.hypot(x - w.x, z - w.z) < w.r && !bridgeAt(x, z)) return true;
-    return false;
+    if (!inRect(x, z, zd.bounds)) return Infinity;
+    if (zd.terrain && zd.terrain(x, z)) return Infinity;
+    for (const w of WATERS) if (Math.hypot(x - w.x, z - w.z) < w.r && !bridgeAt(x, z)) return Infinity;
+    return 0;
   }
+  let top = 0;
+  const up = (v) => { if (v > top) top = v; };
   // Ranh giới: trong sân, hoặc đường ngoài cổng
   const inside = Math.abs(x) <= BOUNDS.xMax && z >= BOUNDS.zMin && z <= GATE.z - 1.8;
   const outside = (Math.abs(x) <= 14 && z >= GATE.z + 2.4 && z <= 62) || WALKS.some((w) => inRect(x, z, w));
   const inGate = z > GATE.z - 1.8 && z < GATE.z + 2.4 && inGateOpening(x);
-  if (!inside && !outside && !inGate) return true;
+  if (!inside && !outside && !inGate) up(Math.abs(x) > SKY.limit || Math.abs(z) > SKY.limit ? Infinity : SKY.ridge);   // ngoài mép thế giới chặn hết; vùng đi bộ đăng ký (phòng trong nhà...) ở xa vẫn đi được
   // Ao sen: chặn trừ lối cầu đá
-  if (Math.hypot(x - POND.x, z - POND.z) < POND.r && Math.abs(x) > POND.bridgeHalf) return true;
+  if (Math.hypot(x - POND.x, z - POND.z) < POND.r && Math.abs(x) > POND.bridgeHalf) up(SKY.water);
   // Hồ thêm: chặn trừ cầu/đảo
-  for (const w of WATERS) if (!w.swim && Math.hypot(x - w.x, z - w.z) < w.r && !bridgeAt(x, z)) return true;   // nước có cờ `swim` (Phiên 80) bơi/lặn được, không chặn
-  if (hallSolid(x, z, 0)) return true;
-  return false;
+  for (const w of WATERS) if (!w.swim && Math.hypot(x - w.x, z - w.z) < w.r && !bridgeAt(x, z)) up(SKY.water);   // nước có cờ `swim` (Phiên 80) bơi/lặn được, không chặn
+  if (hallSolid(x, z, 0)) up(hallSolid(x, z, HALL.h) ? SKY.wall : HALL.h);   // tường chính điện (mái SKY.wall) hoặc dải đá sát nền (mặt = sàn)
+  return top;
 }
+/** Phần chặn do ĐỊA HÌNH (ranh giới, ao, hồ, tường và nền chính điện), chưa tính vật cản tròn/chữ nhật. feetH (m, tuyệt đối): chân đủ cao thì qua phía trên. */
+function terrainBlocked(x, z, feetH = 0) { const t = terrainTop(x, z); return t > 0 && feetH < t - 0.05; }
 
 // ---- ĐỨNG TRÊN VẬT (Phiên 200) ---------------------------------------------------------------------------------------------------------------------
 // Vật cản có `top` (m, mặt đứng được: mái nhà, đá, cây, tượng, tháp...) hoặc `h` (vật thấp: chậu, ghế) thì người ở TRÊN độ cao đó (feetH = độ cao chân so với mặt đất) bay/đi qua phía trên được và đáp xuống đứng lên;
@@ -175,13 +186,14 @@ export function floorAt(x, z, feetH = 0) {
   const lim = feetH + STEP_UP;
   for (const c of CIRCLES) { const t = topOf(c); if (t !== Infinity && t <= lim && t > f && Math.hypot(x - c.x, z - c.z) < c.r) f = t; }
   for (const q of RECTS) { const t = topOf(q); if (t !== Infinity && t <= lim && t > f && inRect(x, z, q)) f = t; }
+  if (activeZone === HUB) { const tt = terrainTop(x, z); if (tt > 0 && tt !== Infinity && tt <= lim && tt > f) f = tt; }   // Phiên 225: đỉnh núi/lá sen/mái tường
   if (activeZone === HUB) for (const d of DECKS) { const t = +d.top; if (t <= lim && t > f && (d.r !== undefined ? Math.hypot(x - d.x, z - d.z) < d.r : inRect(x, z, d))) f = t; }
   return f;
 }
 
 /** Điểm (x, z) có bị chặn không (không xét việc chuyển vùng; xem canStep). */
 export function blocked(x, z, feetH = 0) {
-  if (terrainBlocked(x, z)) return true;
+  if (terrainBlocked(x, z, feetH)) return true;
   for (const c of CIRCLES) if (Math.hypot(x - c.x, z - c.z) < c.r && !overTop(c, feetH)) return true;
   for (const q of RECTS) if (inRect(x, z, q) && !overTop(q, feetH)) return true;
   return false;
@@ -191,7 +203,7 @@ export function blocked(x, z, feetH = 0) {
 export function canStep(x0, z0, x1, z1, feetH = 0) {
   if (blocked(x1, z1, feetH)) return false;
   const a = region(x0, z0), b = region(x1, z1);
-  return a === b || (a !== 'ground' || b !== 'plat') && (a !== 'plat' || b !== 'ground');
+  return a === b || feetH >= HALL.h - 0.05 || (a !== 'ground' || b !== 'plat') && (a !== 'plat' || b !== 'ground');   // Phiên 225: đủ cao thì nhảy thẳng lên/xuống nền
 }
 
 /** Di chuyển một bước dx,dz có trượt dọc vật cản: thử cả hai trục. Trả { x, z }. */
@@ -213,15 +225,15 @@ const RING = Array.from({ length: 8 }, (_, k) => [Math.cos(k * Math.PI / 4) * PL
  * và mép nền chính điện (đất sát nền hoặc sàn sát mép: thân không được gác lên mép nền đá; chỉ qua bậc thềm).
  */
 export function bodyBlocked(x, z, feetH = 0) {
-  if (terrainBlocked(x, z)) return true;
+  if (terrainBlocked(x, z, feetH)) return true;
   for (const c of CIRCLES) if (Math.hypot(x - c.x, z - c.z) < c.r + PLAYER_R && !overTop(c, feetH)) return true;
   for (const q of RECTS) if (x > q.x0 - PLAYER_R && x < q.x1 + PLAYER_R && z > q.z0 - PLAYER_R && z < q.z1 + PLAYER_R && !overTop(q, feetH)) return true;
   const rc = region(x, z);
   for (const [dx, dz] of RING) {
     const px = x + dx, pz = z + dz;
-    if (terrainBlocked(px, pz)) return true;
+    if (terrainBlocked(px, pz, feetH)) return true;
     const rp = region(px, pz);
-    if (rp !== rc && ((rc === 'ground' && rp === 'plat') || (rc === 'plat' && rp === 'ground'))) return true;
+    if (feetH < HALL.h - 0.05 && rp !== rc && ((rc === 'ground' && rp === 'plat') || (rc === 'plat' && rp === 'ground'))) return true;
   }
   return false;
 }
