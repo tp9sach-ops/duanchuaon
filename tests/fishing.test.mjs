@@ -102,12 +102,12 @@ test('thu cá vào ao riêng: có uid riêng, tối đa 30 con, đầy thì báo
   assert.equal(noteCaught(emptyFish()).stat.got, 1);
 });
 
-test('phóng sinh: thưởng 1 (+1 hiếm, +1 lớn) hạt sen; thả đúng con theo uid; uid lạ không làm gì; thống kê thả', () => {
-  assert.equal(releaseSen({ sp: 'chep', lon: false }), 1); assert.equal(releaseSen({ sp: 'chep', lon: true }), 2); assert.equal(releaseSen({ sp: 'koi', lon: false }), 2); assert.equal(releaseSen({ sp: 'koi', lon: true }), 3);
+test('phóng sinh: thưởng cố định 2 hạt sen (Phiên 221); thả đúng con theo uid; uid lạ không làm gì; thống kê thả', () => {
+  for (const f of [{ sp: 'chep', lon: false }, { sp: 'chep', lon: true }, { sp: 'koi', lon: false }, { sp: 'koi', lon: true }]) assert.equal(releaseSen(f), 2);   // Phiên 221: cố định 2 hạt sen mọi loài/cỡ
   assert.equal(releaseSen({ sp: 'xxx' }), 0); assert.equal(releaseSen(null), 0);
   let s = keepFish(emptyFish(), { sp: 'koi', lon: true }).state; s = keepFish(s, { sp: 'chep', lon: false }).state;
   const bad = releaseFish(s, 99); assert.equal(bad.ok, false); assert.equal(bad.state, s);
-  const r = releaseFish(s, 1); assert.equal(r.ok, true); assert.equal(r.sen, 3); assert.equal(r.fish.sp, 'koi'); assert.equal(r.state.pond.length, 1); assert.equal(r.state.pond[0].uid, 2); assert.equal(r.state.stat.rel, 1); assert.equal(s.pond.length, 2);
+  const r = releaseFish(s, 1); assert.equal(r.ok, true); assert.equal(r.sen, 2); assert.equal(r.fish.sp, 'koi'); assert.equal(r.state.pond.length, 1); assert.equal(r.state.pond[0].uid, 2); assert.equal(r.state.stat.rel, 1); assert.equal(s.pond.length, 2);
   const again = releaseFish(r.state, 1); assert.equal(again.ok, false);
   const k = keepFish(r.state, { sp: 'baba', lon: false }); assert.equal(k.uid, 3, 'uid không dùng lại sau khi thả');
   const now = releaseCaught(emptyFish(), { sp: 'ruavang', lon: false }); assert.equal(now.ok, true); assert.equal(now.sen, 2); assert.equal(now.state.stat.rel, 1); assert.equal(now.state.stat.got, 1);
