@@ -36,11 +36,19 @@ export const canRide = (c = {}) => !!(isObj(c) && c.free && !c.inHouse && !c.swi
 /** Ván bay về tay khi vào trận: xoay trọn MỘT vòng quanh người (SPIN_S giây) rồi lao về bàn tay (FLY_S giây). */
 export const SPIN_S = 0.55, FLY_S = 0.35, RETURN_S = SPIN_S + FLY_S, ORBIT_R = 0.95;
 const ease = (x) => x * x * (3 - 2 * x);
-/** Tư thế ván tại giây t kể từ lúc bắt đầu bay về. Trả { done, ang (rad, 0..2π quanh người), rad (bán kính quỹ đạo), blend (0 = trên quỹ đạo, 1 = đã ở tay) }. t lạ → coi như 0. */
-export function returnPose(t) {
+// Phiên 224: GẬY TRE cưỡi — thu về tay thì bay lên cao, XOAY 3 VÒNG trên không (TRE_SPIN_S giây, TRE_LIFT m nhấc lên) rồi nhẹ nhàng về tay (FLY_S giây).
+export const TRE_TURNS = 3, TRE_SPIN_S = 1.2, TRE_LIFT = 0.9, TRE_RETURN_S = TRE_SPIN_S + FLY_S;
+/** Tư thế ván tại giây t kể từ lúc bắt đầu bay về. Trả { done, lift (m, chỉ Gậy tre), ang (rad, 0..2π quanh người; Gậy tre 0..6π = 3 vòng), rad (bán kính quỹ đạo), blend (0 = trên quỹ đạo, 1 = đã ở tay) }. t lạ → coi như 0. */
+export function returnPose(t, id) {
   const x = Number.isFinite(+t) ? Math.max(0, +t) : 0;
-  if (x >= RETURN_S) return { done: true, ang: Math.PI * 2, rad: 0, blend: 1 };
-  if (x < SPIN_S) return { done: false, ang: (x / SPIN_S) * Math.PI * 2, rad: ORBIT_R, blend: 0 };
+  if (id === 'tre') {   // Phiên 224: 3 vòng trên không, nhấc lên rồi hạ xuống tay. lift (m) = độ nhấc thêm so với quỹ đạo thường.
+    if (x >= TRE_RETURN_S) return { done: true, ang: Math.PI * 2 * TRE_TURNS, rad: 0, blend: 1, lift: 0 };
+    if (x < TRE_SPIN_S) { const k = x / TRE_SPIN_S; return { done: false, ang: k * Math.PI * 2 * TRE_TURNS, rad: ORBIT_R, blend: 0, lift: Math.sin(Math.PI * Math.min(1, k * 1.0)) * TRE_LIFT }; }
+    const e2 = ease((x - TRE_SPIN_S) / FLY_S);
+    return { done: false, ang: Math.PI * 2 * TRE_TURNS, rad: ORBIT_R * (1 - e2), blend: e2, lift: 0 };
+  }
+  if (x >= RETURN_S) return { done: true, ang: Math.PI * 2, rad: 0, blend: 1, lift: 0 };
+  if (x < SPIN_S) return { done: false, ang: (x / SPIN_S) * Math.PI * 2, rad: ORBIT_R, blend: 0, lift: 0 };
   const e = ease((x - SPIN_S) / FLY_S);
-  return { done: false, ang: Math.PI * 2, rad: ORBIT_R * (1 - e), blend: e };
+  return { done: false, ang: Math.PI * 2, rad: ORBIT_R * (1 - e), blend: e, lift: 0 };
 }
