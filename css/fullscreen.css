@@ -1,21 +1,26 @@
-/* Phiên 213: nút toàn màn hình + chặn kéo-để-tải-lại của Chrome Android khi chơi game. */
+/* Phiên 213: nút toàn màn hình + chặn kéo-để-tải-lại của Chrome Android khi chơi game.
+   Phiên 216: vị trí do js/ui/fullscreen.js place() ghi vào --fs-r / --fs-t (bên trái hàng ví của HUD, không đè nút nào);
+   chưa có HUD thì dùng góc phải-trên mặc định. Ẩn khi mở bảng / chế độ sửa nhà; thu nhỏ trên điện thoại nằm ngang. */
 html, body { overscroll-behavior: none; }
 
 #dgt-fs {
-  position: fixed; z-index: 70;
-  top: calc(env(safe-area-inset-top, 0px) + 8px);
-  right: calc(env(safe-area-inset-right, 0px) + 8px);
-  display: flex; gap: 6px; opacity: .55; transition: opacity .2s;
+  position: fixed; z-index: 30;
+  top: var(--fs-t, calc(env(safe-area-inset-top, 0px) + 8px));
+  right: var(--fs-r, calc(env(safe-area-inset-right, 0px) + 8px));
+  display: flex; gap: 6px; opacity: .6; transition: opacity .2s;
 }
 #dgt-fs:hover, #dgt-fs:focus-within, #dgt-fs:active { opacity: 1; }
-#dgt-fs.is-fs { opacity: .35; }
+#dgt-fs.is-fs { opacity: .4; }
+.panel-open #dgt-fs, .edit-mode #dgt-fs { opacity: 0; pointer-events: none; }
 #dgt-fs button {
-  width: 40px; height: 40px; padding: 0; border-radius: 12px;
+  width: 36px; height: 36px; padding: 0; border-radius: 12px;
   border: 1px solid rgba(241, 219, 160, .45);
   background: rgba(8, 10, 20, .6); color: #f6e7c1;
-  font: 600 20px/1 system-ui, sans-serif; cursor: pointer;
+  font: 600 18px/1 system-ui, sans-serif; cursor: pointer;
   -webkit-tap-highlight-color: transparent; touch-action: manipulation;
 }
+@media (pointer: coarse) { #dgt-fs button { width: 40px; height: 40px; } }
+@media (max-height: 500px) { #dgt-fs button { width: 34px; height: 34px; font-size: 17px; border-radius: 10px; } }
 #dgt-fs button[hidden] { display: none; }
 #dgt-fs button.on { background: rgba(217, 178, 95, .85); color: #1a1405; }
 

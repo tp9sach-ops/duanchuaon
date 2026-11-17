@@ -3,6 +3,8 @@
 // 2) Bấm "Vào chùa" (hoặc nút ⛶) → Fullscreen API ẩn thanh địa chỉ + thanh công cụ Chrome. Trình duyệt chỉ cho vào toàn màn hình khi người dùng CHẠM, nên không thể tự bật lúc vừa tải trang.
 // 3) Nút ↻ khoá xoay ngang (tuỳ chọn, nhớ lựa chọn). Mặc định KHÔNG khoá để không làm kẹt người chơi đang cầm dọc.
 // 4) iPhone/iPad (Safari không có Fullscreen API cho trang web): nút ⛶ hướng dẫn "Thêm vào MH chính" (PWA, manifest display_override fullscreen).
+// Phiên 216: cụm nút ⛶/↻ trước đây nằm cố định góc phải-trên và ĐÈ LÊN hàng ví (hạt sen/ngọc) của HUD (cả dọc lẫn ngang). Nay place() đo hàng ví thật
+//   (.hm-wallet → .hm-icons → .hm-tr) và đặt cụm nút NGAY BÊN TRÁI nó, cùng hàng; chưa có HUD thì về góc phải-trên mặc định. Ẩn khi mở bảng (panel-open) / chế độ sửa nhà.
 // Không đụng tới logic game: lỗi ở đây chỉ làm mất nút, game vẫn chạy.
 const THEME_NIGHT = '#06070d', THEME_DAY = '#27456b', THEME_FS = '#000000';
 const doc = document, root = doc.documentElement;
@@ -81,15 +83,43 @@ export function initFullscreen() {
     if (fsEl() || isInstalledFs()) { setThemeColor(THEME_FS); return; }
     const L = window.LGT; setThemeColor(L && typeof L.night === 'number' && L.night <= 0.5 ? THEME_DAY : THEME_NIGHT);
   };
-  paintTheme(); setInterval(paintTheme, 1000);
+  paintTheme();
 
-  // Nút nổi (góc phải trên). Đã ở chế độ app toàn màn hình (PWA) thì không cần.
+  // Nút nổi (mặc định góc phải trên; place() dời sang trái hàng ví của HUD). Đã ở chế độ app toàn màn hình (PWA) thì không cần.
   const box = doc.createElement('div'); box.id = 'dgt-fs'; box.setAttribute('role', 'group'); box.setAttribute('aria-label', 'Toàn màn hình');
   box.innerHTML = '<button type="button" id="dgt-fs-btn" aria-label="Toàn màn hình" title="Toàn màn hình">⛶</button>' +
     '<button type="button" id="dgt-fs-rot" aria-label="Khoá xoay ngang" title="Khoá xoay ngang" aria-pressed="false" hidden>↻</button>';
   const btn = box.querySelector('#dgt-fs-btn'), rot = box.querySelector('#dgt-fs-rot');
   if (!isInstalledFs()) doc.body.appendChild(box);
   const canRotate = !!(screen.orientation && screen.orientation.lock);
+
+  // Phiên 216: đặt cụm nút bên trái hàng ví (hạt sen/ngọc) của HUD để không đè nút nào, ở cả điện thoại dọc lẫn ngang.
+  let lastPos = '';
+  const place = () => {
+    try {
+      if (!box.isConnected) return;
+      let r = null;
+      for (const sel of ['.hm-wallet', '.hm-icons', '.hm-tr']) {
+        const n = doc.querySelector(sel); if (!n) continue;
+        const b = n.getBoundingClientRect(); if (b.width > 4 && b.height > 4) { r = b; break; }
+      }
+      let pos = '';
+      if (r) {
+        const cw = root.clientWidth || window.innerWidth, bw = box.offsetWidth || 40, bh = box.offsetHeight || 40;
+        let right = Math.round(cw - r.left + 8);
+        if (right + bw > cw - 4) right = Math.max(4, cw - bw - 4);
+        const top = Math.max(4, Math.round(r.top + (r.height - bh) / 2));
+        pos = right + 'px|' + top + 'px';
+      }
+      if (pos === lastPos) return;
+      lastPos = pos;
+      if (!pos) { box.style.removeProperty('--fs-r'); box.style.removeProperty('--fs-t'); return; }
+      const p = pos.split('|'); box.style.setProperty('--fs-r', p[0]); box.style.setProperty('--fs-t', p[1]);
+    } catch (_) { /* bỏ qua: nút vẫn ở góc mặc định */ }
+  };
+  const placeSoon = () => { try { requestAnimationFrame(place); } catch (_) { place(); } };
+  setInterval(() => { paintTheme(); place(); }, 1000);   // HUD dựng muộn / số hạt sen đổi độ rộng → đo lại mỗi giây (rẻ)
+  for (const ev of ['resize', 'orientationchange', 'lgt:viewport']) window.addEventListener(ev, placeSoon);
 
   const paintBtns = () => {
     const on = !!fsEl();
@@ -107,17 +137,18 @@ export function initFullscreen() {
   rot.addEventListener('click', () => {
     const next = !wantLandscape(); store.set('dgt.lockLand', next ? '1' : '0');
     if (next) lockLandscape(); else unlockOrientation();
-    paintBtns();
+    paintBtns(); placeSoon();
   });
   const onFsChange = () => {
     const on = !!fsEl();
     if (!on) { unlockOrientation(); store.sset('dgt.fsDeclined', '1'); }   // thoát bằng cử chỉ hệ thống/nút Back: phiên này không tự bật lại
     else if (wantLandscape()) lockLandscape();
-    paintBtns(); paintTheme();
+    paintBtns(); paintTheme(); placeSoon();
     try { window.dispatchEvent(new Event('resize')); } catch (_) { /* viewport.js tự đo lại */ }
+    setTimeout(place, 350);   // thanh Chrome ẩn/hiện xong khung nhìn mới ổn định
   };
   doc.addEventListener('fullscreenchange', onFsChange); doc.addEventListener('webkitfullscreenchange', onFsChange);
-  paintBtns();
+  paintBtns(); placeSoon();
 
   // Tự vào toàn màn hình ngay khi bấm "Vào chùa" (đó là một lần chạm của người dùng nên trình duyệt cho phép).
   // Phiên này đã thoát toàn màn hình thủ công thì không ép lại.
@@ -127,5 +158,5 @@ export function initFullscreen() {
     enterFullscreen();
   }, true);
 
-  return { enter: enterFullscreen, leave: leaveFullscreen, setThemeColor };
+  return { enter: enterFullscreen, leave: leaveFullscreen, setThemeColor, place };
 }
