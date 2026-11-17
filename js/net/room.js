@@ -67,7 +67,9 @@ export function initRoom() {
       const prof = loadProfile(localStorage), p = W.pos, av = W.avatar;
       const inArena = !!(LGT.zones && LGT.zones.current === ARENA.id);   // Phiên 137: ở võ đài (x ≈ 580) báo vị trí "mượn" trong khung ±200 (Firebase từ chối ngoài khung)
       const np = inArena ? { ...toNet(p.x, p.z), r: null } : netPos(LGT.land && LGT.land.state, p);   // đang ở trong nhà: người khác thấy bạn đứng trước cửa nhà (phòng nằm ngoài giới hạn ±200 của máy chủ)
-      return { n: prof.name, c: prof.color, h: prof.hair, x: np.x, y: np.r == null ? p.y : 0, z: np.z, r: np.r == null ? av.group.rotation.y : np.r, s: np.r == null ? (av.state === 'glide' ? 'idle' : av.state) : 'idle', i: selfGear() };   // Phiên 196: 'glide' (bay lướt) chỉ hiện ở máy mình; người khác thấy 'idle' vì luật Firebase chỉ nhận 6 trạng thái cũ
+      // Phiên 223b: cú NHẢY thường (js/ui/skill.js) cộng thẳng vào av.group.position.y, KHÔNG vào W.pos.y → trước đây y gửi đi luôn là mặt đất và người khác không bao giờ thấy nhảy. Giờ lấy độ cao THẬT của nhân vật (không thấp hơn mặt đất: bỏ qua cú nhún khi gồng lực).
+      const yReal = Math.max(p.y, (av.group.position && av.group.position.y) || 0);
+      return { n: prof.name, c: prof.color, h: prof.hair, x: np.x, y: np.r == null ? yReal : 0, z: np.z, r: np.r == null ? av.group.rotation.y : np.r, s: np.r == null ? (av.state === 'glide' ? 'idle' : av.state) : 'idle', i: selfGear() };   // Phiên 196: 'glide' (bay lướt) chỉ hiện ở máy mình; người khác thấy 'idle' vì luật Firebase chỉ nhận 6 trạng thái cũ
     },
   });
 
