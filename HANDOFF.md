@@ -1,5 +1,7 @@
 # HANDOFF — Web tâm linh "DIỆU GIANG TỰ" (chùa Việt 3D) — tên cũ: Linh Giang Tự (Phiên 5 đổi tên theo ptg)
 
+> **Cập nhật Phiên 219 (2026-11-17): nút toàn màn hình bị lớp phim/màn vào cửa CHE (z-index) → đã sửa; nút ngay trong màn "Vào chùa"; điện thoại chạm lần đầu tự toàn màn hình + xoay ngang; hết đè nút khi xoay ngang; điện thoại bắt đầu ở chất lượng đầy đủ — ĐỌC `docs/PHIEN219_NUT_BI_CHE_DO_HOA.md` (có giới hạn theme-color trong Google Sites + VIỆC KẾ). `sw.js` = `dgt-v206`, `npm test` 1379/1379.**
+
 > **Cập nhật Phiên 196 (2026-11-15): mục 3 — KHINH CÔNG = BAY LƯỚT (nhảy lần 2 trên không → xung đẩy yếu dần, rơi chậm, hạ cánh đệm ~0,13 s, camera xoay theo hướng bay; logic `js/world/glide.js`) — ĐỌC `docs/PHIEN196_MUC3.md`. Mục 1–2 của danh sách ptg đã xong ở Phiên 195 (`docs/PHIEN195.md`, `PHIEN195_MUC2.md`). VIỆC KẾ = mục 4 (Đánh thường lao tới + combo 3 đòn). `sw.js` = `dgt-v184`.**
 
 > **Cập nhật Phiên 173 (2026-11-15): prompt chiêu thức 3D mục 5 — KHO ÂM THANH 18 tiếng tự tổng hợp (`assets/sfx/chieu/*.m4a`, gồng/phát/dư âm 5 Hệ + trúng 3 chất liệu) nối vào `chieuFx.js` qua `LGT.sfx.playFile` — ĐỌC `docs/PHIEN173.md` (VIỆC KẾ = mục 6 kẻ địch trúng đòn; còn thiếu giọng hô cần thu). `sw.js` = `dgt-v165`.**

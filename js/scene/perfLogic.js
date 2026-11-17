@@ -3,7 +3,7 @@
 
    BẬC (0 = đầy đủ → 5 = nhẹ nhất; chỉ đi xuống, không tự lên lại trong một lần chạy):
      0  đầy đủ (pixelRatio tối đa 2)
-     1  pixelRatio tối đa 1,5            (Phiên 217: trước đây hạ thẳng xuống 1 nên điện thoại bị mờ/răng cưa; điện thoại bắt đầu ở bậc này)
+     1  pixelRatio tối đa 1,5            (Phiên 217: trước đây hạ thẳng xuống 1 nên điện thoại bị mờ/răng cưa)
      2  tắt bloom + pixelRatio tối đa 1,25
      3  bản đồ bóng nhỏ một nửa (≥ 512) + rừng thôi đổ bóng (pixelRatio vẫn tối đa 1,25)
      4  tắt đổ bóng + pixelRatio tối đa 1
@@ -11,7 +11,7 @@
    Ngưỡng và số liệu là QUY ƯỚC TẠM (chờ thử trên điện thoại thật). */
 
 export const MAX_LEVEL = 5;
-export const KEY = 'lgt.perf2';   // Phiên 217: đổi tên (cũ: 'lgt.perf') để bỏ bậc thấp máy đã bị hạ dưới quy ước cũ, tránh kẹt đồ họa xấu 7 ngày
+export const KEY = 'lgt.perf3';   // Phiên 219: đổi tên (cũ: 'lgt.perf2', 'lgt.perf') để bỏ bậc thấp máy đã bị hạ dưới quy ước cũ (điện thoại từng bắt đầu ở bậc 1 nên mờ), tránh kẹt đồ họa xấu 7 ngày
 export const SAVE_DAYS = 7;   // nhớ bậc đã hạ 7 ngày, để lần sau mở lên máy yếu không phải giật lại từ đầu
 
 export const clampLevel = (v) => { const n = Math.round(+v); return Number.isFinite(n) ? Math.min(MAX_LEVEL, Math.max(0, n)) : 0; };
@@ -68,9 +68,10 @@ export function save(storage, level, now = Date.now()) {
   try { storage.setItem(KEY, JSON.stringify({ lv: clampLevel(level), t: now })); return true; } catch { return false; }
 }
 
-/* Bậc xuất phát: lớn nhất của (điện thoại → 1), (bậc đã nhớ). ?perf=N (0–5) ép cố định và tắt tự động — dùng để chụp thử/kiểm. */
+/* Bậc xuất phát: bậc đã nhớ (mặc định 0 = đầy đủ, pixelRatio tối đa 2, kể cả điện thoại — Phiên 219: trước đây điện thoại bắt đầu ở bậc 1 nên hình bị mờ; máy yếu vẫn tự hạ bậc nhờ bộ đo FPS). ?perf=N (0–5) ép cố định và tắt tự động — dùng để chụp thử/kiểm. */
 export function startLevel({ coarse = false, saved = 0, query = '' } = {}) {
   const q = new URLSearchParams(query).get('perf');
   if (q !== null && q !== '' && Number.isFinite(+q)) return { level: clampLevel(q), fixed: true };
-  return { level: Math.max(coarse ? 1 : 0, clampLevel(saved)), fixed: false };
+  void coarse;   // giữ chữ ký cũ; điện thoại không còn bị ép bắt đầu ở bậc 1
+  return { level: clampLevel(saved), fixed: false };
 }

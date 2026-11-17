@@ -6,6 +6,9 @@
 // 4) iPhone/iPad (Safari không có Fullscreen API cho trang web): nút ⛶ hướng dẫn "Thêm vào MH chính" (PWA, manifest display_override fullscreen + orientation landscape).
 // 5) Phiên 218: game NHÚNG trong khung (Google Sites iframe) KHÔNG thể đổi màu thanh Chrome (theme-color chỉ ăn ở trang cha) và thường bị chặn Fullscreen API (khung thiếu allow="fullscreen").
 //    Khi đó nút đổi thành "↗ Toàn màn hình" và mở game trong TAB MỚI (trang gốc) — ở đó theme-color, toàn màn hình, khoá xoay ngang hoạt động đầy đủ.
+// Phiên 219: (a) nút nổi z-index 70 để KHÔNG bị lớp phim mở đầu/màn "Vào chùa" che (nguyên nhân người dùng không thấy nút trong Google Sites);
+//    (b) thêm nút "Toàn màn hình" ngay trong màn "Vào chùa"; (c) điện thoại: lần CHẠM đầu tiên (bất kỳ đâu, kể cả lúc phim mở đầu) tự vào toàn màn hình + khoá xoay ngang;
+//    (d) thẻ "Xoay ngang" lớn, không tự mờ, ẩn khi đã ngang. Trong Google Sites: theme-color của TRANG CHA không đổi được từ khung con (giới hạn của trình duyệt) → dùng nút mở tab mới.
 // Phiên 216: nút ⛶/↻ đặt bên trái hàng ví của HUD (place()) để không đè nút nào; ẩn khi mở bảng (panel-open) / chế độ sửa nhà.
 // Không đụng tới logic game: lỗi ở đây chỉ làm mất nút, game vẫn chạy.
 const THEME_NIGHT = '#06070d', THEME_DAY = '#27456b', THEME_FS = '#000000';
@@ -93,12 +96,12 @@ function tip(text) {
   } catch (_) { /* bỏ qua */ }
 }
 
-/** Gợi ý "Xoay ngang màn hình" cho điện thoại đang cầm dọc: tự mờ dần sau vài giây, không chặn thao tác, tự ẩn khi đã xoay ngang (CSS). */
+/** Gợi ý "Xoay ngang màn hình" (Phiên 219: thẻ lớn, không tự mờ) cho điện thoại đang cầm dọc: tự ẩn khi đã xoay ngang (CSS), không chặn thao tác; nút "Chơi dọc" tắt hẳn. */
 function initRotateHint() {
   try {
     if (!isPhone() || store.get('dgt.rotTipOff') === '1' || doc.getElementById('dgt-rot-tip')) return;
     const t = doc.createElement('div'); t.id = 'dgt-rot-tip'; t.setAttribute('role', 'status');
-    t.innerHTML = '<span>↻ Xoay ngang màn hình để chơi đẹp hơn</span><button type="button" aria-label="Đóng gợi ý xoay ngang">✕</button>';
+    t.innerHTML = '<span class="rt-ic" aria-hidden="true">\u{1F4F1}</span><span>Xoay ngang điện thoại để chơi: hình đẹp và đủ nút hơn</span><button type="button">Chơi dọc</button>';
     t.querySelector('button').addEventListener('click', () => { store.set('dgt.rotTipOff', '1'); t.remove(); });
     doc.body.appendChild(t);
   } catch (_) { /* bỏ qua */ }
@@ -156,12 +159,12 @@ export function initFullscreen() {
     const on = !!fsEl(), out = outsideOnly();
     box.classList.toggle('is-out', out);
     const label = out ? 'Mở game toàn màn hình trong tab mới' : on ? 'Thoát toàn màn hình' : 'Toàn màn hình';
-    btn.textContent = out ? '↗ Toàn màn hình' : on ? '✕' : '⛶'; btn.setAttribute('aria-label', label); btn.title = label;
+    if (out) btn.innerHTML = '↗<span class="fs-tx"> Toàn màn hình</span>'; else btn.textContent = on ? '✕' : '⛶'; btn.setAttribute('aria-label', label); btn.title = label;
     box.classList.toggle('is-fs', on);
     rot.hidden = !(on && canRotate && !out);
     const lk = wantLandscape(); rot.setAttribute('aria-pressed', String(lk)); rot.classList.toggle('on', lk);
   };
-  btn.addEventListener('click', async () => {
+  const onToggle = async () => {
     if (fsEl()) { await leaveFullscreen(); return; }
     if (outsideOnly()) {   // Phiên 218: trong khung Google Sites → mở tab mới để có toàn màn hình + đổi màu thanh Chrome
       if (openOutside()) tip('Đã mở game ở tab mới. Ở đó bấm "Vào chùa" để toàn màn hình và xoay ngang.');
@@ -171,7 +174,29 @@ export function initFullscreen() {
     if (canFs) { const ok = await enterFullscreen(); if (!ok) tip('Trình duyệt không cho bật toàn màn hình ở đây. Thử mở game ở tab riêng (không trong khung).'); return; }
     if (isIOS() && !isStandalone()) tip('iPhone/iPad: bấm nút Chia sẻ → "Thêm vào MH chính", rồi mở game từ biểu tượng để chơi toàn màn hình.');
     else tip('Trình duyệt này không hỗ trợ toàn màn hình. Thử Chrome/Edge trên Android hoặc "Cài đặt ứng dụng".');
-  });
+  };
+  btn.addEventListener('click', onToggle);
+
+  // Phiên 219: nút "Toàn màn hình" ngay trong màn "Vào chùa" (màn này phủ lên nút nổi trước đây). Dựng khi màn xuất hiện; cập nhật nhãn theo trạng thái.
+  const paintEnterBtn = () => {
+    const b = doc.getElementById('dgt-en-fs'); if (!b) return;
+    const on = !!fsEl(), out = outsideOnly();
+    b.hidden = isStandalone() && !out;   // đã là app toàn màn hình thì thôi
+    b.textContent = out ? '↗ Mở game toàn màn hình (tab mới)' : on ? '✕ Thoát toàn màn hình' : '⛶ Toàn màn hình';
+  };
+  const ensureEnterBtn = () => {
+    try {
+      if (doc.getElementById('dgt-en-fs')) return;
+      const go = doc.getElementById('en-go'); if (!go || !go.parentNode) return;
+      const b = doc.createElement('button'); b.type = 'button'; b.id = 'dgt-en-fs'; b.className = 'en-fs';
+      b.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); onToggle(); });
+      const card = go.closest('.enter-card') || go.parentNode, anchor = card.querySelector('#en-sub') || card.querySelector('h2');   // đặt ngay dưới tiêu đề để thấy ngay cả khi thẻ cuộn trên màn thấp
+      if (anchor && anchor.parentNode) anchor.parentNode.insertBefore(b, anchor.nextSibling); else go.parentNode.insertBefore(b, go);
+      paintEnterBtn();
+    } catch (_) { /* bỏ qua */ }
+  };
+  try { new MutationObserver(ensureEnterBtn).observe(doc.body, { childList: true, subtree: true }); } catch (_) { /* bỏ qua */ }
+  ensureEnterBtn();
   rot.addEventListener('click', () => {
     const next = !wantLandscape(); store.set('dgt.lockLand', next ? '1' : '0');
     if (next) lockLandscape(); else unlockOrientation();
@@ -181,12 +206,12 @@ export function initFullscreen() {
     const on = !!fsEl();
     if (!on) { unlockOrientation(); store.sset('dgt.fsDeclined', '1'); }   // thoát bằng cử chỉ hệ thống/nút Back: phiên này không tự bật lại
     else if (wantLandscape()) lockLandscape();
-    paintBtns(); paintTheme(); placeSoon();
+    paintBtns(); paintEnterBtn(); paintTheme(); placeSoon();
     try { window.dispatchEvent(new Event('resize')); } catch (_) { /* viewport.js tự đo lại */ }
     setTimeout(place, 350);   // thanh Chrome ẩn/hiện xong khung nhìn mới ổn định
   };
   doc.addEventListener('fullscreenchange', onFsChange); doc.addEventListener('webkitfullscreenchange', onFsChange);
-  paintBtns(); placeSoon();
+  paintBtns(); paintEnterBtn(); placeSoon();
 
   // Phiên 218: mở bằng app PWA (đã ở chế độ app) thì khoá xoay ngang ngay (manifest cũng đã khai orientation landscape); điện thoại cầm dọc thì hiện gợi ý xoay.
   if (isStandalone() && wantLandscape()) lockLandscape();
@@ -199,6 +224,19 @@ export function initFullscreen() {
     if (store.sget('dgt.fsDeclined') === '1' || fsEl() || isStandalone() || outsideOnly()) return;
     enterFullscreen();
   }, true);
+
+  // Phiên 219: điện thoại — lần CHẠM đầu tiên ở bất kỳ đâu (kể cả lúc phim mở đầu) tự vào toàn màn hình + khoá xoay ngang (trình duyệt chỉ cho khi có thao tác chạm).
+  // Không làm khi: đã toàn màn hình/app, phiên này đã thoát thủ công, khung nhúng bị chặn, người chơi đang bấm đúng nút toàn màn hình/tắt gợi ý xoay.
+  if (isPhone()) {
+    const firstTap = (e) => {
+      const t = e.target;
+      if (t && t.closest && t.closest('#dgt-fs, #dgt-en-fs, #dgt-rot-tip')) return;
+      if (store.sget('dgt.fsDeclined') === '1' || fsEl() || isStandalone() || outsideOnly() || !canFs) return;
+      doc.removeEventListener('pointerup', firstTap, true);
+      enterFullscreen();
+    };
+    doc.addEventListener('pointerup', firstTap, true);
+  }
 
   return { enter: enterFullscreen, leave: leaveFullscreen, setThemeColor, place };
 }

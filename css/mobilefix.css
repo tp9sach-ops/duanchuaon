@@ -26,3 +26,13 @@ html[data-frame-x=true] .sound{left:calc(var(--vv-left,0px) + 14px)}
    --vv-gap (viewport.js) = phần khung nằm dưới vùng nhìn thấy; nâng cần đi lên đúng bấy nhiêu. */
 html[data-frame=true] #joy{margin-bottom:var(--vv-gap,0px)}
 html[data-frame-x=true] #joy{margin-left:var(--vv-left,0px)}
+
+/* 7) Phiên 219: điện thoại NẰM NGANG (khung thấp) — nút âm thanh không còn nằm đè lên cần đi (#joy, góc dưới-trái): dời sang phải cần đi + nút nhạc. */
+@media (orientation:landscape) and (max-height:500px){
+  html[data-short=true] body.world-mode .sound{left:calc(var(--sai-l,0px) + 126px)!important;right:auto!important}
+}
+
+/* 8) Phiên 219: màn "Vào chùa" trên điện thoại nằm ngang — lời mời bật nhạc không còn che tiêu đề thẻ: thu nhỏ, dời xuống góc trái-dưới (ngoài thẻ). */
+@media (orientation:landscape) and (max-height:500px){
+  body.entering #sound-invite{top:auto!important;bottom:calc(8px + env(safe-area-inset-bottom,0px))!important;left:calc(var(--sai-l,0px) + 12px)!important;transform:none!important;max-width:176px!important;padding:8px 12px!important;border-radius:16px!important;font-size:12px!important;line-height:1.25!important;white-space:normal!important;text-align:left!important}
+}

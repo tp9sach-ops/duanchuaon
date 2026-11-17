@@ -54,8 +54,11 @@ export function initHudFit(hud) {
     if (chip && !chip.hidden) {
       chip.style.top = ''; chip.style.left = '';
       const r = chip.getBoundingClientRect();
+      // Phiên 219: cần đi (#joy) ở góc dưới-trái — không đặt nút Giao lưu xuống dưới mép trên của cần đi (nằm ngang trên điện thoại từng đè lên cần đi và nút âm thanh).
+      let lim = floor;
+      try { const j = document.getElementById('joy'); if (j) { const jr = j.getBoundingClientRect(); if (jr.width > 2 && jr.top > H / 3) lim = Math.min(lim, jr.top - gap); } } catch (_) { /* bỏ qua */ }
       if (r.top < y) {
-        if (y + r.height > floor && zr) { chip.style.left = px(zr.right + gap); chip.style.top = px(zr.top); }
+        if (y + r.height > lim && zr) { chip.style.left = px(zr.right + gap); chip.style.top = px(zr.top); }
         else chip.style.top = px(y);
       }
     }

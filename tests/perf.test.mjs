@@ -115,9 +115,10 @@ test('lưu bậc: ghi rồi đọc lại; hết 7 ngày thì bỏ', () => {
   assert.equal(loadSaved(s, NOW + 8 * 86400000), 0);
 });
 
-test('lưu bậc: khóa mới (lgt.perf2) — bậc cũ lưu dưới khóa lgt.perf bị bỏ qua (Phiên 217)', () => {
-  assert.equal(KEY, 'lgt.perf2');
+test('lưu bậc: khóa mới (lgt.perf3) — bậc cũ lưu dưới khóa lgt.perf / lgt.perf2 bị bỏ qua (Phiên 217, 219)', () => {
+  assert.equal(KEY, 'lgt.perf3');
   assert.equal(loadSaved(mem([['lgt.perf', JSON.stringify({ lv: 5, t: NOW })]]), NOW), 0);
+  assert.equal(loadSaved(mem([['lgt.perf2', JSON.stringify({ lv: 5, t: NOW })]]), NOW), 0);
 });
 
 test('lưu bậc: dữ liệu hỏng, thiếu, giờ tương lai, lỗi lưu trữ → an toàn', () => {
@@ -131,15 +132,15 @@ test('lưu bậc: dữ liệu hỏng, thiếu, giờ tương lai, lỗi lưu tr�
   assert.equal(loadSaved(null, NOW), 0); assert.equal(save(null, 2, NOW), false);
 });
 
-test('startLevel: điện thoại bắt đầu ≥ 1; bậc đã nhớ thắng nếu cao hơn; ?perf ép cố định', () => {
+test('startLevel: điện thoại cũng bắt đầu ở bậc 0 (Phiên 219); bậc đã nhớ được dùng; ?perf ép cố định', () => {
   assert.deepEqual(startLevel({ coarse: false, saved: 0, query: '' }), { level: 0, fixed: false });
-  assert.deepEqual(startLevel({ coarse: true, saved: 0, query: '' }), { level: 1, fixed: false });
+  assert.deepEqual(startLevel({ coarse: true, saved: 0, query: '' }), { level: 0, fixed: false });
   assert.deepEqual(startLevel({ coarse: true, saved: 3, query: '' }), { level: 3, fixed: false });
   assert.deepEqual(startLevel({ coarse: false, saved: 2, query: '?x=1' }), { level: 2, fixed: false });
   assert.deepEqual(startLevel({ coarse: true, saved: 4, query: '?perf=0' }), { level: 0, fixed: true });
   assert.deepEqual(startLevel({ query: '?rail=1&perf=4' }), { level: 4, fixed: true });
   assert.deepEqual(startLevel({ query: '?perf=9' }), { level: MAX_LEVEL, fixed: true });
-  assert.deepEqual(startLevel({ coarse: true, query: '?perf=' }), { level: 1, fixed: false });
-  assert.deepEqual(startLevel({ coarse: true, query: '?perf=abc' }), { level: 1, fixed: false });
+  assert.deepEqual(startLevel({ coarse: true, query: '?perf=' }), { level: 0, fixed: false });
+  assert.deepEqual(startLevel({ coarse: true, query: '?perf=abc' }), { level: 0, fixed: false });
   assert.deepEqual(startLevel(), { level: 0, fixed: false });
 });
