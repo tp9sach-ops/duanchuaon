@@ -138,12 +138,16 @@ export function initFarm(hud, { toast = () => {} } = {}) {
   let lastKind = '', lastHitAt = -1e9, dashLock = 0, farAt = -1e9;   // lastHitAt / dashLock / farAt: performance.now() (ms)
   const chainNext = (now) => { const k = nextKind(lastKind, (now - lastHitAt) / 1000 - comboEnd(lastKind)); return { kind: k, step: CHAIN.indexOf(k) + 1 }; };
   const advanceChain = (now) => { const ck = chainNext(now); lastKind = ck.kind; lastHitAt = now; return ck; };
+  // Phiên 224: GẬY DẠY CHÓ — đòn đánh thường thứ 3 gây sát thương ×3 so với đòn thường (LGT.items.finisherMul; thay hệ số 1,5 mặc định của đòn 3); mỗi đòn nghe tiếng gỗ, đòn 3 thả SÓI KHÍ VÀNG (LGT.items.onHit).
+  const stepMulFor = (step) => { let f = 1; try { f = LGT.items && LGT.items.finisherMul ? +LGT.items.finisherMul() || 1 : 1; } catch (_) { f = 1; } return step === BASIC.steps && f > 1 ? Math.max(stepMul(step), f) : stepMul(step); };
+  const weaponFx = (step, target) => { try { if (LGT.items && LGT.items.onHit) LGT.items.onHit(step, target || null); } catch (_) { /* hiệu ứng hỏng thì thôi, không làm hỏng đòn đánh */ } };
+  const woodOn = () => !!(LGT.items && LGT.items.bambooOn);   // đang cầm Gậy dạy chó → tiếng gỗ thay tiếng ném đá
   // Phiên 190: KHÔNG có quái vẫn ĐÁNH THƯỜNG / THƯƠNG được — chỉ vung vào không khí (hoạt ảnh + tiếng, combatPose.js tự vung khi hồi chiêu tăng), KHÔNG gây sát thương ai.
   let airToast = -1e9;
   function airSwing(cdKind) {
     if (cdKind === 'stone') cdStone = STONE.cd; else cdSpear = SPEAR.cd;
-    advanceChain(performance.now());
-    if (LGT.sfx) LGT.sfx.play(cdKind === 'stone' ? 'nem-da' : 'thuong');
+    const ck = advanceChain(performance.now()); if (cdKind === 'stone') weaponFx(ck.step, null);   // Phiên 224: vung vào không khí đòn 3 vẫn có sói khí (không sát thương)
+    if (LGT.sfx && !(cdKind === 'stone' && woodOn())) LGT.sfx.play(cdKind === 'stone' ? 'nem-da' : 'thuong');
     const now = performance.now(); if (now - airToast > 12000) { airToast = now; toast('Chưa có quái nào gần — đánh vào không khí, không gây sát thương ai.', 2600); }
   }
   /** Phiên 198: ĐÁNH THƯỜNG. Không quái → vung không khí; quái xa tầm đâm nhưng trong tầm lao → LAO tới (chưa ra đòn); trong tầm đâm → đòn 1/2/3 (đòn 3 mạnh hơn + lan); quá xa → nhắc lại gần. */
@@ -156,10 +160,11 @@ export function initFarm(hud, { toast = () => {} } = {}) {
     if (plan === 'air') { airSwing('stone'); return; }
     if (plan === 'far') { tooFar(); return; }
     if (plan === 'dash') { if (rush(t)) dashLock = now + BASIC.dashCd * 1000; else tooFar(); return; }
-    const ck = advanceChain(now); cdStone = STONE.cd; if (LGT.sfx) LGT.sfx.play('nem-da');
-    const dmg = Math.max(1, Math.round(stoneDamage(str()) * buffMul() * stepMul(ck.step)));   // Phiên 127: Đánh thường = đòn cận chiến trúng ngay (không còn ném đá); Phiên 198: nhân theo đòn (đòn 3 ×1,5)
+    const ck = advanceChain(now); cdStone = STONE.cd; if (LGT.sfx && !woodOn()) LGT.sfx.play('nem-da');
+    const dmg = Math.max(1, Math.round(stoneDamage(str()) * buffMul() * stepMulFor(ck.step)));   // Phiên 224: Gậy dạy chó đòn 3 ×3;   // Phiên 127: Đánh thường = đòn cận chiến trúng ngay (không còn ném đá); Phiên 198: nhân theo đòn (đòn 3 ×1,5)
     const around = ck.step === BASIC.steps ? splashTargets(p, allMons(), BASIC.splashR, t.uid, bodyOf) : [];   // đòn 3 xoay 360°: mọi quái quanh người (trừ mục tiêu chính) dính sát thương lan
     hit(t.uid, dmg, { nho: ck.step < BASIC.steps });
+    weaponFx(ck.step, t);   // Phiên 224: tiếng gỗ + sói khí đòn 3
     around.forEach((m, k) => hit(m.uid, Math.max(1, Math.round(dmg * BASIC.splashPct)), { i: k + 1 }));
   }
   function spear() {
@@ -257,7 +262,7 @@ export function initFarm(hud, { toast = () => {} } = {}) {
   LGT.farm = {
     skillReady, skillHit, skillHitDir, pickAt, unlock, stopAttack, get attacking() { return attackOn; }, get locked() { return lockUid; }, get tuviInfo() { return tuViOf(farm); },
     stone, spear, toggleAuto, grantBoss, addAutoMinutes, remoteHit, claimKill,
-    rushPoint, chainStep: () => advanceChain(performance.now()).step,   // Phiên 205: yêu quái hằng tháng dùng chung lao tới + chuỗi 3 đòn
+    rushPoint, stepMulFor, chainStep: () => advanceChain(performance.now()).step,   // Phiên 205: yêu quái hằng tháng dùng chung lao tới + chuỗi 3 đòn
     get tuvi() { return tuViOf(farm).tuvi; }, get state() { return farm; },
     status() { const t = target(); return { active: !!t || running, ten: t ? t.ten : '', stoneCd: cdStone, spearCd: cdSpear, canAuto: true, auto: running, autoLeft: Math.floor(autoLeft(auto, Date.now()) / 60) }; },
   };
