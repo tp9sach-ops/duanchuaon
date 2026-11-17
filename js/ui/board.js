@@ -10,6 +10,7 @@ import { BOARD, loadBoard, buyBoard, canRide, returnPose } from '../world/board.
 import { HOLDS, holdById, loadLoadout, chooseHold, weaponFor, ownedMap, mountMul, rideLabel } from '../world/loadout.js';
 import { askConfirm } from './dialog.js';
 import { buildStaff, loadStaffGlb, pulseGlows, glowTexture } from './staffMesh.js';
+import { buildBambooMount, pulseBamboo } from './bambooMesh.js';   // Phiên 224: Gậy dạy chó cưỡi
 
 const VKEY = 'lgt.van', LKEY = 'lgt.loadout', GLB = new URL('../../assets/models/skateboard.glb', import.meta.url).href;
 export const FLY_LIFT = 0.45, FLY_BOB = 0.035, VBOB = 0.006, VBASE = 0.14;   // Phiên 166: xuất ra để js/ui/remoteGear.js vẽ người khác cưỡi giống hệt mình
@@ -75,7 +76,7 @@ export function initBoard({ toast = () => {} } = {}) {
   const saveVan = () => { try { localStorage.setItem(VKEY, JSON.stringify({ own: van.own, on: false })); } catch (_) { /* riêng tư */ } };
   const saveLo = () => { try { localStorage.setItem(LKEY, JSON.stringify(rawLo)); } catch (_) { /* riêng tư */ } };
   // Trạng thái chọn đồ thô (rawLo) không bị ép về Thương khi LGT.items chưa nạp xong: mỗi lần đọc đều lọc lại theo đồ đã có.
-  const owned = () => ownedMap({ nhuy: !!(LGT.items && LGT.items.state && LGT.items.state.staff), van: van.own });
+  const owned = () => ownedMap({ nhuy: !!(LGT.items && LGT.items.state && LGT.items.state.staff), tre: !!(LGT.items && LGT.items.state && LGT.items.state.tre), van: van.own });   // Phiên 224: thêm tre (Gậy dạy chó)
   const cur = () => loadLoadout(rawLo, owned());
   const mountId = () => cur().hold;
   const nameOf = (id) => (holdById(id) || { ten: 'đồ' }).ten;
@@ -86,11 +87,11 @@ export function initBoard({ toast = () => {} } = {}) {
   const mulText = (id) => String(mountMul(id)).replace('.', ',');
   const placeRiding = (m) => { m.position.set(0, 0, 0); m.rotation.set(0, 0, 0); };
   function placeReturn(av, dt, m) {
-    ret.t += dt; const p = returnPose(ret.t);
+    ret.t += dt; const p = returnPose(ret.t, ret.id);   // Phiên 224: Gậy dạy chó xoay 3 vòng trên không (p.lift)
     if (p.done) { ret = null; m.visible = false; placeRiding(m); m.scale.setScalar(1); return; }
     let hx = 0.3, hy = 1.0, hz = 0.2;
     if (av.handPos && av.group) { av.group.updateWorldMatrix(true, false); const h = av.handPos(), v = av.group.worldToLocal(new THREE.Vector3(h.x, h.y, h.z)); hx = v.x; hy = v.y; hz = v.z; }
-    const ox = Math.sin(p.ang) * p.rad, oz = Math.cos(p.ang) * p.rad, oy = 1.1;
+    const ox = Math.sin(p.ang) * p.rad, oz = Math.cos(p.ang) * p.rad, oy = 1.1 + (p.lift || 0);
     m.position.set(ox + (hx - ox) * p.blend, oy + (hy - oy) * p.blend, oz + (hz - oz) * p.blend);
     m.rotation.set(0, p.ang + Math.PI / 2, 0);
     const k = 1 - 0.55 * p.blend; if (ret.id === 'thuong') m.scale.set(k / K, k / K, k); else m.scale.setScalar(k);
@@ -110,7 +111,7 @@ export function initBoard({ toast = () => {} } = {}) {
   function wrap() {
     const av = LGT.world && LGT.world.avatar; if (!av || av.__board || !av.group) return;
     const proc = buildProcBoard(), vg = new THREE.Group(); vg.name = 'cuoi-van'; vg.add(proc); vg.userData.proc = proc;
-    meshes = { thuong: buildSpearMount(), nhuy: buildStaffMount(), van: vg };
+    meshes = { thuong: buildSpearMount(), nhuy: buildStaffMount(), tre: buildBambooMount(SLEN), van: vg };
     for (const k of Object.keys(meshes)) { meshes[k].visible = false; av.group.add(meshes[k]); }
     const orig = av.update.bind(av); av.__board = true;
     av.update = (dt) => {
@@ -125,6 +126,10 @@ export function initBoard({ toast = () => {} } = {}) {
         else if (on || lift > 0.01) { m.visible = true; placeRiding(m); m.scale.setScalar(1); if (on) shown = id; }
         if (id === 'nhuy' && m.visible) {   // gậy cưỡi: hai đầu chớp nhanh + vệt sáng phía sau (chỉ khi đang bay)
           pulseGlows(m.userData.staff, clock, true);
+          m.userData.trail.forEach((sp, i) => { sp.material.opacity = on ? Math.max(0, 0.55 - i * 0.055) * (0.7 + 0.3 * Math.sin(clock * 10 + i)) : 0; });
+        }
+        if (id === 'tre' && m.visible) {   // Phiên 224: gậy dạy chó cưỡi: hai đầu chớp vàng đều + vệt sáng vàng phía sau
+          pulseBamboo(m.userData.staff, clock, true);
           m.userData.trail.forEach((sp, i) => { sp.material.opacity = on ? Math.max(0, 0.55 - i * 0.055) * (0.7 + 0.3 * Math.sin(clock * 10 + i)) : 0; });
         }
       }
