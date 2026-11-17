@@ -213,6 +213,8 @@ Việc ptg làm song song (không chặn các phiên trên): bật Pages (Settin
 
 - **2026-11-14 (Phiên 159) — ptg chơi trên máy tính, giao 2 mục (làm từng mục, đẩy GitHub rồi báo):** (1) di chuyển bằng CHUỘT PHẢI, chọn mục tiêu đánh bằng bấm CHUỘT PHẢI 2 LẦN vào mục tiêu → **XONG** (Phiên 159, `docs/PHIEN159.md`, `js/world/mouseTarget.js`); (2) phím `Q` = đánh thường (ở trạng thái bình thường bấm Q vẫn đánh thường được), `W`, `E`, `R`, `1`, `2`, `3`, `4`… = thứ tự các chiêu thức → **CHƯA làm** (chú ý xung đột W = đi). Vẫn: chỉ xem chỗ cần thiết, việc đã làm rồi thì bỏ qua, cập nhật không lỗi, mỗi phiên gửi bàn giao chi tiết.
 
+- **2026-11-17 (Phiên 224):** ptg giao 2 mục, làm từng mục, đẩy GitHub rồi báo: (1) **Gậy dạy chó** (ptg gọi "gậy tre", Điện Máy, 150 lá): +1%, đòn 3 "thương to gấp 3" + sói khí vàng đầu to vồ ra, chớp vàng đều hai đầu, cưỡi thu về xoay 3 vòng, tiếng gỗ — **XONG** (`docs/PHIEN224.md`, mô hình `bamboo_stick.glb` nhúng base64 ~18 KB, đồng bộ online sói khí, 1425/1425 test, `dgt-v210`); (2) **Chổi** (Điện Máy, 50 lá): đòn 3 đập chổi lá/cát/đá bay, gió nhẹ sau lưng, tiếng quét lá, cưỡi chổi thu về phi lên cao rồi hạ nhẹ — **CHƯA LÀM**, chờ ptg nói "tiếp tục" (kế hoạch ở cuối `docs/PHIEN224.md`; file `broom.glb` 7 MB cần nén). Quy ước tạm: "thương to gấp 3" = sát thương đòn 3 ×3 (ptg chỉnh nếu ý khác).
+
 ## 8. PROMPT KHỞI ĐỘNG PHIÊN MỚI (dán nguyên văn)
 
 ```

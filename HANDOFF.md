@@ -1,5 +1,7 @@
 # HANDOFF — Web tâm linh "DIỆU GIANG TỰ" (chùa Việt 3D) — tên cũ: Linh Giang Tự (Phiên 5 đổi tên theo ptg)
 
+> **Cập nhật Phiên 224 (2026-11-17): MỤC 1 GẬY DẠY CHÓ (150 lá, id `tre`) XONG — +1%, đòn 3 ×3 + sói khí vàng đầu to (đồng bộ online), chớp vàng hai đầu, cưỡi thu về xoay 3 vòng, tiếng gỗ tổng hợp. ĐỌC `docs/PHIEN224.md` (có "VIỆC KẾ": MỤC 2 CHỔI 50 lá, làm khi ptg nói tiếp tục). `sw.js` = `dgt-v210`, 1425/1425 test xanh. CHƯA nhìn bằng mắt trên máy thật.**
+
 > **Cập nhật Phiên 219 (2026-11-17): nút toàn màn hình bị lớp phim/màn vào cửa CHE (z-index) → đã sửa; nút ngay trong màn "Vào chùa"; điện thoại chạm lần đầu tự toàn màn hình + xoay ngang; hết đè nút khi xoay ngang; điện thoại bắt đầu ở chất lượng đầy đủ — ĐỌC `docs/PHIEN219_NUT_BI_CHE_DO_HOA.md` (có giới hạn theme-color trong Google Sites + VIỆC KẾ). `sw.js` = `dgt-v206`, `npm test` 1379/1379.**
 
 > **Cập nhật Phiên 196 (2026-11-15): mục 3 — KHINH CÔNG = BAY LƯỚT (nhảy lần 2 trên không → xung đẩy yếu dần, rơi chậm, hạ cánh đệm ~0,13 s, camera xoay theo hướng bay; logic `js/world/glide.js`) — ĐỌC `docs/PHIEN196_MUC3.md`. Mục 1–2 của danh sách ptg đã xong ở Phiên 195 (`docs/PHIEN195.md`, `PHIEN195_MUC2.md`). VIỆC KẾ = mục 4 (Đánh thường lao tới + combo 3 đòn). `sw.js` = `dgt-v184`.**
