@@ -16,9 +16,9 @@ const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 test('encodeGear / decodeGear: khứ hồi đủ món, không có gì thì rỗng, chỉ một món cưỡi', () => {
   assert.equal(encodeGear({}), ''); assert.equal(encodeGear(null), ''); assert.equal(encodeGear({ ride: 'xe' }), '');
   const all = encodeGear({ staff: true, hat: true, ride: 'nhuy', regen: true, revive: true });
-  assert.deepEqual(decodeGear(all), { staff: true, hat: true, ride: 'nhuy', regen: true, revive: true });
-  for (const r of ['thuong', 'nhuy', 'van']) assert.equal(decodeGear(encodeGear({ ride: r })).ride, r);
-  assert.deepEqual(decodeGear(''), { staff: false, hat: false, ride: '', regen: false, revive: false });
+  assert.deepEqual(decodeGear(all), { staff: true, bamboo: false, hat: true, ride: 'nhuy', regen: true, revive: true });
+  for (const r of ['thuong', 'nhuy', 'tre', 'van']) assert.equal(decodeGear(encodeGear({ ride: r })).ride, r);
+  assert.deepEqual(decodeGear(''), { staff: false, bamboo: false, hat: false, ride: '', regen: false, revive: false });
   assert.equal(encodeGear({ staff: 1, hat: 'yes' }), '', 'chỉ true thật mới tính');
 });
 test('cleanGear: chữ lạ / quá dài / hoa / không phải chuỗi → bỏ; trùng chữ gộp', () => {
@@ -124,4 +124,11 @@ test('roomClient: applyGear ném lỗi thì người vẫn hiện, đồng bộ 
   const c = createRoomClient({ call: async () => ({ ok: true, players: [{ id: 'other-0001', n: 'B', c: 'nau', h: 'troc', x: 1, y: 0, z: 1, r: 0, s: 'idle' }], chat: [], seq: 0, count: 2 }), getSelf: () => ({ n: 'T', c: 'nau', h: 'troc', x: 0, y: 0, z: 0, r: 0, s: 'idle' }), pageId: 'page-self0001', schedule: () => 1, cancel() {}, scene,
     makeAvatar: () => ({ group: { position: { set() {} } }, setFacing() {}, setState() {}, say() {}, update() { up++; }, dispose() {} }), applyGear: () => { throw new Error('hỏng'); } });
   await c.tick(); c.frame(0.05); c.frame(0.05); assert.equal(up, 2); assert.equal(c.remoteCount, 1);
+});
+
+test('Phiên 224: Gậy dạy chó — chữ b (cầm) và t (cưỡi) khứ hồi, không lẫn Gậy như ý', () => {
+  assert.equal(encodeGear({ bamboo: true }), 'b'); assert.equal(decodeGear('b').bamboo, true); assert.equal(decodeGear('b').staff, false);
+  assert.equal(encodeGear({ ride: 'tre' }), 't'); assert.equal(decodeGear('t').ride, 'tre');
+  const g = decodeGear(encodeGear({ bamboo: true, hat: true, ride: 'tre' })); assert.deepEqual([g.bamboo, g.hat, g.ride, g.staff], [true, true, 'tre', false]);
+  assert.equal(encodeGear({ bamboo: 1 }), '', 'chỉ true thật mới tính');
 });

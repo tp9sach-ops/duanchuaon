@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { HOLDS, DEFAULT_HOLD, MOUNT_MUL, ownedMap, loadLoadout, chooseHold, weaponFor, mountOf, mountMul, rideLabel, isWeapon } from '../js/world/loadout.js';
 
 test('mặc định: cầm Thương, ai cũng có thương', () => {
-  assert.equal(DEFAULT_HOLD, 'thuong'); assert.deepEqual(ownedMap(), { thuong: true, nhuy: false, van: false });
+  assert.equal(DEFAULT_HOLD, 'thuong'); assert.deepEqual(ownedMap(), { thuong: true, nhuy: false, tre: false, van: false });
   assert.deepEqual(loadLoadout(null), { hold: 'thuong', last: 'thuong' }); assert.deepEqual(loadLoadout('{hỏng'), { hold: 'thuong', last: 'thuong' });
 });
 test('đồ chưa có thì không cầm được; đồ lạ bị từ chối', () => {
@@ -33,6 +33,13 @@ test('nhãn nút cưỡi theo đồ', () => {
   assert.equal(rideLabel('thuong', false), 'Cưỡi thương'); assert.equal(rideLabel('nhuy', false), 'Cưỡi gậy'); assert.equal(rideLabel('van', false), 'Lướt ván');
   assert.equal(rideLabel('van', true), 'Xuống ván'); assert.equal(rideLabel('thuong', true), 'Xuống');
 });
-test('HOLDS có đúng 3 món, chỉ ván là không phải vũ khí', () => {
-  assert.deepEqual(HOLDS.map((h) => h.id), ['thuong', 'nhuy', 'van']); assert.deepEqual(HOLDS.filter((h) => !h.weapon).map((h) => h.id), ['van']);
+test('HOLDS có đúng 4 món (thương, gậy như ý, gậy dạy chó, ván), chỉ ván là không phải vũ khí', () => {
+  assert.deepEqual(HOLDS.map((h) => h.id), ['thuong', 'nhuy', 'tre', 'van']); assert.deepEqual(HOLDS.filter((h) => !h.weapon).map((h) => h.id), ['van']);
+});
+
+test('Phiên 224: Gậy dạy chó — chọn được khi đã mua, cưỡi ×1,25, nút "Cưỡi gậy"', () => {
+  assert.equal(chooseHold(null, 'tre', ownedMap()).reason, 'notowned');
+  assert.equal(ownedMap({ tre: true }).tre, true);
+  const r = chooseHold(null, 'tre', ownedMap({ tre: true })); assert.equal(r.ok, true); assert.equal(weaponFor(r.state, ownedMap({ tre: true })), 'tre');
+  assert.equal(mountMul('tre'), 1.25); assert.equal(rideLabel('tre', false), 'Cưỡi gậy'); assert.equal(rideLabel('tre', true), 'Xuống'); assert.equal(isWeapon('tre'), true);
 });

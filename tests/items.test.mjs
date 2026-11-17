@@ -1,7 +1,7 @@
 // Vật phẩm mua bằng lá bồ đề (mục 1): Bánh sầu riêng 3 vị (id hoimau), Bánh sầu riêng pho mai than tre (id dichchuyen), Gậy như ý, Nón Jingasa, Trà sữa xoài hoàng kim (Tách Hoa).
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { GEMS, STAFF, HAT, TRASUA, REGEN_MUL, MAX_STACK, loadItems, buyGem, buyStaff, buyHat, buyTraSua, toggleHat, hatWorn, armorMul, afterArmor, remainSec, isActive, regenMul, canRevive, dmgMul, fmtTime } from '../js/world/items.js';
+import { GEMS, STAFF, BAMBOO, HAT, TRASUA, REGEN_MUL, MAX_STACK, loadItems, buyGem, buyStaff, buyBamboo, finisherMul, buyHat, buyTraSua, toggleHat, hatWorn, armorMul, afterArmor, remainSec, isActive, regenMul, canRevive, dmgMul, fmtTime } from '../js/world/items.js';
 import { HAT_GLB_B64 } from '../js/data/hatGlb.js';
 import { ITEM_IMG } from '../js/data/itemImages.js';
 import { addAutoBonus, autoLeft, addAutoTime, loadAuto } from '../js/world/autoHunt.js';
@@ -41,7 +41,7 @@ test('ảnh vật phẩm nhúng: ba ảnh WebP hợp lệ (RIFF/WEBP), nhỏ, đ
 });
 
 test('loadItems: hỏng → trống; mốc hết hạn quá xa bị kéo về trần', () => {
-  for (const bad of [null, undefined, '', 'xyz', '[]', 5]) assert.deepEqual(loadItems(bad, T), { v: 1, exp: { hoimau: 0, dichchuyen: 0 }, staff: false, hat: false, hatOn: false });
+  for (const bad of [null, undefined, '', 'xyz', '[]', 5]) assert.deepEqual(loadItems(bad, T), { v: 1, exp: { hoimau: 0, dichchuyen: 0 }, staff: false, tre: false, hat: false, hatOn: false });
   const s = loadItems({ exp: { hoimau: T + 99e9 }, staff: true }, T);
   assert.equal(s.exp.hoimau, T + 600 * MAX_STACK * 1000); assert.equal(s.staff, true);
   assert.equal(loadItems({ staff: 'yes' }, T).staff, false);
@@ -106,4 +106,13 @@ test('hatGlb: mô hình nón nhúng là GLB hợp lệ (nhỏ, có mảnh lướ
   assert.ok(buf.length < 20000, 'nón nhúng phải nhỏ: ' + buf.length);
   const jl = buf.readUInt32LE(12), json = JSON.parse(buf.toString('utf8', 20, 20 + jl));
   assert.ok(json.meshes.length >= 1); assert.ok(json.materials.every((m) => m.name !== 'jingasa_rope'));
+});
+
+test('Phiên 224: Gậy dạy chó — 150 lá, mua một lần, +1% khi cầm, đòn 3 gấp 3', () => {
+  assert.equal(BAMBOO.gia, 150); assert.equal(BAMBOO.ten, 'Gậy dạy chó'); assert.equal(BAMBOO.hit3, 3); assert.equal(BAMBOO.dmg, 1.01);
+  assert.equal(buyBamboo(null, 149, T).reason, 'poor'); assert.equal(buyBamboo(null, 'abc', T).ok, false);
+  const r = buyBamboo(null, 150, T); assert.equal(r.ok, true); assert.equal(r.cost, 150); assert.equal(r.state.tre, true); assert.equal(r.state.staff, false);
+  assert.equal(buyBamboo(r.state, 999, T).reason, 'owned');
+  assert.equal(loadItems({ tre: 'yes' }, T).tre, false); assert.equal(loadItems({ tre: true }, T).tre, true);
+  assert.equal(finisherMul(r.state), 3); assert.equal(finisherMul(r.state, false), 1); assert.equal(finisherMul(null), 1); assert.equal(finisherMul({ staff: true }), 1);
 });
