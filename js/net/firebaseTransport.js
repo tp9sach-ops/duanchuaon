@@ -7,6 +7,7 @@ import { COMBAT, COMBAT_CHARSET } from '../world/combatShare.js';   // Phiên 22
 export const FIREBASE_SDK_VERSION = '11.0.2';
 const STALE_MS = 15000;       // quá hạn này không nhận được tin gì từ một người thì coi như họ đã rời
 const SEND_MIN_MS = 250;      // gửi vị trí tối đa 4 lần/giây
+const SEND_AIR_MS = 80;       // Phiên 223: đang trên không (nhảy / bay lướt) gửi dày hơn (~12 lần/giây) để người khác thấy cú nhảy
 const KEEPALIVE_MS = 5000;    // đứng yên: cứ 5 giây báo "còn đây" một lần
 const SIG_GAP_MS = 120;         // Phiên 137: gói tin giao lưu võ thuật (bắt đầu bằng "#dg") có nhịp riêng, nhanh hơn lời nhắn thường (ROOM_CFG.chatGapMs)
 const CHAT_KEEP = 20;         // chỉ nghe 20 lời nhắn gần nhất
@@ -29,7 +30,7 @@ export function createFirebaseTransport({ config, name = 'Firebase', loadSdk, no
   let sdk = null, app = null, db = null, uid = '', myRef = null, connected = false, closed = false;
   const players = new Map(), chatSeen = new Set(), unsubs = [], combatIn = new Map();   // combatIn (Phiên 220): gói chiến đấu mới nhất của từng người khác
   let combatBlocked = false, cRef = null, cEpoch = 0, cDiscEpoch = -1;   // combatBlocked: luật Firebase chưa có nhánh /combat → thôi gửi (người chơi vẫn hiện bình thường)
-  let chatLog = [], seq = 0, lastKey = '', lastSend = 0, lastChat = 0, lastSig = 0, gearBlocked = false;   // gearBlocked (Phiên 166): luật Firebase cũ từ chối trường `i` → thôi gửi `i`, người chơi vẫn hiện bình thường
+  let chatLog = [], seq = 0, lastKey = '', lastSend = 0, lastY = 0, lastChat = 0, lastSig = 0, gearBlocked = false;   // gearBlocked (Phiên 166): luật Firebase cũ từ chối trường `i` → thôi gửi `i`, người chơi vẫn hiện bình thường
   const API = { kind: 'firebase', name };
 
   /** Kết nối + đăng nhập ẩn danh + nạp danh sách hiện tại. Ném 'room_full' nếu phòng đã đủ người, 'timeout' nếu quá hạn. */
@@ -84,7 +85,8 @@ export function createFirebaseTransport({ config, name = 'Firebase', loadSdk, no
     if (me) {
       const rec = { n: me.n, c: me.c, h: me.h, x: me.x, y: me.y, z: me.z, r: me.r, s: me.s }; if (me.i && !gearBlocked) rec.i = me.i;   // Phiên 166: chỉ gửi `i` khi có đồ
       const key = JSON.stringify(rec), hadGear = !!rec.i;
-      const due = key !== lastKey ? t - lastSend >= SEND_MIN_MS : t - lastSend >= KEEPALIVE_MS;
+      const air = (rec.y > 0.05 || lastY > 0.05), due = key !== lastKey ? t - lastSend >= (air ? SEND_AIR_MS : SEND_MIN_MS) : t - lastSend >= KEEPALIVE_MS;   // Phiên 223: air gồm cả lần vừa chạm đất (gửi nốt y = 0)
+      lastY = rec.y;
       if (due) {
         lastKey = key; lastSend = t;
         Promise.resolve(sdk.set(myRef, { ...rec, t })).catch(() => {

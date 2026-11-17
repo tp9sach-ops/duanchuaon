@@ -11,7 +11,7 @@ import { tagOf } from '../world/duel.js';
 const NEAR_MON_M = 40;   // chỉ phát quái đang đánh cách mình ≤ 40 m
 
 export function createCombatLink(deps) {
-  const { LGT, W, getTransport, avatarOf, roomOf = () => 'main', now = () => Date.now(), perf = () => (globalThis.performance ? performance.now() : Date.now()), makeSlash = null, castFx = null, ghostView = null, getCamera = () => null, skipOut = () => false } = deps;
+  const { LGT, W, getTransport, avatarOf, roomOf = () => 'main', now = () => Date.now(), perf = () => (globalThis.performance ? performance.now() : Date.now()), makeSlash = null, castFx = null, ghostView = null, getCamera = () => null, skipOut = () => false, dragonFx = null } = deps;   // Phiên 223: dragonFx = bộ rồng hồng RIÊNG cho người khác (js/ui/dragonFx.js)
   const outbox = createOutbox(), inbox = createInbox(), ghosts = createGhosts(), lastT = new Map(), stance = new Map(), slashes = new Map();
   const hookedAv = new WeakSet(), poses = new Map(); let startedAt = 0, myTag = '', flushQ = false;   // Phiên 222: world.js DỰNG LẠI nhân vật khi vào chùa / đổi tên (setProfile) → hook phải gắn lại cho nhân vật mới; poses = tư thế bay lướt / lao của người khác
   let timer = null, raf = 0, hitHooked = false, lastSfx = 0, lastFrame = 0, running = false;
@@ -26,7 +26,7 @@ export function createCombatLink(deps) {
   /** Tư thế bay lướt / lao của MÌNH → hộp gửi (người khác thấy mình bay, lao). g = bay lướt (avatar.state 'glide'), d = lao chúi đầu, r = lao chạy. */
   function pollPose() {
     const av = W && W.avatar; let mode = 'n', tilt = 0;
-    if (av && !skipOut()) { tilt = av.group && av.group.rotation ? +av.group.rotation.x || 0 : 0; if (W.dashing) mode = tilt > 0.2 ? 'd' : 'r'; else if (av.state === 'glide') mode = 'g'; }
+    if (av && !skipOut()) { tilt = av.group && av.group.rotation ? +av.group.rotation.x || 0 : 0; if (W.dashing) mode = tilt > 0.2 ? 'd' : 'r'; else if (av.state === 'glide') mode = 'g'; else if (LGT.combatPose && LGT.combatPose.stance) mode = 's'; }   // Phiên 223: 's' = đang đứng THẾ SẴN SÀNG CHIẾN ĐẤU (người khác thấy ngay, không đợi tới lúc vung đòn)
     outbox.setPose({ mode, tilt });
   }
   function flush() { try { const tr = getTransport ? getTransport() : null; pollPose(); outbox.setRoom(roomOf()); outbox.setMons(mine()); const pkt = outbox.packet(now()); if (pkt && tr && typeof tr.sendCombat === 'function') tr.sendCombat(pkt); } catch (_) { /* gửi lỗi: bỏ qua */ } }
@@ -67,13 +67,21 @@ export function createCombatLink(deps) {
   function slashOf(id) { let s = slashes.get(id); if (!s && makeSlash) { try { s = makeSlash(); } catch (_) { s = null; } if (s) slashes.set(id, s); } return s || null; }
   function dropSlash(id) { const s = slashes.get(id); if (s) { try { if (s.dispose) s.dispose(); } catch (_) { /* bỏ qua */ } slashes.delete(id); } }
 
+  const lastAct = new Map(); const a_recent = (id, t) => t - (lastAct.get(id) || -1e9) < 1200;   // Phiên 223: vừa vung đòn / tung chiêu ≤ 1,2 s thì chưa hạ thế
+  /** Phiên 223: rồng hồng của người khác — bay quanh CHÍNH nhân vật họ trên màn hình mình (bám vị trí sống của avatar). */
+  function playDragon(id, a) {
+    if (!dragonFx) return; const av = avatarOf ? avatarOf(id) : null, g = av && av.group && av.group.position; if (!g || dist(g.x, g.z) > COMBAT.seeM) return;
+    try { dragonFx.spawn(g, a.ry, g); } catch (_) { /* bỏ qua */ }
+  }
   function playCast(id, a) {
+    lastAct.set(id, now());
     if (dist(a.x, a.z) > COMBAT.seeM) return;
     const av = avatarOf ? avatarOf(id) : null, o = spot(av, a);
     if (av) { try { av.setFacing(a.ry); if (av.cast) av.cast(a.id); } catch (_) { /* bỏ qua */ } markStance(id, av); }
     try { if (castFx) castFx(a.id, { x: o.x, z: o.z, ry: a.ry, tx: a.tx, tz: a.tz }); } catch (_) { /* bỏ qua */ }
   }
   function playSwing(id, a) {
+    lastAct.set(id, now());
     if (dist(a.x, a.z) > COMBAT.seeM) return;
     const av = avatarOf ? avatarOf(id) : null, o = spot(av, a);
     if (av) { try { av.setFacing(a.ry); if (av.swing) av.swing(a.kind); } catch (_) { /* bỏ qua */ } markStance(id, av); }
@@ -103,9 +111,12 @@ export function createCombatLink(deps) {
     const r = F.remoteHit(a.key, a.dmg, by, a.ax, a.az);
     if (r && r.dead) emit({ k: 'k', key: a.key, type: r.type, killer: by });
   }
-  /** Tư thế bay lướt / lao của người `id` (cho roomClient vẽ), hoặc null. */
+  /** Phiên 223: MÌNH vừa tung RỒNG HỒNG (Gậy như ý đủ 3 đòn) → báo cho mọi người cùng thấy. ry = hướng mặt. */
+  API.sendDragon = (ry) => { try { return skipOut() ? 0 : emit({ k: 'r', ry: +ry || 0 }); } catch (_) { return 0; } };
+  /** Tư thế bay lướt / lao của người `id` (cho roomClient vẽ), hoặc null. 's' (thế chiến đấu) KHÔNG đổi trạng thái đi/đứng nên trả null (stance do tick lo). */
   API.poseOf = (id) => {
     const o = poses.get(id); if (!o) return null; if (now() > o.until) { poses.delete(id); return null; }
+    if (o.mode === 's') return null;
     return { state: o.mode === 'g' ? 'glide' : o.mode === 'r' ? 'walk' : 'idle', speed: o.mode === 'r' ? 6.5 : 0, tilt: o.tilt };
   };
 
@@ -123,7 +134,10 @@ export function createCombatLink(deps) {
       const acts = inbox.take(p.id, p.a, fresh);                             // luôn cập nhật mốc (người có từ trước: chỉ ghi mốc, không phát lại đồ cũ)
       if ((p.r || '') !== room) { ghosts.drop(p.id); poses.delete(p.id); continue; }   // người ở zone khác: không thấy gì của họ
       const fp = unpackActions(p.a).find((x) => x.k === 'f');
-      if (fp) { if (fp.mode === 'n') poses.delete(p.id); else poses.set(p.id, { mode: fp.mode, tilt: fp.tilt, until: t + (fp.mode === 'd' ? 1200 : 4000) }); }
+      if (fp) {
+        if (fp.mode === 'n') { poses.delete(p.id); const av0 = avatarOf ? avatarOf(p.id) : null; if (av0 && av0.setStance && stance.has(p.id) && !a_recent(p.id, t)) { stance.delete(p.id); av0.setStance(false); } }   // Phiên 223: người đó báo HẾT thế chiến đấu → hạ thế ngay (trừ khi vừa vung đòn)
+        else { poses.set(p.id, { mode: fp.mode, tilt: fp.tilt, until: t + (fp.mode === 'd' ? 1200 : 4000) }); if (fp.mode === 's') markStance(p.id, avatarOf ? avatarOf(p.id) : null); }   // Phiên 223: thấy thế sẵn sàng của họ NGAY khi họ vào giao chiến
+      }
       const by = tagOf(p.id), late = [];
       for (const a of acts) {
         if (a.k === 'd') { if (me && a.owner === me) applyRemote(a, by); }   // họ đánh quái CỦA MÌNH → trừ máu thật
@@ -132,9 +146,9 @@ export function createCombatLink(deps) {
       }
       ghosts.ingest(p.id, unpackMons(p.m), t);
       for (const a of late) playHit(p.id, a);                                // quái mới xuất hiện cùng gói với đòn đầu tiên
-      for (const a of acts) { if (a.k === 'c') playCast(p.id, a); else if (a.k === 's') playSwing(p.id, a); }
+      for (const a of acts) { if (a.k === 'c') playCast(p.id, a); else if (a.k === 's') playSwing(p.id, a); else if (a.k === 'r') playDragon(p.id, a); }
     }
-    for (const id of [...lastT.keys()]) if (!seenIds.has(id)) { lastT.delete(id); ghosts.drop(id); inbox.forget(id); stance.delete(id); dropSlash(id); poses.delete(id); }   // người đã rời
+    for (const id of [...lastT.keys()]) if (!seenIds.has(id)) { lastT.delete(id); ghosts.drop(id); inbox.forget(id); stance.delete(id); dropSlash(id); poses.delete(id); lastAct.delete(id); }   // người đã rời
   };
 
   /** Mỗi khung hình: bóng quái bước tiếp + vẽ + vệt chém bám theo người + hết thế chiến đấu của người khác. */
@@ -142,7 +156,7 @@ export function createCombatLink(deps) {
     try {
       API.hookAvatar();
       const t = now(), hide = !!(LGT.inHouse || (LGT.swim && LGT.swim.active));
-      ghosts.step(dt, t);
+      ghosts.step(dt, t); if (dragonFx) dragonFx.update(dt, null);   // Phiên 223: rồng hồng của người khác bay theo họ
       const gl = hide ? [] : ghosts.list();
       if (LGT.farmView) LGT.farmView.ghosts = gl;
       if (ghostView) ghostView.update(perf() / 1000, { mons: gl, target: (LGT.farmView && LGT.farmView.target) || '', stones: [] }, getCamera());
