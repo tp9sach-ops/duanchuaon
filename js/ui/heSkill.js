@@ -3,10 +3,10 @@
 // Bộ máy hồi chiêu / cấp chiêu: js/world/skillEngine.js; dữ liệu: js/data/combatSkills.js (TẠM). Phím tắt máy tính: Q, W, E. Mọi chữ qua textContent.
 // Phiên 163: TU VỄ LÀ ĐỂ TĂNG CẤP CHIÊU — cấp mỗi chiêu tự theo Tu Vị (js/ui/farm.js): cấp = Tu Vị ÷ 10 (tối thiểu 1, tối đa 10, skillLevelCap ở skillEngine.js); mỗi cấp +6% hệ số sát thương. Trước đây không chỗ nào nâng cấp nên chiêu luôn ở cấp 1. Nút chiêu hiện "Lv N"; giữ nhấn xem bảng thông tin cũng theo cấp này.
 // Phiên 184: CHIÊU HỖ TRỢ TUNG ĐƯỢC THẬT (trước chỉ báo "sắp có"): bấm là hồi chiêu + tư thế/hiệu ứng 3D theo id chiêu + "hiệu lực" có giờ hiện trên nút (js/world/skillBuff.js); không cần quái ở gần. Tăng sát thương thật cho Cuồng Long Phẫn Nộ (LGT.buffMul, nhân vào đòn ở js/ui/farm.js). Nút rung khi chưa dùng được; thanh chiêu báo chiều cao qua --hs-h để bong bóng chỉ chỗ của cụm nút không bị đè.
-// Phiên 182 (mục 2): NÚt CHIÊU BẤM ĐƯỢC — .hud có pointer-events:none (css/hud.css) và thuộc tính này KẾ THỪA xuống con, trước đây #hs-bar không tự bật lại nên mọi cú chạm xuyên qua. Thêm pointer-events:auto cho #hs-bar, .hs-b, #hs-pm. Nút to hơn (biến --hs-s, mặc định 60px — mục 3 sẽ cho người chơi chỉnh), biểu tượng có nền đặc + màu Hệ + họa tiết trắng + chữ lớn, tên chiêu nằm ở đáy nút.
+// Phiên 182 (mục 2): NÚt CHIÊU BẤM ĐƯỢC — .hud có pointer-events:none (css/hud.css) và thuộc tính này KẾ THẪA xuống con, trước đây #hs-bar không tự bật lại nên mọi cú chạm xuyên qua. Thêm pointer-events:auto cho #hs-bar, .hs-b, #hs-pm. Nút to hơn (biến --hs-s, mặc định 60px — mục 3 sẽ cho người chơi chỉnh), biểu tượng có nền đặc + màu Hệ + họa tiết trắng + chữ lớn, tên chiêu nằm ở đáy nút.
 // Phiên 185 (kế hoạch hiệu ứng 3D, bước 1): HIỆU ỨNG 3D KHI ĐÁNH QUÁI THẬT. Trước đây createChieuFx (js/scene/chieuFx.js: vùng cảnh báo, lõi sáng, lửa/băng/kim, hạt, vệt, quầng, decal, tiếng) chỉ được nối trong Võ đường luyện chiêu (js/ui/luyenChieu.js); ngoài bãi rừng bấm chiêu chỉ có tư thế + chữ nên "không thấy hiệu ứng gì". Giờ pose() quay mặt về quái đang nhắm, làm tư thế, rồi gọi cfx.cast với vị trí người chơi + vị trí quái (đọc từ LGT.farmView). Bộ hiệu ứng nạp lười (một lần, sau khi LGT.scene sẵn sàng); nạp/dựng lỗi thì chiêu vẫn đánh được như cũ. CHƯA nhìn bằng mắt (môi trường AI không có WebGL).
 // Phiên 195 (mục 2): KHU LUYỆN TẬP — nút chiêu theo HỆ ĐANG TẬP (LGT.luyenChieu.he) thay vì Hệ người chơi (lệch Hệ thì bấm không ra chiêu); không cần runtime chiêu của người chơi; xem thông tin giữ-nhấn cũng theo Hệ đang tập.
-// Phiên 191 (Mục 1): (a) SỬA LỖI paint(): biến `locked` bị dùng trước khi khai báo (const → ReferenceError mỗi 150 ms, nút chiêu không vẽ được tên/hình/hồi chiêu); (b) thanh chiêu HIỆN CẢ Ở KHU LUYỆN TẬP — cùng một cụm nút với ngoài bãi rừng / trong chùa (trước đây bị ẩn và thay bằng hàng nút riêng).
+// Phiên 191 (Mục 1): (a) SỬỪA LỖI paint(): biến `locked` bị dùng trước khi khai báo (const → ReferenceError mỗi 150 ms, nút chiêu không vẽ được tên/hình/hồi chiêu); (b) thanh chiêu HIỆN CẢ Ở KHU LUYỆN TẬP — cùng một cụm nút với ngoài bãi rừng / trong chùa (trước đây bị ẩn và thay bằng hàng nút riêng).
 // Phiên 198 (mục 2, đợt D): LƯỚT TAY ĐỂ TUNG CHIÊU. Bấm giữ nút chiêu rồi LƯỚT ngón tay ≥ SWIPE_PX (js/world/aimSwipe.js) → hiện mũi tên hướng, thả tay thì tung chiêu. Chiêu ĐỊNH HƯỚNG (vùng báo dạng đường/nón) bay theo HƯỚNG LƯỚT (hướng trên màn hình đổi sang hướng thế giới theo góc camera) và chỉ đánh quái nằm trong vùng báo theo hướng đó (LGT.farm.skillHitDir);
 //   không có quái trong hướng lướt thì chiêu vẫn tung (hoạt ảnh + hiệu ứng 3D bay theo hướng lướt) nhưng KHÔNG gây sát thương. Chiêu vòng tròn / hỗ trợ không cần hướng: lướt hay chạm đều tung như cũ. Lướt rồi kéo ngược về chỗ bấm = hủy. Chạm nhanh (không lướt) = như cũ (đánh quái gần nhất); giữ yên ≥ 380 ms = xem thông tin.
 // Phiên 207: (a) VÙNG TUNG CHIÊU HIỆN TRÊN MẶT ĐẤT khi lướt chiêu định hướng (như Liên Quân / Liên Minh): hình đường / nón tô màu Hệ, gốc ở chân nhân vật, xoay theo hướng kéo và cập nhật mỗi 60 ms (đi hay xoay camera khi đang ngắm vẫn đúng), nhả tay mới tung (js/scene/aimPreview.js, hình học js/world/aimPreview.js); (b) KHU LUYỆN TẬP nhận hướng lướt: luyenCast(slot, swipe) truyền { ry } cho LGT.luyenChieu.castById (trước đây bỏ qua lướt, chiêu luôn bay về mộc nhân gần nhất).
@@ -21,6 +21,7 @@ import { createBuffs, buffNote } from '../world/skillBuff.js';   // Phiên 184: 
 import { infoOf, infoRows, iconSpec, glyphOf, HE_COLOR } from '../world/chieuInfo.js';   // Phiên 162: biểu tượng + bảng giữ-để-xem
 import { tierOf } from '../world/chieuFxPlan.js';
 import { drawGlyphIcon } from './skillIcon.js';   // Phiên 189: hình chiêu dùng chung với khu luyện tập   // Phiên 185: bậc máy (cao / vừa / yếu) cho hiệu ứng 3D
+import { manaPool, maxMana, costOf } from '../world/mana.js';   // Phiên 215 (mục 2): dùng chiêu tốn Chân khí
 import { swipeDir, isDirectional, hinhOf, SWIPE_PX } from '../world/aimSwipe.js';   // Phiên 198: lướt tay định hướng chiêu
 // Phiên 208: VÕ ĐÀI dùng CHUNG thanh chiêu này (không còn hàng nút riêng cho Q/W/E): ô 1/2/3 → chiêu Võ đài (LGT.duel.castSlot), có lướt tay + vùng tung chiêu trên đất theo ĐÚNG hình vùng trúng của Võ đài (LGT.duel.hinhOf); ô 4 / Tuyệt Học ẩn ở Võ đài; hồi chiêu đọc từ LGT.duel.cdOfSlot.
 
@@ -42,6 +43,13 @@ export function initHeSkill(hud, { toast = () => {} } = {}) {
   let rt = null, he = null, pm = null;
   const buffs = createBuffs(); LGT.buffMul = () => buffs.damageMul(nowSec());   // Phiên 184: farm.js nhân hệ số này vào mọi đòn đánh quái
   const nope = (slot) => { const e = btns[slot]; if (!e) return; e.b.classList.remove('hs-no'); void e.b.offsetWidth; e.b.classList.add('hs-no'); setTimeout(() => e.b.classList.remove('hs-no'), 460); };   // rung nút khi chưa dùng được
+  const pool = manaPool(LGT);   // Phiên 215 (mục 2): Chân khí dùng chung (LGT.mana)
+  const manaOk = (slot, sk) => {   // đủ Chân khí chưa (đang hồi chiêu thì để tryCast báo hồi chiêu); thiếu → báo + rung nút
+    pool.setMax(maxMana(eff())); const need = costOf(slot);
+    if (need <= 0 || pool.can(need) || (rt && rt.cooldownLeft(sk.id, nowSec()) > 0)) return true;
+    toast(`Không đủ Chân khí cho ${sk.ten}: cần ${need}, còn ${Math.floor(pool.value)}. Đợi hồi lại hoặc đánh thường.`, 2400); nope(slot); return false;
+  };
+  const manaSpend = (slot) => { pool.spend(costOf(slot)); };
   const currentPm = (h) => { try { const id = localStorage.getItem(PM_KEY); return phapMonOfHe(h).some((p) => p.id === id) ? id : null; } catch (_) { return null; } };
   const currentHe = () => { try { return loadHe(localStorage.getItem(KHAI_NGO.heKey)); } catch (_) { return LGT.he || null; } };
   function sync() {
@@ -115,6 +123,7 @@ export function initHeSkill(hud, { toast = () => {} } = {}) {
     const info = infoOf(sk.id, { tuvi: eff(), level: rt && !inLuyen() ? rt.effectiveLevel(sk.id) : 1 }); if (!info) return false;
     tip.textContent = ''; const h = document.createElement('h4'); h.textContent = info.ten; tip.appendChild(h);
     for (const [k, v] of infoRows(info)) { const r = document.createElement('div'), b = document.createElement('b'); r.className = 'r'; b.textContent = k + ': '; r.append(b, document.createTextNode(v)); tip.appendChild(r); }
+    if (!inLuyen() && costOf(slot) > 0) { const r = document.createElement('div'), b = document.createElement('b'); r.className = 'r'; b.textContent = 'Chân khí: '; r.append(b, document.createTextNode(`${costOf(slot)}`)); tip.appendChild(r); }   // Phiên 215
     tip.hidden = false; const bb = bar.getBoundingClientRect(), tw = tip.offsetWidth, th = tip.offsetHeight;
     tip.style.left = Math.max(8, Math.min(innerWidth - tw - 8, bb.right - tw)) + 'px'; tip.style.top = Math.max(8, bb.top - th - 8) + 'px'; return true;
   }
@@ -162,14 +171,18 @@ export function initHeSkill(hud, { toast = () => {} } = {}) {
   }
   // Phiên 184: chiêu HỖ TRỢ (khiên, giáp, hồi sinh, ẩn thân, khống chế...) tung được THẬT, không cần quái ở gần.
   function castSupport(slot, sk) {
+    if (!manaOk(slot, sk)) return false;
     const r = rt.tryCast(slot, nowSec()); if (!r.ok) { toast(failText(sk, r), 2200); nope(slot); return false; }
+    manaSpend(slot);
     buffs.start(sk, slot, nowSec()); pose(sk, null);
     toast(buffNote(sk, r.level), 3200); if (LGT.sfx) LGT.sfx.play('tu-dong-bat'); if (LGT.act) LGT.act('dungchieu');
     return true;
   }
   // Phiên 198: chiêu ĐỊNH HƯỚNG tung bằng lướt tay. sd = swipeDir(...) = { ry, ... }. Hồi chiêu tính như thật; chỉ đánh quái nằm TRONG vùng báo theo hướng lướt; không có thì vẫn tung (hiệu ứng bay theo hướng lướt) nhưng không gây sát thương, không tích Tâm Ấn.
   function castDir(slot, sk, sd) {
+    if (!manaOk(slot, sk)) return false;
     const r = rt.tryCast(slot, nowSec()); if (!r.ok) { toast(failText(sk, r), 2200); nope(slot); return false; }
+    manaSpend(slot);
     const W = LGT.world, p = W && W.pos, hinh = hinhOf(sk.id), reach = hinh && +hinh.dai > 0 ? +hinh.dai : 8;
     const tg = p ? { x: p.x + Math.sin(sd.ry) * reach, z: p.z + Math.cos(sd.ry) * reach } : null;   // điểm giả ở cuối vùng báo theo hướng lướt: nhân vật quay mặt + hiệu ứng 3D bay về phía đó
     const h = LGT.farm && LGT.farm.skillHitDir ? LGT.farm.skillHitDir(r.heSo, sd.ry, hinh, sk.id) : { ok: false };
@@ -212,8 +225,10 @@ export function initHeSkill(hud, { toast = () => {} } = {}) {
     if (!(sk.heSo > 0)) return castSupport(slot, sk);
     if (swipe) { const sd = swipeDir(swipe.dx, swipe.dy, LGT.world && LGT.world.camera ? LGT.world.camera.yaw : 0); if (sd && isDirectional(sk.id)) return castDir(slot, sk, sd); }   // Phiên 198: lướt tay + chiêu định hướng → bay theo hướng lướt
     const pre = LGT.farm ? LGT.farm.skillReady() : { ok: false, reason: 'khong-quai' };
+    if (!manaOk(slot, sk)) return false;
     const r = rt.tryCast(slot, nowSec());
     if (!r.ok) { toast(failText(sk, r), 2200); nope(slot); return false; }
+    manaSpend(slot);
     if (!pre.ok) {   // Phiên 190: KHÔNG có quái (hoặc quái còn xa) vẫn tung được chiêu: hoạt ảnh + hiệu ứng 3D, hồi chiêu như thật, nhưng KHÔNG gây sát thương, không tích Tâm Ấn
       pose(sk, targetNow()); toast(`${sk.ten}! ${pre.reason === 'xa' ? 'Quái còn xa nên chưa trúng.' : 'Chưa có quái — không gây sát thương ai.'}`, 2200); if (LGT.sfx) LGT.sfx.play('tu-dong-bat'); return true;
     }
