@@ -95,6 +95,7 @@ async function boot() {
   try {
     const hudEl = document.getElementById('hud'), toast = (t, ms) => window.LGT.toast && window.LGT.toast(t, ms);
     Promise.all([import('./ui/heSkill.js'), import('./ui/khaiNgo.js')]).then(([hs, kn]) => { if (hudEl) hs.initHeSkill(hudEl, { toast }); kn.initKhaiNgo({ toast }); }).catch((e) => console.warn('[Diệu Giang Tự] Lễ Khai Ngộ / chiêu phái lỗi:', e && e.message));
+    import('./ui/hitReact.js').then((m) => m.initHitReact()).catch((e) => console.warn('[Diệu Giang Tự] Phản ứng trúng chiêu lỗi:', e && e.message));   // Phiên 214 (mục 1): tư thế/tiếng/hiệu ứng khi quái bị chiêu trúng (trước đây viết xong nhưng CHƯA ai gọi initHitReact)
     import('./ui/btnScale.js').then((m) => { if (hudEl) m.initBtnScale(hudEl); }).catch((e) => console.warn('[Diệu Giang Tự] Cỡ nút lỗi:', e && e.message));   // Phiên 188: nút ⚙ chỉnh cỡ nút
   } catch (_) { /* bỏ qua */ }
   // Phiên 147: khi chuyển tab, vòng vẽ (requestAnimationFrame) dừng hẳn nên nhân vật đứng yên (không đi, không lao vào quái được). Nhịp nền (Worker) tự cập nhật nhân vật khi tab ẩn, chia nhỏ từng bước 0,05 giây để không xuyên tường.
