@@ -10,6 +10,7 @@ import { MONSTERS, FARM_ZONES, FARM_CFG } from '../data/monsters.js';
 import { createSpawner, tickSpawner, rollDrops, hitMonster, nearestMonster, setNight, isNight, rectsOf, ZONE_IDS } from '../world/spawn.js';
 import { pickMonster, LOCK_RANGE } from '../world/mouseTarget.js';   // Phiên 159: chuột phải 2 lần vào quái = khóa mục tiêu
 import { loadFarm, settleKill, settleBoss, senLeft, tuViOf, killXp } from '../world/farm.js';
+import { quaThuPhuc } from '../world/senThuong.js';   // Phiên 221: mỗi con thu phục = 1 hạt sen cố định
 import { STONE, SPEAR, stoneDamage, spearDamage, rngSeed } from '../world/yeuquai.js';
 import { mapAvailable } from '../world/minimap.js';
 import { loadAuto, autoLeft, addAutoTime, addAutoBonus, nextAction, rushTarget } from '../world/autoHunt.js';
@@ -81,7 +82,7 @@ export function initFarm(hud, { toast = () => {} } = {}) {
     else if (e.code === 'KeyR' && !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey && !LGT.panelOpen && !document.body.classList.contains('edit-mode') && !/^(INPUT|TEXTAREA|SELECT)$/.test((e.target && e.target.tagName) || '') && !(e.target && e.target.isContentEditable)) { spear(); } });   // R = Thương   // Esc bỏ khóa mục tiêu (khi không có bảng nào đang mở)
 
   function reward(r) {
-    const mon = r.mon, now = Date.now(), s = settleKill(farm, MONSTERS[mon.type], r.drops, now); farm = s.farm; save();
+    const mon = r.mon, now = Date.now(), s = settleKill(farm, MONSTERS[mon.type], quaThuPhuc(), now); farm = s.farm; save();   // Phiên 221: quà sen cố định 1 hạt (không dùng r.drops ngẫu nhiên nữa); trần ngày vẫn áp dụng
     if (s.senGain > 0 && LGT.addMerit) LGT.addMerit(s.senGain);
     const xp = killXp(mon);   // Phiên 138: MỖI lần thu phục quái đều cộng kinh nghiệm cấp độ (thanh "Cấp"), kể cả khi đã hết trần Tu Vi trong ngày (trần ngày chỉ áp cho Tu Vi và hạt sen)
     const bits = [`Thu phục ${mon.ten}!`]; if (xp > 0) bits.push(`+${xp} kinh nghiệm`); if (s.senGain > 0) bits.push(`+${s.senGain} hạt sen`); if (s.expGain > 0) bits.push(`+${s.expGain} Tu Vi`);
