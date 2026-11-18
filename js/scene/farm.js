@@ -50,13 +50,13 @@ export function buildFarm() {
       slots.forEach((s, i) => {
         const m = mons[i]; if (!m || (camera && Math.hypot(m.x - camera.position.x, m.z - camera.position.z) > CULL)) { s.root.visible = false; return; }   // xa camera quá CULL m thì không vẽ (tiết kiệm lượt vẽ trên điện thoại)
         if (s.type !== m.type) { s.body.clear(); s.model = buildMonster(m.type); s.body.add(s.model.g); s.type = m.type; s.lx = m.x; s.lz = m.z; }
-        const flash = Math.max(0, m.flash || 0), sc = (m.boss ? 1.7 : m.elite ? 1.15 : 1) * (1 + 0.14 * flash), phase = (m.id || 0) * 1.7;
+        const flash = Math.max(0, m.flash || 0), sc = (m.size ? (m.elite && !m.boss ? 1.15 : 1) * m.size : (m.boss ? 1.7 : m.elite ? 1.15 : 1)) * (1 + 0.14 * flash), phase = (m.id || 0) * 1.7;
         s.root.visible = true; s.root.position.set(m.x, 0, m.z);
         const po = m.rx ? rxPose(m.rx, performance.now() / 1000) : null;   // Phiên 213: tư thế bị trúng chiêu (giật/lùi/ngã theo hướng đòn) — tính ở js/world/hitReact.js
         if (po && !po.done) { s.root.position.x += po.dx; s.root.position.z += po.dz; } else if (m.rx && po && po.done) m.rx = null;
         const wdur = m.slam ? BOSS_ATTACK_CFG.slamWindup : ATTACK_CFG.windup, aW = m.wind > 0 ? clamp01(1 - m.wind / wdur) : 0, pS = m.strikeT > 0 ? clamp01(1 - m.strikeT / 0.45) : 0;   // Phiên 232: gồng 0..1, vung đòn 0..1
         const mvNow = Math.hypot(m.x - s.lx, m.z - s.lz) > 0.004 ? 1 : 0; s.mv += (mvNow - s.mv) * 0.25; s.lx = m.x; s.lz = m.z;
-        const sleep = !m.eng;   // Phiên 118: quái chưa bị đánh thì NGỦ trong bụi (nằm thấp, thở chậm); bị đánh mới nổi giận và đứng dậy
+        const sleep = !m.eng && !m.pbCong;   // Phiên 235: quái phó bản luôn đứng canh (không nằm ngủ trong bụi)   // Phiên 118: quái chưa bị đánh thì NGỦ trong bụi (nằm thấp, thở chậm); bị đánh mới nổi giận và đứng dậy
         s.body.position.y = sleep ? 0 : Math.abs(Math.sin(t * 2.2 + phase)) * 0.07; s.body.rotation.y = m.ry + (sleep ? 0 : Math.sin(t * 0.9 + phase) * 0.3); s.body.scale.setScalar(sc);
         if (po && !po.done) { s.body.rotation.x = po.rx; s.body.rotation.z = po.rz; s.body.rotation.y += po.ry; } else { s.body.rotation.x = 0; s.body.rotation.z = 0; }
         if (s.model) { s.model.anim(t + phase, { a: aW, p: m.strikeT > 0 ? Math.max(0.001, pS) : 0, mv: s.mv, sleep }); if (pS > 0 && m.strikeT > 0) { const zz = zoneOf(m), lunge = zz.kieu === 'duong' ? (zz.lao || 0) * Math.sin(Math.PI * pS) : 0; s.body.position.x = Math.sin(m.ry) * lunge; s.body.position.z = Math.cos(m.ry) * lunge; } else { s.body.position.x = 0; s.body.position.z = 0; } }

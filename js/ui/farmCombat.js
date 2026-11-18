@@ -39,6 +39,7 @@ export function initFarmCombat(hud, { toast = () => {} } = {}) {
 
   function defeat() {
     for (const m of engaged.values()) calm(m); engaged.clear();
+    if (LGT.dungeonRun && LGT.dungeonRun.onDefeat && LGT.dungeonRun.onDefeat()) { vit.revive(); return; }   // Phiên 235: gục trong phó bản → hủy lượt, về chỗ NPC (không teleport về cổng chùa từ zone khác)
     if (LGT.items && LGT.items.tryRevive && LGT.items.tryRevive()) {   // Phiên 149: CÓ Ngọc dịch chuyển → hồi sinh tại chỗ, hoặc tại chỗ đã ghim; tự động hàng yêu vẫn chạy
       const pin = LGT.items.pinned;
       if (pin && Number.isFinite(pin.x) && Number.isFinite(pin.z) && LGT.world && LGT.world.teleport && !LGT.inHouse) LGT.world.teleport(pin.x, pin.z);
@@ -59,6 +60,7 @@ export function initFarmCombat(hud, { toast = () => {} } = {}) {
     if (!p || !mons.length) { stepVit(dt); show(); return; }
     // 1) quái bị đánh (Oán Khí giảm) thì nổi giận
     for (const m of mons) {
+      if (m.aggro && !m.eng) { provoke(m); engaged.set(m.uid, m); }   // Phiên 235: quái phó bản đã được thả (aggro) thì lao vào người chơi, không cần bị đánh trước
       if (m._o !== undefined && m.oan < m._o) { vit.touch(); if (!m.eng) { provoke(m); engaged.set(m.uid, m); if (!warned) { warned = true; toast('Quái bị đánh sẽ đánh trả! Chú ý thanh Sinh Lực: lùi ra khi quái phồng lên để né, hoặc nghỉ một lát để hồi.', 5200); } } else m.engT = 0; }
       m._o = m.oan;
     }
