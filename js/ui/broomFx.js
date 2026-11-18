@@ -4,14 +4,17 @@
 import * as THREE from 'three';
 import { BROOM, IMPACT_T, slamPose, debrisPlan, debrisAt, windAt } from '../world/broomMath.js';
 import { buildBroom, loadBroomGlb, dustTexture } from './broomMesh.js';
+import { TORN, tornadoPlan, tornadoOrigin, tornadoAt } from '../world/tornadoMath.js';
+import { makeTornadoMesh, poseTornado, disposeTornadoMesh } from './tornadoFx.js';
 
+const BROOM_HALF = 0.75;   // nửa chiều dài chổi chuẩn hóa (broomMesh.BROOM_LEN = 1,5): đầu rơm ở -y
 const COL = { la: [0x6f9a2e, 0x9bb83c, 0xc9a227, 0x8a5a1c], cat: [0xd9c28a], da: [0x7a7468, 0x5e5a52] };
 let G = null;
 const geos = () => G || (G = { leaf: new THREE.PlaneGeometry(1, 0.6), sand: new THREE.SphereGeometry(1, 6, 5), stone: new THREE.DodecahedronGeometry(1, 0) });
 
 function makeSlam(scene, pos, heading, range, seed, remote) {
   const g = geos(), root = new THREE.Group(), broom = buildBroom(); loadBroomGlb(broom);
-  broom.scale.setScalar(1.6); const arm = new THREE.Group(); arm.add(broom); broom.rotation.x = Math.PI; broom.position.y = 1.2; root.add(arm);   // đầu rơm hướng xuống, cán lên trời
+  broom.scale.setScalar(1.6); const arm = new THREE.Group(); arm.add(broom); root.add(arm);   // Phiên 234: GLB + chổi khối đều có đầu rơm ở -y → KHÔNG lật (trước đây xoay π làm CÁN chổi đập xuống); đặt chổi cho ĐẦU rơm nằm đúng gốc `arm`, mỗi khung hình trong update()
   const px = pos.x + Math.sin(heading) * range, pz = pos.z + Math.cos(heading) * range;
   root.position.set(px, pos.y, pz); root.rotation.y = heading; scene.add(root);
   const parts = debrisPlan(seed).map((d, i) => {
@@ -32,6 +35,7 @@ function ownMaterials(s) {
 function disposeSlam(s) {
   s.scene.remove(s.root);   // hình khối dùng chung với chổi cầm tay → không hủy; chỉ hủy chất liệu RIÊNG (clone) của cú đập
   for (const m of s.mats) m.dispose();
+  for (const sp of s.broom.userData.halo || []) sp.material.dispose();   // Phiên 234: quầng sáng có chất liệu riêng
   for (const p of s.parts) { s.scene.remove(p.m); p.m.material.dispose(); }
 }
 
@@ -42,28 +46,39 @@ function makeWind(scene, pos, heading) {
 }
 function disposeWind(w) { for (const sp of w.sprites) { w.scene.remove(sp); sp.material.dispose(); } }
 
-export function createBroomFx(scene, { max = BROOM.max } = {}) {
-  const slams = [], winds = []; let seedN = 1;
+// Phiên 234: onTornadoHit(tn, pt, t, rec) → { n, pts } — CHỈ máy của người đánh truyền vào (js/ui/items.js) để cơn lốc làm quái mất máu; người khác không truyền → lốc chỉ để xem.
+export function createBroomFx(scene, { max = BROOM.max, onTornadoHit = null } = {}) {
+  const slams = [], winds = [], torns = []; let seedN = 1;
+  function launchTornadoes(w, pos, heading, range, remote) {
+    for (const tn of tornadoPlan(w, heading)) {
+      if (torns.length >= TORN.maxLive) break;
+      const o = tornadoOrigin(tn, pos, heading, range);
+      torns.push({ tn, mesh: makeTornadoMesh(scene, tn.kind === 'big'), ox: o.x, oz: o.z, oy: pos.y, t: -tn.delay, rec: new Map(), remote });
+    }
+  }
   return {
     get count() { return slams.length; },
+    get tornadoes() { return torns.length; },
     get scene() { return scene; },
     /** Cú đập chổi (đòn 3). seed: người khác dùng đúng seed của người đánh để mảnh bay GIỐNG nhau (không có thì tự đếm). */
-    spawn(pos, heading = 0, range = BROOM.rangeAir, remote = false, seed = 0) {
-      if (!scene || !pos || slams.length >= max) return false;
-      const h = Number.isFinite(+heading) ? +heading : 0, r = Number.isFinite(+range) && +range > 0 ? +range : BROOM.rangeAir, sd = seed > 0 ? seed : (seedN = (seedN % 997) + 1);
-      slams.push(makeSlam(scene, pos, h, r, sd, remote));
-      if (!remote) { try { const L = globalThis.LGT; if (L && L.combatLink && L.combatLink.sendBroom) L.combatLink.sendBroom(h, r); } catch (_) { /* phát lỗi không làm hỏng hiệu ứng của mình */ } }
-      return true;
+    spawn(pos, heading = 0, range = BROOM.rangeAir, remote = false, seed = 0, w = 0) {
+      if (!scene || !pos) return false;
+      const h = Number.isFinite(+heading) ? +heading : 0, r = Number.isFinite(+range) && +range > 0 ? +range : BROOM.rangeAir, sd = seed > 0 ? seed : (seedN = (seedN % 997) + 1), wk = Math.max(0, Math.min(2, Math.floor(+w) || 0));
+      let ok = false;
+      if (slams.length < max) { slams.push(makeSlam(scene, pos, h, r, sd, remote)); ok = true; }
+      if (wk > 0) launchTornadoes(wk, pos, h, r, remote);   // Phiên 234: đòn 3 = 3 lốc nhỏ; đòn 9 = thêm lốc to từ sau lưng
+      if (ok && !remote) { try { const L = globalThis.LGT; if (L && L.combatLink && L.combatLink.sendBroom) L.combatLink.sendBroom(h, r, wk); } catch (_) { /* phát lỗi không làm hỏng hiệu ứng của mình */ } }
+      return ok || wk > 0;
     },
     /** Gió nhẹ thổi lên từ phía sau người đánh (mỗi đòn). */
     wind(pos, heading = 0) { if (!scene || !pos || winds.length >= 4) return false; winds.push(makeWind(scene, pos, Number.isFinite(+heading) ? +heading : 0)); return true; },
     update(dt) {
-      if (!slams.length && !winds.length) return;
+      if (!slams.length && !winds.length && !torns.length) return;
       const step = Math.max(0, Math.min(0.1, +dt || 0));
       for (let i = slams.length - 1; i >= 0; i--) {
         const s = slams[i]; s.t += step; const p = slamPose(s.t);
         if (p.done) { disposeSlam(s); slams.splice(i, 1); continue; }
-        s.arm.position.y = p.lift; s.arm.rotation.x = p.tilt; s.broom.scale.setScalar(1.6 * p.grow);
+        s.arm.position.y = p.lift; s.arm.rotation.x = p.tilt; s.broom.scale.setScalar(1.6 * p.grow); s.broom.position.y = BROOM_HALF * 1.6 * p.grow - 0.05; for (const sp of s.broom.userData.halo || []) sp.material.opacity = 0.6 * p.fade;   // Phiên 234: quầng sáng mờ theo chổi   // Phiên 234: đáy ĐẦU rơm chạm đúng điểm đập (lún 5 cm), cán chổi chổng lên trời
         ownMaterials(s); for (const m of s.mats) m.opacity = p.fade;   // chỉ chỉnh chất liệu RIÊNG của chổi khổng lồ, KHÔNG đụng chất liệu dùng chung
         if (s.t >= IMPACT_T) {
           const u = s.t - IMPACT_T;
@@ -73,6 +88,14 @@ export function createBroomFx(scene, { max = BROOM.max } = {}) {
             q.m.material.opacity = Math.max(0, Math.min(1, (BROOM.life - s.t) / 0.4));
           }
         }
+      }
+      for (let i = torns.length - 1; i >= 0; i--) {   // Phiên 234: cơn lốc — đi thẳng theo hướng, nở dần, tan; của MÌNH (không remote) thì quét trúng quái là trừ máu
+        const q = torns[i]; q.t += step;
+        if (q.t < 0) continue;
+        const a = tornadoAt(q.tn, q.t);
+        if (a.done) { disposeTornadoMesh(scene, q.mesh); torns.splice(i, 1); continue; }
+        const at = { x: q.ox + a.x, y: q.oy, z: q.oz + a.z }; poseTornado(q.mesh, a, at, q.t);
+        if (!q.remote && onTornadoHit && a.a > 0.5) { try { onTornadoHit(q.tn, at, q.t, q.rec); } catch (_) { /* sát thương lỗi không làm hỏng hiệu ứng */ } }
       }
       for (let i = winds.length - 1; i >= 0; i--) {
         const w = winds[i]; w.t += step; let allDone = true;
@@ -84,6 +107,6 @@ export function createBroomFx(scene, { max = BROOM.max } = {}) {
         if (allDone) { disposeWind(w); winds.splice(i, 1); }
       }
     },
-    clear() { while (slams.length) disposeSlam(slams.pop()); while (winds.length) disposeWind(winds.pop()); },
+    clear() { while (torns.length) disposeTornadoMesh(scene, torns.pop().mesh); while (slams.length) disposeSlam(slams.pop()); while (winds.length) disposeWind(winds.pop()); },
   };
 }
