@@ -6,7 +6,7 @@
 // Phiên 219: dgt-v206 (nút toàn màn hình trên lớp phim, thẻ xoay ngang, điện thoại bắt đầu ở chất lượng đầy đủ).
 // Phiên 160: file cùng trang luôn hỏi lại máy chủ (cache:'no-cache') để không bị kẹt bản JS/CSS cũ trong bộ nhớ đệm của trình duyệt ~10 phút sau khi đẩy code.
 // Phiên 230: Chổi (js/ui/broomMesh.js, broomFx.js, data/broomGlb.js nạp lười) → v216.
-const VERSION = 'dgt-v217';
+const VERSION = 'dgt-v218';
 self.addEventListener('install', (e) => { self.skipWaiting(); e.waitUntil(caches.open(VERSION).then((c) => c.addAll(['./', 'index.html', 'manifest.webmanifest', 'assets/icon.svg', 'assets/icon-192.png']).catch(() => {}))); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== VERSION).map((k) => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', (e) => {

@@ -18,10 +18,20 @@ function makeSlam(scene, pos, heading, range, seed, remote) {
     const mat = new THREE.MeshStandardMaterial({ color: COL[d.kind][i % COL[d.kind].length], roughness: 0.95, transparent: true, opacity: 1, side: THREE.DoubleSide });
     const m = new THREE.Mesh(d.kind === 'la' ? g.leaf : d.kind === 'cat' ? g.sand : g.stone, mat); m.scale.setScalar(d.size); m.visible = false; scene.add(m); return { d, m };
   });
-  return { scene, root, arm, broom, parts, x: px, y: pos.y, z: pz, t: 0, hit: false, remote, mat: null };
+  return { scene, root, arm, broom, parts, x: px, y: pos.y, z: pz, t: 0, hit: false, remote, mat: null, mats: [] };
+}
+// Phiên 233 (sửa chổi bị mờ): root.clone(true) của mô hình GLB DÙNG CHUNG chất liệu với chổi cầm tay / chổi cưỡi. Trước đây cú đập hạ opacity ngay trên chất liệu dùng chung đó
+// → sau đòn 3 cây chổi cầm tay bị mờ (thậm chí tàng hình). Giờ mỗi cú đập CLONE chất liệu riêng cho chổi khổng lồ (làm lười, vì GLB nạp bất đồng bộ) rồi chỉ chỉnh bản riêng.
+function ownMaterials(s) {
+  s.arm.traverse((o) => {
+    if (!o.isMesh || !o.material || o.userData.ownMat) return;
+    const own = (m) => { const c = m.clone(); c.transparent = true; s.mats.push(c); return c; };
+    o.material = Array.isArray(o.material) ? o.material.map(own) : own(o.material); o.userData.ownMat = true;
+  });
 }
 function disposeSlam(s) {
-  s.scene.remove(s.root);   // hình chổi nhân bản dùng chung với chổi cầm tay → không hủy
+  s.scene.remove(s.root);   // hình khối dùng chung với chổi cầm tay → không hủy; chỉ hủy chất liệu RIÊNG (clone) của cú đập
+  for (const m of s.mats) m.dispose();
   for (const p of s.parts) { s.scene.remove(p.m); p.m.material.dispose(); }
 }
 
@@ -54,7 +64,7 @@ export function createBroomFx(scene, { max = BROOM.max } = {}) {
         const s = slams[i]; s.t += step; const p = slamPose(s.t);
         if (p.done) { disposeSlam(s); slams.splice(i, 1); continue; }
         s.arm.position.y = p.lift; s.arm.rotation.x = p.tilt; s.broom.scale.setScalar(1.6 * p.grow);
-        s.root.traverse((o) => { if (o.material && o.material.transparent !== undefined && o.isMesh) { o.material.transparent = true; o.material.opacity = p.fade; } });
+        ownMaterials(s); for (const m of s.mats) m.opacity = p.fade;   // chỉ chỉnh chất liệu RIÊNG của chổi khổng lồ, KHÔNG đụng chất liệu dùng chung
         if (s.t >= IMPACT_T) {
           const u = s.t - IMPACT_T;
           for (const q of s.parts) {
