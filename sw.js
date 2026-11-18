@@ -1,6 +1,6 @@
-
 // Service worker: mở lại được khi mất mạng. Mạng trước, bộ nhớ đệm sau (để luôn thấy bản mới khi có mạng).
 // Đổi VERSION mỗi khi muốn buộc làm mới toàn bộ.
+// Phiên 235: dgt-v221 (người chơi ảo bước 1: lệnh /nguoichoiao; tin bắt đầu bằng "/" chỉ người gõ thấy).
 // Phiên 221: dgt-v219 (hạt sen thưởng cố định: thu phục yêu quái +1, phóng sinh +2).
 // Phiên 228: dgt-v214 (rồng hồng Gậy như ý tạo hình lại theo ảnh mẫu: mờ, nhìn xuyên được như khí, vảy chuyển màu hồng-cam, bụng xanh, sừng chẻ nhánh, râu lượn sóng).
 // Phiên 227 (mục 2): dgt-v213 (rồng hồng Gậy như ý to/ngầu hơn + bay trúng quái gây sát thương).
@@ -8,7 +8,7 @@
 // Phiên 219: dgt-v206 (nút toàn màn hình trên lớp phim, thẻ xoay ngang, điện thoại bắt đầu ở chất lượng đầy đủ).
 // Phiên 160: file cùng trang luôn hỏi lại máy chủ (cache:'no-cache') để không bị kẹt bản JS/CSS cũ trong bộ nhớ đệm của trình duyệt ~10 phút sau khi đẩy code.
 // Phiên 230: Chổi (js/ui/broomMesh.js, broomFx.js, data/broomGlb.js nạp lười) → v216.
-const VERSION = 'dgt-v219';
+const VERSION = 'dgt-v221';
 self.addEventListener('install', (e) => { self.skipWaiting(); e.waitUntil(caches.open(VERSION).then((c) => c.addAll(['./', 'index.html', 'manifest.webmanifest', 'assets/icon.svg', 'assets/icon-192.png']).catch(() => {}))); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== VERSION).map((k) => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', (e) => {
