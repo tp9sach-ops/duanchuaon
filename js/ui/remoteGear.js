@@ -9,6 +9,7 @@ import * as THREE from 'three';
 import { decodeGear } from '../world/gearSync.js';
 import { kitOf } from './weaponKit.js';   // Phiên 224: gậy phát sáng theo bảng KIT (nhuy / tre)
 import { buildBambooMount, pulseBamboo } from './bambooMesh.js';
+import { buildBroomMount, pulseBroom } from './broomMesh.js';   // Phiên 230: Chổi
 import { buildHat, HAT_POS } from './hatMesh.js';
 import { buildSpearMount, buildStaffMount, buildProcBoard, FLY_LIFT, FLY_BOB, VBOB, VBASE } from './board.js';
 import { createDogPack } from './dogPack.js';   // Phiên 227: bầy chó chạy theo người cưỡi Gậy dạy chó
@@ -47,7 +48,7 @@ export function createGearView() {
     if (!slot) return;
     const kit = kitOf(kind);
     if (slot.mesh && (!kit || slot.kind !== kit.id)) {
-      slot.host.remove(slot.mesh); if (slot.kind !== 'tre') disposeTree(slot.mesh); slot.mesh = null; slot.kind = '';   // gậy dạy chó nhân bản chung hình khối → không hủy
+      slot.host.remove(slot.mesh); if (slot.kind !== 'tre' && slot.kind !== 'choi') disposeTree(slot.mesh); slot.mesh = null; slot.kind = '';   // gậy dạy chó / chổi nhân bản chung hình khối → không hủy
       if (!kit) for (const c of slot.orig) c.visible = true;       // trả cây côn mặc định
     }
     if (kit && !slot.mesh) {
@@ -60,7 +61,7 @@ export function createGearView() {
   function ensureMounts(av, s) {
     if (s.mounts) return s.mounts;
     const van = new THREE.Group(); van.name = 'cuoi-van'; const proc = buildProcBoard(); van.add(proc);
-    s.mounts = { thuong: buildSpearMount(), nhuy: buildStaffMount(), tre: buildBambooMount(2.6), van };   // 2.6 = SLEN của js/ui/board.js
+    s.mounts = { thuong: buildSpearMount(), nhuy: buildStaffMount(), tre: buildBambooMount(2.6), choi: buildBroomMount(2.6), van };   // 2.6 = SLEN của js/ui/board.js
     for (const k of Object.keys(s.mounts)) { s.mounts[k].visible = false; av.group.add(s.mounts[k]); }
     return s.mounts;
   }
@@ -86,7 +87,7 @@ export function createGearView() {
     if (!s) { if (!tok) return; s = init(av); }                              // chưa từng có đồ và hiện không có đồ: khỏi tốn gì
     s.clock += dt;
 
-    const held = g.staff ? 'nhuy' : g.bamboo ? 'tre' : '';   // Phiên 224: cầm Gậy như ý hoặc Gậy dạy chó
+    const held = g.staff ? 'nhuy' : g.bamboo ? 'tre' : g.broom ? 'choi' : '';   // Phiên 224: cầm Gậy như ý hoặc Gậy dạy chó
     swapStaff(s.hand, held, 1, s.clock);
     swapStaff(s.back, held, 0.7, s.clock);
 
@@ -108,6 +109,10 @@ export function createGearView() {
       if (g.ride === 'tre' && m) {                                            // Phiên 224: gậy dạy chó cưỡi: chớp vàng đều + vệt vàng
         pulseBamboo(m.userData.staff, s.clock, true);
         m.userData.trail.forEach((sp, i) => { sp.material.opacity = Math.max(0, 0.55 - i * 0.055) * (0.7 + 0.3 * Math.sin(s.clock * 10 + i)); });
+      }
+      if (g.ride === 'choi' && m) {                                           // Phiên 230: chổi cưỡi: đầu chổi đưa nhẹ + vệt bụi rơm
+        pulseBroom(m.userData.staff, s.clock, true);
+        m.userData.trail.forEach((sp, i) => { sp.material.opacity = Math.max(0, 0.4 - i * 0.04) * (0.7 + 0.3 * Math.sin(s.clock * 8 + i)); });
       }
       if (g.ride === 'nhuy' && m) {                                           // gậy cưỡi: hai đầu chớp nhanh + vệt sáng phía sau
         kitOf('nhuy').pulse(m.userData.staff, s.clock, true);
@@ -131,7 +136,7 @@ export function createGearView() {
   /** Dọn toàn bộ đồ đã gắn (người đó rời chùa / dựng lại nhân vật). */
   function drop(av) {
     const s = av && av.__rg; if (!s) return;
-    for (const slot of [s.hand, s.back]) if (slot && slot.mesh) { slot.host.remove(slot.mesh); if (slot.kind !== 'tre') disposeTree(slot.mesh); slot.mesh = null; slot.kind = ''; for (const c of slot.orig) c.visible = true; }
+    for (const slot of [s.hand, s.back]) if (slot && slot.mesh) { slot.host.remove(slot.mesh); if (slot.kind !== 'tre' && slot.kind !== 'choi') disposeTree(slot.mesh); slot.mesh = null; slot.kind = ''; for (const c of slot.orig) c.visible = true; }
     if (s.hat && av.headHost) { av.headHost.remove(s.hat); s.hat = null; }
     if (s.mounts) { for (const m of Object.values(s.mounts)) { av.group.remove(m); disposeTree(m); } s.mounts = null; }
     if (s.dogs) { s.dogs.dispose(); s.dogs = null; }   // Phiên 227: bầy chó của người đó

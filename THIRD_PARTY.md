@@ -77,7 +77,7 @@ SOFTWARE.
 ## Gậy dạy chó (`js/data/bambooGlb.js`, nén từ `bamboo_stick.glb`) — CC-BY-4.0, PHẢI GHI TÊN TÁC GIẢ
 - Mô hình "Bamboo Stick" của **robertsjadon03** (https://sketchfab.com/robertsjadon03), https://sketchfab.com/3d-models/bamboo-stick-d6327ed535ff49a5a67d693056b73616 , giấy phép **CC-BY-4.0** (http://creativecommons.org/licenses/by/4.0/). Đã sửa: giảm tam giác, nén ảnh/toạ độ (từ 2,1 MB còn ~18 KB), nhúng base64 vào .js. Dùng làm thân Gậy dạy chó trong game (hai đầu chớp vàng do mã tự thêm).
 
-## Chổi (CHƯA đưa vào game — mục 2) — CC-BY-4.0, PHẢI GHI TÊN TÁC GIẢ khi dùng
-- Mô hình "Broom" của **KargaEntiti** (https://sketchfab.com/KargaEntiti), https://sketchfab.com/3d-models/broom-470d46e70e934e76a9fe7df8c56197f5 , giấy phép **CC-BY-4.0**. Ptg đã gửi file `broom.glb` (7 MB, cần nén trước khi nhúng).
+## Chổi (ĐÃ đưa vào game Phiên 230 — mục 2; `js/data/broomGlb.js`, 13k tam giác, ảnh 256px WebP) — CC-BY-4.0, PHẢI GHI TÊN TÁC GIẢ khi dùng
+- Mô hình "Broom" của **KargaEntiti** (https://sketchfab.com/KargaEntiti), https://sketchfab.com/3d-models/broom-470d46e70e934e76a9fe7df8c56197f5 , giấy phép **CC-BY-4.0**. Ptg đã gửi file `broom.glb` (7 MB); đã nén còn ~571 KB (hàn đỉnh, giảm tam giác, ảnh WebP, lượng tử hoá), nhúng base64, nạp lười chỉ khi dùng chổi. Tiếng quét lá / xột xoạt / đập chổi tự tổng hợp WebAudio trong `js/ui/sfx.js` (`LGT.sfx.broom`).
 
 ## Tiếng gỗ Gậy dạy chó, tiếng chớp sáng — TỰ TỔNG HỢP bằng WebAudio trong `js/ui/sfx.js` (`LGT.sfx.wood`), không dùng mẫu thu của ai.

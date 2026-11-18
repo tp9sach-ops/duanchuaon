@@ -64,7 +64,7 @@ export function initYeuQuai(hud, { toast = () => {} } = {}) {
     if (plan === 'far') { toast('Yêu quái còn xa quá, lại gần hơn để đánh.', 1800); return; }
     if (plan === 'dash') { if (F && F.rushPoint && F.rushPoint(boss, bd)) dashLock = now + BASIC.dashCd * 1000; else toast('Yêu quái còn xa quá, lại gần hơn để đánh.', 1800); return; }
     const step = F && F.chainStep ? F.chainStep() : 1;
-    const wood = !!(LGT.items && LGT.items.bambooOn);
+    const wood = !!(LGT.items && LGT.items.weaponSfx);
     cdStone = STONE.cd; if (LGT.sfx && !wood) LGT.sfx.play('nem-da'); hit(Math.max(1, Math.round(stoneDamage(str()) * (F && F.stepMulFor ? F.stepMulFor(step) : stepMul(step)))));   // Phiên 224: Gậy dạy chó đòn 3 ×3 (F.stepMulFor)
     try { if (LGT.items && LGT.items.onHit) LGT.items.onHit(step, boss); } catch (_) { /* hiệu ứng hỏng thì thôi */ }   // Phiên 224: tiếng gỗ + sói khí đòn 3   // Phiên 127: Đánh thường = đòn cận chiến trúng ngay (không còn ném đá)
   }

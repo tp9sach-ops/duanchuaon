@@ -16,9 +16,9 @@ const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 test('encodeGear / decodeGear: khứ hồi đủ món, không có gì thì rỗng, chỉ một món cưỡi', () => {
   assert.equal(encodeGear({}), ''); assert.equal(encodeGear(null), ''); assert.equal(encodeGear({ ride: 'xe' }), '');
   const all = encodeGear({ staff: true, hat: true, ride: 'nhuy', regen: true, revive: true });
-  assert.deepEqual(decodeGear(all), { staff: true, bamboo: false, hat: true, ride: 'nhuy', regen: true, revive: true });
-  for (const r of ['thuong', 'nhuy', 'tre', 'van']) assert.equal(decodeGear(encodeGear({ ride: r })).ride, r);
-  assert.deepEqual(decodeGear(''), { staff: false, bamboo: false, hat: false, ride: '', regen: false, revive: false });
+  assert.deepEqual(decodeGear(all), { staff: true, bamboo: false, broom: false, hat: true, ride: 'nhuy', regen: true, revive: true });
+  for (const r of ['thuong', 'nhuy', 'tre', 'choi', 'van']) assert.equal(decodeGear(encodeGear({ ride: r })).ride, r);
+  assert.deepEqual(decodeGear(''), { staff: false, bamboo: false, broom: false, hat: false, ride: '', regen: false, revive: false });
   assert.equal(encodeGear({ staff: 1, hat: 'yes' }), '', 'chỉ true thật mới tính');
 });
 test('cleanGear: chữ lạ / quá dài / hoa / không phải chuỗi → bỏ; trùng chữ gộp', () => {

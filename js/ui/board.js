@@ -10,7 +10,8 @@ import { BOARD, loadBoard, buyBoard, canRide, returnPose } from '../world/board.
 import { HOLDS, holdById, loadLoadout, chooseHold, weaponFor, ownedMap, mountMul, rideLabel } from '../world/loadout.js';
 import { askConfirm } from './dialog.js';
 import { buildStaff, loadStaffGlb, pulseGlows, glowTexture } from './staffMesh.js';
-import { buildBambooMount, pulseBamboo } from './bambooMesh.js';   // Phiên 224: Gậy dạy chó cưỡi
+import { buildBambooMount, pulseBamboo } from './bambooMesh.js';
+import { buildBroomMount, pulseBroom } from './broomMesh.js';   // Phiên 230: Chổi cưỡi   // Phiên 224: Gậy dạy chó cưỡi
 
 const VKEY = 'lgt.van', LKEY = 'lgt.loadout', GLB = new URL('../../assets/models/skateboard.glb', import.meta.url).href;
 export const FLY_LIFT = 0.45, FLY_BOB = 0.035, VBOB = 0.006, VBASE = 0.14;   // Phiên 166: xuất ra để js/ui/remoteGear.js vẽ người khác cưỡi giống hệt mình
@@ -76,7 +77,7 @@ export function initBoard({ toast = () => {} } = {}) {
   const saveVan = () => { try { localStorage.setItem(VKEY, JSON.stringify({ own: van.own, on: false })); } catch (_) { /* riêng tư */ } };
   const saveLo = () => { try { localStorage.setItem(LKEY, JSON.stringify(rawLo)); } catch (_) { /* riêng tư */ } };
   // Trạng thái chọn đồ thô (rawLo) không bị ép về Thương khi LGT.items chưa nạp xong: mỗi lần đọc đều lọc lại theo đồ đã có.
-  const owned = () => ownedMap({ nhuy: !!(LGT.items && LGT.items.state && LGT.items.state.staff), tre: !!(LGT.items && LGT.items.state && LGT.items.state.tre), van: van.own });   // Phiên 224: thêm tre (Gậy dạy chó)
+  const owned = () => ownedMap({ nhuy: !!(LGT.items && LGT.items.state && LGT.items.state.staff), tre: !!(LGT.items && LGT.items.state && LGT.items.state.tre), choi: !!(LGT.items && LGT.items.state && LGT.items.state.choi), van: van.own });   // Phiên 224: thêm tre (Gậy dạy chó)
   const cur = () => loadLoadout(rawLo, owned());
   const mountId = () => cur().hold;
   const nameOf = (id) => (holdById(id) || { ten: 'đồ' }).ten;
@@ -111,7 +112,7 @@ export function initBoard({ toast = () => {} } = {}) {
   function wrap() {
     const av = LGT.world && LGT.world.avatar; if (!av || av.__board || !av.group) return;
     const proc = buildProcBoard(), vg = new THREE.Group(); vg.name = 'cuoi-van'; vg.add(proc); vg.userData.proc = proc;
-    meshes = { thuong: buildSpearMount(), nhuy: buildStaffMount(), tre: buildBambooMount(SLEN), van: vg };
+    meshes = { thuong: buildSpearMount(), nhuy: buildStaffMount(), tre: buildBambooMount(SLEN), choi: buildBroomMount(SLEN), van: vg };
     for (const k of Object.keys(meshes)) { meshes[k].visible = false; av.group.add(meshes[k]); }
     const orig = av.update.bind(av); av.__board = true;
     av.update = (dt) => {
@@ -131,6 +132,10 @@ export function initBoard({ toast = () => {} } = {}) {
         if (id === 'tre' && m.visible) {   // Phiên 224: gậy dạy chó cưỡi: hai đầu chớp vàng đều + vệt sáng vàng phía sau
           pulseBamboo(m.userData.staff, clock, true);
           m.userData.trail.forEach((sp, i) => { sp.material.opacity = on ? Math.max(0, 0.55 - i * 0.055) * (0.7 + 0.3 * Math.sin(clock * 10 + i)) : 0; });
+        }
+        if (id === 'choi' && m.visible) {   // Phiên 230: chổi cưỡi: đầu chổi đưa nhẹ + vệt bụi rơm phía sau
+          pulseBroom(m.userData.staff, clock, on);
+          m.userData.trail.forEach((sp, i) => { sp.material.opacity = on ? Math.max(0, 0.4 - i * 0.04) * (0.7 + 0.3 * Math.sin(clock * 8 + i)) : 0; });
         }
       }
       if (av.setBackHidden) av.setBackHidden(!!(m && m.visible && id !== 'van'));   // 14/11 (mục 2): thương/gậy đang hiện dưới chân (cưỡi, đang xuống hoặc bay về tay) → ẩn cây đeo sau lưng; ván trượt thì giữ nguyên

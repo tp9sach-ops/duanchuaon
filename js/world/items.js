@@ -17,6 +17,9 @@ export const STAFF = { id: 'nhuy', ten: 'Gậy như ý', gia: 400, dmg: 1.01, mo
 // Phiên 224 (mục 1, 17/11): GẬY DẠY CHÓ (id nội bộ 'tre'; Điện Máy Lam Sen, 150 lá bồ đề): +1% sát thương; ĐÒN ĐÁNH THƯỜNG THỨ 3 gây sát thương gấp 3 lần đòn thường (BAMBOO.hit3, thay hệ số 1,5 mặc định) và có SÓI KHÍ VÀNG vồ ra; hai đầu gậy chớp vàng đều; cưỡi gậy thì thu về tay xoay 3 vòng trên không; đánh nghe tiếng gỗ.
 export const BAMBOO = { id: 'tre', ten: 'Gậy dạy chó', gia: 150, dmg: 1.01, hit3: 3, mo: 'Gậy dạy chó vàng óng, hai đầu chớp ánh sáng vàng đều; đánh nghe tiếng gỗ, +1% sát thương. Đòn đánh thường thứ 3 mạnh gấp 3 lần và có sói khí đầu to, bờm vàng vồ ra. Cưỡi gậy bay, thu về tay gậy xoay 3 vòng trên không. Mua một lần dùng mãi.' };
 
+// Phiên 230 (mục 2, 18/11): CHỔI (id 'choi'; Điện Máy Lam Sen, 50 lá bồ đề): vũ khí thứ tư. Đòn đánh thường THỨ 3 = ĐẬP CHỔI (đầu chổi to nhấc lên rồi đập xuống, lá / cát / đá bay lên); mỗi đòn đánh có gió nhẹ thổi lên từ phía sau + tiếng quét lá, xột xoạt; cưỡi chổi: thu về tay thì chổi phi lên cao rồi nhẹ nhàng hạ xuống tay. Yêu cầu của ptg KHÔNG nêu thêm sát thương nên Chổi KHÔNG cộng % sát thương; đòn 3 giữ hệ số mặc định 1,5.
+export const BROOM = { id: 'choi', ten: 'Chổi', gia: 50, mo: 'Cây chổi quét lá: đánh nghe tiếng quét lá, xột xoạt và có gió nhẹ thổi lên từ phía sau. Đòn đánh thường thứ 3 là ĐẬP CHỔI — đầu chổi to nhấc lên đập xuống, lá, cát, đá bay tung. Cưỡi chổi bay; thu về tay chổi phi vút lên cao rồi nhẹ nhàng hạ xuống tay. Mua một lần dùng mãi.' };
+
 // Phiên 163: Trà sữa xoài hoàng kim (Tách Hoa, 39 lá bồ đề): +30 phút Tự động hàng yêu hôm nay mỗi ly (uống nhiều ly thì cộng dồn).
 export const TRASUA = { id: 'trasua', ten: 'Trà sữa xoài hoàng kim', gia: 39, phut: 30, mo: 'Ly trà sữa xoài hoàng kim của tiệm Tách Hoa: uống vào được cộng thêm 30 phút Tự động hàng yêu cho hôm nay (cộng dồn với 60 phút gốc). Sang ngày mới trở về 60 phút.' };
 
@@ -26,13 +29,14 @@ export const HAT = { id: 'non', ten: 'Nón Jingasa', gia: 400, giap: 0.03, mo: '
 const isObj = (o) => !!o && typeof o === 'object' && !Array.isArray(o);
 const int = (x, lo, hi) => (Number.isFinite(+x) ? Math.max(lo, Math.min(hi, Math.floor(+x))) : lo);
 export const gemById = (id) => GEMS.find((g) => g.id === id) || null;
-export const emptyItems = () => ({ v: 1, exp: { hoimau: 0, dichchuyen: 0 }, staff: false, tre: false, hat: false, hatOn: false });
+export const emptyItems = () => ({ v: 1, exp: { hoimau: 0, dichchuyen: 0 }, staff: false, tre: false, choi: false, hat: false, hatOn: false });
 
 /** Đọc trạng thái đã lưu (chuỗi JSON hoặc đối tượng); hỏng → trống. Mốc hết hạn vô lý (quá xa) bị kéo về trần. */
 export function loadItems(raw, now = Date.now()) {
   let o = raw; if (typeof raw === 'string') { try { o = JSON.parse(raw); } catch (_) { o = null; } }
   const s = emptyItems(); if (!isObj(o)) return s;
   s.staff = o.staff === true;
+  s.choi = o.choi === true;   // Phiên 230: Chổi (bản lưu cũ không có → chưa mua)
   s.tre = o.tre === true;   // Phiên 224: Gậy dạy chó (bản lưu cũ không có → chưa mua)
   s.hat = o.hat === true; s.hatOn = s.hat && o.hatOn !== false;   // bản lưu cũ không có hat → chưa mua; đã mua mà không ghi hatOn → đang đội
   const e = isObj(o.exp) ? o.exp : {};
@@ -68,6 +72,13 @@ export function buyStaff(state, la, now = Date.now()) {
 }
 
 /** Mua Gậy dạy chó. Trả { ok, reason: ''|'owned'|'poor', cost, state }. */
+/** Mua Chổi (50 lá). Trả { ok, reason: ''|'owned'|'poor', cost, state }. Nơi gọi tự trừ lá khi ok. */
+export function buyBroom(state, la, now = Date.now()) {
+  const st = loadItems(state, now);
+  if (st.choi) return { ok: false, reason: 'owned', cost: BROOM.gia, state: st };
+  if (!(Number(la) >= BROOM.gia)) return { ok: false, reason: 'poor', cost: BROOM.gia, state: st };
+  return { ok: true, reason: '', cost: BROOM.gia, state: { ...st, choi: true } };
+}
 export function buyBamboo(state, la, now = Date.now()) {
   const st = loadItems(state, now);
   if (st.tre) return { ok: false, reason: 'owned', cost: BAMBOO.gia, state: st };

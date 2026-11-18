@@ -8,10 +8,12 @@
 //   Phiên 163: cầm Gậy như ý đánh thường đủ 3 đòn liên tiếp → RỒNG HỒNG bay quanh người (js/ui/dragonFx.js). Chiêu (Chém khí...) gọi swing(số) nên không tính là đánh thường.
 // Nhân vật dựng bằng khối (không phải chibi) thì không đổi hình gậy nhưng vẫn có +1% và vòng sáng. CHƯA nhìn bằng mắt trên máy thật.
 import * as THREE from 'three';
-import { GEMS, STAFF, BAMBOO, HAT, TRASUA, afterArmor as aAfter, loadItems, buyGem, buyStaff, buyBamboo, finisherMul as fMul, buyHat, buyTraSua, toggleHat, hatWorn, armorMul as aMul, remainSec, regenMul as rMul, canRevive, dmgMul as dMul, fmtTime } from '../world/items.js';
+import { GEMS, STAFF, BAMBOO, BROOM, HAT, TRASUA, afterArmor as aAfter, loadItems, buyGem, buyStaff, buyBamboo, buyBroom, finisherMul as fMul, buyHat, buyTraSua, toggleHat, hatWorn, armorMul as aMul, remainSec, regenMul as rMul, canRevive, dmgMul as dMul, fmtTime } from '../world/items.js';
 import { BOARD } from '../world/board.js';
 import { askConfirm } from './dialog.js';
 import { STAFF_SCALE, STAFF_PINK } from './staffMesh.js';
+import { createBroomFx } from './broomFx.js';   // Phiên 230: đập chổi + gió
+import { broomRange } from '../world/broomMath.js';
 import { kitOf } from './weaponKit.js';   // Phiên 224: bảng đồ nghề gậy phát sáng (nhuy / tre)
 import { createWolfFx } from './wolfFx.js';   // Phiên 224: sói khí vàng đòn 3 của Gậy dạy chó
 import { wolfRange, headingTo } from '../world/wolfMath.js';
@@ -49,9 +51,10 @@ export function initItems({ toast = () => {} } = {}) {
   const spend = (n) => !!(LGT.merit && LGT.merit.spendLa && LGT.merit.spendLa(n));
   const hatOn = () => hatWorn(st);
   // Phiên 224: đang cầm gậy phát sáng nào? 'nhuy' = Gậy như ý (chưa có hệ chọn đồ thì coi như cầm nếu đã mua) · 'tre' = Gậy dạy chó (phải chọn ở Túi đồ) · null = Thương mặc định.
-  const heldKind = () => { const w = LGT.loadout ? LGT.loadout.weapon : null; if (st.staff && (!w || w === 'nhuy')) return 'nhuy'; if (st.tre && w === 'tre') return 'tre'; return null; };
+  const heldKind = () => { const w = LGT.loadout ? LGT.loadout.weapon : null; if (st.staff && (!w || w === 'nhuy')) return 'nhuy'; if (st.tre && w === 'tre') return 'tre'; if (st.choi && w === 'choi') return 'choi'; return null; };   // Phiên 230: 'choi' = Chổi
   const staffOn = () => heldKind() === 'nhuy';
   const bambooOn = () => heldKind() === 'tre';
+  const broomOn = () => heldKind() === 'choi';
   const holdDmg = () => { const k = heldKind(); return k === 'nhuy' ? dMul(st) : k === 'tre' ? BAMBOO.dmg : 1; };   // +1% sát thương cho cả hai gậy
 
   // ---------- Cửa hàng ----------
@@ -83,6 +86,14 @@ export function initItems({ toast = () => {} } = {}) {
     st = r.state; save();
     if (LGT.loadout) LGT.loadout.choose('tre', true);   // mua xong tự cầm gậy
     draw(); toast(`Đã mua ${BAMBOO.ten} (−${r.cost} lá bồ đề). Bạn đang cầm gậy — đổi vũ khí ở Túi đồ.`, 4200);
+  }
+  async function buyBroomUi() {   // Phiên 230: Chổi 50 lá
+    const ok = await confirm(`${BROOM.ten} — ${BROOM.gia} lá bồ đề.\n${BROOM.mo}\nBạn đang có ${laNow()} lá bồ đề. Mua không?`); if (!ok) return;
+    const r = buyBroom(st, laNow()); if (!r.ok) { toast(r.reason === 'owned' ? 'Bạn đã có Chổi rồi.' : `Chưa đủ lá bồ đề (cần ${r.cost}, bạn có ${laNow()}).`, 3600); return; }
+    if (!spend(r.cost)) { toast('Chưa đủ lá bồ đề.', 2500); return; }
+    st = r.state; save();
+    if (LGT.loadout) LGT.loadout.choose('choi', true);   // mua xong tự cầm chổi
+    draw(); toast(`Đã mua ${BROOM.ten} (−${r.cost} lá bồ đề). Bạn đang cầm chổi — đổi vũ khí ở Túi đồ.`, 4200);
   }
   async function buyHatUi() {
     const ok = await confirm(`${HAT.ten} — ${HAT.gia} lá bồ đề.\n${HAT.mo}\nBạn đang có ${laNow()} lá bồ đề. Mua không?`); if (!ok) return;
@@ -123,6 +134,7 @@ export function initItems({ toast = () => {} } = {}) {
       list.appendChild(row(BOARD.ten, `Ván trượt 3D: lướt đi nhanh gấp ${String(BOARD.mul).replace('.', ',')} lần. Ván KHÔNG phải vũ khí (không đánh được); đánh nhau thì tự xuống.`, `Giá ${BOARD.gia} lá${bd.van ? ' · Bạn đã có' : ''}`, bd.van ? 'Đã có' : 'Mua', !bd.van && la >= BOARD.gia, async () => { if (LGT.board) await LGT.board.buy(); draw(); }));
       list.appendChild(row(STAFF.ten, STAFF.mo, `Giá ${STAFF.gia} lá${st.staff ? ' · Bạn đã có' : ''}`, st.staff ? 'Đã có' : 'Mua', !st.staff && la >= STAFF.gia, buyStaffUi));
       list.appendChild(row(BAMBOO.ten, BAMBOO.mo, `Giá ${BAMBOO.gia} lá${st.tre ? ' · Bạn đã có' : ''}`, st.tre ? 'Đã có' : 'Mua', !st.tre && la >= BAMBOO.gia, buyBambooUi));
+      list.appendChild(row(BROOM.ten, BROOM.mo, `Giá ${BROOM.gia} lá${st.choi ? ' · Bạn đã có' : ''}`, st.choi ? 'Đã có' : 'Mua', !st.choi && la >= BROOM.gia, buyBroomUi));
       list.appendChild(row(HAT.ten, HAT.mo, `Giá ${HAT.gia} lá · +3% giáp${st.hat ? (hatOn() ? ' · Bạn đang đội' : ' · Bạn đã có, đang cất') : ''}`, st.hat ? (hatOn() ? 'Cất nón' : 'Đội nón') : 'Mua', st.hat || la >= HAT.gia, st.hat ? toggleHatUi : buyHatUi));
     }
   }
@@ -197,7 +209,8 @@ export function initItems({ toast = () => {} } = {}) {
     av.update = (dt) => {
       upd(dt); clock += dt; stepRipples(dt);
       if (dragon) dragon.update(dt, av.group.position);   // Phiên 163: rồng hồng bay theo người chơi
-      if (wolf) wolf.update(dt);                           // Phiên 224: sói khí vàng
+      if (wolf) wolf.update(dt);
+      if (broomFx) broomFx.update(dt);   // Phiên 230                           // Phiên 224: sói khí vàng
       if (skin) {   // Phiên 224: cây trên tay theo bảng KIT (nhuy / tre); đổi gậy → dựng lại
         const kit = kitOf(heldKind());
         if (skin.mesh && (!kit || skin.kind !== kit.id)) { skin.host.remove(skin.mesh); skin.mesh = null; skin.kind = ''; if (!kit) for (const c of skin.orig) c.visible = true; }   // đổi về Thương: trả cây côn mặc định
@@ -241,7 +254,19 @@ export function initItems({ toast = () => {} } = {}) {
 
   // ---------- Gậy dạy chó (Phiên 224): mỗi đòn đánh thường nghe tiếng GỖ; đòn THỨ 3 thả SÓI KHÍ VÀNG vồ về phía quái ----------
   // farm.js / yeuquai.js gọi LGT.items.onHit(step, target) mỗi đòn đánh thường (step 1..3; target = quái bị đánh hoặc null khi vung không khí) và nhân sát thương bằng LGT.items.finisherMul() ở đòn 3.
+  let broomFx = null;
+  function onBroomHit(step, target) {   // Phiên 230: mỗi đòn: tiếng quét lá + gió nhẹ từ phía sau; đòn 3: ĐẬP CHỔI (lá, cát, đá bay)
+    try { if (LGT.sfx && LGT.sfx.broom) LGT.sfx.broom(step); } catch (_) { /* tiếng lỗi không làm hỏng đòn đánh */ }
+    const av = LGT.world && LGT.world.avatar, scene = av && av.group && av.group.parent; if (!scene) return;
+    if (!broomFx || broomFx.scene !== scene) { if (broomFx) broomFx.clear(); broomFx = createBroomFx(scene); }
+    const p = av.group.position, ry = av.group.rotation.y;
+    broomFx.wind({ x: p.x, y: p.y, z: p.z }, ry);
+    if (step < BASIC.steps) return;
+    const gap = target && Number.isFinite(+target.x) && Number.isFinite(+target.z) ? Math.hypot(target.x - p.x, target.z - p.z) : 0;
+    broomFx.spawn({ x: p.x, y: p.y, z: p.z }, target ? headingTo(p, target, ry) : ry, broomRange(gap));
+  }
   function onHit(step, target) {
+    if (broomOn()) { onBroomHit(step, target); return; }
     if (!bambooOn()) return;
     try { if (LGT.sfx && LGT.sfx.wood) LGT.sfx.wood(step); } catch (_) { /* tiếng lỗi không làm hỏng đòn đánh */ }
     if (step < BASIC.steps) return;
@@ -259,6 +284,6 @@ export function initItems({ toast = () => {} } = {}) {
     return true;
   }
 
-  LGT.items = { openShop, closeShop, regenMul: () => rMul(st), tryRevive, get pinned() { return pin; }, dmgMul: holdDmg, finisherMul: () => (bambooOn() ? fMul(st) : 1), onHit, get bambooOn() { return bambooOn(); }, get bamboo() { return st.tre; }, armorMul: () => aMul(st), afterArmor: (d) => aAfter(d, st), get state() { return st; }, get staff() { return st.staff; } };
+  LGT.items = { openShop, closeShop, regenMul: () => rMul(st), tryRevive, get pinned() { return pin; }, dmgMul: holdDmg, finisherMul: () => (bambooOn() ? fMul(st) : 1), onHit, get bambooOn() { return bambooOn(); }, get bamboo() { return st.tre; }, get broomOn() { return broomOn(); }, get weaponSfx() { return bambooOn() || broomOn(); },   /* Phiên 230: gậy/chổi có tiếng riêng → bỏ tiếng ném đá */  get broom() { return st.choi; }, armorMul: () => aMul(st), afterArmor: (d) => aAfter(d, st), get state() { return st; }, get staff() { return st.staff; } };
   return LGT.items;
 }

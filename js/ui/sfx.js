@@ -130,6 +130,28 @@ export function initSfx() {
     } catch (_) { return false; }
   }
 
-  LGT.sfx = { play, playFile, preloadFiles, preload, gust, wood, windStart, windSet, windStop, get loaded() { return bufs.size; } };
+  // ── Phiên 230: tiếng CHỔI, tổng hợp: "xào" quét lá = nhiễu lọc quét tần (sweep), "xột xoạt" = hai nhịp nhiễu ngắn dội nhau, đòn 3 (đập chổi) thêm cú "bịch" trầm + lá xào xạc.
+  function noiseBurst(c, out, t, f1, f2, q, dur, peak) {
+    const src = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain(); src.buffer = noiseOf(c); f.type = 'bandpass'; f.Q.value = q; f.frequency.setValueAtTime(f1, t); f.frequency.exponentialRampToValueAtTime(f2, t + dur);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + dur * 0.3); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    src.connect(f); f.connect(g); g.connect(out); src.start(t); src.stop(t + dur + 0.05); src.onended = () => { try { g.disconnect(); } catch (_) { /* đã ngắt */ } };
+  }
+  function broom(step = 1) {
+    try {
+      const gv = volume(); if (!gv) return false; const c = ctxOf(); if (!c) return false; const t = c.currentTime, out = busOf(c) || c.destination, k = Math.max(1, Math.min(3, Math.round(+step) || 1));
+      noiseBurst(c, out, t, 1800, 5200, 0.9, 0.22, 0.34 * gv);                   // quét lá: "xoạt" lướt lên cao
+      noiseBurst(c, out, t + 0.1, 4200, 2200, 1.4, 0.12, 0.2 * gv);              // "xột" dội lại
+      if (k === 3) {
+        noiseBurst(c, out, t + 0.28, 900, 260, 1.1, 0.2, 0.5 * gv);              // đập xuống: nhiễu trầm
+        const o = c.createOscillator(), og = c.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(120, t + 0.28); o.frequency.exponentialRampToValueAtTime(48, t + 0.5);
+        og.gain.setValueAtTime(0.0001, t + 0.28); og.gain.exponentialRampToValueAtTime(0.55 * gv, t + 0.3); og.gain.exponentialRampToValueAtTime(0.0001, t + 0.55);
+        o.connect(og); og.connect(out); o.start(t + 0.28); o.stop(t + 0.6); o.onended = () => { try { og.disconnect(); } catch (_) { /* đã ngắt */ } };
+        noiseBurst(c, out, t + 0.34, 3000, 6500, 0.7, 0.5, 0.22 * gv);           // lá cát xào xạc rơi lại
+      }
+      return true;
+    } catch (_) { return false; }
+  }
+
+  LGT.sfx = { play, playFile, preloadFiles, preload, gust, wood, windStart, windSet, windStop, broom, get loaded() { return bufs.size; } };
   return LGT.sfx;
 }

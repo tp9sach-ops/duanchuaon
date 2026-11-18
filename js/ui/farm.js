@@ -141,7 +141,7 @@ export function initFarm(hud, { toast = () => {} } = {}) {
   // Phiên 224: GẬY DẠY CHÓ — đòn đánh thường thứ 3 gây sát thương ×3 so với đòn thường (LGT.items.finisherMul; thay hệ số 1,5 mặc định của đòn 3); mỗi đòn nghe tiếng gỗ, đòn 3 thả SÓI KHÍ VÀNG (LGT.items.onHit).
   const stepMulFor = (step) => { let f = 1; try { f = LGT.items && LGT.items.finisherMul ? +LGT.items.finisherMul() || 1 : 1; } catch (_) { f = 1; } return step === BASIC.steps && f > 1 ? Math.max(stepMul(step), f) : stepMul(step); };
   const weaponFx = (step, target) => { try { if (LGT.items && LGT.items.onHit) LGT.items.onHit(step, target || null); } catch (_) { /* hiệu ứng hỏng thì thôi, không làm hỏng đòn đánh */ } };
-  const woodOn = () => !!(LGT.items && LGT.items.bambooOn);   // đang cầm Gậy dạy chó → tiếng gỗ thay tiếng ném đá
+  const woodOn = () => !!(LGT.items && LGT.items.weaponSfx);   // đang cầm Gậy dạy chó → tiếng gỗ thay tiếng ném đá
   // Phiên 190: KHÔNG có quái vẫn ĐÁNH THƯỜNG / THƯƠNG được — chỉ vung vào không khí (hoạt ảnh + tiếng, combatPose.js tự vung khi hồi chiêu tăng), KHÔNG gây sát thương ai.
   let airToast = -1e9;
   function airSwing(cdKind) {

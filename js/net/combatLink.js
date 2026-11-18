@@ -11,7 +11,7 @@ import { tagOf } from '../world/duel.js';
 const NEAR_MON_M = 40;   // chỉ phát quái đang đánh cách mình ≤ 40 m
 
 export function createCombatLink(deps) {
-  const { LGT, W, getTransport, avatarOf, roomOf = () => 'main', now = () => Date.now(), perf = () => (globalThis.performance ? performance.now() : Date.now()), makeSlash = null, castFx = null, ghostView = null, getCamera = () => null, skipOut = () => false, dragonFx = null, wolfFx = null } = deps;   // Phiên 224: wolfFx = bộ sói khí vàng RIÊNG cho người khác (js/ui/wolfFx.js)   // Phiên 223: dragonFx = bộ rồng hồng RIÊNG cho người khác (js/ui/dragonFx.js)
+  const { LGT, W, getTransport, avatarOf, roomOf = () => 'main', now = () => Date.now(), perf = () => (globalThis.performance ? performance.now() : Date.now()), makeSlash = null, castFx = null, ghostView = null, getCamera = () => null, skipOut = () => false, dragonFx = null, wolfFx = null, broomFx = null } = deps;   // Phiên 224: wolfFx = bộ sói khí vàng RIÊNG cho người khác (js/ui/wolfFx.js)   // Phiên 223: dragonFx = bộ rồng hồng RIÊNG cho người khác (js/ui/dragonFx.js)
   const outbox = createOutbox(), inbox = createInbox(), ghosts = createGhosts(), lastT = new Map(), stance = new Map(), slashes = new Map();
   const hookedAv = new WeakSet(), poses = new Map(); let startedAt = 0, myTag = '', flushQ = false;   // Phiên 222: world.js DỰNG LẠI nhân vật khi vào chùa / đổi tên (setProfile) → hook phải gắn lại cho nhân vật mới; poses = tư thế bay lướt / lao của người khác
   let timer = null, raf = 0, hitHooked = false, lastSfx = 0, lastFrame = 0, running = false;
@@ -79,6 +79,11 @@ export function createCombatLink(deps) {
     if (!wolfFx) return; const av = avatarOf ? avatarOf(id) : null, g = av && av.group && av.group.position; if (!g || dist(g.x, g.z) > COMBAT.seeM) return;
     try { wolfFx.spawn({ x: g.x, y: Number.isFinite(+g.y) ? +g.y : 0, z: g.z }, a.ry, a.rg, true); } catch (_) { /* bỏ qua */ }
   }
+  /** Phiên 230: đập chổi (đòn 3 cầm Chổi) của người khác — đập xuống phía trước CHÍNH chỗ họ đứng trên màn hình mình. */
+  function playBroom(id, a) {
+    if (!broomFx) return; const av = avatarOf ? avatarOf(id) : null, g = av && av.group && av.group.position; if (!g || dist(g.x, g.z) > COMBAT.seeM) return;
+    try { broomFx.spawn({ x: g.x, y: Number.isFinite(+g.y) ? +g.y : 0, z: g.z }, a.ry, a.rg, true); } catch (_) { /* bỏ qua */ }
+  }
   /** Phiên 225: người khác bị đánh trúng — tiếng + giật người (poseOf trả độ ngả). */
   function playHurt(id, a) {
     const av = avatarOf ? avatarOf(id) : null, g = av && av.group && av.group.position; if (!g || dist(g.x, g.z) > COMBAT.seeM) return;
@@ -123,6 +128,7 @@ export function createCombatLink(deps) {
     if (r && r.dead) emit({ k: 'k', key: a.key, type: r.type, killer: by });
   }
   /** Phiên 223: MÌNH vừa tung RỒNG HỒNG (Gậy như ý đủ 3 đòn) → báo cho mọi người cùng thấy. ry = hướng mặt. */
+  API.sendBroom = (ry, rg) => { try { return skipOut() ? 0 : emit({ k: 'q', ry: +ry || 0, rg: +rg || 0 }); } catch (_) { return 0; } };   // Phiên 230: đập chổi của MÌNH → mọi người thấy
   API.sendWolf = (ry, rg) => { try { return skipOut() ? 0 : emit({ k: 'w', ry: +ry || 0, rg: +rg || 0 }); } catch (_) { return 0; } };   // Phiên 224: sói khí vàng của MÌNH → mọi người thấy
   API.sendDragon = (ry) => { try { return skipOut() ? 0 : emit({ k: 'r', ry: +ry || 0 }); } catch (_) { return 0; } };
   /** Phiên 225: MÌNH bị quái đánh trúng (lv 0-9) → báo mọi người cùng thấy. */
@@ -162,7 +168,7 @@ export function createCombatLink(deps) {
       }
       ghosts.ingest(p.id, unpackMons(p.m), t);
       for (const a of late) playHit(p.id, a);                                // quái mới xuất hiện cùng gói với đòn đầu tiên
-      for (const a of acts) { if (a.k === 'c') playCast(p.id, a); else if (a.k === 's') playSwing(p.id, a); else if (a.k === 'r') playDragon(p.id, a); else if (a.k === 'w') playWolf(p.id, a); else if (a.k === 'p') playHurt(p.id, a); }
+      for (const a of acts) { if (a.k === 'c') playCast(p.id, a); else if (a.k === 's') playSwing(p.id, a); else if (a.k === 'r') playDragon(p.id, a); else if (a.k === 'w') playWolf(p.id, a); else if (a.k === 'q') playBroom(p.id, a); else if (a.k === 'p') playHurt(p.id, a); }
     }
     for (const id of [...lastT.keys()]) if (!seenIds.has(id)) { lastT.delete(id); ghosts.drop(id); inbox.forget(id); stance.delete(id); dropSlash(id); poses.delete(id); lastAct.delete(id); hurts.delete(id); }   // người đã rời
   };
@@ -172,7 +178,7 @@ export function createCombatLink(deps) {
     try {
       API.hookAvatar();
       const t = now(), hide = !!(LGT.inHouse || (LGT.swim && LGT.swim.active));
-      ghosts.step(dt, t); if (dragonFx) dragonFx.update(dt, null); if (wolfFx) wolfFx.update(dt);   // Phiên 223: rồng hồng của người khác bay theo họ
+      ghosts.step(dt, t); if (dragonFx) dragonFx.update(dt, null); if (wolfFx) wolfFx.update(dt); if (broomFx) broomFx.update(dt);   // Phiên 223: rồng hồng của người khác bay theo họ
       const gl = hide ? [] : ghosts.list();
       if (LGT.farmView) LGT.farmView.ghosts = gl;
       if (ghostView) ghostView.update(perf() / 1000, { mons: gl, target: (LGT.farmView && LGT.farmView.target) || '', stones: [] }, getCamera());
