@@ -54,7 +54,8 @@ export function calm(m) { if (m) { m.eng = false; m.wind = 0; m.engT = 0; m.slam
  */
 export function strikeDamage(m, { thu = 0, max = 1, rel = 'thuong' } = {}) {
   const st = m && monsterStats(m.type); if (!st) return 0;
-  const raw = damageOf({ cong: st.cong, heSo: m.slam ? BOSS_ATTACK_CFG.slamHeSo : A.heSo[kind(m)], rel, thu });
+  const raw = damageOf({ cong: m.pbCong > 0 ? m.pbCong : st.cong,   // Phiên 235: quái phó bản mang Công riêng (theo lượt + số lần chinh phục)
+     heSo: m.slam ? BOSS_ATTACK_CFG.slamHeSo : A.heSo[kind(m)], rel, thu });
   return Math.max(1, Math.min(raw, Math.max(1, Math.floor(num(max, 1) * A.maxHitPct))));
 }
 

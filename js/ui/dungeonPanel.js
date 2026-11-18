@@ -1,6 +1,7 @@
 // Bảng chọn PHÓ BẢN (mục 4c, Phiên 139): người dẫn (NPC) ở lối vào bốn khu rừng sâu mở bảng này. Hiện thông tin phó bản, số lần đã chinh phục, độ mạnh hiện tại; nút "Vào phó bản".
 // Lưu trạng thái ở localStorage `lgt.dungeon` (loadDungeon ở js/world/dungeon.js), đặt LGT.dungeonState = { get(), set(s) } cho bước 4d dùng. CHƯA nhìn bằng mắt. Mọi chữ qua textContent.
 import { loadDungeon, describe, enter, leave } from '../world/dungeon.js';
+import { DUNGEONS } from '../data/dungeons.js';
 
 const KEY = 'lgt.dungeon';
 const isEditable = (el) => !!el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName));
@@ -30,7 +31,7 @@ export function initDungeonPanel({ toast = () => {} } = {}) {
     box.append(put('h3', d.ten), put('p', `${d.npc} · ${d.dia}`, 'pb-sub'),
       put('p', `Quái cấp ${d.lvMin}–${d.lvMax}. Hạ hết quái ${d.waves} lượt (mỗi lượt quái hồi sinh mạnh và to hơn) thì boss chính ${d.bossTen} (cấp ${d.bossLv}) xuất hiện.`));
     const ul = document.createElement('ul');
-    for (const [a, b] of [['Đã chinh phục', `${d.clears} lần`], ['Độ mạnh quái hiện tại', d.clears ? `Máu ×${d.hpMul} · Công ×${d.atkMul} · To ×${d.sizeMul}` : 'Lần đầu'], ['Hạt sen khi hạ boss', `khoảng ${d.senBoss}`], ['Mảnh yêu quái', `1 mảnh ${d.bossTen}`]]) { const li = document.createElement('li'); li.append(put('span', a), put('span', b)); ul.appendChild(li); }
+    for (const [a, b] of [['Đã chinh phục', `${d.clears} lần`], ['Độ mạnh quái hiện tại', d.clears ? `Máu ×${d.hpMul} · Công ×${d.atkMul} · To ×${d.sizeMul}` : 'Lần đầu'], ['Hạt sen khi hạ boss', `khoảng ${d.senBoss}`], ['Mảnh yêu quái', `1 mảnh ${d.bossTen}` + (st.manh && st.manh[DUNGEONS[d.id].boss] ? ` (đang có ${st.manh[DUNGEONS[d.id].boss]})` : '')]]) { const li = document.createElement('li'); li.append(put('span', a), put('span', b)); ul.appendChild(li); }
     const row = document.createElement('div'); row.className = 'pb-row';
     const go = put('button', 'Vào phó bản'), x = put('button', 'Để sau'); go.type = x.type = 'button'; go.disabled = busy;
     go.addEventListener('click', onEnter); x.addEventListener('click', close); row.append(go, x);
@@ -42,7 +43,11 @@ export function initDungeonPanel({ toast = () => {} } = {}) {
       const E = enter(st, id); if (!E.ok) { toast('Bạn đang ở trong một phó bản.', 3000); return; }
       if (!LGT.dungeonZones) { toast('Phó bản chưa sẵn sàng, thử lại sau giây lát.', 3000); return; }
       const r = await LGT.dungeonZones.enter(id);
-      if (r && r.ok) { set(E.state); close(); toast(`Bạn vào ${describe(st, id).ten}. Lượt 1 sắp bắt đầu.`, 3500); }
+      if (r && r.ok) {
+        set(E.state); close();
+        if (LGT.dungeonRun && LGT.dungeonRun.begin(id, E.mobs)) toast(`Bạn vào ${describe(st, id).ten}. Lượt 1 sắp bắt đầu — chuẩn bị chiến đấu!`, 3500);   // Phiên 235 (4d): đặt quái thật
+        else { set(leave(st)); try { LGT.dungeonZones.leave(); } catch (_) { /* bỏ qua */ } toast('Phó bản chưa sẵn sàng, thử lại sau giây lát.', 3000); }
+      }
       else toast((r && r.reason) || 'Chưa vào được phó bản.', 3000);
     } catch (_) { toast('Chưa vào được phó bản.', 3000); } finally { busy = false; if (!box.hidden) paint(); }
   }
