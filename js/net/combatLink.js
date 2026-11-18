@@ -82,7 +82,7 @@ export function createCombatLink(deps) {
   /** Phiên 230: đập chổi (đòn 3 cầm Chổi) của người khác — đập xuống phía trước CHÍNH chỗ họ đứng trên màn hình mình. */
   function playBroom(id, a) {
     if (!broomFx) return; const av = avatarOf ? avatarOf(id) : null, g = av && av.group && av.group.position; if (!g || dist(g.x, g.z) > COMBAT.seeM) return;
-    try { broomFx.spawn({ x: g.x, y: Number.isFinite(+g.y) ? +g.y : 0, z: g.z }, a.ry, a.rg, true); } catch (_) { /* bỏ qua */ }
+    try { broomFx.spawn({ x: g.x, y: Number.isFinite(+g.y) ? +g.y : 0, z: g.z }, a.ry, a.rg, true, 0, a.w | 0); } catch (_) { /* bỏ qua */ }
   }
   /** Phiên 225: người khác bị đánh trúng — tiếng + giật người (poseOf trả độ ngả). */
   function playHurt(id, a) {
@@ -128,7 +128,7 @@ export function createCombatLink(deps) {
     if (r && r.dead) emit({ k: 'k', key: a.key, type: r.type, killer: by });
   }
   /** Phiên 223: MÌNH vừa tung RỒNG HỒNG (Gậy như ý đủ 3 đòn) → báo cho mọi người cùng thấy. ry = hướng mặt. */
-  API.sendBroom = (ry, rg) => { try { return skipOut() ? 0 : emit({ k: 'q', ry: +ry || 0, rg: +rg || 0 }); } catch (_) { return 0; } };   // Phiên 230: đập chổi của MÌNH → mọi người thấy
+  API.sendBroom = (ry, rg, w) => { try { return skipOut() ? 0 : emit({ k: 'q', ry: +ry || 0, rg: +rg || 0, w: +w || 0 }); } catch (_) { return 0; } };   // Phiên 230: đập chổi của MÌNH → mọi người thấy
   API.sendWolf = (ry, rg) => { try { return skipOut() ? 0 : emit({ k: 'w', ry: +ry || 0, rg: +rg || 0 }); } catch (_) { return 0; } };   // Phiên 224: sói khí vàng của MÌNH → mọi người thấy
   API.sendDragon = (ry) => { try { return skipOut() ? 0 : emit({ k: 'r', ry: +ry || 0 }); } catch (_) { return 0; } };
   /** Phiên 225: MÌNH bị quái đánh trúng (lv 0-9) → báo mọi người cùng thấy. */
