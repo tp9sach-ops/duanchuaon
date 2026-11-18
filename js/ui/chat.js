@@ -8,7 +8,7 @@ export function initChat(hud, { toast }) {
   box.innerHTML = `<header><h3>Trò chuyện trong chùa</h3><button type="button" class="ch-x" aria-label="Đóng">×</button></header>
     <ol class="ch-log" aria-live="polite"></ol>
     <form class="ch-form" autocomplete="off"><input class="ch-in" type="text" maxlength="80" placeholder="Viết lời chào…" enterkeyhint="send" aria-label="Lời nhắn"><button type="submit" class="ch-send">Gửi</button></form>
-    <p class="ch-note">Lời nhắn hiện trên đầu bạn vài giây. Hãy nói lời hiền hòa; không đăng đường link hay số điện thoại.</p>`;
+    <p class="ch-note">Lời nhắn hiện trên đầu bạn vài giây; tin bắt đầu bằng "/" là lệnh và chỉ mình bạn thấy. Hãy nói lời hiền hòa; không đăng đường link hay số điện thoại.</p>`;
   hud.appendChild(box);
   const log = box.querySelector('.ch-log'), form = box.querySelector('.ch-form'), input = box.querySelector('.ch-in');
 
@@ -28,6 +28,13 @@ export function initChat(hud, { toast }) {
   form.addEventListener('submit', (e) => {
     e.preventDefault();
     const v = input.value.trim(); if (!v) return;
+    if (v.startsWith('/')) {   // Phiên 235: tin bắt đầu bằng "/" là LỆNH — chỉ người gõ thấy, KHÔNG gửi lên phòng, không hiện bong bóng cho ai
+      input.value = '';
+      const show = (out) => add('Hệ thống', out || 'Lệnh không hợp lệ.', true);
+      const L = window.LGT; if (L && L.virtual) { show(L.virtual.command(v)); return; }
+      import('./virtualPlayers.js').then((m) => { const vr = (window.LGT && window.LGT.virtual) || m.initVirtual(); show(vr ? vr.command(v) : 'Lệnh chưa dùng được lúc này.'); }).catch(() => show('Lệnh chưa dùng được lúc này.'));   // nạp lười lần đầu gõ lệnh
+      return;
+    }
     const room = window.LGT && window.LGT.room;
     if (!room) { toast('Chưa kết nối được phòng trò chuyện.', 3000); return; }
     const sent = room.say(v);

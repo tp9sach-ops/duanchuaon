@@ -21,7 +21,7 @@ export function pollInterval(count) { return clamp((Number(count) || 1) * ROOM_C
 /** Lời nhắn: ≤ 80 ký tự, không link/email/số điện thoại. Trả chuỗi đã làm sạch hoặc '' nếu không hợp lệ. (Giống roomChat_ trong Room.gs.) */
 export function chatOk(s) {
   s = String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
-  if (!s) return '';
+  if (!s || s.startsWith('/')) return '';   // Phiên 235: tin bắt đầu bằng "/" là lệnh riêng của người gõ, không bao giờ gửi lên phòng
   s = Array.from(s).slice(0, ROOM_CFG.chatMax).join('');
   if (/(https?:\/\/|www\.|\.com\b|\.vn\b|@)/i.test(s)) return '';
   if (/\d[\d\s.\-]{7,}\d/.test(s)) return '';
