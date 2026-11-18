@@ -21,7 +21,8 @@ export function loadDungeon(o) {
     const wave = int(r.wave, 1, BOSS_WAVE);
     run = { id: r.id, wave, alive: int(r.alive, 0, 99), kills: int(r.kills, 0, 1e9), boss: wave === BOSS_WAVE };
   }
-  return { v: 1, clears, run };
+  const bag = (o) => { const out = {}; if (o && typeof o === 'object' && !Array.isArray(o)) for (const k of Object.keys(o).slice(0, 64)) if (/^[a-z0-9_]{1,40}$/.test(k)) { const n = int(o[k], 0, 1e9); if (n > 0) out[k] = n; } return out; };
+  return { v: 1, clears, run, manh: bag(s.manh), loot: bag(s.loot) };   // Phiên 235: manh = mảnh yêu quái (id boss → số mảnh, dùng cho mục ghép linh thú); loot = vật phẩm rơi (id → số lượng)
 }
 
 /** Số lần đã chinh phục phó bản `id` (loại lạ → 0). */
@@ -85,7 +86,8 @@ export function onKill(st, rng = Math.random) {
   if (run.alive > 0) return { state: { ...s, run }, nextWave: [], cleared: false, reward: null };
   if (run.boss) {
     const reward = rewardFor(run.id, clears, rng);
-    return { state: { ...s, clears: { ...s.clears, [run.id]: clears + 1 }, run: null }, nextWave: [], cleared: true, reward };
+    const add = (m, k, n) => ({ ...m, [k]: (m[k] || 0) + n }), loot = reward.items.reduce((m, it) => add(m, it, 1), s.loot);
+    return { state: { ...s, clears: { ...s.clears, [run.id]: clears + 1 }, run: null, manh: reward.manh ? add(s.manh, reward.manh, C.reward.manh) : s.manh, loot }, nextWave: [], cleared: true, reward };
   }
   const wave = run.wave + 1, mobs = waveMobs(run.id, wave, clears);
   return { state: { ...s, run: { ...run, wave, alive: mobs.length, boss: wave === BOSS_WAVE } }, nextWave: mobs, cleared: false, reward: null };

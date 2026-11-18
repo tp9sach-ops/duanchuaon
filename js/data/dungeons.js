@@ -20,3 +20,7 @@ export const DUNGEONS = Object.freeze({
   thaptho: Object.freeze({ id: 'thaptho', ten: 'Mê Cung Bảo Tháp', npc: 'Sư thầy giữ tháp', npcId: 'pbtho', dia: 'Chân đồi Bảo Tháp', mobs: Object.freeze(['thachtinh', 'hothap']), boss: 'thachlinh', vatPham: Object.freeze([['thachanh', 0.6], ['tuongda', 0.3], ['linhthach', 0.1]]) }),
 });
 export const DUNGEON_IDS = Object.freeze(Object.keys(DUNGEONS));
+
+// Phiên 235: TÊN HIỂN THỊ vật phẩm rơi (id ở `vatPham` mỗi phó bản vẫn là id TẠM, chưa là đồ trong Túi hồ lô). TẠM — ptg duyệt/đổi tên.
+export const VAT_PHAM_TEN = Object.freeze({ linhchi: 'Linh chi ngàn năm', modeo: 'Mộc nhĩ vàng', trangcuong: 'Lõi gỗ trăm tuổi', quangvang: 'Quặng vàng', giapsat: 'Giáp sắt cũ', kiemdoc: 'Kiếm độc', ngocthuy: 'Ngọc thủy', voc: 'Vỏ ốc cổ', chauthuy: 'Châu thủy', thachanh: 'Thạch anh', tuongda: 'Tượng đá nhỏ', linhthach: 'Linh thạch' });
+export const vatPhamTen = (id) => VAT_PHAM_TEN[id] || String(id);
