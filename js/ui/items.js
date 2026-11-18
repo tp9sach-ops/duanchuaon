@@ -13,6 +13,7 @@ import { BOARD } from '../world/board.js';
 import { askConfirm } from './dialog.js';
 import { STAFF_SCALE, STAFF_PINK } from './staffMesh.js';
 import { createBroomFx } from './broomFx.js';   // Phiên 230: đập chổi + gió
+import { applySlippers } from './slipperMesh.js';   // Phiên 233: dép lào khi dùng chổi
 import { broomRange } from '../world/broomMath.js';
 import { kitOf } from './weaponKit.js';   // Phiên 224: bảng đồ nghề gậy phát sáng (nhuy / tre)
 import { createWolfFx } from './wolfFx.js';   // Phiên 224: sói khí vàng đòn 3 của Gậy dạy chó
@@ -210,6 +211,7 @@ export function initItems({ toast = () => {} } = {}) {
       upd(dt); clock += dt; stepRipples(dt);
       if (dragon) dragon.update(dt, av.group.position);   // Phiên 163: rồng hồng bay theo người chơi
       if (wolf) wolf.update(dt);
+      applySlippers(av, av.__slip || (av.__slip = {}), broomOn());   // Phiên 233: dùng chổi thì mang đôi dép lào
       if (broomFx) broomFx.update(dt);   // Phiên 230                           // Phiên 224: sói khí vàng
       if (skin) {   // Phiên 224: cây trên tay theo bảng KIT (nhuy / tre); đổi gậy → dựng lại
         const kit = kitOf(heldKind());
