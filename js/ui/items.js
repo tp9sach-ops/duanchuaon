@@ -15,6 +15,8 @@ import { STAFF_SCALE, STAFF_PINK } from './staffMesh.js';
 import { createBroomFx } from './broomFx.js';   // Phiên 230: đập chổi + gió
 import { applySlippers } from './slipperMesh.js';   // Phiên 233: dép lào khi dùng chổi
 import { broomRange } from '../world/broomMath.js';
+import { countBroomHit } from '../world/tornadoMath.js';   // Phiên 234: đếm đòn chổi → 3 lốc nhỏ (đòn 3) / lốc to (đòn 9)
+import { applyTornadoHit } from './tornadoHit.js';
 import { kitOf } from './weaponKit.js';   // Phiên 224: bảng đồ nghề gậy phát sáng (nhuy / tre)
 import { createWolfFx } from './wolfFx.js';   // Phiên 224: sói khí vàng đòn 3 của Gậy dạy chó
 import { wolfRange, headingTo } from '../world/wolfMath.js';
@@ -256,16 +258,17 @@ export function initItems({ toast = () => {} } = {}) {
 
   // ---------- Gậy dạy chó (Phiên 224): mỗi đòn đánh thường nghe tiếng GỖ; đòn THỨ 3 thả SÓI KHÍ VÀNG vồ về phía quái ----------
   // farm.js / yeuquai.js gọi LGT.items.onHit(step, target) mỗi đòn đánh thường (step 1..3; target = quái bị đánh hoặc null khi vung không khí) và nhân sát thương bằng LGT.items.finisherMul() ở đòn 3.
-  let broomFx = null;
+  let broomFx = null, broomCount = null;
   function onBroomHit(step, target) {   // Phiên 230: mỗi đòn: tiếng quét lá + gió nhẹ từ phía sau; đòn 3: ĐẬP CHỔI (lá, cát, đá bay)
     try { if (LGT.sfx && LGT.sfx.broom) LGT.sfx.broom(step); } catch (_) { /* tiếng lỗi không làm hỏng đòn đánh */ }
     const av = LGT.world && LGT.world.avatar, scene = av && av.group && av.group.parent; if (!scene) return;
-    if (!broomFx || broomFx.scene !== scene) { if (broomFx) broomFx.clear(); broomFx = createBroomFx(scene); }
+    if (!broomFx || broomFx.scene !== scene) { if (broomFx) broomFx.clear(); broomFx = createBroomFx(scene, { onTornadoHit: (tn, pt, t, rec) => { const q = av.group.position; return applyTornadoHit(tn, pt, t, rec, { x: q.x, z: q.z }); } }); }   // Phiên 234: lốc của MÌNH làm quái mất máu
     const p = av.group.position, ry = av.group.rotation.y;
+    const cnt = countBroomHit(broomCount, step, performance.now() / 1000); broomCount = cnt.state;   // Phiên 234: đòn 3 → w=1 (3 lốc nhỏ), đòn 9 → w=2 (thêm lốc to)
     broomFx.wind({ x: p.x, y: p.y, z: p.z }, ry);
     if (step < BASIC.steps) return;
     const gap = target && Number.isFinite(+target.x) && Number.isFinite(+target.z) ? Math.hypot(target.x - p.x, target.z - p.z) : 0;
-    broomFx.spawn({ x: p.x, y: p.y, z: p.z }, target ? headingTo(p, target, ry) : ry, broomRange(gap));
+    broomFx.spawn({ x: p.x, y: p.y, z: p.z }, target ? headingTo(p, target, ry) : ry, broomRange(gap), false, 0, cnt.w);
   }
   function onHit(step, target) {
     if (broomOn()) { onBroomHit(step, target); return; }
