@@ -23,3 +23,21 @@ export const VITALS_CFG = Object.freeze({
   koGrace: 4,              // giây bất tử sau khi được đưa về cửa chùa
   autoStopFrac: 0.3,       // Tự Động Hàng Yêu tự dừng khi Sinh Lực dưới 30%
 });
+
+// Phiên 232 (mục 1): KIỂU ĐÒN của quái — mỗi loại quái có 2 kiểu đòn luân phiên; vùng đánh có HƯỚNG (khóa theo hướng quái đang nhìn lúc bắt đầu gồng, nên chạy ngang là né được).
+// kieu: 'non' (quạt: góc `goc` độ), 'duong' (lao thẳng: rộng `rong` m, quái lao tới ~`lao` m), 'tron' (đập quanh thân). `k` nhân với tầm (reach × missSlack) để ra chiều dài / bán kính vùng đánh. TẠM, chờ ptg duyệt.
+export const PATTERNS = Object.freeze({
+  vuot: Object.freeze({ id: 'vuot', ten: 'Vuốt quét', kieu: 'non', goc: 120, k: 1.0 }),
+  chem: Object.freeze({ id: 'chem', ten: 'Chém dọc', kieu: 'non', goc: 70, k: 1.15 }),
+  nen: Object.freeze({ id: 'nen', ten: 'Đập đất', kieu: 'tron', k: 0.95 }),
+  lao: Object.freeze({ id: 'lao', ten: 'Lao tới', kieu: 'duong', rong: 1.6, k: 1.45, lao: 1.6 }),
+  xoay: Object.freeze({ id: 'xoay', ten: 'Xoay vòng', kieu: 'tron', k: 1.05 }),
+  xung: Object.freeze({ id: 'xung', ten: 'Xung thẳng', kieu: 'duong', rong: 2.2, k: 1.7, lao: 2.4 }),
+});
+/** Hai kiểu đòn luân phiên cho từng loại quái (đòn chẵn → [0], lẻ → [1]). Loại lạ → ['vuot', 'nen']. */
+export const MON_PATTERNS = Object.freeze({
+  dameo: ['lao', 'vuot'], reutinh: ['nen', 'vuot'], daotac: ['chem', 'vuot'], cuopduong: ['chem', 'xoay'], thuyquy: ['vuot', 'lao'], lyngu: ['xung', 'xoay'],
+  thachtinh: ['nen', 'vuot'], hothap: ['nen', 'xung'], laomoc: ['vuot', 'nen'], soncuoc: ['chem', 'xung'], thachlinh: ['nen', 'xoay'], thuymau: ['xoay', 'xung'],
+  hoaly: ['lao', 'chem'], viemma: ['chem', 'xoay'], viemde: ['xung', 'nen'], cotmoc: ['vuot', 'nen'], thuvuong: ['xoay', 'vuot'], thumau: ['nen', 'xoay'],
+  kimgiap: ['chem', 'lao'], kimtuong: ['xung', 'chem'], kimvuong: ['chem', 'xoay'], nhamcu: ['nen', 'vuot'], nhamvuong: ['nen', 'xung'], solinh: ['xoay', 'nen'],
+});

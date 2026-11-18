@@ -2,7 +2,7 @@
 // Quái chỉ nổi giận (eng) khi BỊ ĐÁNH (provoke); lúc đó đuổi theo người chơi trong vùng của nó, gồng chiêu báo trước rồi đánh. Số liệu: js/data/monsterAI.js (TẠM). Test: tests/monsterattack.test.mjs.
 // Các hàm sửa quái / vitals TẠI CHỖ (giống spawn.js). Nối giao diện: js/ui/farmCombat.js.
 import { rectsOf } from './spawn.js';
-import { ATTACK_CFG as A, BOSS_ATTACK_CFG, VITALS_CFG as V } from '../data/monsterAI.js';
+import { ATTACK_CFG as A, BOSS_ATTACK_CFG, VITALS_CFG as V, PATTERNS, MON_PATTERNS } from '../data/monsterAI.js';
 import { FARM_ZONES } from '../data/monsters.js';
 import { monsterStats } from './spawn.js';
 import { damageOf } from './combat.js';
@@ -20,10 +20,33 @@ export function walkable(zoneId, x, z, night = false) {
   return !zone.avoid.some((c) => Math.hypot(px - c.x, pz - c.z) <= c.r);
 }
 
+/** Danh sách kiểu đòn (id) của quái `type`. */
+export const patternIds = (type) => MON_PATTERNS[type] || ['vuot', 'nen'];
+/**
+ * Vùng đánh có hướng của quái `m` (Phiên 232). Trả { kieu: 'non'|'duong'|'tron', goc?, rong?, dai (m, tính từ tâm quái), lao?, id, ten }.
+ * Đòn giậm đất của boss (m.slam) luôn là vòng tròn bán kính slamReach. Chưa chọn kiểu (m.pat trống — vd. bóng quái từ mạng) → kiểu đầu của loại quái.
+ */
+export function zoneOf(m) {
+  if (!m) return { kieu: 'tron', dai: 0, id: 'nen', ten: '' };
+  if (m.slam) return { kieu: 'tron', dai: BOSS_ATTACK_CFG.slamReach, id: 'slam', ten: 'Giậm đất' };
+  const base = A.reach[kind(m)] * A.missSlack, pt = PATTERNS[m.pat] || PATTERNS[patternIds(m.type)[0]] || PATTERNS.vuot;
+  return { kieu: pt.kieu, goc: pt.goc, rong: pt.rong, lao: pt.lao, dai: base * pt.k, id: pt.id, ten: pt.ten };
+}
+/** Điểm (px, pz) có nằm trong vùng đánh `z` của quái `m` (đứng ở m.x, m.z, nhìn theo m.ry) không. Người chơi tính bán kính thân 0,4 m. */
+export function inZone(z, m, px, pz, body = 0.4) {
+  const dx = px - m.x, dz = pz - m.z, d = Math.hypot(dx, dz);
+  if (z.kieu === 'tron') return d <= z.dai + body;
+  const fx = Math.sin(num(m.ry)), fz = Math.cos(num(m.ry)), along = dx * fx + dz * fz, side = Math.abs(dx * fz - dz * fx);
+  if (z.kieu === 'duong') return along >= -body && along <= z.dai + body && side <= z.rong / 2 + body;
+  if (d > z.dai + body) return false;                                            // 'non'
+  if (d < 1e-6) return true;
+  return Math.acos(clamp(along / d, -1, 1)) <= (z.goc * Math.PI) / 360 + Math.atan2(body, Math.max(d, 0.1));
+}
+
 /** Quái nổi giận (khi bị đánh): bắt đầu đuổi và đánh. */
 export function provoke(m) { if (m) { m.eng = true; m.engT = 0; } }
 /** Quái hết giận: đứng yên, huỷ đòn đang gồng. */
-export function calm(m) { if (m) { m.eng = false; m.wind = 0; m.engT = 0; m.slam = false; } }
+export function calm(m) { if (m) { m.eng = false; m.wind = 0; m.engT = 0; m.slam = false; m.pat = ''; m.strikeT = 0; } }
 
 /**
  * Sát thương một đòn của quái lên người chơi. in: m ({ type, elite }), { thu (Thủ người chơi), max (Sinh Lực tối đa), rel = 'thuong' | 'loi' | 'bat' (quan hệ Hệ: quái đánh người) }.
@@ -46,17 +69,17 @@ export function strikeDamage(m, { thu = 0, max = 1, rel = 'thuong' } = {}) {
 export function stepMonster(m, dt, player, ctx = {}) {
   if (!m || !m.eng || !player) return null;
   const d0 = clamp(num(dt), 0, 0.25), kd = kind(m), reach = A.reach[kd];
-  m.engT = num(m.engT) + d0; m.atkT = Math.max(0, num(m.atkT) - d0);
+  m.engT = num(m.engT) + d0; m.atkT = Math.max(0, num(m.atkT) - d0); m.strikeT = Math.max(0, num(m.strikeT) - d0);
   const px = num(player.x), pz = num(player.z);
   let dx = px - m.x, dz = pz - m.z, dist = Math.hypot(dx, dz);
   if (dist > A.leash || (m.engT > A.giveUp && dist > reach * 2)) { calm(m); return { k: 'calm' }; }
-  if (dist > 1e-6) m.ry = Math.atan2(dx, dz);
+  if (dist > 1e-6 && !(m.wind > 0)) m.ry = Math.atan2(dx, dz);   // Phiên 232: đang gồng thì KHÓA hướng — chạy ngang là né được vùng quạt/đường
   if (m.wind > 0) {                                   // đang gồng: đứng yên
     m.wind -= d0; if (m.wind > 0) return null;
     m.wind = 0; m.atkT = A.interval[kd];
-    const slam = !!m.slam, hitR = slam ? BOSS_ATTACK_CFG.slamReach : reach * A.missSlack;
-    const ev = dist <= hitR ? { k: 'strike', dmg: strikeDamage(m, ctx) } : { k: 'miss' };
-    m.slam = false; if (slam) ev.slam = true; return ev;
+    const slam = !!m.slam, trung = inZone(zoneOf(m), m, px, pz);
+    const ev = trung ? { k: 'strike', dmg: strikeDamage(m, ctx) } : { k: 'miss' };
+    m.strikeT = 0.45; m.slam = false; if (slam) ev.slam = true; return ev;
   }
   if (dist > reach * A.stopFrac) {                    // đuổi theo, không đi ra ngoài vùng
     const step = Math.min(A.speed[kd] * d0, dist - reach * A.stopFrac), ux = dx / dist, uz = dz / dist;
@@ -65,7 +88,8 @@ export function stepMonster(m, dt, player, ctx = {}) {
     dx = px - m.x; dz = pz - m.z; dist = Math.hypot(dx, dz);
   }
   if (dist <= reach && m.atkT <= 0) {
-    m.atkN = num(m.atkN) + 1; m.slam = !!(m.boss && m.atkN % BOSS_ATTACK_CFG.slamEvery === 0);   // boss: cứ 3 đòn có 1 đòn giậm đất
+    m.atkN = num(m.atkN) + 1; m.slam = !!(m.boss && m.atkN % BOSS_ATTACK_CFG.slamEvery === 0);
+    const pl = patternIds(m.type); m.pat = pl[(m.atkN - 1) % pl.length];   // Phiên 232: luân phiên 2 kiểu đòn; boss cứ 3 đòn có 1 đòn giậm đất (m.slam ghi đè)   // boss: cứ 3 đòn có 1 đòn giậm đất
     m.wind = m.slam ? BOSS_ATTACK_CFG.slamWindup : A.windup; return m.slam ? { k: 'windup', slam: true } : { k: 'windup' };
   }
   return null;

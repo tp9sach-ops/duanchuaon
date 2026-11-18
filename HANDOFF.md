@@ -1,5 +1,7 @@
 # HANDOFF — Web tâm linh "DIỆU GIANG TỰ" (chùa Việt 3D) — tên cũ: Linh Giang Tự (Phiên 5 đổi tên theo ptg)
 
+> **Cập nhật Phiên 232 (2026-11-18): MỤC 1 (đợt 1) XONG — đồ họa yêu quái: hình riêng + hoạt ảnh cho đủ 24 loại (trước chỉ 6), đòn đánh CÓ HƯỚNG (quạt/lao thẳng/đập tròn, luân phiên 2 kiểu, khóa hướng lúc gồng để né ngang), vùng báo đòn đúng hình. ĐỌC `docs/PHIEN232.md` (có phần CHƯA nhìn bằng mắt + VIỆC KẾ = MỤC 2 người chơi ảo `/nguoichoiao`). `sw.js` = `dgt-v217`.**
+
 > **Cập nhật Phiên 230 (2026-11-18): MỤC 2 CHỔI (50 lá, id `choi`) XONG — đòn 3 = ĐẬP CHỔI (chổi khổng lồ giơ lên đập xuống, lá/cát/đá bay), mỗi đòn có gió nhẹ từ sau lưng + tiếng quét lá/xột xoạt, cưỡi chổi, thu về tay phi vút lên cao rồi hạ nhẹ, đồng bộ online (hành động `q`, mã gói `c`/`u`). ĐỌC `docs/PHIEN230.md`. CHƯA nhìn bằng mắt trên máy thật.
 
 > **Cập nhật Phiên 229 (2026-11-18): game mở từ Checkin (repo checkin) vào toàn màn hình + xoay ngang ngay trong khung, không mở tab mới — ĐỌC `docs/PHIEN229_TOAN_MAN_HINH_TRONG_KHUNG.md` (có giới hạn màu thanh Chrome + VIỆC KẾ). `sw.js` = dgt-v215, `npm test` 1450/1450.**
