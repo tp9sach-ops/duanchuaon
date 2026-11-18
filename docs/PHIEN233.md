@@ -8,4 +8,9 @@ Nguồn yêu cầu (ptg): 1 sửa chổi bị mờ · 2 dép lào khi dùng ch�
 - Test: `tests/broom233.test.mjs` (đã đăng ký package.json). npm test: 1468/1468 đạt. sw VERSION → dgt-v218.
 - CHƯA nhìn bằng mắt trên máy thật.
 
-## Còn lại (làm tiếp theo thứ tự): mục 2 → 6.
+## Mục 2 — XONG: đôi dép lào khi dùng chổi
+- Mới: `js/ui/slipperMesh.js` (đế xanh lá, quai chữ V + núm kẹp ngón màu trắng; gắn vào xương `footL`/`footR`, tìm theo tên nên KHÔNG phải sửa `avatarChibi.js`).
+- Người chơi: `js/ui/items.js` (`broomOn()` → mang, đổi vũ khí → tháo; chỗ nhớ gắn theo từng nhân vật `av.__slip`). Người khác: `js/ui/remoteGear.js` (cờ chổi `c` hoặc cưỡi `u` → mang; `drop()` → tháo). Không thêm gói mạng.
+- Test: thêm vào `tests/broom233.test.mjs` (kiểm đấu nối). Kích thước/vị trí dép là số TẠM (`SLIPPER`), CHƯA nhìn bằng mắt trên máy thật.
+
+## Còn lại (làm tiếp theo thứ tự): mục 3 → 6.
