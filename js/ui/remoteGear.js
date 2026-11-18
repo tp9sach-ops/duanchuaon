@@ -11,6 +11,7 @@ import { kitOf } from './weaponKit.js';   // Phiên 224: gậy phát sáng theo 
 import { buildBambooMount, pulseBamboo } from './bambooMesh.js';
 import { buildBroomMount, pulseBroom } from './broomMesh.js';   // Phiên 230: Chổi
 import { buildHat, HAT_POS } from './hatMesh.js';
+import { applySlippers } from './slipperMesh.js';   // Phiên 233: dép lào khi dùng chổi
 import { buildSpearMount, buildStaffMount, buildProcBoard, FLY_LIFT, FLY_BOB, VBOB, VBASE } from './board.js';
 import { createDogPack } from './dogPack.js';   // Phiên 227: bầy chó chạy theo người cưỡi Gậy dạy chó
 
@@ -38,7 +39,7 @@ export function createGearView() {
       clock: 0, lift: 0,
       hand: hand ? { host: hand, orig: hand.children.slice(), mesh: null } : null,     // cây gậy trên tay (chỉ hiện khi người đó vào thế đánh; hiện chưa đồng bộ nên thường ẩn)
       back: back ? { host: back, orig: back.children.slice(), mesh: null } : null,     // gậy thu gọn đeo sau lưng
-      hat: null, mounts: null, auras: {}, dogs: null,
+      hat: null, slip: {}, mounts: null, auras: {}, dogs: null,
     };
     av.__rg = s; return s;
   }
@@ -91,6 +92,7 @@ export function createGearView() {
     swapStaff(s.hand, held, 1, s.clock);
     swapStaff(s.back, held, 0.7, s.clock);
 
+    applySlippers(av, s.slip, !!g.broom || g.ride === 'choi');   // Phiên 233: người khác dùng chổi (cầm hoặc cưỡi) cũng mang dép lào
     const head = av.headHost;
     if (head) {
       if (g.hat && !s.hat) { s.hat = buildHat(); s.hat.position.set(HAT_POS.x, HAT_POS.y, HAT_POS.z); head.add(s.hat); if (av.setHat) av.setHat(true); }
@@ -138,6 +140,7 @@ export function createGearView() {
     const s = av && av.__rg; if (!s) return;
     for (const slot of [s.hand, s.back]) if (slot && slot.mesh) { slot.host.remove(slot.mesh); if (slot.kind !== 'tre' && slot.kind !== 'choi') disposeTree(slot.mesh); slot.mesh = null; slot.kind = ''; for (const c of slot.orig) c.visible = true; }
     if (s.hat && av.headHost) { av.headHost.remove(s.hat); s.hat = null; }
+    applySlippers(av, s.slip, false);
     if (s.mounts) { for (const m of Object.values(s.mounts)) { av.group.remove(m); disposeTree(m); } s.mounts = null; }
     if (s.dogs) { s.dogs.dispose(); s.dogs = null; }   // Phiên 227: bầy chó của người đó
     for (const a of Object.values(s.auras)) { av.group.remove(a.m); a.m.geometry.dispose(); a.m.material.dispose(); }
