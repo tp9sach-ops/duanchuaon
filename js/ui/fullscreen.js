@@ -25,9 +25,13 @@ export function setThemeColor(c) {
 }
 
 const fsEl = () => doc.fullscreenElement || doc.webkitFullscreenElement || null;
+const fsOn = () => !!fsEl() || hostFs;
 const reqFs = root.requestFullscreen || root.webkitRequestFullscreen || null;
 const exitFs = doc.exitFullscreen || doc.webkitExitFullscreen || null;
 const canFs = !!reqFs;
+/* Phiên 229: trang cha (Checkin trong Google Sites) đưa CẢ KHUNG game vào toàn màn hình + khoá xoay ngang (cha mới có lượt bấm của người dùng). Game chỉ nhận trạng thái và nhờ cha thoát/khoá. */
+let hostFs = false;
+const toHost = (m) => { try { if (window.parent && window.parent !== window) window.parent.postMessage(Object.assign({ type: 'dgt-host-fs' }, m), '*'); } catch (_) { /* bỏ qua */ } };
 const mq = (q) => { try { return window.matchMedia(q).matches; } catch (_) { return false; } };
 const embedded = (() => { try { return window.self !== window.top; } catch (_) { return true; } })();
 /** Trang cha có cho phép Fullscreen trong khung không (allow="fullscreen"). Ngoài khung luôn true. */
@@ -49,9 +53,10 @@ const store = {
 const wantLandscape = () => { const v = store.get('dgt.lockLand'); return v === null ? isPhone() : v === '1'; };
 
 async function lockLandscape() {
+  if (hostFs) { toHost({ cmd: 'lock', land: true }); return; }
   try { if (screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape'); } catch (_) { /* chỉ chạy được khi đang toàn màn hình/PWA, một số máy không cho */ }
 }
-function unlockOrientation() { try { screen.orientation && screen.orientation.unlock && screen.orientation.unlock(); } catch (_) { /* bỏ qua */ } }
+function unlockOrientation() { if (hostFs) toHost({ cmd: 'lock', land: false }); try { screen.orientation && screen.orientation.unlock && screen.orientation.unlock(); } catch (_) { /* bỏ qua */ } }
 
 /** Mở game ở tab mới (trang gốc, không còn trong khung). Trả false nếu bị chặn cửa sổ bật lên. PHẢI gọi trong sự kiện bấm. */
 function openOutside() {
@@ -65,7 +70,7 @@ function openOutside() {
 
 /** Vào toàn màn hình. PHẢI gọi trực tiếp trong sự kiện chạm/bấm của người dùng. */
 export async function enterFullscreen() {
-  if (fsEl()) return true;
+  if (fsOn()) return true;
   if (!canFs || !fsAllowed()) return false;
   store.sset('dgt.fsDeclined', '0');
   try { await reqFs.call(root, { navigationUI: 'hide' }); } catch (_) { return false; }
@@ -75,6 +80,7 @@ export async function enterFullscreen() {
 export async function leaveFullscreen() {
   store.sset('dgt.fsDeclined', '1');
   unlockOrientation();
+  if (hostFs) { toHost({ cmd: 'exit' }); return; }
   if (fsEl() && exitFs) { try { await exitFs.call(doc); } catch (_) { /* bỏ qua */ } }
 }
 
@@ -156,7 +162,7 @@ export function initFullscreen() {
   for (const ev of ['resize', 'orientationchange', 'lgt:viewport']) window.addEventListener(ev, placeSoon);
 
   const paintBtns = () => {
-    const on = !!fsEl(), out = outsideOnly();
+    const on = fsOn(), out = outsideOnly() && !hostFs;
     box.classList.toggle('is-out', out);
     const label = out ? 'Mở game toàn màn hình trong tab mới' : on ? 'Thoát toàn màn hình' : 'Toàn màn hình';
     if (out) btn.innerHTML = '↗<span class="fs-tx"> Toàn màn hình</span>'; else btn.textContent = on ? '✕' : '⛶'; btn.setAttribute('aria-label', label); btn.title = label;
@@ -165,7 +171,7 @@ export function initFullscreen() {
     const lk = wantLandscape(); rot.setAttribute('aria-pressed', String(lk)); rot.classList.toggle('on', lk);
   };
   const onToggle = async () => {
-    if (fsEl()) { await leaveFullscreen(); return; }
+    if (fsOn()) { await leaveFullscreen(); return; }
     if (outsideOnly()) {   // Phiên 218: trong khung Google Sites → mở tab mới để có toàn màn hình + đổi màu thanh Chrome
       if (openOutside()) tip('Đã mở game ở tab mới. Ở đó bấm "Vào chùa" để toàn màn hình và xoay ngang.');
       else tip('Khung nhúng chặn mở tab mới. Hãy mở trực tiếp: ' + location.href.split('#')[0]);
@@ -180,7 +186,7 @@ export function initFullscreen() {
   // Phiên 219: nút "Toàn màn hình" ngay trong màn "Vào chùa" (màn này phủ lên nút nổi trước đây). Dựng khi màn xuất hiện; cập nhật nhãn theo trạng thái.
   const paintEnterBtn = () => {
     const b = doc.getElementById('dgt-en-fs'); if (!b) return;
-    const on = !!fsEl(), out = outsideOnly();
+    const on = fsOn(), out = outsideOnly() && !hostFs;
     b.hidden = isStandalone() && !out;   // đã là app toàn màn hình thì thôi
     b.textContent = out ? '↗ Mở game toàn màn hình (tab mới)' : on ? '✕ Thoát toàn màn hình' : '⛶ Toàn màn hình';
   };
@@ -211,6 +217,16 @@ export function initFullscreen() {
     setTimeout(place, 350);   // thanh Chrome ẩn/hiện xong khung nhìn mới ổn định
   };
   doc.addEventListener('fullscreenchange', onFsChange); doc.addEventListener('webkitfullscreenchange', onFsChange);
+  window.addEventListener('message', (e) => {   // Phiên 229: trạng thái toàn màn hình do trang cha báo
+    const d = e.data; if (e.source !== window.parent || !d || d.type !== 'dgt-host-fs-state') return;
+    const on = !!d.on; if (on === hostFs) return;
+    hostFs = on;
+    if (!on) store.sset('dgt.fsDeclined', '1');   // người chơi thoát toàn màn hình: phiên này không tự bật lại
+    paintBtns(); paintEnterBtn(); paintTheme(); placeSoon();
+    try { window.dispatchEvent(new Event('resize')); } catch (_) { /* bỏ qua */ }
+    setTimeout(place, 350);
+  });
+  if (embedded) toHost({ cmd: 'query' });
   paintBtns(); paintEnterBtn(); placeSoon();
 
   // Phiên 218: mở bằng app PWA (đã ở chế độ app) thì khoá xoay ngang ngay (manifest cũng đã khai orientation landscape); điện thoại cầm dọc thì hiện gợi ý xoay.
@@ -221,7 +237,7 @@ export function initFullscreen() {
   // Phiên này đã thoát toàn màn hình thủ công thì không ép lại. Trong khung bị chặn toàn màn hình thì không tự mở tab mới (người chơi bấm nút ↗).
   doc.addEventListener('click', (e) => {
     const t = e.target; if (!t || !t.closest || !t.closest('#en-go')) return;
-    if (store.sget('dgt.fsDeclined') === '1' || fsEl() || isStandalone() || outsideOnly()) return;
+    if (store.sget('dgt.fsDeclined') === '1' || fsOn() || isStandalone() || outsideOnly()) return;
     enterFullscreen();
   }, true);
 
@@ -231,7 +247,7 @@ export function initFullscreen() {
     const firstTap = (e) => {
       const t = e.target;
       if (t && t.closest && t.closest('#dgt-fs, #dgt-en-fs, #dgt-rot-tip')) return;
-      if (store.sget('dgt.fsDeclined') === '1' || fsEl() || isStandalone() || outsideOnly() || !canFs) return;
+      if (store.sget('dgt.fsDeclined') === '1' || fsOn() || isStandalone() || outsideOnly() || !canFs) return;
       doc.removeEventListener('pointerup', firstTap, true);
       enterFullscreen();
     };

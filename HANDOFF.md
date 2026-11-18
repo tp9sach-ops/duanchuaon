@@ -1,5 +1,7 @@
 # HANDOFF — Web tâm linh "DIỆU GIANG TỰ" (chùa Việt 3D) — tên cũ: Linh Giang Tự (Phiên 5 đổi tên theo ptg)
 
+> **Cập nhật Phiên 229 (2026-11-18): game mở từ Checkin (repo checkin) vào toàn màn hình + xoay ngang ngay trong khung, không mở tab mới — ĐỌC `docs/PHIEN229_TOAN_MAN_HINH_TRONG_KHUNG.md` (có giới hạn màu thanh Chrome + VIỆC KẾ). `sw.js` = dgt-v215, `npm test` 1450/1450.**
+
 > **Cập nhật Phiên 224 (2026-11-17): MỤC 1 GẬY DẠY CHÓ (150 lá, id `tre`) XONG — +1%, đòn 3 ×3 + sói khí vàng đầu to (đồng bộ online), chớp vàng hai đầu, cưỡi thu về xoay 3 vòng, tiếng gỗ tổng hợp. ĐỌC `docs/PHIEN224.md` (có "VIỆC KẾ": MỤC 2 CHỔI 50 lá, làm khi ptg nói tiếp tục). `sw.js` = `dgt-v210`, 1425/1425 test xanh. CHƯA nhìn bằng mắt trên máy thật.**
 
 > **Cập nhật Phiên 219 (2026-11-17): nút toàn màn hình bị lớp phim/màn vào cửa CHE (z-index) → đã sửa; nút ngay trong màn "Vào chùa"; điện thoại chạm lần đầu tự toàn màn hình + xoay ngang; hết đè nút khi xoay ngang; điện thoại bắt đầu ở chất lượng đầy đủ — ĐỌC `docs/PHIEN219_NUT_BI_CHE_DO_HOA.md` (có giới hạn theme-color trong Google Sites + VIỆC KẾ). `sw.js` = `dgt-v206`, `npm test` 1379/1379.**
