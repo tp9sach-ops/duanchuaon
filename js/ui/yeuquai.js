@@ -9,6 +9,7 @@ import { COOP_POLL_MS, coopKeyOk, buildReq, applyServer, lootFromServer, leavesG
 import { move } from '../world/layout.js';
 import { mapAvailable } from '../world/minimap.js';
 import { levelOf } from '../world/quests.js';
+import { SEN_THU_PHUC } from '../world/senThuong.js';   // Phiên 221: thu phục 1 yêu quái = 1 hạt sen
 
 const KEY = 'lgt.yq';
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
@@ -51,7 +52,8 @@ export function initYeuQuai(hud, { toast = () => {} } = {}) {
     if (!coopOn) drops = lootDrops(boss.x, boss.z, 1, rng, boss.diff);   // đánh chung: túi lá do máy chủ chia (cùng hạt giống cho mọi người)
     view.loot = drops; stat.done[key] = true; stat.kills++;
     if (rw.xp) { if (LGT.addXp) LGT.addXp(rw.xp); if (LGT.farm && LGT.farm.grantBoss) { try { LGT.farm.grantBoss(); } catch (_) {} } stat.bonus = Math.min(100, stat.bonus + rw.strength); }
-    save(); toast(rw.xp ? `Bạn đã thu phục ${t.ten}! +${rw.xp} điểm, +${rw.strength} sức mạnh. Nhặt nhanh những túi lá bồ đề rơi quanh đó!` : `${t.ten} đã bị thu phục. Bạn đánh chưa đủ ${Math.round(MIN_SHARE * 100)}% nên chưa có thưởng — nhưng vẫn nhặt được lá rơi!`, 7000);
+    const sen = rw.xp && LGT.addMerit ? SEN_THU_PHUC : 0; if (sen) LGT.addMerit(sen);   // Phiên 221: cộng NGAY vào số hạt sen đang có (chỉ khi đóng góp đủ MIN_SHARE như phần thưởng khác)
+    save(); toast(rw.xp ? `Bạn đã thu phục ${t.ten}! +${rw.xp} điểm, +${rw.strength} sức mạnh${sen ? `, +${sen} hạt sen` : ''}. Nhặt nhanh những túi lá bồ đề rơi quanh đó!` : `${t.ten} đã bị thu phục. Bạn đánh chưa đủ ${Math.round(MIN_SHARE * 100)}% nên chưa có thưởng — nhưng vẫn nhặt được lá rơi!`, 7000);
   }
 
   let dashLock = 0;   // performance.now() (ms): vừa lao xong thì chưa ra đòn ngay (chống bấm dồn)
@@ -141,4 +143,5 @@ export function initYeuQuai(hud, { toast = () => {} } = {}) {
   };
   return LGT.yq;
 }
+
 
